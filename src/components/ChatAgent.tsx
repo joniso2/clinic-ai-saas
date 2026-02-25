@@ -1,21 +1,21 @@
 'use client';
 
-import { FormEvent, useEffect, useRef } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { useChat } from '@ai-sdk/react';
 
 export function ChatAgent() {
   const {
     messages,
-    input,
-    handleInputChange,
-    handleSubmit,
-    isLoading,
+    sendMessage,
+    status,
     error,
   } = useChat({
     api: '/api/chat',
   });
 
+  const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const isLoading = status === 'submitted' || status === 'streaming';
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -25,8 +25,10 @@ export function ChatAgent() {
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!input.trim() || isLoading) return;
-    handleSubmit(event);
+    const trimmed = input.trim();
+    if (!trimmed || isLoading) return;
+    setInput('');
+    sendMessage({ text: trimmed });
   };
 
   return (
@@ -70,7 +72,10 @@ export function ChatAgent() {
                   : 'bg-slate-100 text-slate-900'
               }`}
             >
-              {message.content}
+              {message.parts
+                ?.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+                .map((p) => p.text)
+                .join('') ?? ''}
             </div>
           </div>
         ))}
@@ -89,7 +94,7 @@ export function ChatAgent() {
         <div className="flex items-end gap-2">
           <textarea
             value={input}
-            onChange={handleInputChange}
+            onChange={(e) => setInput(e.target.value)}
             placeholder="Ask the assistant to summarize leads, suggest follow-ups, or craft outreach messages..."
             rows={1}
             className="max-h-24 flex-1 resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
@@ -106,4 +111,3 @@ export function ChatAgent() {
     </div>
   );
 }
-
