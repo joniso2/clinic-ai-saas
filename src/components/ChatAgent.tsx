@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useRef } from 'react';
-import { useChat } from 'ai/react';
+import { useChat } from '@ai-sdk/react';
 
 export function ChatAgent() {
   const {
