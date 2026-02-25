@@ -1,0 +1,52 @@
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+
+console.log("TOKEN:", process.env.DISCORD_BOT_TOKEN ? "Loaded ✅" : "Missing ❌");
+
+import { Client, GatewayIntentBits } from "discord.js";
+
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
+});
+
+client.once("ready", () => {
+  console.log(`Bot logged in as ${client.user.tag}`);
+});
+
+client.on("messageCreate", async (message) => {
+  if (message.author.bot) return;
+
+  try {
+    const response = await fetch("http://localhost:3000/api/webhook/discord", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        content: message.content,
+        author_name: message.author.username,
+        channel_id: message.channel.id,
+        guild_id: message.guild?.id ?? null,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.reply) {
+      await message.reply(data.reply);
+    }
+  } catch (err) {
+    console.error("Bot error:", err);
+  }
+});
+
+if (!process.env.DISCORD_BOT_TOKEN) {
+  console.error("DISCORD_BOT_TOKEN not found. Check .env.local");
+  process.exit(1);
+}
+
+client.login(process.env.DISCORD_BOT_TOKEN);
