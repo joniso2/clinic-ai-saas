@@ -1,0 +1,18 @@
+---
+description: Keep responses and tool use token-efficient; avoid unnecessary context and long outputs.
+alwaysApply: true
+---
+
+# Token efficiency
+
+## Default behavior
+
+- **Operate only on selected code.** When the user has a selection, work within that scope. Do not pull in other files or regions unless the request explicitly requires it.
+- **Do not search or read other files** unless the request clearly involves cross-file logic (e.g. “update the API and all callers”, “find usages”).
+- **If multiple files are needed, ask before expanding context.** Do not automatically search or open additional files; confirm with the user first.
+- **Prefer minimal context expansion.** Add files or workspace search only when necessary and after confirmation when in doubt.
+
+## Response style
+
+- Match output to task size: minimal fix + short explanation for small changes; no long write-ups unless asked.
+- One concern per reply; skip lengthy preamble or extra tips unless the user asks.
