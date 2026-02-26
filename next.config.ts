@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
-// Railway 1GB: limit concurrency, disable React Compiler & source maps to save memory
+// Railway 1GB: standalone = smaller runtime footprint, less memory
 const nextConfig: NextConfig = {
+  output: "standalone",
   reactCompiler: false,
   productionBrowserSourceMaps: false,
   experimental: {
