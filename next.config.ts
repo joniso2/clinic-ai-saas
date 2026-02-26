@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
 
-// Railway 1GB: limit concurrency & optimize memory so build doesn't get OOM killed
+// Railway 1GB: limit concurrency, disable React Compiler & source maps to save memory
 const nextConfig: NextConfig = {
-  reactCompiler: true,
+  reactCompiler: false,
+  productionBrowserSourceMaps: false,
   experimental: {
     staticGenerationMaxConcurrency: 1,
     webpackMemoryOptimizations: true,
