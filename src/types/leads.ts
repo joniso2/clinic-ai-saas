@@ -1,5 +1,5 @@
 export type Priority = 'Low' | 'Medium' | 'High' | 'Urgent';
-export type LeadStatus = 'New' | 'Contacted' | 'Closed';
+export type LeadStatus = 'New' | 'Contacted' | 'Appointment scheduled' | 'Closed';
 export type LeadSource =
   | 'Google Ads'
   | 'Organic'
@@ -28,6 +28,7 @@ export function getDisplayPriority(lead: Lead): Priority {
   if (lead.priority) return lead.priority as Priority;
   if (lead.status === 'New') return 'High';
   if (lead.status === 'Contacted') return 'Medium';
+  if (lead.status === 'Appointment scheduled') return 'Medium';
   return 'Low';
 }
 

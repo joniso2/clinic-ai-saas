@@ -32,7 +32,7 @@ export async function getAppointmentsByMonth(
 
   const { data, error } = await supabase
     .from('appointments')
-    .select('id, clinic_id, patient_name, datetime, type, created_at')
+    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id')
     .eq('clinic_id', clinicId)
     .gte('datetime', start)
     .lt('datetime', end)
@@ -51,7 +51,7 @@ export async function getAppointmentsInRange(
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
     .from('appointments')
-    .select('id, clinic_id, patient_name, datetime, type, created_at')
+    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id')
     .eq('clinic_id', clinicId)
     .gte('datetime', startIso)
     .lt('datetime', endIso)
@@ -69,7 +69,7 @@ export async function getLastAppointmentForPatient(
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
     .from('appointments')
-    .select('id, clinic_id, patient_name, datetime, type, created_at')
+    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id')
     .eq('clinic_id', clinicId)
     .ilike('patient_name', patientName.trim())
     .order('datetime', { ascending: false })
@@ -88,7 +88,7 @@ export async function createAppointment(
   const { data, error } = await supabase
     .from('appointments')
     .insert(payload)
-    .select('id, clinic_id, patient_name, datetime, type, created_at')
+    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id')
     .single();
 
   if (error) return { data: null, error };
