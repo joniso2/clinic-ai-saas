@@ -13,16 +13,16 @@ export default async function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden">
+    <div className="relative min-h-screen w-full">
       <video
         autoPlay
         loop
         muted
         playsInline
-        className="absolute inset-0 h-full w-full object-cover blur-md"
+        className="fixed inset-0 h-full w-full object-cover blur-md"
         src="/videos/clinic.mp4"
       />
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="fixed inset-0 bg-black/50" aria-hidden />
       <div className="relative z-10 flex min-h-screen items-center justify-center">
         <LoginForm />
       </div>
