@@ -71,6 +71,21 @@ export async function getLeadsByClinicId(clinicId: string): Promise<{
   return { data: (data ?? []) as LeadRow[], error: null };
 }
 
+export async function getLeadById(
+  leadId: string,
+  clinicId: string
+): Promise<{ data: LeadRow | null; error: unknown }> {
+  const supabase = getSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from('leads')
+    .select('id, full_name, email, phone, interest, status, created_at, next_follow_up_date')
+    .eq('id', leadId)
+    .eq('clinic_id', clinicId)
+    .maybeSingle();
+  if (error) return { data: null, error };
+  return { data: data as LeadRow | null, error: null };
+}
+
 export async function updateLead(
   id: string,
   clinicId: string,
