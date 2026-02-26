@@ -80,24 +80,35 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-  const clinicId = (user.app_metadata as { clinic_id?: string } | null)?.clinic_id;
-  if (!clinicId) {
-    return NextResponse.json({ error: 'Clinic not set for user' }, { status: 403 });
-  }
+    const clinicId = (user.app_metadata as { clinic_id?: string } | null)?.clinic_id;
+    if (!clinicId) {
+      return NextResponse.json(
+        { leads: [], error: 'Clinic not set for user' },
+        { status: 200 },
+      );
+    }
 
-  const { data, error } = await leadRepository.getLeadsByClinicId(clinicId);
-  if (error) {
-    console.error('Error fetching leads:', error);
+    const { data, error } = await leadRepository.getLeadsByClinicId(clinicId);
+    if (error) {
+      console.error('Error fetching leads:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch leads' },
+        { status: 500 },
+      );
+    }
+    return NextResponse.json({ leads: data ?? [] });
+  } catch (err) {
+    console.error('GET /api/leads error:', err);
     return NextResponse.json(
       { error: 'Failed to fetch leads' },
       { status: 500 },
     );
   }
-  return NextResponse.json({ leads: data ?? [] });
 }

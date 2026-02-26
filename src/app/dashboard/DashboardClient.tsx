@@ -81,12 +81,17 @@ export default function DashboardClient() {
 
       if (clinicIdFromMetadata) {
         const res = await fetch('/api/leads', { credentials: 'include' });
+        const json = await res.json().catch(() => ({})) as { leads?: Lead[]; error?: string };
         if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          setError((err as { error?: string }).error ?? 'Failed to load leads');
+          setError(json.error ?? 'Failed to load leads');
+          setLeads([]);
         } else {
-          const json = (await res.json()) as { leads?: Lead[] };
           setLeads(json.leads ?? []);
+          if (json.error === 'Clinic not set for user') {
+            setError('No clinic linked to your account. Ask an admin to assign your user to a clinic.');
+          } else {
+            setError(null);
+          }
         }
       }
 
