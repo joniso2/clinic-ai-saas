@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { TrendingUp, Users, CheckCircle2, Calendar, ArrowRight } from 'lucide-react';
 import type { Lead } from '@/types/leads';
 import { formatCurrency } from '@/types/leads';
@@ -61,12 +61,31 @@ function MetricCard({
   );
 }
 
+// Smooth cubic bezier path builder
+function smoothPath(pts: { x: number; y: number }[]): string {
+  if (pts.length < 2) return '';
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  for (let i = 1; i < pts.length; i++) {
+    const prev = pts[i - 1];
+    const curr = pts[i];
+    const cpx = (prev.x + curr.x) / 2;
+    d += ` C ${cpx} ${prev.y}, ${cpx} ${curr.y}, ${curr.x} ${curr.y}`;
+  }
+  return d;
+}
+
 // Simple SVG line chart — no external deps
 function LeadsLineChart({ data }: { data: { label: string; count: number }[] }) {
-  const max = Math.max(...data.map((d) => d.count), 1);
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; label: string; count: number } | null>(null);
+
+  // +1 headroom above peak so the line never clips at the top
+  const dataMax = Math.max(...data.map((d) => d.count), 0);
+  const max = dataMax + 1;
+
   const W = 600;
-  const H = 120;
-  const PAD = { top: 12, right: 16, bottom: 28, left: 28 };
+  const H = 160;
+  // Left pad only for Y-axis labels; right pad matches spec (20px); line starts/ends at edges
+  const PAD = { top: 20, right: 20, bottom: 32, left: 28 };
   const chartW = W - PAD.left - PAD.right;
   const chartH = H - PAD.top - PAD.bottom;
 
@@ -77,71 +96,103 @@ function LeadsLineChart({ data }: { data: { label: string; count: number }[] }) 
     count: d.count,
   }));
 
-  const pathD = points
-    .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`)
-    .join(' ');
-
-  const areaD =
-    pathD +
+  const linePath = smoothPath(points);
+  const areaPath =
+    linePath +
     ` L ${points[points.length - 1].x} ${PAD.top + chartH} L ${points[0].x} ${PAD.top + chartH} Z`;
 
+  // Y-axis ticks: 0, 25%, 50%, 75%, 100% of scale
+  const yTicks = [0, 0.25, 0.5, 0.75, 1].map((t) => ({
+    y: PAD.top + t * chartH,
+    val: Math.round(max * (1 - t)),
+  }));
+
   return (
-    <div className="overflow-x-auto">
+    <div className="h-64 w-full">
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        className="w-full min-w-[320px]"
+        className="w-full"
         preserveAspectRatio="none"
-        style={{ height: 140 }}
+        style={{ height: '100%' }}
       >
         <defs>
-          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.18" />
-            <stop offset="100%" stopColor="#6366f1" stopOpacity="0.01" />
+          <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#6366F1" stopOpacity={0.25} />
+            <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
           </linearGradient>
         </defs>
 
-        {/* Grid lines */}
-        {[0, 0.25, 0.5, 0.75, 1].map((t) => {
-          const y = PAD.top + t * chartH;
-          return (
+        {/* Grid lines + Y-axis labels */}
+        {yTicks.map(({ y, val }) => (
+          <g key={y}>
             <line
-              key={t}
               x1={PAD.left}
               y1={y}
               x2={PAD.left + chartW}
               y2={y}
               stroke="#e2e8f0"
               strokeWidth={1}
+              strokeDasharray="3 3"
             />
-          );
-        })}
-
-        {/* Area fill */}
-        <path d={areaD} fill="url(#areaGrad)" />
-
-        {/* Line */}
-        <path d={pathD} fill="none" stroke="#6366f1" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
-
-        {/* Dots */}
-        {points.map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r={3} fill="#6366f1" />
+            <text x={PAD.left - 6} y={y + 3.5} textAnchor="end" fontSize={8} fill="#94a3b8">
+              {val}
+            </text>
+          </g>
         ))}
 
-        {/* X-axis labels — show every 2nd */}
+        {/* Gradient area fill */}
+        <path d={areaPath} fill="url(#colorLeads)" />
+
+        {/* Smooth line — stretches edge to edge within PAD */}
+        <path
+          d={linePath}
+          fill="none"
+          stroke="#6366f1"
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        {/* Dots + hover targets */}
+        {points.map((p, i) => (
+          <g key={i}>
+            <circle cx={p.x} cy={p.y} r={4} fill="#6366f1" />
+            <circle
+              cx={p.x}
+              cy={p.y}
+              r={12}
+              fill="transparent"
+              onMouseEnter={() => setTooltip(p)}
+              onMouseLeave={() => setTooltip(null)}
+              style={{ cursor: 'pointer' }}
+            />
+          </g>
+        ))}
+
+        {/* X-axis labels — every 2nd, no tickLine */}
         {points.map((p, i) =>
           i % 2 === 0 ? (
-            <text
-              key={i}
-              x={p.x}
-              y={H - 4}
-              textAnchor="middle"
-              fontSize={9}
-              fill="#94a3b8"
-            >
+            <text key={i} x={p.x} y={H - 8} textAnchor="middle" fontSize={9} fill="#94a3b8">
               {p.label}
             </text>
           ) : null,
         )}
+
+        {/* Inline tooltip */}
+        {tooltip && (() => {
+          const tx = Math.min(Math.max(tooltip.x, 44), W - 44);
+          const ty = tooltip.y - 14;
+          const labelText = `${tooltip.label}: ${tooltip.count}`;
+          const tw = labelText.length * 5.5 + 16;
+          return (
+            <g>
+              <rect x={tx - tw / 2} y={ty - 17} width={tw} height={19} rx={4} fill="#1e293b" opacity={0.92} />
+              <text x={tx} y={ty - 4} textAnchor="middle" fontSize={9} fill="#f8fafc" fontWeight="600">
+                {labelText}
+              </text>
+            </g>
+          );
+        })()}
       </svg>
     </div>
   );
