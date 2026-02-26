@@ -22,3 +22,6 @@ export function buildDiscordSystemPrompt(): string {
 }
 
 export const discordSystemPrompt = buildDiscordSystemPrompt();
+
+
+//Change
