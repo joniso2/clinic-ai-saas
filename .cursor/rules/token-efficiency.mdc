@@ -1,18 +1,41 @@
 ---
-description: Keep responses and tool use token-efficient; avoid unnecessary context and long outputs.
+description: Strict token control. Minimize context, file reads, and output size.
 alwaysApply: true
 ---
 
-# Token efficiency
+# STRICT TOKEN MODE
 
-## Default behavior
+## Context control
 
-- **Operate only on selected code.** When the user has a selection, work within that scope. Do not pull in other files or regions unless the request explicitly requires it.
-- **Do not search or read other files** unless the request clearly involves cross-file logic (e.g. “update the API and all callers”, “find usages”).
-- **If multiple files are needed, ask before expanding context.** Do not automatically search or open additional files; confirm with the user first.
-- **Prefer minimal context expansion.** Add files or workspace search only when necessary and after confirmation when in doubt.
+- Work ONLY on the currently selected code.
+- If no selection exists, operate only on the file explicitly mentioned.
+- NEVER perform workspace-wide search unless the user explicitly says:
+  - "search the project"
+  - "find all usages"
+  - "refactor across files"
+- NEVER open additional files automatically.
+- If more files are required, STOP and ask which specific files to open.
+- Do not inspect directories.
+- Do not scan folders.
+- Do not auto-expand context.
 
-## Response style
+## File limits
 
-- Match output to task size: minimal fix + short explanation for small changes; no long write-ups unless asked.
-- One concern per reply; skip lengthy preamble or extra tips unless the user asks.
+- Maximum files per task: 2 unless explicitly authorized.
+- Never read entire large files if only a function is relevant.
+- Do not reload files already seen unless explicitly required.
+
+## Output limits
+
+- Provide minimal diffs instead of full file rewrites when possible.
+- Do not restate unchanged code.
+- Do not include explanations longer than 5 lines unless requested.
+- No architectural suggestions unless explicitly asked.
+
+## Reasoning control
+
+- Avoid multi-pass reasoning unless required.
+- Avoid speculative improvements.
+- Do not optimize beyond the requested change.
+
+If uncertain whether to expand scope — ASK FIRST.
