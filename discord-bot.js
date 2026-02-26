@@ -54,6 +54,10 @@ client.on(Events.MessageCreate, async (message) => {
     };
 
     const webhookUrl = `${process.env.APP_URL}/api/webhook/discord`;
+    if (!process.env.APP_URL) {
+      console.error('Discord bot: APP_URL is not set in .env.local');
+      return;
+    }
     const response = await doFetch(webhookUrl, {
       method: 'POST',
       headers: {
@@ -63,8 +67,10 @@ client.on(Events.MessageCreate, async (message) => {
     });
 
     if (!response.ok) {
+      const text = await response.text();
       console.error(
-        `Discord bot: webhook request failed with status ${response.status}`,
+        `Discord bot: webhook failed ${response.status}`,
+        text.slice(0, 200),
       );
       return;
     }
@@ -75,6 +81,8 @@ client.on(Events.MessageCreate, async (message) => {
 
     if (reply) {
       await message.reply(reply);
+    } else {
+      console.log('Discord bot: API returned empty reply');
     }
   } catch (error) {
     console.error('Discord bot: error handling messageCreate:', error);
