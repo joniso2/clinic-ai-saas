@@ -14,7 +14,7 @@ export type LeadExtractionResult = {
   reply?: string;
 };
 
-const DEFAULT_REPLY = 'Thank you. Our team will review your message shortly.';
+const DEFAULT_REPLY = 'תודה. הצוות שלנו ייצור איתך קשר בהקדם.';
 
 /**
  * Runs the Discord lead-extraction prompt (structured JSON).
