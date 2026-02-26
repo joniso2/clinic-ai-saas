@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+// Railway 1GB: avoid static generation at build time
 export const dynamic = "force-dynamic";
 
 const geistSans = Geist({

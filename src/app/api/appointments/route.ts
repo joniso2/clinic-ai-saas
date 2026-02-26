@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server';
 import * as appointmentRepo from '@/repositories/appointment.repository';
 import * as appointmentService from '@/services/appointment.service';
 import type { AppointmentType } from '@/types/appointments';
+import type { ScheduleAppointmentParams } from '@/services/appointment.service';
 
 async function getClinicIdFromSession(): Promise<string | null> {
   const supabase = await createClient();
@@ -84,13 +85,14 @@ export async function POST(req: NextRequest) {
     const appointmentType: AppointmentType =
       type === 'follow_up' ? 'follow_up' : 'new';
 
-    const result = await appointmentService.scheduleAppointment({
+    const params: ScheduleAppointmentParams = {
       clinicId,
       patientName:            patient_name,
       requestedDatetimeRaw:   datetimeRaw,
       type:                   appointmentType,
-      leadId:                 lead_id ?? null,
-    });
+      leadId:                 lead_id ?? undefined,
+    };
+    const result = await appointmentService.scheduleAppointment(params);
 
     if (result.status === 'confirmed') {
       return NextResponse.json(

@@ -161,18 +161,20 @@ export async function suggestClosestAvailable(
   return suggestions;
 }
 
-/**
- * Main entry point for scheduling.
- * Validates hours, follow-up rules, and overlap, then creates the appointment
- * or returns structured alternatives.
- */
-export async function scheduleAppointment(params: {
+export type ScheduleAppointmentParams = {
   clinicId: string;
   patientName: string;
   requestedDatetimeRaw: string;
   type: AppointmentType;
   leadId?: string | null;
-}): Promise<ScheduleResult> {
+};
+
+/**
+ * Main entry point for scheduling.
+ * Validates hours, follow-up rules, and overlap, then creates the appointment
+ * or returns structured alternatives.
+ */
+export async function scheduleAppointment(params: ScheduleAppointmentParams): Promise<ScheduleResult> {
   const { clinicId, patientName, requestedDatetimeRaw, type, leadId } = params;
 
   const requestedDate = parseRequestedDatetime(requestedDatetimeRaw);
