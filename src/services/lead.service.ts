@@ -40,7 +40,25 @@ export async function processDiscordMessage(params: {
 
     if (!clinicId) {
       console.error('[Discord] DISCORD_DEFAULT_CLINIC_ID is not set.');
-      return { reply: 'מצטעריim, לא ניתן לקבוע תור כרגע. פנה אלינו ישירות.' };
+      return { reply: 'מצטערים, לא ניתן לקבוע תור כרגע. פנה אלינו ישירות.' };
+    }
+
+    // Find or create lead so the appointment appears on the Leads page
+    let leadId: string | undefined;
+    const { data: existingLead } = await leadRepository.getLeadByClinicAndName(clinicId, patientName);
+    if (existingLead) {
+      leadId = existingLead.id;
+    } else {
+      const { data: newLead, error: createErr } = await leadRepository.createLead({
+        clinic_id:  clinicId,
+        full_name:  patientName.trim(),
+        phone:      analysis.phone ?? null,
+        email:      analysis.email ?? null,
+        interest:   analysis.interest ?? null,
+        status:     'Appointment scheduled',
+      });
+      if (createErr) console.error('[Discord] Lead creation for appointment failed:', createErr);
+      else if (newLead) leadId = newLead.id;
     }
 
     const result = await appointmentService.scheduleAppointment({
@@ -48,9 +66,13 @@ export async function processDiscordMessage(params: {
       patientName,
       requestedDatetimeRaw: datetimeRaw,
       type: appointmentType,
+      leadId: leadId ?? undefined,
     });
 
     if (result.status === 'confirmed') {
+      if (existingLead && existingLead.status !== 'Appointment scheduled') {
+        await leadRepository.updateLead(existingLead.id, clinicId, { status: 'Appointment scheduled' });
+      }
       const time = appointmentService.formatAppointmentTime(result.appointment.datetime);
       return { reply: `מעולה! ${patientName}, קבענו לך תור ל${time}. נתראה בקליניקה!` };
     }

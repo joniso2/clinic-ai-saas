@@ -71,6 +71,25 @@ export async function getLeadsByClinicId(clinicId: string): Promise<{
   return { data: (data ?? []) as LeadRow[], error: null };
 }
 
+/** Find first lead for clinic by full name (case-insensitive). */
+export async function getLeadByClinicAndName(
+  clinicId: string,
+  fullName: string,
+): Promise<{ data: LeadRow | null; error: unknown }> {
+  const supabase = getSupabaseAdminClient();
+  const name = fullName.trim();
+  if (!name) return { data: null, error: null };
+  const { data, error } = await supabase
+    .from('leads')
+    .select('id, clinic_id, full_name, phone, email, interest, status, created_at, next_follow_up_date')
+    .eq('clinic_id', clinicId)
+    .ilike('full_name', name)
+    .limit(1)
+    .maybeSingle();
+  if (error) return { data: null, error };
+  return { data: data as LeadRow | null, error: null };
+}
+
 export async function getLeadById(
   leadId: string,
   clinicId: string
