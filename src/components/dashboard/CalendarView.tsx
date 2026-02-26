@@ -122,7 +122,17 @@ type NewAppointmentFormProps = {
 
 function NewAppointmentForm({ prefillDate, onClose, onSuccess }: NewAppointmentFormProps) {
   const [patientName, setPatientName] = useState('');
-  const [date, setDate]               = useState(prefillDate ?? '');
+  const [date, setDate]               = useState(() => {
+    if (prefillDate) {
+      const [y, m, d] = prefillDate.split('-');
+      return `${d}/${m}/${y}`;
+    }
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    return `${day}/${month}/${year}`;
+  });
   const [time, setTime]               = useState('08:00');
   const [type, setType]               = useState<AppointmentType>('new');
   const [submitting, setSubmitting]   = useState(false);
@@ -134,7 +144,26 @@ function NewAppointmentForm({ prefillDate, onClose, onSuccess }: NewAppointmentF
     setSubmitting(true);
     setError(null);
 
-    const datetimeRaw = `${date}T${time}:00+02:00`;
+    const parts = date.split('/');
+    if (parts.length !== 3) {
+      setError('Please use date format DD/MM/YYYY');
+      setSubmitting(false);
+      return;
+    }
+    const [dayStr, monthStr, yearStr] = parts;
+    const day = parseInt(dayStr, 10);
+    const month = parseInt(monthStr, 10);
+    const year = parseInt(yearStr, 10);
+    if (!day || !month || !year) {
+      setError('Please use date format DD/MM/YYYY');
+      setSubmitting(false);
+      return;
+    }
+    const isoDate = `${year.toString().padStart(4, '0')}-${month
+      .toString()
+      .padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+
+    const datetimeRaw = `${isoDate}T${time}:00+02:00`;
     const res = await fetch('/api/appointments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -182,8 +211,13 @@ function NewAppointmentForm({ prefillDate, onClose, onSuccess }: NewAppointmentF
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700">Date</label>
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required
+            <label className="text-xs font-medium text-slate-700">Date (DD/MM/YYYY)</label>
+            <input
+              type="text"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              placeholder="DD/MM/YYYY"
+              required
                 className="block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-slate-900" />
             </div>
             <div className="space-y-1.5">

@@ -7,6 +7,7 @@ export type Appointment = {
   datetime: string; // ISO with timezone
   type: AppointmentType;
   created_at: string;
+  lead_id?: string | null;
 };
 
 export type ScheduleStatus =

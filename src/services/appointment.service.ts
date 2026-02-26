@@ -171,8 +171,9 @@ export async function scheduleAppointment(params: {
   patientName: string;
   requestedDatetimeRaw: string;
   type: AppointmentType;
+  leadId?: string | null;
 }): Promise<ScheduleResult> {
-  const { clinicId, patientName, requestedDatetimeRaw, type } = params;
+  const { clinicId, patientName, requestedDatetimeRaw, type, leadId } = params;
 
   const requestedDate = parseRequestedDatetime(requestedDatetimeRaw);
 
@@ -218,6 +219,7 @@ export async function scheduleAppointment(params: {
     patient_name: patientName,
     datetime:     requestedDate.toISOString(),
     type,
+    lead_id:      leadId ?? null,
   });
 
   if (error || !data) {

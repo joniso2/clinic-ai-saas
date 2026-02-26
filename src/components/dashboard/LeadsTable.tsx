@@ -26,7 +26,7 @@ const PRIORITY_STYLES: Record<Priority, string> = {
   Urgent: 'bg-red-100 text-red-700',
 };
 
-const STATUS_OPTIONS: LeadStatus[] = ['New', 'Contacted', 'Closed'];
+const STATUS_OPTIONS: LeadStatus[] = ['New', 'Contacted', 'Appointment scheduled', 'Closed'];
 
 type SortKey = 'revenue' | 'created' | 'name' | 'score';
 
@@ -47,6 +47,8 @@ export function LeadsTable({
   onStatusChange,
   onMarkContacted,
   onScheduleFollowUp,
+  onScheduleAppointment,
+  nextAppointmentsByLeadId,
 }: {
   leads: Lead[];
   onView: (lead: Lead) => void;
@@ -55,6 +57,8 @@ export function LeadsTable({
   onStatusChange: (leadId: string, status: LeadStatus) => void;
   onMarkContacted: (leadId: string) => void;
   onScheduleFollowUp: (leadId: string) => void;
+  onScheduleAppointment: (lead: Lead) => void;
+  nextAppointmentsByLeadId?: Record<string, string | undefined>;
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<Priority | ''>('');
@@ -63,6 +67,13 @@ export function LeadsTable({
   const [sortDesc, setSortDesc] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [rowMenuId, setRowMenuId] = useState<string | null>(null);
+  const [rowMenuCoords, setRowMenuCoords] = useState<
+    | {
+        top: number;
+        left: number;
+      }
+    | null
+  >(null);
 
   const filteredAndSorted = useMemo(() => {
     let list = [...leads];
@@ -224,7 +235,7 @@ export function LeadsTable({
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-lg shadow-slate-200/30">
+      <div className="relative rounded-2xl border border-slate-200/80 bg-white shadow-lg shadow-slate-200/30">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-100">
             <thead>
@@ -263,6 +274,9 @@ export function LeadsTable({
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Next follow-up
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Next appointment
                 </th>
                 <th className="w-12 px-4 py-3" />
               </tr>
@@ -354,6 +368,19 @@ export function LeadsTable({
                         ? formatDateDDMMYYYY(lead.next_follow_up_date)
                         : '—'}
                     </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600">
+                      {nextAppointmentsByLeadId?.[lead.id]
+                        ? new Intl.DateTimeFormat('he-IL', {
+                            timeZone: 'Asia/Jerusalem',
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false,
+                          }).format(new Date(nextAppointmentsByLeadId[lead.id]!))
+                        : '—'}
+                    </td>
                     <td className="relative px-4 py-3">
                       <div className="flex items-center gap-1">
                         <button
@@ -375,22 +402,51 @@ export function LeadsTable({
                         <div className="relative">
                           <button
                             type="button"
-                            onClick={() =>
-                              setRowMenuId(rowMenuId === lead.id ? null : lead.id)
-                            }
+                            onClick={(e) => {
+                              if (rowMenuId === lead.id) {
+                                setRowMenuId(null);
+                                setRowMenuCoords(null);
+                                return;
+                              }
+                              const rect =
+                                (e.currentTarget as HTMLElement).getBoundingClientRect();
+                              const estimatedMenuHeight = 220;
+                              const viewportHeight = window.innerHeight;
+                              let top = rect.bottom + window.scrollY;
+                              if (
+                                top + estimatedMenuHeight >
+                                window.scrollY + viewportHeight - 8
+                              ) {
+                                top = rect.top + window.scrollY - estimatedMenuHeight;
+                              }
+                              setRowMenuId(lead.id);
+                              setRowMenuCoords({
+                                top,
+                                left: rect.right + window.scrollX,
+                              });
+                            }}
                             className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
                             title="More"
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </button>
-                          {rowMenuId === lead.id && (
+                          {rowMenuId === lead.id && rowMenuCoords && (
                             <>
                               <div
                                 className="fixed inset-0 z-10"
-                                onClick={() => setRowMenuId(null)}
+                                onClick={() => {
+                                  setRowMenuId(null);
+                                  setRowMenuCoords(null);
+                                }}
                                 aria-hidden="true"
                               />
-                              <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+                              <div
+                                className="fixed z-20 w-48 rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+                                style={{
+                                  top: rowMenuCoords.top,
+                                  left: rowMenuCoords.left - 192,
+                                }}
+                              >
                                 <select
                                   value={lead.status ?? 'New'}
                                   onChange={(e) => {
@@ -429,6 +485,17 @@ export function LeadsTable({
                                 >
                                   <Calendar className="h-3.5 w-3.5" />
                                   Schedule follow-up
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    onScheduleAppointment(lead);
+                                    setRowMenuId(null);
+                                  }}
+                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                                >
+                                  <Calendar className="h-3.5 w-3.5" />
+                                  Schedule appointment
                                 </button>
                                 <button
                                   type="button"

@@ -71,7 +71,8 @@ export async function POST(req: NextRequest) {
       patient_name,
       datetime: datetimeRaw,
       type,
-    } = body as { patient_name?: string; datetime?: string; type?: AppointmentType };
+      lead_id,
+    } = body as { patient_name?: string; datetime?: string; type?: AppointmentType; lead_id?: string | null };
 
     if (!patient_name || !datetimeRaw) {
       return NextResponse.json(
@@ -88,6 +89,7 @@ export async function POST(req: NextRequest) {
       patientName:            patient_name,
       requestedDatetimeRaw:   datetimeRaw,
       type:                   appointmentType,
+      leadId:                 lead_id ?? null,
     });
 
     if (result.status === 'confirmed') {

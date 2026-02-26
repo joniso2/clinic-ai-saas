@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { Users, BarChart3, Settings as SettingsIcon, Calendar as CalendarIcon } from 'lucide-react';
 import type { Lead, LeadStatus } from '../../types/leads';
+import type { Appointment } from '@/types/appointments';
+import { ScheduleAppointmentModal } from './ScheduleAppointmentModal';
 import { LeadsKpiCards } from '../../components/dashboard/LeadsKpiCards';
 import { LeadsTable } from '../../components/dashboard/LeadsTable';
 import { LeadDetailDrawer } from '../../components/dashboard/LeadDetailDrawer';
@@ -36,6 +38,9 @@ export default function DashboardClient() {
   const [deleting, setDeleting] = useState(false);
   const [editLead, setEditLead] = useState<Lead | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
+
+  const [appointmentLead, setAppointmentLead] = useState<Lead | null>(null);
+  const [nextAppointmentsByLeadId, setNextAppointmentsByLeadId] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const load = async () => {
@@ -100,6 +105,11 @@ export default function DashboardClient() {
 
     load();
   }, [router]);
+
+  useEffect(() => {
+    refreshNextAppointments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leads.length]);
 
   const handleCreateLead = async () => {
     if (!clinicId) return;
@@ -179,6 +189,38 @@ export default function DashboardClient() {
     setDrawerLead((prev) =>
       prev?.id === leadId ? { ...prev, next_follow_up_date: dateStr } : prev
     );
+  };
+
+  const refreshNextAppointments = async () => {
+    if (!leads.length) return;
+    const now = new Date();
+    const monthsToFetch = [0, 1];
+    const all: Appointment[] = [];
+    for (const offset of monthsToFetch) {
+      const d = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+      const month = d.getMonth() + 1;
+      const year = d.getFullYear();
+      const res = await fetch(`/api/appointments?month=${month}&year=${year}`, {
+        credentials: 'include',
+      });
+      if (!res.ok) continue;
+      const json = (await res.json().catch(() => ({}))) as {
+        appointments?: Appointment[];
+      };
+      if (json.appointments) all.push(...json.appointments);
+    }
+    const map: Record<string, string> = {};
+    const nowMs = now.getTime();
+    for (const apt of all) {
+      if (!apt.lead_id) continue;
+      const t = new Date(apt.datetime).getTime();
+      if (t < nowMs) continue;
+      const existing = map[apt.lead_id];
+      if (!existing || new Date(apt.datetime) < new Date(existing)) {
+        map[apt.lead_id] = apt.datetime;
+      }
+    }
+    setNextAppointmentsByLeadId(map);
   };
 
   const handleEditSave = async (id: string, data: Partial<Lead>) => {
@@ -430,6 +472,7 @@ export default function DashboardClient() {
                     >
                       <option value="New">New</option>
                       <option value="Contacted">Contacted</option>
+                      <option value="Appointment scheduled">Appointment scheduled</option>
                       <option value="Closed">Closed</option>
                     </select>
                   </div>
@@ -484,6 +527,8 @@ export default function DashboardClient() {
                 onStatusChange={handleUpdateLeadStatus}
                 onMarkContacted={handleMarkContacted}
                 onScheduleFollowUp={handleScheduleFollowUp}
+                onScheduleAppointment={(lead) => setAppointmentLead(lead)}
+                nextAppointmentsByLeadId={nextAppointmentsByLeadId}
               />
             )}
 
@@ -521,6 +566,35 @@ export default function DashboardClient() {
               onSave={handleEditSave}
               loading={savingEdit}
             />
+
+            {appointmentLead && (
+              <ScheduleAppointmentModal
+                lead={appointmentLead}
+                onClose={() => setAppointmentLead(null)}
+                onScheduled={(appointment) => {
+                  setLeads((prev) =>
+                    prev.map((l) =>
+                      l.id === appointmentLead.id
+                        ? { ...l, status: 'Appointment scheduled' }
+                        : l,
+                    ),
+                  );
+                  setDrawerLead((prev) =>
+                    prev?.id === appointmentLead.id
+                      ? { ...prev, status: 'Appointment scheduled' }
+                      : prev,
+                  );
+                  setNextAppointmentsByLeadId((prev) => ({
+                    ...prev,
+                    [appointment.lead_id ?? appointmentLead.id]: appointment.datetime,
+                  }));
+                  void handleUpdateLeadStatus(
+                    appointmentLead.id,
+                    'Appointment scheduled',
+                  );
+                }}
+              />
+            )}
           </>
         )}
 
