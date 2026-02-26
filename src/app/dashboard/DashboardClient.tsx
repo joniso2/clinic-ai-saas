@@ -4,13 +4,13 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { Users, BarChart3, Settings as SettingsIcon } from 'lucide-react';
-import type { Lead, LeadStatus } from '@/types/leads';
-import { LeadsKpiCards } from '@/components/dashboard/LeadsKpiCards';
-import { LeadsTable } from '@/components/dashboard/LeadsTable';
-import { LeadDetailDrawer } from '@/components/dashboard/LeadDetailDrawer';
-import { ConfirmDeleteModal } from '@/components/dashboard/ConfirmDeleteModal';
-import { EditLeadModal } from '@/components/dashboard/EditLeadModal';
-import { LeadsEmptyState } from '@/components/dashboard/LeadsEmptyState';
+import type { Lead, LeadStatus } from '../../types/leads';
+import { LeadsKpiCards } from '../../components/dashboard/LeadsKpiCards';
+import { LeadsTable } from '../../components/dashboard/LeadsTable';
+import { LeadDetailDrawer } from '../../components/dashboard/LeadDetailDrawer';
+import { ConfirmDeleteModal } from '../../components/dashboard/ConfirmDeleteModal';
+import { EditLeadModal } from '../../components/dashboard/EditLeadModal';
+import { LeadsEmptyState } from '../../components/dashboard/LeadsEmptyState';
 
 export default function DashboardClient() {
   const router = useRouter();
