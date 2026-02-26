@@ -17,6 +17,7 @@ export type CreateAppointmentPayload = {
   patient_name: string;
   datetime: string; // ISO with timezone, e.g. "2026-02-27T10:00:00+02:00"
   type: AppointmentType;
+  lead_id?: string | null;
 };
 
 /** Fetch all appointments for a given month (1-indexed month). */
@@ -104,6 +105,20 @@ export async function deleteAppointment(
     .from('appointments')
     .delete()
     .eq('id', id)
+    .eq('clinic_id', clinicId);
+  return { error: error ?? null };
+}
+
+/** Delete all appointments linked to a lead (used when updating/clearing lead follow-up). */
+export async function deleteAppointmentsByLeadId(
+  leadId: string,
+  clinicId: string,
+): Promise<{ error: unknown }> {
+  const supabase = getSupabaseAdminClient();
+  const { error } = await supabase
+    .from('appointments')
+    .delete()
+    .eq('lead_id', leadId)
     .eq('clinic_id', clinicId);
   return { error: error ?? null };
 }
