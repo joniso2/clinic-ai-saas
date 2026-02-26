@@ -47,6 +47,19 @@ function buildCalendarGrid(year: number, month: number): (number | null)[][] {
   return grid;
 }
 
+// Density color: 0 = none, 1-2 = light, 3-4 = medium, 5+ = heavy
+function getDensityStyle(count: number): string {
+  if (count === 0) return '';
+  if (count <= 2) return 'ring-1 ring-blue-200 bg-blue-50/30';
+  if (count <= 4) return 'ring-1 ring-blue-300 bg-blue-50/50';
+  return 'ring-2 ring-blue-400 bg-blue-50/70';
+}
+
+const TYPE_PILL: Record<string, string> = {
+  follow_up: 'bg-amber-100 text-amber-800 border border-amber-200',
+  new: 'bg-blue-100 text-blue-800 border border-blue-200',
+};
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 type AppointmentModalProps = {
@@ -72,7 +85,7 @@ function AppointmentDayModal({
             <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Appointments</p>
             <h2 className="mt-0.5 text-base font-semibold text-slate-900">{dateLabel}</h2>
           </div>
-          <button onClick={onClose} className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100">
+          <button onClick={onClose} className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 transition-colors">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -83,20 +96,18 @@ function AppointmentDayModal({
           )}
           {appointments.map((apt) => (
             <div key={apt.id}
-              className="flex items-start justify-between rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+              className="flex items-start justify-between rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 transition-colors hover:bg-slate-100/70">
               <div>
-                <p className="text-sm font-medium text-slate-900">{apt.patient_name}</p>
-                <p className="mt-0.5 text-xs text-slate-500">{formatTime(apt.datetime)}</p>
-                <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                  apt.type === 'follow_up'
-                    ? 'bg-amber-100 text-amber-700'
-                    : 'bg-blue-100 text-blue-700'
+                <p className="text-sm font-semibold text-slate-900">{apt.patient_name}</p>
+                <p className="mt-0.5 text-xs font-medium text-slate-500">{formatTime(apt.datetime)}</p>
+                <span className={`mt-1.5 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
+                  TYPE_PILL[apt.type] ?? TYPE_PILL['new']
                 }`}>
-                  {apt.type === 'follow_up' ? 'Follow-up' : 'New'}
+                  {apt.type === 'follow_up' ? 'Follow-up' : 'New Patient'}
                 </span>
               </div>
               <button onClick={() => onDelete(apt.id)}
-                className="ml-3 mt-0.5 rounded-full p-1 text-slate-400 hover:bg-red-50 hover:text-red-500">
+                className="ml-3 mt-0.5 rounded-full p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors">
                 <X className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -105,7 +116,7 @@ function AppointmentDayModal({
 
         <div className="border-t border-slate-100 px-5 py-3">
           <button onClick={() => { onClose(); onAdd(day); }}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors">
             <Plus className="h-4 w-4" /> Add Appointment
           </button>
         </div>
@@ -192,7 +203,7 @@ function NewAppointmentForm({ prefillDate, onClose, onSuccess }: NewAppointmentF
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <h2 className="text-base font-semibold text-slate-900">New Appointment</h2>
           <button type="button" onClick={onClose}
-            className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100">
+            className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 transition-colors">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -207,7 +218,7 @@ function NewAppointmentForm({ prefillDate, onClose, onSuccess }: NewAppointmentF
             <label className="text-xs font-medium text-slate-700">Patient name</label>
             <input type="text" value={patientName} onChange={(e) => setPatientName(e.target.value)}
               required placeholder="Full name"
-              className="block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-slate-900" />
+              className="block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
@@ -218,19 +229,19 @@ function NewAppointmentForm({ prefillDate, onClose, onSuccess }: NewAppointmentF
               onChange={(e) => setDate(e.target.value)}
               placeholder="DD/MM/YYYY"
               required
-                className="block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                className="block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition" />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-slate-700">Time (08:00–16:00)</label>
               <input type="time" value={time} min="08:00" max="15:30"
                 onChange={(e) => setTime(e.target.value)} required
-                className="block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-slate-900" />
+                className="block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition" />
             </div>
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-700">Type</label>
             <select value={type} onChange={(e) => setType(e.target.value as AppointmentType)}
-              className="block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-slate-900">
+              className="block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition">
               <option value="new">New appointment</option>
               <option value="follow_up">Follow-up</option>
             </select>
@@ -239,11 +250,11 @@ function NewAppointmentForm({ prefillDate, onClose, onSuccess }: NewAppointmentF
 
         <div className="flex justify-end gap-3 border-t border-slate-100 px-5 py-3">
           <button type="button" onClick={onClose} disabled={submitting}
-            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 transition-colors">
             Cancel
           </button>
           <button type="submit" disabled={submitting}
-            className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
+            className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-colors">
             {submitting ? 'Scheduling…' : 'Schedule'}
           </button>
         </div>
@@ -318,41 +329,69 @@ export function CalendarView() {
 
   const grid = buildCalendarGrid(year, month);
 
+  // Total appointments this month for the legend
+  const totalThisMonth = appointments.length;
+  const followUpCount = appointments.filter((a) => a.type === 'follow_up').length;
+  const newCount = appointments.filter((a) => a.type === 'new').length;
+
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-5 py-4">
         <div className="flex items-center gap-3">
-          <Calendar className="h-5 w-5 text-slate-500" />
-          <h2 className="text-base font-semibold text-slate-900">
-            {MONTH_NAMES[month - 1]} {year}
-          </h2>
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white">
+            <Calendar className="h-4 w-4" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-slate-900">
+              {MONTH_NAMES[month - 1]} {year}
+            </h2>
+            {!loading && (
+              <p className="text-xs text-slate-500">
+                {totalThisMonth} appointment{totalThisMonth !== 1 ? 's' : ''} this month
+              </p>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={prevMonth}
-            className="rounded-xl border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50">
+            className="rounded-xl border border-slate-200 bg-white p-2 text-slate-500 shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-colors">
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             onClick={() => { setYear(today.getFullYear()); setMonth(today.getMonth() + 1); }}
-            className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-colors">
             Today
           </button>
           <button onClick={nextMonth}
-            className="rounded-xl border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50">
+            className="rounded-xl border border-slate-200 bg-white p-2 text-slate-500 shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-colors">
             <ChevronRight className="h-4 w-4" />
           </button>
           <button onClick={() => { setPrefillDate(undefined); setShowNewForm(true); }}
-            className="ml-2 flex items-center gap-1.5 rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800">
+            className="ml-1 flex items-center gap-1.5 rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm">
             <Plus className="h-3.5 w-3.5" /> New
           </button>
         </div>
       </div>
 
+      {/* Legend */}
+      {!loading && totalThisMonth > 0 && (
+        <div className="flex items-center gap-4 border-b border-slate-100 bg-white px-5 py-2.5">
+          <div className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-blue-400" />
+            <span className="text-xs text-slate-600">{newCount} New</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+            <span className="text-xs text-slate-600">{followUpCount} Follow-up</span>
+          </div>
+        </div>
+      )}
+
       {/* Day header row */}
-      <div className="grid grid-cols-7 border-b border-slate-100">
+      <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50/40">
         {DAY_NAMES.map((d) => (
-          <div key={d} className="py-2 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          <div key={d} className="py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">
             {d}
           </div>
         ))}
@@ -378,23 +417,24 @@ export function CalendarView() {
               if (!day) {
                 return (
                   <div key={`empty-${wi}-${di}`}
-                    className="min-h-[90px] border-b border-r border-slate-100 bg-slate-50/50" />
+                    className="min-h-[96px] border-b border-r border-slate-100 bg-slate-50/30" />
                 );
               }
               const dayStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
               const isToday = dayStr === todayStr;
               const dayApts = appointmentsForDay(day);
+              const densityStyle = getDensityStyle(dayApts.length);
 
               return (
                 <button
                   key={dayStr}
                   onClick={() => setSelectedDay(day)}
-                  className={`group min-h-[90px] cursor-pointer border-b border-r border-slate-100 p-1.5 text-left transition hover:bg-slate-50 ${
+                  className={`group relative min-h-[96px] cursor-pointer border-b border-r border-slate-100 p-2 text-left transition-all hover:bg-slate-50 ${
                     di === 6 ? 'border-r-0' : ''
-                  }`}
+                  } ${densityStyle}`}
                 >
                   {/* Day number */}
-                  <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${
+                  <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold transition-colors ${
                     isToday
                       ? 'bg-slate-900 text-white'
                       : 'text-slate-700 group-hover:bg-slate-200'
@@ -402,21 +442,28 @@ export function CalendarView() {
                     {day}
                   </span>
 
+                  {/* Density dot indicator */}
+                  {dayApts.length > 0 && (
+                    <span className="absolute top-2 right-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-slate-900 px-1 text-[9px] font-bold text-white">
+                      {dayApts.length}
+                    </span>
+                  )}
+
                   {/* Appointment pills */}
                   <div className="mt-1 space-y-0.5">
-                    {dayApts.slice(0, 3).map((apt) => (
+                    {dayApts.slice(0, 2).map((apt) => (
                       <div key={apt.id}
-                        className={`truncate rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                        className={`truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
                           apt.type === 'follow_up'
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-blue-100 text-blue-700'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-blue-100 text-blue-800'
                         }`}>
                         {formatTime(apt.datetime)} {apt.patient_name}
                       </div>
                     ))}
-                    {dayApts.length > 3 && (
-                      <div className="px-1.5 text-[10px] text-slate-400">
-                        +{dayApts.length - 3} more
+                    {dayApts.length > 2 && (
+                      <div className="px-1 text-[10px] font-medium text-slate-500">
+                        +{dayApts.length - 2} more
                       </div>
                     )}
                   </div>

@@ -20,10 +20,18 @@ import {
 } from '@/types/leads';
 
 const PRIORITY_STYLES: Record<Priority, string> = {
-  Low: 'bg-slate-100 text-slate-600',
-  Medium: 'bg-amber-100 text-amber-700',
-  High: 'bg-orange-100 text-orange-700',
-  Urgent: 'bg-red-100 text-red-700',
+  Low: 'bg-slate-100 text-slate-600 border border-slate-200',
+  Medium: 'bg-amber-50 text-amber-700 border border-amber-200',
+  High: 'bg-orange-50 text-orange-700 border border-orange-200',
+  Urgent: 'bg-red-50 text-red-700 border border-red-200 font-semibold',
+};
+
+const STATUS_BADGE_STYLES: Record<string, string> = {
+  New: 'bg-indigo-50 text-indigo-700 border border-indigo-200',
+  Contacted: 'bg-amber-50 text-amber-700 border border-amber-200',
+  'Appointment scheduled': 'bg-blue-50 text-blue-700 border border-blue-200',
+  Closed: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+  Converted: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
 };
 
 const STATUS_OPTIONS: LeadStatus[] = ['New', 'Contacted', 'Appointment scheduled', 'Closed'];
@@ -235,11 +243,11 @@ export function LeadsTable({
       </div>
 
       {/* Table */}
-      <div className="relative rounded-2xl border border-slate-200/80 bg-white shadow-lg shadow-slate-200/30">
+      <div className="relative rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-100">
             <thead>
-              <tr className="bg-slate-50/80">
+              <tr className="bg-slate-50 border-b border-slate-200">
                 <th className="w-10 px-4 py-3 text-left">
                   <input
                     type="checkbox"
@@ -288,7 +296,11 @@ export function LeadsTable({
                 return (
                   <tr
                     key={lead.id}
-                    className="group transition hover:bg-slate-50/80"
+                    className={`group transition-colors ${
+                      urgent
+                        ? 'bg-red-50/40 hover:bg-red-50/70'
+                        : 'hover:bg-slate-50'
+                    }`}
                   >
                     <td className="px-4 py-3">
                       <input
@@ -299,22 +311,22 @@ export function LeadsTable({
                       />
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2.5">
                         {urgent && (
                           <span
-                            className="h-2 w-2 shrink-0 rounded-full bg-amber-500"
-                            title="Requires attention"
+                            className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-red-500"
+                            title="Requires urgent attention"
                           />
                         )}
                         <div>
                           <button
                             type="button"
                             onClick={() => onView(lead)}
-                            className="font-medium text-slate-900 hover:text-slate-700 hover:underline"
+                            className="font-semibold text-slate-900 hover:text-indigo-600 hover:underline transition-colors"
                           >
                             {lead.full_name || 'Unnamed lead'}
                           </button>
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-slate-400">
                             {lead.email || '—'}
                           </p>
                         </div>
@@ -343,14 +355,9 @@ export function LeadsTable({
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={[
-                          'inline-flex rounded-lg px-2 py-0.5 text-xs font-medium',
-                          lead.status === 'Closed' || lead.status === 'Converted'
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : lead.status === 'Contacted'
-                              ? 'bg-amber-100 text-amber-700'
-                              : 'bg-indigo-100 text-indigo-700',
-                        ].join(' ')}
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          STATUS_BADGE_STYLES[lead.status ?? 'New'] ?? STATUS_BADGE_STYLES['New']
+                        }`}
                       >
                         {lead.status ?? 'New'}
                       </span>

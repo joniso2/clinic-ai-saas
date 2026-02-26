@@ -13,6 +13,8 @@ import { LeadDetailDrawer } from '../../components/dashboard/LeadDetailDrawer';
 import { ConfirmDeleteModal } from '../../components/dashboard/ConfirmDeleteModal';
 import { EditLeadModal } from '../../components/dashboard/EditLeadModal';
 import { LeadsEmptyState } from '../../components/dashboard/LeadsEmptyState';
+import { AnalyticsTab } from '../../components/dashboard/AnalyticsTab';
+import { SettingsTab } from '../../components/dashboard/SettingsTab';
 
 export default function DashboardClient() {
   const router = useRouter();
@@ -266,39 +268,38 @@ export default function DashboardClient() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
-      <header className="border-b border-slate-200 bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-md shadow-sm">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900 text-white">
-              <span className="text-xl font-semibold">λ</span>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-slate-800 to-slate-950 text-white shadow-md shadow-slate-900/20">
+              <span className="text-lg font-bold">λ</span>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-400">
                 Clinic AI
               </p>
-              <p className="text-sm text-slate-700">Clinic CRM Dashboard</p>
+              <p className="text-sm font-semibold text-slate-900 leading-tight">
+                {clinicName ?? 'Practice Management'}
+              </p>
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-1 text-right">
-            <p className="text-[11px] text-slate-500">
-              {userEmail
-                ? `Logged in as ${userEmail}`
-                : 'Logged in as unknown user'}
-              {' · '}
-              {clinicName
-                ? `Managing: ${clinicName}`
-                : clinicId
-                  ? 'Managing: Loading clinic name...'
-                  : 'Managing: Clinic not set'}
-            </p>
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex flex-col items-end text-right">
+              <p className="text-xs font-medium text-slate-700">
+                {userEmail ?? 'Unknown user'}
+              </p>
+              <p className="text-[11px] text-slate-400">
+                {clinicId ? 'Clinic admin' : 'No clinic linked'}
+              </p>
+            </div>
             <button
               onClick={async () => {
                 await supabase.auth.signOut();
                 router.replace('/login');
               }}
-              className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-900/5"
+              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-900/10 transition-colors"
             >
               Sign out
             </button>
@@ -306,14 +307,14 @@ export default function DashboardClient() {
         </div>
       </header>
 
-      <main className="min-h-[80vh] bg-gradient-to-b from-slate-50/50 to-white">
+      <main className="min-h-[80vh]">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
               Dashboard
             </p>
-            <h1 className="mt-1 text-2xl font-semibold text-slate-900 sm:text-3xl">
+            <h1 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
               {activeTab === 'leads'
                 ? 'Leads'
                 : activeTab === 'analytics'
@@ -332,51 +333,30 @@ export default function DashboardClient() {
         </div>
 
         <div className="mb-6 border-b border-slate-200">
-          <nav className="-mb-px flex space-x-6 text-sm">
-            <button
-              type="button"
-              onClick={() => setActiveTab('leads')}
-              className={`inline-flex items-center gap-2 border-b-2 px-0.5 pb-3 text-xs font-medium transition ${
-                activeTab === 'leads'
-                  ? 'border-slate-900 text-slate-900'
-                  : 'border-transparent text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              <Users className="h-4 w-4" />
-              <span>Leads</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push('/dashboard/calendar')}
-              className="inline-flex items-center gap-2 border-b-2 border-transparent px-0.5 pb-3 text-xs font-medium text-slate-500 transition hover:text-slate-900"
-            >
-              <CalendarIcon className="h-4 w-4" />
-              <span>Calendar</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('analytics')}
-              className={`inline-flex items-center gap-2 border-b-2 px-0.5 pb-3 text-xs font-medium transition ${
-                activeTab === 'analytics'
-                  ? 'border-slate-900 text-slate-900'
-                  : 'border-transparent text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              <BarChart3 className="h-4 w-4" />
-              <span>Analytics</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('settings')}
-              className={`inline-flex items-center gap-2 border-b-2 px-0.5 pb-3 text-xs font-medium transition ${
-                activeTab === 'settings'
-                  ? 'border-slate-900 text-slate-900'
-                  : 'border-transparent text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              <SettingsIcon className="h-4 w-4" />
-              <span>Settings</span>
-            </button>
+          <nav className="-mb-px flex space-x-1 text-sm">
+            {([
+              { id: 'leads', label: 'Leads', icon: Users, action: () => setActiveTab('leads') },
+              { id: 'calendar', label: 'Calendar', icon: CalendarIcon, action: () => router.push('/dashboard/calendar') },
+              { id: 'analytics', label: 'Analytics', icon: BarChart3, action: () => setActiveTab('analytics') },
+              { id: 'settings', label: 'Settings', icon: SettingsIcon, action: () => setActiveTab('settings') },
+            ] as const).map(({ id, label, icon: Icon, action }) => {
+              const isActive = activeTab === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={action}
+                  className={`inline-flex items-center gap-2 rounded-t-lg border-b-2 px-4 pb-3 pt-1 text-xs font-semibold transition-colors ${
+                    isActive
+                      ? 'border-slate-900 text-slate-900'
+                      : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  <span>{label}</span>
+                </button>
+              );
+            })}
           </nav>
         </div>
 
@@ -599,64 +579,14 @@ export default function DashboardClient() {
         )}
 
         {activeTab === 'analytics' && (
-          <section className="space-y-4">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <h2 className="text-sm font-semibold text-slate-900">
-                Pipeline summary
-              </h2>
-              <p className="mt-1 text-xs text-slate-500">
-                Analytics for total leads and conversion rate will appear here.
-              </p>
-              <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <p className="text-xs text-slate-500">Total leads</p>
-                  <p className="mt-1 text-xl font-semibold text-slate-900">
-                    {leads.length}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <p className="text-xs text-slate-500">Conversion rate</p>
-                  <p className="mt-1 text-xl font-semibold text-slate-900">—</p>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <p className="text-xs text-slate-500">Contacted leads</p>
-                  <p className="mt-1 text-xl font-semibold text-slate-900">
-                    {leads.filter((l) => l.status === 'Contacted').length}
-                  </p>
-                </div>
-              </div>
-            </div>
+          <section>
+            <AnalyticsTab leads={leads} />
           </section>
         )}
 
         {activeTab === 'settings' && (
-          <section className="space-y-4">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <h2 className="text-sm font-semibold text-slate-900">
-                Clinic profile
-              </h2>
-              <p className="mt-1 text-xs text-slate-500">
-                Basic information about the clinic linked to this account.
-              </p>
-              <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div>
-                  <dt className="text-xs font-medium text-slate-500">
-                    Clinic name
-                  </dt>
-                  <dd className="mt-1 text-sm text-slate-900">
-                    {clinicName ?? 'Not set'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium text-slate-500">
-                    Account email
-                  </dt>
-                  <dd className="mt-1 text-sm text-slate-900">
-                    {userEmail ?? 'Not available'}
-                  </dd>
-                </div>
-              </dl>
-            </div>
+          <section>
+            <SettingsTab clinicName={clinicName} userEmail={userEmail} />
           </section>
         )}
         </div>
