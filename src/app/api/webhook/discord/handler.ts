@@ -5,6 +5,7 @@ export type DiscordWebhookBody = {
   author_name?: string;
   channel_id?: string;
   guild_id?: string;
+  conversation_history?: Array<{ role: 'user' | 'assistant'; content: string }>;
 };
 
 /**
@@ -22,11 +23,17 @@ export async function handleDiscordWebhook(
 
   const authorName =
     typeof body.author_name === 'string' ? body.author_name : undefined;
+  const conversationHistory = Array.isArray(body.conversation_history)
+    ? body.conversation_history.filter(
+        (m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string',
+      )
+    : [];
 
   try {
     const { reply } = await processDiscordMessage({
       content,
       authorName,
+      conversationHistory,
     });
     return Response.json({ reply });
   } catch (err) {

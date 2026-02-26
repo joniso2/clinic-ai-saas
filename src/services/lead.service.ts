@@ -13,13 +13,15 @@ export async function processDiscordMessage(params: {
   content: string;
   authorName?: string;
   channelName?: string;
+  conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
 }): Promise<ProcessDiscordMessageResult> {
-  const { content, authorName, channelName } = params;
+  const { content, authorName, channelName, conversationHistory } = params;
 
   const analysis = await runStructuredPrompt({
     text: content,
     authorName,
     channelName,
+    conversationHistory: conversationHistory ?? [],
   });
 
   const clinicId = process.env.DISCORD_DEFAULT_CLINIC_ID;

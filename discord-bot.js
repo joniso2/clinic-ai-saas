@@ -46,11 +46,33 @@ client.on(Events.MessageCreate, async (message) => {
       return;
     }
 
+    const userId = message.author.id;
+    const botId = client.user?.id;
+    const conversationHistory = [];
+    try {
+      const fetched = await message.channel.messages.fetch({ limit: 25 });
+      const fromThisUserOrBot = fetched
+        .filter((m) => m.author.id === userId || m.author.id === botId)
+        .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+      const list = Array.from(fromThisUserOrBot.values());
+      const currentIndex = list.findIndex((m) => m.id === message.id);
+      const forHistory = currentIndex >= 0 ? list.slice(0, currentIndex) : list.slice(0, -1);
+      for (const m of forHistory) {
+        conversationHistory.push({
+          role: m.author.bot ? 'assistant' : 'user',
+          content: (m.content || '').trim(),
+        });
+      }
+    } catch (e) {
+      console.warn('Discord bot: could not fetch history', e.message);
+    }
+
     const payload = {
       content,
       author_name: message.author.username,
       channel_id: message.channel.id,
       guild_id: message.guild ? message.guild.id : null,
+      conversation_history: conversationHistory,
     };
 
     const webhookUrl = `${process.env.APP_URL}/api/webhook/discord`;
