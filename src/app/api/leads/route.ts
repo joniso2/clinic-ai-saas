@@ -1,46 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import * as leadRepository from '@/repositories/lead.repository';
+import { createClient } from '@/lib/supabase-server';
 
-// Create a Supabase client with the service role key on the server.
-function getSupabaseAdminClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('Supabase server environment variables are not configured.');
-  }
-
-  return createClient(supabaseUrl, serviceRoleKey, {
-    auth: {
-      persistSession: false,
-    },
-  });
-}
-
-// Verify that the incoming request is authorized to create leads.
-function isAuthorized(req: NextRequest): boolean {
+function isAgentAuthorized(req: NextRequest): boolean {
   const configuredSecret = process.env.AGENT_API_SECRET;
   if (!configuredSecret) {
     console.error('AGENT_API_SECRET is not set on the server.');
     return false;
   }
-
   const headerSecret = req.headers.get('x-agent-secret');
   const bearer = req.headers.get('authorization');
   const bearerToken =
     bearer && bearer.toLowerCase().startsWith('bearer ')
       ? bearer.slice('bearer '.length)
       : null;
-
   const provided = headerSecret || bearerToken;
   return !!provided && provided === configuredSecret;
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAuthorized(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   let body: unknown;
   try {
     body = await req.json();
@@ -51,52 +29,75 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { full_name, phone, email, interest, clinic_id } = body as {
+  const parsed = body as {
     full_name?: string;
     phone?: string;
     email?: string;
     interest?: string;
     clinic_id?: string;
+    status?: string;
   };
 
-  if (!full_name || !clinic_id) {
+  let clinicId: string | null = null;
+
+  if (isAgentAuthorized(req)) {
+    clinicId = parsed.clinic_id ?? null;
+  } else {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      clinicId = (user.app_metadata as { clinic_id?: string } | null)?.clinic_id ?? null;
+    }
+  }
+
+  if (!parsed.full_name || !clinicId) {
     return NextResponse.json(
-      { error: 'full_name and clinic_id are required' },
-      { status: 400 },
+      isAgentAuthorized(req)
+        ? { error: 'full_name and clinic_id are required' }
+        : { error: 'Unauthorized or clinic not set' },
+      { status: isAgentAuthorized(req) ? 400 : 401 },
     );
   }
 
-  try {
-    const supabase = getSupabaseAdminClient();
+  const { data, error } = await leadRepository.createLead({
+    clinic_id: clinicId,
+    full_name: parsed.full_name,
+    phone: parsed.phone ?? null,
+    email: parsed.email ?? null,
+    interest: parsed.interest ?? null,
+    status: parsed.status ?? 'New',
+  });
 
-    const { data, error } = await supabase
-      .from('leads')
-      .insert({
-        clinic_id,
-        full_name,
-        phone: phone || null,
-        email: email || null,
-        interest: interest || null,
-        status: 'New',
-      })
-      .select('id, clinic_id, full_name, phone, email, interest, status, created_at')
-      .single();
-
-    if (error) {
-      console.error('Error inserting lead:', error);
-      return NextResponse.json(
-        { error: 'Failed to create lead' },
-        { status: 500 },
-      );
-    }
-
-    return NextResponse.json({ lead: data }, { status: 201 });
-  } catch (err) {
-    console.error('Unexpected error creating lead:', err);
+  if (error) {
+    console.error('Error inserting lead:', error);
     return NextResponse.json(
-      { error: 'Unexpected server error' },
+      { error: 'Failed to create lead' },
       { status: 500 },
     );
   }
+
+  return NextResponse.json({ lead: data }, { status: 201 });
 }
 
+export async function GET(req: NextRequest) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const clinicId = (user.app_metadata as { clinic_id?: string } | null)?.clinic_id;
+  if (!clinicId) {
+    return NextResponse.json({ error: 'Clinic not set for user' }, { status: 403 });
+  }
+
+  const { data, error } = await leadRepository.getLeadsByClinicId(clinicId);
+  if (error) {
+    console.error('Error fetching leads:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch leads' },
+      { status: 500 },
+    );
+  }
+  return NextResponse.json({ leads: data ?? [] });
+}

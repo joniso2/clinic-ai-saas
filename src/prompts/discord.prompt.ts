@@ -1,10 +1,10 @@
-import { clinicPrices } from './prices';
+import { clinicPrices } from '@/discord/prices';
 
 /**
- * פרומפט המערכת של הבוט בדיסקורד.
- * ערוך כאן את ההנחיות והטון – השינויים ישפיעו על כל התשובות.
+ * Discord bot system prompt.
+ * Edit here to change Discord bot behavior; prices come from @/discord/prices.
  */
-function buildSystemPrompt(): string {
+export function buildDiscordSystemPrompt(): string {
   const pricesText = Object.entries(clinicPrices)
     .map(([service, price]) => `- ${service}: ${price}`)
     .join('\n');
@@ -21,4 +21,4 @@ function buildSystemPrompt(): string {
   );
 }
 
-export const discordSystemPrompt = buildSystemPrompt();
+export const discordSystemPrompt = buildDiscordSystemPrompt();

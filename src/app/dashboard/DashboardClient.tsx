@@ -80,16 +80,13 @@ export default function DashboardClient() {
       }
 
       if (clinicIdFromMetadata) {
-        const { data, error } = await supabase
-          .from('leads')
-          .select('id, full_name, email, phone, interest, status, created_at')
-          .eq('clinic_id', clinicIdFromMetadata)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          setError(error.message);
+        const res = await fetch('/api/leads', { credentials: 'include' });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          setError((err as { error?: string }).error ?? 'Failed to load leads');
         } else {
-          setLeads(data ?? []);
+          const json = (await res.json()) as { leads?: Lead[] };
+          setLeads(json.leads ?? []);
         }
       }
 
@@ -104,23 +101,25 @@ export default function DashboardClient() {
     setSubmittingLead(true);
     setError(null);
 
-    const { error: insertError, data } = await supabase
-      .from('leads')
-      .insert({
-        clinic_id: clinicId,
-        full_name: newLeadName || null,
+    const res = await fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        full_name: newLeadName || '',
         email: newLeadEmail || null,
         phone: newLeadPhone || null,
         interest: newLeadInterest || null,
         status: newLeadStatus,
-      })
-      .select('id, full_name, email, phone, interest, status, created_at')
-      .single();
+      }),
+    });
 
-    if (insertError) {
-      setError(insertError.message);
-    } else if (data) {
-      setLeads((current) => [data as Lead, ...current]);
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setError((json as { error?: string }).error ?? 'Failed to create lead');
+    } else if ((json as { lead?: Lead }).lead) {
+      const data = (json as { lead: Lead }).lead;
+      setLeads((current) => [data, ...current]);
       setShowNewLeadForm(false);
       setNewLeadName('');
       setNewLeadPhone('');
@@ -133,12 +132,15 @@ export default function DashboardClient() {
   };
 
   const handleUpdateLeadStatus = async (leadId: string, status: LeadStatus) => {
-    const { error } = await supabase
-      .from('leads')
-      .update({ status })
-      .eq('id', leadId);
-    if (error) {
-      setError(error.message);
+    const res = await fetch(`/api/leads/${leadId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ status }),
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setError((json as { error?: string }).error ?? 'Failed to update');
       return;
     }
     setLeads((prev) =>
@@ -155,12 +157,15 @@ export default function DashboardClient() {
     const next = new Date();
     next.setDate(next.getDate() + 7);
     const dateStr = next.toISOString().slice(0, 10);
-    const { error } = await supabase
-      .from('leads')
-      .update({ next_follow_up_date: dateStr })
-      .eq('id', leadId);
-    if (error) {
-      setError(error.message);
+    const res = await fetch(`/api/leads/${leadId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ next_follow_up_date: dateStr }),
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setError((json as { error?: string }).error ?? 'Failed to update');
       return;
     }
     setLeads((prev) =>
@@ -174,9 +179,15 @@ export default function DashboardClient() {
   const handleEditSave = async (id: string, data: Partial<Lead>) => {
     setSavingEdit(true);
     setError(null);
-    const { error } = await supabase.from('leads').update(data).eq('id', id);
-    if (error) {
-      setError(error.message);
+    const res = await fetch(`/api/leads/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setError((json as { error?: string }).error ?? 'Failed to update');
       setSavingEdit(false);
       return;
     }
@@ -191,9 +202,13 @@ export default function DashboardClient() {
   const handleDeleteLead = async () => {
     if (!deleteLead) return;
     setDeleting(true);
-    const { error } = await supabase.from('leads').delete().eq('id', deleteLead.id);
-    if (error) {
-      setError(error.message);
+    const res = await fetch(`/api/leads/${deleteLead.id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setError((json as { error?: string }).error ?? 'Failed to delete');
       setDeleting(false);
       return;
     }
