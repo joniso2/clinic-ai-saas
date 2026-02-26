@@ -32,7 +32,7 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-10 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950">
+    <div className="flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="rounded-2xl shadow-xl bg-white border border-slate-200/80 p-8 sm:p-10">
           <div className="text-center sm:text-left mb-8">
