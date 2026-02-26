@@ -1,8 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   reactCompiler: true,
+  experimental: {
+    staticGenerationMaxConcurrency: 1,
+    webpackMemoryOptimizations: true,
+  },
 };
 
 export default nextConfig;
