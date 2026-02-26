@@ -5,14 +5,23 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export type LeadExtractionResult = {
+export type DiscordAnalysisResult = {
+  intent?: 'lead' | 'appointment' | 'question' | 'other';
+  // Lead fields
   is_new_lead: boolean;
   full_name?: string | null;
   phone?: string | null;
   email?: string | null;
   interest?: string | null;
+  // Appointment fields (only when intent === 'appointment')
+  appointment_datetime?: string | null;  // ISO "YYYY-MM-DDTHH:mm:ss" (Israel time, no tz suffix)
+  appointment_type?: 'new' | 'follow_up' | null;
+  appointment_patient_name?: string | null;
   reply?: string;
 };
+
+/** @deprecated use DiscordAnalysisResult */
+export type LeadExtractionResult = DiscordAnalysisResult;
 
 const DEFAULT_REPLY = 'תודה. הצוות שלנו ייצור איתך קשר בהקדם.';
 
@@ -26,13 +35,16 @@ export async function runStructuredPrompt(params: {
   authorName?: string;
   channelName?: string;
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
-}): Promise<LeadExtractionResult> {
+}): Promise<DiscordAnalysisResult> {
   if (!process.env.OPENAI_API_KEY) {
     console.error('OPENAI_API_KEY is not configured.');
     return { is_new_lead: false, reply: 'AI not configured.' };
   }
 
   const { text, authorName, channelName, conversationHistory = [] } = params;
+
+  // Include today's date so AI can resolve relative dates like "tomorrow"
+  const todayIso = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' });
 
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
     { role: 'system', content: discordSystemPrompt },
@@ -52,6 +64,7 @@ export async function runStructuredPrompt(params: {
       message_text: text,
       author_name: authorName ?? null,
       channel_name: channelName ?? null,
+      today_date: todayIso,
     }),
   });
 
@@ -64,7 +77,7 @@ export async function runStructuredPrompt(params: {
   const raw = response.choices[0]?.message?.content ?? '{}';
 
   try {
-    return JSON.parse(raw) as LeadExtractionResult;
+    return JSON.parse(raw) as DiscordAnalysisResult;
   } catch (err) {
     console.error('AI JSON parse failed:', err, raw);
     return { is_new_lead: false, reply: DEFAULT_REPLY };

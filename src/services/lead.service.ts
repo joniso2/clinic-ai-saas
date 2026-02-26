@@ -1,13 +1,15 @@
 import { runStructuredPrompt } from '@/ai/ai-client';
 import * as leadRepository from '@/repositories/lead.repository';
+import * as appointmentService from '@/services/appointment.service';
+import type { AppointmentType } from '@/types/appointments';
 
 export type ProcessDiscordMessageResult = {
   reply: string | null;
 };
 
 /**
- * Processes a Discord message: runs AI lead extraction, optionally creates a lead.
- * All business logic for "is this a lead?" and "create lead" lives here.
+ * Entry point for every Discord message.
+ * Routes to AppointmentService (booking) or lead creation based on AI intent.
  */
 export async function processDiscordMessage(params: {
   content: string;
@@ -26,29 +28,72 @@ export async function processDiscordMessage(params: {
 
   const clinicId = process.env.DISCORD_DEFAULT_CLINIC_ID;
 
-  if (analysis.is_new_lead && analysis.full_name && clinicId) {
-    console.log(
-      '[Discord] Creating lead:',
-      analysis.full_name,
-      '| clinic_id:',
+  // ── APPOINTMENT INTENT ──────────────────────────────────────────────────────
+  if (analysis.intent === 'appointment') {
+    const datetimeRaw     = analysis.appointment_datetime;
+    const patientName     = analysis.appointment_patient_name ?? authorName ?? null;
+    const appointmentType = (analysis.appointment_type ?? 'new') as AppointmentType;
+
+    if (!datetimeRaw || !patientName) {
+      return { reply: analysis.reply ?? null };
+    }
+
+    if (!clinicId) {
+      console.error('[Discord] DISCORD_DEFAULT_CLINIC_ID is not set.');
+      return { reply: 'מצטעריim, לא ניתן לקבוע תור כרגע. פנה אלינו ישירות.' };
+    }
+
+    const result = await appointmentService.scheduleAppointment({
       clinicId,
-    );
-    const { data, error } = await leadRepository.createLead({
-      clinic_id: clinicId,
-      full_name: analysis.full_name,
-      phone: analysis.phone ?? null,
-      email: analysis.email ?? null,
-      interest: analysis.interest ?? null,
-      status: 'New',
+      patientName,
+      requestedDatetimeRaw: datetimeRaw,
+      type: appointmentType,
     });
-    if (error) {
-      console.error('[Discord] Lead creation failed:', error);
-    } else if (data) {
-      console.log('[Discord] Lead created successfully.');
+
+    if (result.status === 'confirmed') {
+      const time = appointmentService.formatAppointmentTime(result.appointment.datetime);
+      return { reply: `מעולה! ${patientName}, קבענו לך תור ל${time}. נתראה בקליניקה!` };
+    }
+
+    if (result.status === 'unavailable') {
+      if (result.suggestions.length === 0) {
+        return { reply: `השעה המבוקשת תפוסה ולא מצאנו חלופות קרובות. פנה אלינו ישירות לתיאום.` };
+      }
+      const opts = result.suggestions
+        .slice(0, 2)
+        .map(appointmentService.formatAppointmentTime)
+        .join(' או ');
+      return { reply: `השעה המבוקשת תפוסה. אני יכול להציע: ${opts}. מה מתאים לך?` };
+    }
+
+    if (result.status === 'outside_hours') {
+      return {
+        reply: `שעות הקליניקה הן ${result.openHour}:00–${result.closeHour}:00. באיזו שעה תרצה לקבוע?`,
+      };
+    }
+
+    if (result.status === 'follow_up_too_soon') {
+      const earliest = appointmentService.formatAppointmentTime(result.earliestAllowed);
+      return {
+        reply: `ביקור המשך צריך להיות לפחות 7 ימים אחרי הביקור הקודם. המועד המוקדם ביותר הוא ${earliest}.`,
+      };
     }
   }
 
-  return {
-    reply: analysis.reply ?? null,
-  };
+  // ── LEAD INTENT ─────────────────────────────────────────────────────────────
+  if (analysis.is_new_lead && analysis.full_name && clinicId) {
+    console.log('[Discord] Creating lead:', analysis.full_name, '| clinic_id:', clinicId);
+    const { data, error } = await leadRepository.createLead({
+      clinic_id: clinicId,
+      full_name:  analysis.full_name,
+      phone:      analysis.phone ?? null,
+      email:      analysis.email ?? null,
+      interest:   analysis.interest ?? null,
+      status:     'New',
+    });
+    if (error) console.error('[Discord] Lead creation failed:', error);
+    else if (data) console.log('[Discord] Lead created successfully.');
+  }
+
+  return { reply: analysis.reply ?? null };
 }

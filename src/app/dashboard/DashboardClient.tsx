@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { Users, BarChart3, Settings as SettingsIcon } from 'lucide-react';
+import { Users, BarChart3, Settings as SettingsIcon, Calendar as CalendarIcon } from 'lucide-react';
 import type { Lead, LeadStatus } from '../../types/leads';
 import { LeadsKpiCards } from '../../components/dashboard/LeadsKpiCards';
 import { LeadsTable } from '../../components/dashboard/LeadsTable';
@@ -21,7 +21,7 @@ export default function DashboardClient() {
   const [clinicName, setClinicName] = useState<string | null>(null);
   const [clinicId, setClinicId] = useState<string | null>(null);
 
-  const [activeTab, setActiveTab] = useState<'leads' | 'analytics' | 'settings'>('leads');
+  const [activeTab, setActiveTab] = useState<'leads' | 'analytics' | 'settings' | 'calendar'>('leads');
 
   const [showNewLeadForm, setShowNewLeadForm] = useState(false);
   const [newLeadName, setNewLeadName] = useState('');
@@ -302,6 +302,14 @@ export default function DashboardClient() {
             >
               <Users className="h-4 w-4" />
               <span>Leads</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard/calendar')}
+              className="inline-flex items-center gap-2 border-b-2 border-transparent px-0.5 pb-3 text-xs font-medium text-slate-500 transition hover:text-slate-900"
+            >
+              <CalendarIcon className="h-4 w-4" />
+              <span>Calendar</span>
             </button>
             <button
               type="button"
