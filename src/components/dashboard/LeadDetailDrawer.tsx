@@ -20,6 +20,15 @@ const PRIORITY_STYLES: Record<
   Urgent: 'bg-red-100 text-red-800',
 };
 
+function formatDateDDMMYYYY(value: string): string {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
 export function LeadDetailDrawer({
   lead,
   open,
@@ -155,9 +164,7 @@ export function LeadDetailDrawer({
                 <div>
                   <dt className="text-xs font-medium text-slate-500">Created</dt>
                   <dd className="text-sm text-slate-900">
-                    {new Date(lead.created_at).toLocaleDateString(undefined, {
-                      dateStyle: 'medium',
-                    })}
+                    {formatDateDDMMYYYY(lead.created_at)}
                   </dd>
                 </div>
               </div>
@@ -169,7 +176,7 @@ export function LeadDetailDrawer({
                       Last contact
                     </dt>
                     <dd className="text-sm text-slate-900">
-                      {new Date(lead.last_contact_date).toLocaleDateString()}
+                      {formatDateDDMMYYYY(lead.last_contact_date)}
                     </dd>
                   </div>
                 </div>
@@ -182,7 +189,7 @@ export function LeadDetailDrawer({
                       Next follow-up
                     </dt>
                     <dd className="text-sm text-slate-900">
-                      {new Date(lead.next_follow_up_date).toLocaleDateString()}
+                      {formatDateDDMMYYYY(lead.next_follow_up_date)}
                     </dd>
                   </div>
                 </div>
