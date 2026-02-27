@@ -112,7 +112,7 @@ export function LeadsTable({
           cmp = (a.full_name ?? '').localeCompare(b.full_name ?? '');
           break;
         case 'score':
-          cmp = (a.lead_score ?? 0) - (b.lead_score ?? 0);
+          cmp = (a.lead_quality_score ?? a.lead_score ?? 0) - (b.lead_quality_score ?? b.lead_score ?? 0);
           break;
         default:
           cmp =
@@ -345,9 +345,9 @@ export function LeadsTable({
                         : '—'}
                     </td>
                     <td className="px-4 py-3">
-                      {lead.lead_score != null ? (
+                      {(lead.lead_quality_score ?? lead.lead_score) != null ? (
                         <span className="text-sm font-medium text-slate-900 dark:text-zinc-100">
-                          {lead.lead_score}
+                          {lead.lead_quality_score ?? lead.lead_score}
                         </span>
                       ) : (
                         '—'
