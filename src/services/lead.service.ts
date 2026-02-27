@@ -11,6 +11,10 @@ export type ProcessDiscordMessageResult = {
 /**
  * Entry point for every Discord message.
  * Routes to AppointmentService (booking) or lead creation based on AI intent.
+ *
+ * Hard rules enforced at logic level (regardless of AI output):
+ *   1. Phone is mandatory — no lead or appointment without it.
+ *   2. First message cannot trigger an appointment — at least one prior exchange required.
  */
 export async function processDiscordMessage(params: {
   content: string;
@@ -19,12 +23,13 @@ export async function processDiscordMessage(params: {
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
 }): Promise<ProcessDiscordMessageResult> {
   const { content, authorName, channelName, conversationHistory } = params;
+  const history = conversationHistory ?? [];
 
   const analysis = await runStructuredPrompt({
     text: content,
     authorName,
     channelName,
-    conversationHistory: conversationHistory ?? [],
+    conversationHistory: history,
   });
 
   const intel = computeIntelligenceTimestamps({
@@ -34,11 +39,23 @@ export async function processDiscordMessage(params: {
 
   const clinicId = process.env.DISCORD_DEFAULT_CLINIC_ID;
 
+  // Hard rule: phone is mandatory for any lead or appointment action
+  const hasPhone = typeof analysis.phone === 'string' && analysis.phone.trim().length > 0;
+
+  // Hard rule: first message cannot book an appointment (no prior exchange)
+  const isFirstMessage = history.length === 0;
+
   // ── APPOINTMENT INTENT ──────────────────────────────────────────────────────
   if (analysis.intent === 'appointment') {
     const datetimeRaw     = analysis.appointment_datetime;
     const patientName     = analysis.appointment_patient_name ?? authorName ?? null;
     const appointmentType = (analysis.appointment_type ?? 'new') as AppointmentType;
+
+    // Block appointment if phone missing or first message
+    if (!hasPhone || isFirstMessage) {
+      console.log('[Discord] Appointment blocked — phone:', hasPhone, '| firstMessage:', isFirstMessage);
+      return { reply: analysis.reply ?? null };
+    }
 
     if (!datetimeRaw || !patientName) {
       return { reply: analysis.reply ?? null };
@@ -156,7 +173,8 @@ export async function processDiscordMessage(params: {
   }
 
   // ── LEAD INTENT ─────────────────────────────────────────────────────────────
-  if (analysis.is_new_lead && analysis.full_name && clinicId) {
+  // Hard rule: phone is mandatory — no lead without it
+  if (analysis.is_new_lead && analysis.full_name && hasPhone && clinicId) {
     console.log('[Discord] Creating lead:', analysis.full_name, '| clinic_id:', clinicId);
     const { data, error } = await leadRepository.createLead({
       clinic_id:                clinicId,
