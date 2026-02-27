@@ -18,6 +18,12 @@ export type DiscordAnalysisResult = {
   appointment_type?: 'new' | 'follow_up' | null;
   appointment_patient_name?: string | null;
   reply?: string;
+  // Intelligence fields
+  conversation_summary?:     string | null;
+  lead_quality_score?:       number | null;  // 1–100
+  urgency_level?:            'low' | 'medium' | 'high' | null;
+  priority_level?:           'low' | 'medium' | 'high' | null;
+  callback_recommendation?:  string | null;
 };
 
 /** @deprecated use DiscordAnalysisResult */

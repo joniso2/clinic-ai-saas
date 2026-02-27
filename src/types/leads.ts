@@ -22,6 +22,14 @@ export type Lead = {
   last_contact_date?: string | null;
   next_follow_up_date?: string | null;
   source?: LeadSource | string | null;
+  // Intelligence fields
+  conversation_summary?: string | null;
+  lead_quality_score?: number | null;
+  urgency_level?: 'low' | 'medium' | 'high' | null;
+  priority_level?: 'low' | 'medium' | 'high' | null;
+  sla_deadline?: string | null;
+  follow_up_recommended_at?: string | null;
+  callback_recommendation?: string | null;
 };
 
 export function getDisplayPriority(lead: Lead): Priority {

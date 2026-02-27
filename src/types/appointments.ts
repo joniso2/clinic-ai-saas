@@ -8,6 +8,11 @@ export type Appointment = {
   type: AppointmentType;
   created_at: string;
   lead_id?: string | null;
+  // Intelligence fields
+  appointment_summary?: string | null;
+  urgency_level?: 'low' | 'medium' | 'high' | null;
+  lead_quality_score?: number | null;
+  priority_level?: 'low' | 'medium' | 'high' | null;
 };
 
 export type ScheduleStatus =

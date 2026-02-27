@@ -1,6 +1,7 @@
 import { runStructuredPrompt } from '@/ai/ai-client';
 import * as leadRepository from '@/repositories/lead.repository';
 import * as appointmentService from '@/services/appointment.service';
+import { computeIntelligenceTimestamps } from '@/services/intelligence.service';
 import type { AppointmentType } from '@/types/appointments';
 
 export type ProcessDiscordMessageResult = {
@@ -24,6 +25,11 @@ export async function processDiscordMessage(params: {
     authorName,
     channelName,
     conversationHistory: conversationHistory ?? [],
+  });
+
+  const intel = computeIntelligenceTimestamps({
+    urgency_level:      analysis.urgency_level ?? null,
+    lead_quality_score: analysis.lead_quality_score ?? null,
   });
 
   const clinicId = process.env.DISCORD_DEFAULT_CLINIC_ID;
@@ -71,13 +77,20 @@ export async function processDiscordMessage(params: {
     // 3. Create new lead if none found
     if (!leadId) {
       const { data: newLead, error: createErr } = await leadRepository.createLead({
-        clinic_id: clinicId,
-        full_name:  patientName.trim(),
-        phone:      analysis.phone ?? null,
-        email:      analysis.email ?? null,
-        interest:   analysis.interest ?? null,
-        status:     'Appointment scheduled',
-        source:     'discord',
+        clinic_id:                clinicId,
+        full_name:                patientName.trim(),
+        phone:                    analysis.phone ?? null,
+        email:                    analysis.email ?? null,
+        interest:                 analysis.interest ?? null,
+        status:                   'Appointment scheduled',
+        source:                   'discord',
+        conversation_summary:     analysis.conversation_summary     ?? null,
+        lead_quality_score:       analysis.lead_quality_score       ?? null,
+        urgency_level:            analysis.urgency_level            ?? null,
+        priority_level:           analysis.priority_level           ?? null,
+        sla_deadline:             intel.sla_deadline,
+        follow_up_recommended_at: intel.follow_up_recommended_at,
+        callback_recommendation:  analysis.callback_recommendation  ?? null,
       });
       if (createErr) {
         console.error('[Discord] Lead creation for appointment failed:', createErr);
@@ -146,12 +159,19 @@ export async function processDiscordMessage(params: {
   if (analysis.is_new_lead && analysis.full_name && clinicId) {
     console.log('[Discord] Creating lead:', analysis.full_name, '| clinic_id:', clinicId);
     const { data, error } = await leadRepository.createLead({
-      clinic_id: clinicId,
-      full_name:  analysis.full_name,
-      phone:      analysis.phone ?? null,
-      email:      analysis.email ?? null,
-      interest:   analysis.interest ?? null,
-      status:     'New',
+      clinic_id:                clinicId,
+      full_name:                analysis.full_name,
+      phone:                    analysis.phone ?? null,
+      email:                    analysis.email ?? null,
+      interest:                 analysis.interest ?? null,
+      status:                   'New',
+      conversation_summary:     analysis.conversation_summary     ?? null,
+      lead_quality_score:       analysis.lead_quality_score       ?? null,
+      urgency_level:            analysis.urgency_level            ?? null,
+      priority_level:           analysis.priority_level           ?? null,
+      sla_deadline:             intel.sla_deadline,
+      follow_up_recommended_at: intel.follow_up_recommended_at,
+      callback_recommendation:  analysis.callback_recommendation  ?? null,
     });
     if (error) console.error('[Discord] Lead creation failed:', error);
     else if (data) console.log('[Discord] Lead created successfully.');

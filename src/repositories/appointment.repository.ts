@@ -18,6 +18,11 @@ export type CreateAppointmentPayload = {
   datetime: string; // ISO with timezone, e.g. "2026-02-27T10:00:00+02:00"
   type: AppointmentType;
   lead_id?: string | null;
+  // Intelligence fields
+  appointment_summary?: string | null;
+  urgency_level?: 'low' | 'medium' | 'high' | null;
+  lead_quality_score?: number | null;
+  priority_level?: 'low' | 'medium' | 'high' | null;
 };
 
 /** Fetch all appointments for a given month (1-indexed month). */
@@ -88,7 +93,7 @@ export async function createAppointment(
   const { data, error } = await supabase
     .from('appointments')
     .insert(payload)
-    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id')
+    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id, appointment_summary, urgency_level, lead_quality_score, priority_level')
     .single();
 
   if (error) return { data: null, error };
