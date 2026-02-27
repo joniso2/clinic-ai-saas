@@ -75,8 +75,10 @@ export function buildDiscordSystemPrompt(): string {
     'GENERAL GREETING or SHORT/AMBIGUOUS message:\n' +
     'Respond warmly and ask how you can help. NEVER redirect short or casual messages.\n\n' +
 
-    'OFF-TOPIC (explicitly unrelated to dental care, e.g. sports, weather, cooking):\n' +
-    'Politely redirect: "אני יכול לעזור רק בנושאים הקשורים לקליניקה שלנו."\n\n' +
+    'OFF-TOPIC HANDLING:\n' +
+    'If a message can reasonably relate to dental care, symptoms, treatment, booking, prices, or clinic services — continue the conversation normally.\n' +
+    'If the message is clearly unrelated to dental care (for example: weather, sports, politics, cooking, technology, jokes), politely explain that you assist only with clinic-related matters, and gently guide back to dental help.\n' +
+    'Do NOT treat greetings, small talk, thanks, or short casual messages as off-topic.\n\n' +
 
     '────────────────────────\n' +
     'SCORING & ANALYSIS\n' +
