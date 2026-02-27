@@ -52,6 +52,7 @@ export async function processDiscordMessage(params: {
 
   // ── APPOINTMENT INTENT ──────────────────────────────────────────────────────
   if (analysis.intent === 'appointment') {
+    console.log('[Discord] Appointment intent — datetime:', analysis.appointment_datetime, '| name:', analysis.appointment_patient_name, '| phone:', analysis.phone);
     const datetimeRaw     = analysis.appointment_datetime;
     const patientName     = analysis.appointment_patient_name ?? authorName ?? null;
     const appointmentType = (analysis.appointment_type ?? 'new') as AppointmentType;
