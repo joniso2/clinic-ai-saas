@@ -2,8 +2,10 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { Users, BarChart3, Settings as SettingsIcon, Calendar as CalendarIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Users, BarChart3, Settings as SettingsIcon, Calendar as CalendarIcon, Menu } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import MobileDrawer from '@/components/dashboard/MobileDrawer';
+import BottomNav from '@/components/dashboard/BottomNav';
 
 const NAV_ITEMS = [
   { id: 'leads',     label: 'Leads',     icon: Users,         href: '/dashboard' },
@@ -18,6 +20,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [clinicName, setClinicName] = useState<string | null>(null);
   const [clinicId, setClinicId] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -38,19 +43,53 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     });
   }, []);
 
+  // Compress header on scroll (mobile only)
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => setScrolled(el.scrollTop > 8);
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard';
     return pathname.startsWith(href);
   };
 
-  return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900">
-      {/* Header mirrors the sidebar + content column split exactly */}
-      <header className="h-16 border-b border-slate-200 bg-white w-full sticky top-0 z-40">
-        <div className="flex h-full w-full items-center">
+  const handleNavClick = (href: string) => {
+    setDrawerOpen(false);
+    router.push(href);
+  };
 
-          {/* Logo zone — same width as sidebar (w-64), same left padding (px-4 → pl-5) */}
-          <div className="flex h-full w-64 shrink-0 items-center gap-3 border-r border-slate-200 pl-5 pr-4">
+  return (
+    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 overflow-x-hidden">
+
+      {/* ── HEADER ────────────────────────────────────────────────────────── */}
+      {/* Desktop: unchanged. Mobile: sticky, blur, safe-area, compresses on scroll */}
+      <header
+        className={`border-b border-slate-200 bg-white w-full sticky top-0 z-40
+          transition-all duration-200 ease-out
+          md:h-16
+          ${scrolled ? 'h-[52px]' : 'h-[60px]'}`}
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
+        {/* Mobile backdrop blur layer */}
+        <div
+          className="absolute inset-0 md:hidden"
+          style={{
+            background: 'rgba(255,255,255,0.92)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          }}
+        />
+        {/* Desktop: solid white (overrides the blur layer) */}
+        <div className="absolute inset-0 hidden md:block bg-white" />
+
+        <div className="relative flex h-full w-full items-center">
+
+          {/* ── Logo zone (desktop only — same w-64 as sidebar) ── */}
+          <div className="hidden md:flex h-full w-64 shrink-0 items-center gap-3 border-r border-slate-200 pl-5 pr-4">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-slate-800 to-slate-950 text-white shadow-sm">
               <span className="text-sm font-bold leading-none">λ</span>
             </div>
@@ -62,21 +101,56 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </div>
 
-          {/* Content zone — fills remaining width, same px-8 as main content */}
-          <div className="flex flex-1 items-center justify-end px-8">
+          {/* ── Mobile header content ── */}
+          <div className="flex md:hidden w-full items-center px-4 gap-3">
+            {/* Hamburger */}
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-600
+                hover:bg-slate-100 active:scale-95 transition-all duration-150"
+              aria-label="Open menu"
+              style={{ touchAction: 'manipulation' }}
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+
+            {/* Logo + clinic name */}
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-slate-800 to-slate-950 text-white shadow-sm">
+                <span className="text-xs font-bold leading-none">λ</span>
+              </div>
+              <div className="flex min-w-0 flex-col leading-tight">
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-slate-400">Clinic AI</span>
+                <span className="truncate text-sm font-semibold text-slate-900 max-w-[160px]">
+                  {clinicName ?? 'Practice Management'}
+                </span>
+              </div>
+            </div>
+
+            {/* Sign out (mobile) */}
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut();
+                router.replace('/login');
+              }}
+              className="shrink-0 text-xs text-slate-500 hover:text-slate-900 hover:bg-slate-100
+                rounded-lg px-2.5 py-1.5 transition-colors active:scale-95 h-9"
+              style={{ touchAction: 'manipulation' }}
+            >
+              Sign out
+            </button>
+          </div>
+
+          {/* ── Desktop right zone ── */}
+          <div className="hidden md:flex flex-1 items-center justify-end px-8">
             <div className="flex items-center gap-5">
-              {/* User info */}
               <div className="hidden sm:flex flex-col items-end leading-tight">
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
                   {clinicId ? 'Clinic admin' : 'No clinic linked'}
                 </span>
                 <span className="text-sm font-medium text-slate-600">{userEmail ?? 'Unknown user'}</span>
               </div>
-
-              {/* Divider */}
               <div className="hidden sm:block h-5 w-px bg-slate-200" />
-
-              {/* Sign out */}
               <button
                 onClick={async () => {
                   await supabase.auth.signOut();
@@ -92,8 +166,37 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </header>
 
-      <main className="flex flex-1">
-        <aside className="w-64 shrink-0 border-r border-slate-200 bg-white px-4 py-8">
+      {/* ── MOBILE DRAWER ─────────────────────────────────────────────────── */}
+      <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+        <nav className="flex flex-col gap-1">
+          {NAV_ITEMS.map(({ id, label, icon: Icon, href }) => {
+            const active = isActive(href);
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => handleNavClick(href)}
+                className={`inline-flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold
+                  transition-all duration-200 ease-out active:scale-[0.98]
+                  ${active
+                    ? 'bg-slate-900 text-white shadow-md shadow-slate-900/20'
+                    : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                  }`}
+                style={{ touchAction: 'manipulation' }}
+              >
+                <Icon className="h-5 w-5 shrink-0" />
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </MobileDrawer>
+
+      {/* ── MAIN CONTENT ──────────────────────────────────────────────────── */}
+      <main className="flex flex-1 min-h-0">
+
+        {/* Desktop sidebar — unchanged */}
+        <aside className="hidden md:block w-64 shrink-0 border-r border-slate-200 bg-white px-4 py-8">
           <nav className="flex flex-col gap-1">
             {NAV_ITEMS.map(({ id, label, icon: Icon, href }) => {
               const active = isActive(href);
@@ -116,12 +219,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </nav>
         </aside>
 
-        <div className="flex-1 min-w-0">
-          <div className="px-8 py-8">
+        {/* Content area */}
+        <div
+          ref={scrollRef}
+          className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden"
+        >
+          {/* Desktop padding: unchanged. Mobile: smaller padding + bottom space for BottomNav */}
+          <div className="px-4 py-5 md:px-8 md:py-8 pb-[calc(80px+env(safe-area-inset-bottom))] md:pb-8">
             {children}
           </div>
         </div>
+
       </main>
+
+      {/* ── BOTTOM NAV (mobile only) ───────────────────────────────────────── */}
+      <BottomNav />
+
     </div>
   );
 }
