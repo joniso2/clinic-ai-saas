@@ -31,6 +31,16 @@ export type LeadExtractionResult = DiscordAnalysisResult;
 
 const DEFAULT_REPLY = 'תודה. הצוות שלנו ייצור איתך קשר בהקדם.';
 
+const GREETING_PATTERNS = /^(היי|הי|שלום|hello|hi|hey|good morning|bonjour|bonsoir|hola|ciao|salut|yo|sup|howdy)[!.,\s]*$/i;
+
+const GREETING_REPLIES = [
+  'היי! איך אפשר לעזור היום?',
+  'שלום! במה אוכל לסייע?',
+  'היי, מה מביא אותך אלינו היום?',
+  'שלום! ספר לי, מה קורה?',
+  'היי! שמח שפנית, במה אוכל לעזור?',
+];
+
 /**
  * Runs the Discord lead-extraction prompt (structured JSON).
  * Single entry point for Discord AI behavior.
@@ -48,6 +58,12 @@ export async function runStructuredPrompt(params: {
   }
 
   const { text, authorName, channelName, conversationHistory = [] } = params;
+
+  // Short-circuit: pure greetings never need AI — always reply warmly
+  if (GREETING_PATTERNS.test(text.trim()) && conversationHistory.length === 0) {
+    const reply = GREETING_REPLIES[Math.floor(Math.random() * GREETING_REPLIES.length)];
+    return { is_new_lead: false, intent: 'other', reply };
+  }
 
   // Include today's date so AI can resolve relative dates like "tomorrow"
   const todayIso = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' });
