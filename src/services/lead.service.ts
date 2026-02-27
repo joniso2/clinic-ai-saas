@@ -42,6 +42,11 @@ export async function processDiscordMessage(params: {
   // Hard rule: phone is mandatory for any lead or appointment action
   const hasPhone = typeof analysis.phone === 'string' && analysis.phone.trim().length > 0;
 
+  // Hard rule: is_new_lead cannot be true without a phone number
+  if (analysis.is_new_lead && !hasPhone) {
+    analysis.is_new_lead = false;
+  }
+
   // Hard rule: first message cannot book an appointment (no prior exchange)
   const isFirstMessage = history.length === 0;
 
@@ -51,19 +56,18 @@ export async function processDiscordMessage(params: {
     const patientName     = analysis.appointment_patient_name ?? authorName ?? null;
     const appointmentType = (analysis.appointment_type ?? 'new') as AppointmentType;
 
-    // Block appointment if phone missing or first message
-    if (!hasPhone || isFirstMessage) {
-      console.log('[Discord] Appointment blocked — phone:', hasPhone, '| firstMessage:', isFirstMessage);
-      // Never leak PENDING_SCHEDULE to the user — ask for phone naturally
+    // Block appointment if phone missing, first message, or incomplete details
+    if (!hasPhone || isFirstMessage || !datetimeRaw || !patientName) {
+      console.log('[Discord] Appointment blocked — phone:', hasPhone, '| firstMessage:', isFirstMessage, '| datetime:', datetimeRaw, '| name:', patientName);
       const safeReply =
         analysis.reply && analysis.reply !== 'PENDING_SCHEDULE'
           ? analysis.reply
-          : 'אשמח לעזור! כדי לקבוע את התור אצטרך את מספר הטלפון שלך.';
+          : !hasPhone
+            ? 'אשמח לעזור! כדי לקבוע את התור אצטרך את מספר הטלפון שלך.'
+            : !patientName
+              ? 'מה שמך המלא?'
+              : 'באיזה תאריך ושעה תרצה לקבוע?';
       return { reply: safeReply };
-    }
-
-    if (!datetimeRaw || !patientName) {
-      return { reply: analysis.reply ?? null };
     }
 
     if (!clinicId) {

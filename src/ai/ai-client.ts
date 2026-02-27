@@ -70,6 +70,7 @@ export async function runStructuredPrompt(params: {
 
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
     { role: 'system', content: discordSystemPrompt },
+    { role: 'system', content: `Today's date (Israel time): ${todayIso}${authorName ? `. Patient name hint: ${authorName}` : ''}` },
   ];
 
   for (const m of conversationHistory) {
@@ -80,15 +81,7 @@ export async function runStructuredPrompt(params: {
     }
   }
 
-  messages.push({
-    role: 'user',
-    content: JSON.stringify({
-      message_text: text,
-      author_name: authorName ?? null,
-      channel_name: channelName ?? null,
-      today_date: todayIso,
-    }),
-  });
+  messages.push({ role: 'user', content: text });
 
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
