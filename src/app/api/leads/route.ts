@@ -107,10 +107,9 @@ export async function GET(req: NextRequest) {
 
     const { data, error } = await leadRepository.getLeadsByClinicId(clinicId);
     if (error) {
-      const errMsg = (error as { message?: string })?.message ?? String(error);
       console.error('Error fetching leads:', error);
       return NextResponse.json(
-        { error: `Failed to fetch leads: ${errMsg}` },
+        { error: 'Failed to fetch leads' },
         { status: 500 },
       );
     }
