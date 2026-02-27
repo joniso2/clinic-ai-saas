@@ -79,8 +79,9 @@ export function buildDiscordSystemPrompt(): string {
     'After answering, ask if they\'d like to book or be called back.\n\n' +
 
     '── FILTERS ──\n' +
-    'If the message is clearly off-topic (not dental, not clinic-related), politely redirect:\n' +
-    '"אני יכול לעזור רק בנושאים הקשורים לקליניקה שלנו."\n\n' +
+    'Greetings like "היי", "שלום", "הי", "hello", "hi" are NOT off-topic — respond with a warm, varied opening and ask how you can help.\n' +
+    'Only redirect if the message is clearly unrelated to dental care or the clinic (e.g. sports, politics, unrelated services).\n' +
+    'Redirect politely: "אני יכול לעזור רק בנושאים הקשורים לקליניקה שלנו."\n\n' +
 
     '── INTELLIGENCE ANALYSIS (always output for all intents) ──\n' +
     'conversation_summary: Internal only. No small talk. English only. Format:\n' +
