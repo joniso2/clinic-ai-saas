@@ -179,8 +179,11 @@ export async function scheduleAppointment(params: ScheduleAppointmentParams): Pr
 
   const requestedDate = parseRequestedDatetime(requestedDatetimeRaw);
 
+  console.log('[AppointmentService] scheduling — raw:', requestedDatetimeRaw, '| parsed UTC:', requestedDate.toISOString(), '| israelHour:', israelHour(requestedDate), '| type:', type);
+
   // 1. Enforce opening hours
   if (!enforceOpeningHours(requestedDate)) {
+    console.log('[AppointmentService] blocked: outside_hours');
     return {
       status: 'outside_hours',
       openHour:  CLINIC_OPEN_HOUR,
@@ -208,6 +211,7 @@ export async function scheduleAppointment(params: ScheduleAppointmentParams): Pr
   );
 
   if (existing && existing.length > 0) {
+    console.log('[AppointmentService] blocked: slot taken —', existing.map(a => a.datetime));
     const suggestions = await suggestClosestAvailable(
       clinicId,
       addMinutes(requestedDate, SLOT_MINUTES),
