@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import * as appointmentRepo from '@/repositories/appointment.repository';
 import * as appointmentService from '@/services/appointment.service';
+import * as leadRepository from '@/repositories/lead.repository';
 import type { AppointmentType } from '@/types/appointments';
 import type { ScheduleAppointmentParams } from '@/services/appointment.service';
 
@@ -73,13 +74,49 @@ export async function POST(req: NextRequest) {
       datetime: datetimeRaw,
       type,
       lead_id,
-    } = body as { patient_name?: string; datetime?: string; type?: AppointmentType; lead_id?: string | null };
+      email,
+      phone,
+    } = body as { patient_name?: string; datetime?: string; type?: AppointmentType; lead_id?: string | null; email?: string | null; phone?: string | null };
 
     if (!patient_name || !datetimeRaw) {
       return NextResponse.json(
         { error: 'patient_name and datetime are required' },
         { status: 400 },
       );
+    }
+
+    // Upsert lead before scheduling so appointment gets a lead_id
+    let resolvedLeadId = lead_id ?? undefined;
+    if (!resolvedLeadId) {
+      // 1. Try email/phone lookup
+      const { data: leadByContact } = await leadRepository.getLeadByEmailOrPhone(
+        clinicId, email ?? null, phone ?? null,
+      );
+      if (leadByContact) {
+        resolvedLeadId = leadByContact.id;
+      } else {
+        // 2. Fall back to name lookup
+        const { data: leadByName } = await leadRepository.getLeadByClinicAndName(clinicId, patient_name);
+        if (leadByName) {
+          resolvedLeadId = leadByName.id;
+        }
+      }
+      // 3. Create new lead if still not found
+      if (!resolvedLeadId) {
+        const { data: newLead, error: leadErr } = await leadRepository.createLead({
+          clinic_id: clinicId,
+          full_name:  patient_name.trim(),
+          phone:      phone ?? null,
+          email:      email ?? null,
+          status:     'Appointment scheduled',
+          source:     'calendar',
+        });
+        if (leadErr) console.error('[Appointments] Lead creation failed:', leadErr);
+        else if (newLead) {
+          resolvedLeadId = newLead.id;
+          console.log('[Appointments] New lead created:', resolvedLeadId);
+        }
+      }
     }
 
     const appointmentType: AppointmentType =
@@ -90,11 +127,20 @@ export async function POST(req: NextRequest) {
       patientName:            patient_name,
       requestedDatetimeRaw:   datetimeRaw,
       type:                   appointmentType,
-      leadId:                 lead_id ?? undefined,
+      leadId:                 resolvedLeadId ?? undefined,
     };
     const result = await appointmentService.scheduleAppointment(params);
 
     if (result.status === 'confirmed') {
+      // Update lead with appointment details
+      if (resolvedLeadId) {
+        await leadRepository.updateLead(resolvedLeadId, clinicId, {
+          status:            'Appointment scheduled',
+          last_contact_date: new Date().toISOString(),
+          next_appointment:  result.appointment.datetime,
+        });
+        console.log('[Appointments] Lead linked to appointment:', resolvedLeadId);
+      }
       return NextResponse.json(
         { status: 'confirmed', appointment: result.appointment },
         { status: 201 },
