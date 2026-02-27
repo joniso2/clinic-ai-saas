@@ -60,7 +60,7 @@ export async function runStructuredPrompt(params: {
   const { text, authorName, channelName, conversationHistory = [] } = params;
 
   // Short-circuit: pure greetings never need AI — always reply warmly
-  if (GREETING_PATTERNS.test(text.trim()) && conversationHistory.length === 0) {
+  if (GREETING_PATTERNS.test(text.trim())) {
     const reply = GREETING_REPLIES[Math.floor(Math.random() * GREETING_REPLIES.length)];
     return { is_new_lead: false, intent: 'other', reply };
   }
