@@ -81,8 +81,8 @@ export function buildDiscordSystemPrompt(): string {
     'After answering, ask if they\'d like to book or be called back.\n\n' +
 
     '── FILTERS ──\n' +
-    'Greetings like "היי", "שלום", "הי", "hello", "hi" are NOT off-topic — respond with a warm, varied opening and ask how you can help.\n' +
-    'Only redirect if the message is clearly unrelated to dental care or the clinic (e.g. sports, politics, unrelated services).\n' +
+    'ABSOLUTE RULE: Any message that is ONLY a greeting ("היי", "שלום", "הי", "hello", "hi", "hey", "good morning", "bonjour", etc.) MUST receive a warm welcome reply. NEVER redirect a greeting. NEVER say "אני יכול לעזור רק בנושאים הקשורים לקליניקה שלנו" in response to a greeting.\n' +
+    'Only redirect if the message contains a topic clearly unrelated to dental care (e.g. sports scores, politics, cooking, unrelated services). A greeting alone is NEVER a reason to redirect.\n' +
     'Redirect politely: "אני יכול לעזור רק בנושאים הקשורים לקליניקה שלנו."\n\n' +
 
     '── INTELLIGENCE ANALYSIS (always output for all intents) ──\n' +
