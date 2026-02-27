@@ -66,15 +66,22 @@ export async function createLead(payload: CreateLeadPayload): Promise<{
     email:     payload.email ?? null,
     status:    payload.status ?? 'New',
   };
-  if (payload.source !== undefined)   insertPayload.source   = payload.source;
-  if (payload.interest !== undefined) insertPayload.interest = payload.interest;
+  if (payload.source !== undefined)                   insertPayload.source                   = payload.source;
+  if (payload.interest !== undefined)                 insertPayload.interest                 = payload.interest;
+  if (payload.conversation_summary !== undefined)     insertPayload.conversation_summary     = payload.conversation_summary;
+  if (payload.lead_quality_score !== undefined)       insertPayload.lead_quality_score       = payload.lead_quality_score;
+  if (payload.urgency_level !== undefined)            insertPayload.urgency_level            = payload.urgency_level;
+  if (payload.priority_level !== undefined)           insertPayload.priority_level           = payload.priority_level;
+  if (payload.sla_deadline !== undefined)             insertPayload.sla_deadline             = payload.sla_deadline;
+  if (payload.follow_up_recommended_at !== undefined) insertPayload.follow_up_recommended_at = payload.follow_up_recommended_at;
+  if (payload.callback_recommendation !== undefined)  insertPayload.callback_recommendation  = payload.callback_recommendation;
 
   console.log('[LeadRepository] createLead payload:', JSON.stringify(insertPayload));
 
   const { data, error } = await supabase
     .from('leads')
     .insert(insertPayload)
-    .select('id, clinic_id, full_name, phone, email, interest, status, source, created_at, last_contact_date, next_appointment, next_follow_up_date')
+    .select('id, clinic_id, full_name, phone, email, interest, status, source, created_at, last_contact_date, next_appointment, next_follow_up_date, conversation_summary, lead_quality_score, urgency_level, priority_level, sla_deadline, follow_up_recommended_at, callback_recommendation')
     .single();
 
   if (error) {
@@ -91,7 +98,7 @@ export async function getLeadsByClinicId(clinicId: string): Promise<{
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
     .from('leads')
-    .select('id, clinic_id, full_name, email, phone, interest, status, source, created_at, next_follow_up_date, last_contact_date, next_appointment')
+    .select('id, clinic_id, full_name, email, phone, interest, status, source, created_at, next_follow_up_date, last_contact_date, next_appointment, conversation_summary, lead_quality_score, urgency_level, priority_level, sla_deadline, follow_up_recommended_at, callback_recommendation')
     .eq('clinic_id', clinicId)
     .order('created_at', { ascending: false });
 
