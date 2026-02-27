@@ -21,12 +21,11 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 md:hidden
+        bottom-nav-light dark:bottom-nav-dark"
       style={{
-        background: 'rgba(255,255,255,0.92)',
         backdropFilter: 'blur(20px) saturate(180%)',
         WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-        borderTop: '1px solid rgba(226,232,240,0.8)',
         borderRadius: '16px 16px 0 0',
         boxShadow: '0 -4px 24px rgba(0,0,0,0.07)',
         paddingBottom: 'env(safe-area-inset-bottom)',
@@ -42,13 +41,16 @@ export default function BottomNav() {
               onClick={() => router.push(href)}
               className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full rounded-xl
                 transition-all duration-200 ease-out active:scale-[0.92]
-                ${active ? 'text-slate-900' : 'text-slate-400'}`}
+                ${active
+                  ? 'text-slate-900 dark:text-zinc-100'
+                  : 'text-slate-400 dark:text-zinc-500'
+                }`}
               style={{ touchAction: 'manipulation' }}
             >
               <div className={`relative flex items-center justify-center transition-all duration-200
                 ${active ? 'scale-110' : 'scale-100'}`}>
                 {active && (
-                  <span className="absolute inset-0 rounded-lg bg-slate-100 scale-150 opacity-60" />
+                  <span className="absolute inset-0 rounded-lg bg-slate-100 dark:bg-zinc-700 scale-150 opacity-60" />
                 )}
                 <Icon className={`h-5 w-5 relative z-10 transition-all duration-200 ${active ? 'stroke-[2.5]' : 'stroke-[1.75]'}`} />
               </div>

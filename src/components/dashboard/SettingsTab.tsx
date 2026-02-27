@@ -47,15 +47,15 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-      <div className="border-b border-slate-100 bg-slate-50/60 px-5 py-4">
+    <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 card-shadow overflow-hidden">
+      <div className="border-b border-slate-100 dark:border-zinc-700 bg-slate-50/60 dark:bg-zinc-700/60 px-5 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 text-white">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900">
             <Icon className="h-4 w-4" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
-            <p className="text-xs text-slate-500">{description}</p>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">{title}</h3>
+            <p className="text-xs text-slate-500 dark:text-zinc-400">{description}</p>
           </div>
         </div>
       </div>
@@ -102,13 +102,13 @@ export function SettingsTab({
         icon={Building2}
       >
         <dl className="grid gap-5 sm:grid-cols-2">
-          <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-            <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">Clinic name</dt>
-            <dd className="mt-1.5 text-sm font-medium text-slate-900">{clinicName ?? 'Not set'}</dd>
+          <div className="rounded-xl border border-slate-100 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-700/50 px-4 py-3">
+            <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Clinic name</dt>
+            <dd className="mt-1.5 text-sm font-medium text-slate-900 dark:text-zinc-100">{clinicName ?? 'Not set'}</dd>
           </div>
-          <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-            <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">Account email</dt>
-            <dd className="mt-1.5 text-sm font-medium text-slate-900">{userEmail ?? 'Not available'}</dd>
+          <div className="rounded-xl border border-slate-100 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-700/50 px-4 py-3">
+            <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Account email</dt>
+            <dd className="mt-1.5 text-sm font-medium text-slate-900 dark:text-zinc-100">{userEmail ?? 'Not available'}</dd>
           </div>
         </dl>
       </SectionCard>
@@ -125,8 +125,8 @@ export function SettingsTab({
               key={day}
               className={`flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 transition-colors ${
                 hours[i].enabled
-                  ? 'border-slate-200 bg-white'
-                  : 'border-slate-100 bg-slate-50/60'
+                  ? 'border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-700/50'
+                  : 'border-slate-100 dark:border-zinc-700/60 bg-slate-50/60 dark:bg-zinc-700/20'
               }`}
             >
               {/* Toggle */}
@@ -134,19 +134,19 @@ export function SettingsTab({
                 type="button"
                 onClick={() => updateHour(i, 'enabled', !hours[i].enabled)}
                 className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-1 ${
-                  hours[i].enabled ? 'bg-slate-900' : 'bg-slate-200'
+                  hours[i].enabled ? 'bg-slate-900 dark:bg-zinc-100' : 'bg-slate-200 dark:bg-zinc-600'
                 }`}
                 aria-pressed={hours[i].enabled}
               >
                 <span
-                  className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${
+                  className={`inline-block h-3.5 w-3.5 rounded-full bg-white dark:bg-zinc-900 shadow transition-transform ${
                     hours[i].enabled ? 'translate-x-4' : 'translate-x-0.5'
                   }`}
                 />
               </button>
 
               {/* Day label */}
-              <span className={`w-24 text-sm font-medium ${hours[i].enabled ? 'text-slate-900' : 'text-slate-400'}`}>
+              <span className={`w-24 text-sm font-medium ${hours[i].enabled ? 'text-slate-900 dark:text-zinc-100' : 'text-slate-400 dark:text-zinc-500'}`}>
                 {day}
               </span>
 
@@ -157,18 +157,18 @@ export function SettingsTab({
                     type="time"
                     value={hours[i].open}
                     onChange={(e) => updateHour(i, 'open', e.target.value)}
-                    className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm text-slate-900 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-100"
+                    className="rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-700/50 px-2.5 py-1.5 text-sm text-slate-900 dark:text-zinc-100 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-100"
                   />
-                  <span className="text-xs text-slate-400">to</span>
+                  <span className="text-xs text-slate-400 dark:text-zinc-500">to</span>
                   <input
                     type="time"
                     value={hours[i].close}
                     onChange={(e) => updateHour(i, 'close', e.target.value)}
-                    className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm text-slate-900 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-100"
+                    className="rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-700/50 px-2.5 py-1.5 text-sm text-slate-900 dark:text-zinc-100 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-100"
                   />
                 </div>
               ) : (
-                <span className="text-xs text-slate-400 italic">Closed</span>
+                <span className="text-xs text-slate-400 dark:text-zinc-500 italic">Closed</span>
               )}
             </div>
           ))}
@@ -189,16 +189,16 @@ export function SettingsTab({
               onClick={() => { setDuration(d); setSaved(false); }}
               className={`rounded-xl border px-4 py-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-1 ${
                 duration === d
-                  ? 'border-slate-900 bg-slate-900 text-white shadow-sm'
-                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                  ? 'border-slate-900 dark:border-zinc-100 bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm'
+                  : 'border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:border-slate-300 dark:hover:border-zinc-600 hover:bg-slate-50 dark:hover:bg-zinc-700'
               }`}
             >
               {d} min
             </button>
           ))}
         </div>
-        <p className="mt-3 text-xs text-slate-500">
-          Currently set to <span className="font-semibold text-slate-900">{duration} minutes</span> per appointment.
+        <p className="mt-3 text-xs text-slate-500 dark:text-zinc-400">
+          Currently set to <span className="font-semibold text-slate-900 dark:text-zinc-100">{duration} minutes</span> per appointment.
         </p>
       </SectionCard>
 
@@ -211,31 +211,31 @@ export function SettingsTab({
         <div className="flex items-start gap-4">
           <div
             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-              discordConnected ? 'bg-emerald-100' : 'bg-red-100'
+              discordConnected ? 'bg-emerald-100 dark:bg-emerald-950/50' : 'bg-red-100 dark:bg-red-950/50'
             }`}
           >
             {discordConnected ? (
-              <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+              <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             ) : (
-              <AlertCircle className="h-5 w-5 text-red-500" />
+              <AlertCircle className="h-5 w-5 text-red-500 dark:text-red-400" />
             )}
           </div>
           <div>
-            <p className={`text-sm font-semibold ${discordConnected ? 'text-emerald-800' : 'text-red-700'}`}>
+            <p className={`text-sm font-semibold ${discordConnected ? 'text-emerald-800 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}`}>
               {discordConnected ? 'Connected' : 'Not connected'}
             </p>
-            <p className="mt-0.5 text-xs text-slate-500">
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">
               {discordConnected
                 ? 'Your Discord bot is active and receiving lead notifications.'
                 : 'Configure DISCORD_BOT_TOKEN in your environment to enable notifications.'}
             </p>
             {discordConnected && (
               <div className="mt-3 flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-medium text-emerald-700">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Webhook active
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-3 py-1 text-xs font-medium text-blue-700">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/60 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-400">
                   Lead notifications on
                 </span>
               </div>
@@ -247,7 +247,7 @@ export function SettingsTab({
       {/* Save button */}
       <div className="flex items-center justify-end gap-3">
         {saved && (
-          <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+          <span className="flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 className="h-4 w-4" />
             Settings saved
           </span>
@@ -255,7 +255,7 @@ export function SettingsTab({
         <button
           type="button"
           onClick={handleSave}
-          className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 transition-colors"
+          className="inline-flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-zinc-100 px-5 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-sm hover:bg-slate-800 dark:hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 transition-colors"
         >
           <Save className="h-4 w-4" />
           Save settings

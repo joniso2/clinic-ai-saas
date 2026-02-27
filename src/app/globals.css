@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Tailwind v4: enable .dark class-based dark mode variant */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -12,22 +15,31 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Dark mode CSS vars (applied via .dark class on <html>) */
+html.dark {
+  --background: #18181b;   /* zinc-900 — page layer */
+  --foreground: #f4f4f5;   /* zinc-100 */
+}
+
+/* Global smooth theme transition — applied to all elements so no surface jumps */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 250ms;
+  transition-timing-function: ease;
+}
+
+/* Exclude elements where instant response matters */
+button, a, input, select, textarea, [role="switch"] {
+  transition-property: background-color, border-color, color, fill, stroke,
+    opacity, transform, box-shadow;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-  /* Prevent horizontal overflow on mobile */
   overflow-x: hidden;
-  /* Smooth scroll */
   scroll-behavior: smooth;
-  /* iOS momentum scroll */
   -webkit-overflow-scrolling: touch;
 }
 
@@ -39,6 +51,24 @@ button, a {
 /* Smooth momentum scroll for overflow containers */
 .overflow-y-auto {
   -webkit-overflow-scrolling: touch;
+}
+
+/* Layered card shadow — adds depth without harsh contrast */
+.card-shadow {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+}
+.dark .card-shadow {
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 1px 3px rgba(0,0,0,0.4);
+}
+
+/* BottomNav themed background (can't use Tailwind dark: on inline styles) */
+.bottom-nav-light {
+  background: rgba(255, 255, 255, 0.92);
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+}
+.dark .bottom-nav-dark {
+  background: rgba(24, 24, 27, 0.92);
+  border-top: 1px solid rgba(63, 63, 70, 0.8);
 }
 
 /* Mobile section fade-in animation */

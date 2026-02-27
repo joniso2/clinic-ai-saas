@@ -47,25 +47,25 @@ export function ConfirmDeleteModal({
         className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
         onClick={onCancel}
       />
-      <div className="relative w-full max-w-md rounded-2xl border border-red-200/50 bg-white p-6 shadow-2xl">
+      <div className="relative w-full max-w-md rounded-2xl border border-red-200/50 dark:border-red-900/40 bg-white dark:bg-zinc-900 p-6 shadow-2xl">
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-50">
-            <AlertTriangle className="h-6 w-6 text-red-600" />
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/50">
+            <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
           </div>
           <div className="min-w-0 flex-1">
             <h2
               id="delete-modal-title"
-              className="text-lg font-semibold text-slate-900"
+              className="text-lg font-semibold text-slate-900 dark:text-zinc-100"
             >
               {title}
             </h2>
-            <p className="mt-2 text-sm text-slate-600">{message}</p>
+            <p className="mt-2 text-sm text-slate-600 dark:text-zinc-400">{message}</p>
             <div className="mt-6 flex flex-wrap gap-3">
               <button
                 type="button"
                 onClick={onCancel}
                 disabled={loading}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60"
+                className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-zinc-300 shadow-sm transition hover:bg-slate-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60"
               >
                 Cancel
               </button>
@@ -73,7 +73,7 @@ export function ConfirmDeleteModal({
                 type="button"
                 onClick={onConfirm}
                 disabled={loading}
-                className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-60"
+                className="rounded-xl bg-red-600 dark:bg-red-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-60"
               >
                 {loading ? 'Deleting…' : confirmLabel}
               </button>

@@ -241,9 +241,9 @@ export default function DashboardClient() {
     <>
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Dashboard</p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">Leads</h1>
-          <p className="mt-1 text-sm text-slate-500">Review and manage leads for your clinic.</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500">Dashboard</p>
+          <h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-zinc-100 sm:text-3xl">Leads</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">Review and manage leads for your clinic.</p>
         </div>
       </div>
 
@@ -254,70 +254,70 @@ export default function DashboardClient() {
       )}
 
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white/80 px-3 py-2 text-sm text-slate-600 shadow-sm backdrop-blur-sm">
+        <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 px-3 py-2 text-sm text-slate-600 dark:text-zinc-300 card-shadow">
           <span className="h-2 w-2 rounded-full bg-emerald-500" />
           {leads.length} leads in pipeline
         </div>
         <button
           type="button"
           onClick={() => setShowNewLeadForm(true)}
-          className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2"
+          className="inline-flex items-center justify-center rounded-xl bg-slate-900 dark:bg-zinc-100 px-5 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 dark:hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-zinc-400 focus:ring-offset-2"
         >
           Add New Lead
         </button>
       </div>
 
       {showNewLeadForm && (
-        <div className="mb-8 rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-lg shadow-slate-200/30 backdrop-blur-sm">
-          <h2 className="text-base font-semibold text-slate-900">New lead</h2>
-          <p className="mt-1 text-sm text-slate-500">Add a contact to your pipeline.</p>
+        <div className="mb-8 rounded-2xl border border-slate-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 p-6 card-shadow">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">New lead</h2>
+          <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">Add a contact to your pipeline.</p>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700">Name</label>
+              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Name</label>
               <input
                 type="text"
                 value={newLeadName}
                 onChange={(e) => setNewLeadName(e.target.value)}
-                className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
+                className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
                 placeholder="Jane Doe"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700">Email</label>
+              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Email</label>
               <input
                 type="email"
                 value={newLeadEmail}
                 onChange={(e) => setNewLeadEmail(e.target.value)}
-                className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
+                className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
                 placeholder="jane@example.com"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700">Phone</label>
+              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Phone</label>
               <input
                 type="tel"
                 value={newLeadPhone}
                 onChange={(e) => setNewLeadPhone(e.target.value)}
-                className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
+                className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
                 placeholder="+1 (555) 123-4567"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700">Interest</label>
+              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Interest</label>
               <input
                 type="text"
                 value={newLeadInterest}
                 onChange={(e) => setNewLeadInterest(e.target.value)}
-                className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
+                className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
                 placeholder="Treatment or service"
               />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
-              <label className="text-xs font-medium text-slate-700">Status</label>
+              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Status</label>
               <select
                 value={newLeadStatus}
                 onChange={(e) => setNewLeadStatus(e.target.value as LeadStatus)}
-                className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
+                className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
               >
                 <option value="New">New</option>
                 <option value="Contacted">Contacted</option>
@@ -335,7 +335,7 @@ export default function DashboardClient() {
                 setNewLeadEmail('');
               }}
               disabled={submittingLead}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+              className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-zinc-300 shadow-sm transition hover:bg-slate-50 dark:hover:bg-zinc-700 disabled:opacity-60"
             >
               Cancel
             </button>
@@ -343,7 +343,7 @@ export default function DashboardClient() {
               type="button"
               disabled={submittingLead || !clinicId}
               onClick={handleCreateLead}
-              className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 disabled:opacity-60"
+              className="rounded-xl bg-slate-900 dark:bg-zinc-100 px-4 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-sm transition hover:bg-slate-800 dark:hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-zinc-400 focus:ring-offset-2 disabled:opacity-60"
             >
               {submittingLead ? 'Saving…' : 'Save Lead'}
             </button>
@@ -352,14 +352,14 @@ export default function DashboardClient() {
       )}
 
       {error && (
-        <div className="mb-6 rounded-2xl border border-red-200/80 bg-red-50/90 px-4 py-3 text-sm text-red-700">
+        <div className="mb-6 rounded-2xl border border-red-200/80 dark:border-red-900/60 bg-red-50/90 dark:bg-red-950/40 px-4 py-3 text-sm text-red-700 dark:text-red-400">
           {error}
         </div>
       )}
 
       {loading && (
         <div className="flex justify-center py-16">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-slate-200 border-t-slate-900" />
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-slate-900 dark:border-t-zinc-300" />
         </div>
       )}
 

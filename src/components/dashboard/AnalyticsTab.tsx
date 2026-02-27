@@ -38,20 +38,20 @@ function MetricCard({
   color: 'slate' | 'blue' | 'emerald' | 'violet';
 }) {
   const colors = {
-    slate: { bg: 'bg-slate-50 border-slate-200', icon: 'bg-slate-100 text-slate-600', val: 'text-slate-900', bar: 'bg-slate-900' },
-    blue:  { bg: 'bg-blue-50 border-blue-100',   icon: 'bg-blue-100 text-blue-600',   val: 'text-blue-900',  bar: 'bg-blue-500' },
-    emerald: { bg: 'bg-emerald-50 border-emerald-100', icon: 'bg-emerald-100 text-emerald-600', val: 'text-emerald-900', bar: 'bg-emerald-500' },
-    violet: { bg: 'bg-violet-50 border-violet-100', icon: 'bg-violet-100 text-violet-600', val: 'text-violet-900', bar: 'bg-violet-500' },
+    slate:   { bg: 'bg-white dark:bg-zinc-700 border-slate-200 dark:border-zinc-600',                   icon: 'bg-slate-100 dark:bg-zinc-600 text-slate-600 dark:text-zinc-300',             val: 'text-slate-900 dark:text-zinc-100',   bar: 'bg-slate-900 dark:bg-zinc-300' },
+    blue:    { bg: 'bg-blue-50 dark:bg-blue-900/40 border-blue-100 dark:border-blue-800/50',             icon: 'bg-blue-100 dark:bg-blue-800/50 text-blue-600 dark:text-blue-300',           val: 'text-blue-900 dark:text-blue-100',    bar: 'bg-blue-500' },
+    emerald: { bg: 'bg-emerald-50 dark:bg-emerald-900/40 border-emerald-100 dark:border-emerald-800/50', icon: 'bg-emerald-100 dark:bg-emerald-800/50 text-emerald-600 dark:text-emerald-300', val: 'text-emerald-900 dark:text-emerald-100', bar: 'bg-emerald-500' },
+    violet:  { bg: 'bg-violet-50 dark:bg-violet-900/40 border-violet-100 dark:border-violet-800/50',     icon: 'bg-violet-100 dark:bg-violet-800/50 text-violet-600 dark:text-violet-300',   val: 'text-violet-900 dark:text-violet-100', bar: 'bg-violet-500' },
   };
   const c = colors[color];
   return (
-    <div className={`relative overflow-hidden rounded-2xl border p-5 ${c.bg}`}>
+    <div className={`relative overflow-hidden rounded-2xl border p-5 card-shadow ${c.bg}`}>
       <div className={`absolute inset-x-0 top-0 h-0.5 ${c.bar}`} />
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">{label}</p>
           <p className={`mt-2 text-2xl font-bold tracking-tight ${c.val}`}>{value}</p>
-          {sub && <p className="mt-0.5 text-xs text-slate-400">{sub}</p>}
+          {sub && <p className="mt-0.5 text-xs text-slate-400 dark:text-zinc-500">{sub}</p>}
         </div>
         <div className={`rounded-xl p-2.5 ${c.icon}`}>
           <Icon className="h-5 w-5" strokeWidth={2} />
@@ -214,12 +214,12 @@ function FunnelBar({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-xs">
-        <span className="font-medium text-slate-700">{label}</span>
-        <span className="font-semibold text-slate-900">
-          {count} <span className="font-normal text-slate-400">({pct}%)</span>
+        <span className="font-medium text-slate-700 dark:text-zinc-300">{label}</span>
+        <span className="font-semibold text-slate-900 dark:text-zinc-100">
+          {count} <span className="font-normal text-slate-400 dark:text-zinc-500">({pct}%)</span>
         </span>
       </div>
-      <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+      <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-700">
         <div
           className={`h-full rounded-full transition-all duration-500 ${color}`}
           style={{ width: `${pct}%` }}
@@ -233,11 +233,11 @@ function FunnelBar({
 function AnalyticsEmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
-        <TrendingUp className="h-8 w-8 text-slate-400" />
+      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-zinc-800">
+        <TrendingUp className="h-8 w-8 text-slate-400 dark:text-zinc-500" />
       </div>
-      <h3 className="text-base font-semibold text-slate-800">No data yet</h3>
-      <p className="mt-1.5 max-w-xs text-sm text-slate-500">
+      <h3 className="text-base font-semibold text-slate-800 dark:text-zinc-200">No data yet</h3>
+      <p className="mt-1.5 max-w-xs text-sm text-slate-500 dark:text-zinc-400">
         Add leads to your pipeline to start seeing analytics and conversion metrics.
       </p>
     </div>
@@ -267,7 +267,7 @@ export function AnalyticsTab({ leads }: { leads: Lead[] }) {
 
   if (leads.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 card-shadow">
         <AnalyticsEmptyState />
       </div>
     );
@@ -290,13 +290,13 @@ export function AnalyticsTab({ leads }: { leads: Lead[] }) {
       </div>
 
       {/* Line chart */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-5 card-shadow">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-slate-900">Leads over time</h3>
-            <p className="mt-0.5 text-xs text-slate-500">New leads added per day — last 14 days</p>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Leads over time</h3>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">New leads added per day — last 14 days</p>
           </div>
-          <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-600">
+          <span className="rounded-full bg-indigo-50 dark:bg-indigo-950/50 px-2.5 py-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
             {stats.leadsPerDay.reduce((s, d) => s + d.count, 0)} total
           </span>
         </div>
@@ -304,35 +304,35 @@ export function AnalyticsTab({ leads }: { leads: Lead[] }) {
       </div>
 
       {/* Funnel */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-5 card-shadow">
         <div className="mb-5">
-          <h3 className="text-sm font-semibold text-slate-900">Lead funnel</h3>
-          <p className="mt-0.5 text-xs text-slate-500">Conversion stages across your pipeline</p>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Lead funnel</h3>
+          <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">Conversion stages across your pipeline</p>
         </div>
         <div className="space-y-4">
-          <FunnelBar label="Total leads" count={stats.total} total={stats.total} color="bg-slate-400" />
-          <div className="flex items-center gap-2 pl-2 text-xs text-slate-400">
+          <FunnelBar label="Total leads" count={stats.total} total={stats.total} color="bg-slate-400 dark:bg-zinc-500" />
+          <div className="flex items-center gap-2 pl-2 text-xs text-slate-400 dark:text-zinc-500">
             <ArrowRight className="h-3 w-3" />
           </div>
           <FunnelBar label="Contacted" count={stats.contacted} total={stats.total} color="bg-amber-400" />
-          <div className="flex items-center gap-2 pl-2 text-xs text-slate-400">
+          <div className="flex items-center gap-2 pl-2 text-xs text-slate-400 dark:text-zinc-500">
             <ArrowRight className="h-3 w-3" />
           </div>
           <FunnelBar label="Appointment scheduled" count={stats.scheduled} total={stats.total} color="bg-blue-500" />
-          <div className="flex items-center gap-2 pl-2 text-xs text-slate-400">
+          <div className="flex items-center gap-2 pl-2 text-xs text-slate-400 dark:text-zinc-500">
             <ArrowRight className="h-3 w-3" />
           </div>
           <FunnelBar label="Closed / Converted" count={stats.closed} total={stats.total} color="bg-emerald-500" />
         </div>
 
         {/* Conversion summary */}
-        <div className="mt-6 flex items-center gap-3 rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3">
-          <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
+        <div className="mt-6 flex items-center gap-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/50 px-4 py-3">
+          <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
           <div>
-            <p className="text-sm font-semibold text-emerald-900">
+            <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-300">
               {stats.conversionRate}% conversion rate
             </p>
-            <p className="text-xs text-emerald-700">
+            <p className="text-xs text-emerald-700 dark:text-emerald-400">
               {stats.closed} of {stats.total} leads converted to clients
             </p>
           </div>
