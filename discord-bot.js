@@ -56,7 +56,7 @@ client.on(Events.MessageCreate, async (message) => {
         .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
       const list = Array.from(fromThisUserOrBot.values());
       const currentIndex = list.findIndex((m) => m.id === message.id);
-      const forHistory = currentIndex >= 0 ? list.slice(0, currentIndex) : list.slice(0, -1);
+      const forHistory = currentIndex >= 0 ? list.slice(0, currentIndex) : list;
       for (const m of forHistory) {
         conversationHistory.push({
           role: m.author.bot ? 'assistant' : 'user',
