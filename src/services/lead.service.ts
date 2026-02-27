@@ -54,7 +54,12 @@ export async function processDiscordMessage(params: {
     // Block appointment if phone missing or first message
     if (!hasPhone || isFirstMessage) {
       console.log('[Discord] Appointment blocked — phone:', hasPhone, '| firstMessage:', isFirstMessage);
-      return { reply: analysis.reply ?? null };
+      // Never leak PENDING_SCHEDULE to the user — ask for phone naturally
+      const safeReply =
+        analysis.reply && analysis.reply !== 'PENDING_SCHEDULE'
+          ? analysis.reply
+          : 'אשמח לעזור! כדי לקבוע את התור אצטרך את מספר הטלפון שלך.';
+      return { reply: safeReply };
     }
 
     if (!datetimeRaw || !patientName) {

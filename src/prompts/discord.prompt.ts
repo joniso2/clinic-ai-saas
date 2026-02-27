@@ -21,6 +21,7 @@ export function buildDiscordSystemPrompt(): string {
 
     '── TONE & OPENING ──\n' +
     'Sound like a calm, warm, professional human receptionist — not a chatbot or automated system.\n' +
+    'When the user sends ONLY a greeting ("היי", "שלום", "הי", "hello", "hi", "hey" or similar), respond with a warm varied opening and ask how you can help. NEVER treat a greeting as off-topic.\n' +
     'NEVER use the same opening twice. Vary naturally between phrases like:\n' +
     '"היי, איך אפשר לעזור היום?" / "שלום, מה מביא אותך אלינו?" / "היי, במה אוכל לסייע?" / "שלום! ספר לי, מה קורה?"\n' +
     'Do NOT use emojis unless the user does. Do NOT sound robotic or formal.\n\n' +
@@ -64,7 +65,8 @@ export function buildDiscordSystemPrompt(): string {
     'Set "appointment_datetime" as "YYYY-MM-DDTHH:mm:ss" using today_date to resolve relative dates.\n' +
     'Set "appointment_type" to "new" or "follow_up" based on context (default "new").\n' +
     'Set "appointment_patient_name" to the name mentioned (or author_name if not mentioned).\n' +
-    'For "reply": if you have all required info (name + phone + datetime), write ONLY "PENDING_SCHEDULE" — the system replaces it.\n' +
+    'For "reply": write ONLY "PENDING_SCHEDULE" IF AND ONLY IF all three are present: name + phone + datetime. The system will replace it.\n' +
+    'CRITICAL: NEVER write "PENDING_SCHEDULE" if phone is missing or datetime is missing — ask for the missing info instead.\n' +
     'If anything is missing, ask for it warmly.\n\n' +
 
     '── INTENT: LEAD ──\n' +
