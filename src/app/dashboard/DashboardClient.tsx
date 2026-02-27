@@ -49,24 +49,26 @@ export default function DashboardClient() {
         return;
       }
 
-      const clinicIdFromMetadata =
-        (session.user.app_metadata as { clinic_id?: string } | null)?.clinic_id ?? null;
+      const { data: clinicLink } = await supabase
+        .from('clinic_users')
+        .select('clinic_id')
+        .eq('user_id', session.user.id)
+        .single();
+      const clinicIdFromMetadata = clinicLink?.clinic_id ?? null;
 
       setClinicId(clinicIdFromMetadata);
 
-      if (clinicIdFromMetadata) {
-        const res = await fetch('/api/leads', { credentials: 'include' });
-        const json = await res.json().catch(() => ({})) as { leads?: Lead[]; error?: string };
-        if (!res.ok) {
-          setError(json.error ?? 'Failed to load leads');
-          setLeads([]);
+      const res = await fetch('/api/leads', { credentials: 'include' });
+      const json = await res.json().catch(() => ({})) as { leads?: Lead[]; error?: string };
+      if (!res.ok) {
+        setError(json.error ?? 'Failed to load leads');
+        setLeads([]);
+      } else {
+        setLeads(json.leads ?? []);
+        if (json.error === 'Clinic not set for user') {
+          setError('No clinic linked to your account. Ask an admin to assign your user to a clinic.');
         } else {
-          setLeads(json.leads ?? []);
-          if (json.error === 'Clinic not set for user') {
-            setError('No clinic linked to your account. Ask an admin to assign your user to a clinic.');
-          } else {
-            setError(null);
-          }
+          setError(null);
         }
       }
 

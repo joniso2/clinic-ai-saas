@@ -10,7 +10,14 @@ async function getClinicIdFromSession(): Promise<string | null> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  return (user.app_metadata as { clinic_id?: string } | null)?.clinic_id ?? null;
+
+  const { data } = await supabase
+    .from('clinic_users')
+    .select('clinic_id')
+    .eq('user_id', user.id)
+    .single();
+
+  return data?.clinic_id ?? null;
 }
 
 /** GET /api/appointments?month=MM&year=YYYY */

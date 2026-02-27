@@ -46,7 +46,12 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      clinicId = (user.app_metadata as { clinic_id?: string } | null)?.clinic_id ?? null;
+      const { data: clinicLink } = await supabase
+        .from('clinic_users')
+        .select('clinic_id')
+        .eq('user_id', user.id)
+        .single();
+      clinicId = clinicLink?.clinic_id ?? null;
     }
   }
 
@@ -87,7 +92,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const clinicId = (user.app_metadata as { clinic_id?: string } | null)?.clinic_id;
+    const { data: clinicLink } = await supabase
+      .from('clinic_users')
+      .select('clinic_id')
+      .eq('user_id', user.id)
+      .single();
+    const clinicId = clinicLink?.clinic_id;
     if (!clinicId) {
       return NextResponse.json(
         { leads: [], error: 'Clinic not set for user' },

@@ -23,12 +23,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) return;
       setUserEmail(session.user.email ?? null);
-      const cid = (session.user.app_metadata as { clinic_id?: string } | null)?.clinic_id ?? null;
-      setClinicId(cid);
-      if (cid) {
-        const { data } = await supabase.from('clinics').select('name').eq('id', cid).maybeSingle();
-        if (data?.name) setClinicName(data.name as string);
-      }
+
+      const { data: clinicLink, error } = await supabase
+        .from('clinic_users')
+        .select(`clinic:clinics!clinic_users1_clinic_id_fkey (id, name)`)
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (!clinicLink || error) return;
+
+      const clinic = (Array.isArray(clinicLink.clinic) ? clinicLink.clinic[0] : clinicLink.clinic) as { id: string; name: string } | null;
+      if (clinic?.id) setClinicId(clinic.id);
+      if (clinic?.name) setClinicName(clinic.name);
     });
   }, []);
 
