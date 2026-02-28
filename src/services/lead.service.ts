@@ -52,9 +52,15 @@ export async function processDiscordMessage(params: {
 
   // ── APPOINTMENT INTENT ──────────────────────────────────────────────────────
   if (analysis.intent === 'appointment') {
-    console.log('[Discord] Appointment intent — datetime:', analysis.appointment_datetime, '| name:', analysis.appointment_patient_name, '| phone:', analysis.phone, '| type:', analysis.appointment_type);
-    const datetimeRaw     = analysis.appointment_datetime;
-    const patientName     = analysis.appointment_patient_name ?? authorName ?? null;
+    // Fallback: if AI didn't extract name, use full_name or Discord username
+    const patientName =
+      analysis.appointment_patient_name ??
+      analysis.full_name ??
+      authorName ??
+      null;
+
+    console.log('[Discord] Appointment intent — datetime:', analysis.appointment_datetime, '| name:', patientName, '| phone:', analysis.phone, '| type:', analysis.appointment_type);
+    const datetimeRaw = analysis.appointment_datetime;
     const appointmentType = (analysis.appointment_type ?? 'new') as AppointmentType;
 
     // Block appointment if phone missing, first message, or incomplete details

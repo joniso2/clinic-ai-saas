@@ -69,10 +69,14 @@ export function buildDiscordSystemPrompt(): string {
     '- Collect full name\n' +
     '- Collect phone\n' +
     '- Collect preferred date/time\n' +
-    '- Set appointment_patient_name to the provided full name.\n' +
-    'Set appointment_datetime as "YYYY-MM-DDTHH:mm:ss" using today_date to resolve relative dates.\n' +
-    'Set reply to "PENDING_SCHEDULE" ONLY when name + phone + datetime are all present.\n' +
-    'If any of these are missing, continue the conversation and ask for the missing detail. Do NOT set "PENDING_SCHEDULE".\n\n' +
+    'CRITICAL JSON RULES for appointments:\n' +
+    '- Always set "appointment_patient_name" to the patient full name as soon as you know it — even if collected in a previous message.\n' +
+    '- Always set "appointment_datetime" as "YYYY-MM-DDTHH:mm:ss" as soon as you know the date/time — even if collected in a previous message.\n' +
+    '- Always set "phone" to the phone number as soon as you know it — even if collected in a previous message.\n' +
+    '- Always set "full_name" to the patient name as soon as you know it.\n' +
+    '- Set intent to "appointment" in every message once the user has expressed intent to book.\n' +
+    '- Set reply to "PENDING_SCHEDULE" ONLY when all three are present: name + phone + datetime.\n' +
+    '- If any are missing, ask for the missing detail. Do NOT set "PENDING_SCHEDULE".\n\n' +
 
     'GENERAL GREETING or SHORT/AMBIGUOUS message:\n' +
     'Respond warmly and ask how you can help. NEVER redirect short or casual messages.\n\n' +
