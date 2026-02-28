@@ -66,14 +66,16 @@ export async function processDiscordMessage(params: {
     // Block appointment if phone missing, first message, or incomplete details
     if (!hasPhone || isFirstMessage || !datetimeRaw || !patientName) {
       console.log('[Discord] Appointment blocked — phone:', hasPhone, '| firstMessage:', isFirstMessage, '| datetime:', datetimeRaw, '| name:', patientName);
-      const safeReply =
-        analysis.reply && analysis.reply !== 'PENDING_SCHEDULE'
-          ? analysis.reply
-          : !hasPhone
-            ? 'אשמח לעזור! כדי לקבוע את התור אצטרך את מספר הטלפון שלך.'
-            : !patientName
-              ? 'מה שמך המלא?'
-              : 'באיזה תאריך ושעה תרצה לקבוע?';
+      // If AI provided a valid conversational reply, use it (triage is still ongoing)
+      if (analysis.reply && analysis.reply !== 'PENDING_SCHEDULE' && analysis.reply.trim().length > 0) {
+        return { reply: analysis.reply };
+      }
+      // Only use hardcoded fallback if AI gave no reply
+      const safeReply = !hasPhone
+        ? 'אשמח לעזור! כדי לקבוע את התור אצטרך את מספר הטלפון שלך.'
+        : !patientName
+          ? 'מה שמך המלא?'
+          : 'באיזה תאריך ושעה תרצה לקבוע?';
       return { reply: safeReply };
     }
 

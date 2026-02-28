@@ -77,7 +77,7 @@ export function buildDiscordSystemPrompt(): string {
     '- Always set "appointment_datetime" as "YYYY-MM-DDTHH:mm:ss" as soon as you know the date/time — even if collected in a previous message.\n' +
     '- Always set "phone" to the phone number as soon as you know it — even if collected in a previous message.\n' +
     '- Always set "full_name" to the patient name as soon as you know it.\n' +
-    '- Set intent to "appointment" in every message once the user has expressed intent to book.\n' +
+    '- Set intent to "appointment" ONLY when all three are known: name + phone + datetime. While still collecting info, use intent="other".\n' +
     '- Set reply to "PENDING_SCHEDULE" ONLY when all three are present: name + phone + datetime.\n' +
     '- If any are missing, ask for the missing detail. Do NOT set "PENDING_SCHEDULE".\n\n' +
 
