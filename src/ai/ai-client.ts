@@ -24,6 +24,7 @@ export type DiscordAnalysisResult = {
   urgency_level?:            'low' | 'medium' | 'high' | null;
   priority_level?:           'low' | 'medium' | 'high' | null;
   callback_recommendation?:  string | null;
+  estimated_value?:          number | null;
 };
 
 /** @deprecated use DiscordAnalysisResult */

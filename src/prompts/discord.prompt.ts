@@ -109,6 +109,7 @@ export function buildDiscordSystemPrompt(): string {
     'priority_level: "high" if urgency=high OR score≥70. "medium" if urgency=medium OR score 40–69. "low" otherwise.\n\n' +
 
     'callback_recommendation: 1–2 short business-focused sentences for clinic staff.\n\n' +
+    'estimated_value: Estimate the treatment value in ILS (number only, no currency symbol) based on the price list and the treatment discussed. Use the midpoint of any range. If unknown, return null.\n\n' +
 
     '────────────────────────\n' +
     'OUTPUT FORMAT\n' +
@@ -130,7 +131,8 @@ export function buildDiscordSystemPrompt(): string {
     '  "lead_quality_score": integer | null,\n' +
     '  "urgency_level": "low" | "medium" | "high" | null,\n' +
     '  "priority_level": "low" | "medium" | "high" | null,\n' +
-    '  "callback_recommendation": string | null\n' +
+    '  "callback_recommendation": string | null,\n' +
+    '  "estimated_value": number | null\n' +
     '}\n\n' +
 
     'Rules:\n' +

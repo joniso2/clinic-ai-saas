@@ -29,6 +29,7 @@ export type CreateLeadPayload = {
   sla_deadline?: string | null;
   follow_up_recommended_at?: string | null;
   callback_recommendation?: string | null;
+  estimated_deal_value?: number | null;
 };
 
 export type LeadRow = {
@@ -75,6 +76,7 @@ export async function createLead(payload: CreateLeadPayload): Promise<{
   if (payload.sla_deadline !== undefined)             insertPayload.sla_deadline             = payload.sla_deadline;
   if (payload.follow_up_recommended_at !== undefined) insertPayload.follow_up_recommended_at = payload.follow_up_recommended_at;
   if (payload.callback_recommendation !== undefined)  insertPayload.callback_recommendation  = payload.callback_recommendation;
+  if (payload.estimated_deal_value !== undefined)     insertPayload.estimated_deal_value     = payload.estimated_deal_value;
 
   console.log('[LeadRepository] createLead payload:', JSON.stringify(insertPayload));
 

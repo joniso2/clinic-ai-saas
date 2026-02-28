@@ -124,6 +124,7 @@ export async function processDiscordMessage(params: {
         sla_deadline:             intel.sla_deadline,
         follow_up_recommended_at: intel.follow_up_recommended_at,
         callback_recommendation:  analysis.callback_recommendation  ?? null,
+        estimated_deal_value:     analysis.estimated_value          ?? null,
       });
       if (createErr) {
         console.error('[Discord] Lead creation for appointment failed:', createErr);
@@ -199,6 +200,7 @@ export async function processDiscordMessage(params: {
       email:                    analysis.email ?? null,
       interest:                 analysis.interest ?? null,
       status:                   'New',
+      source:                   'discord',
       conversation_summary:     analysis.conversation_summary     ?? null,
       lead_quality_score:       analysis.lead_quality_score       ?? null,
       urgency_level:            analysis.urgency_level            ?? null,
@@ -206,6 +208,7 @@ export async function processDiscordMessage(params: {
       sla_deadline:             intel.sla_deadline,
       follow_up_recommended_at: intel.follow_up_recommended_at,
       callback_recommendation:  analysis.callback_recommendation  ?? null,
+      estimated_deal_value:     analysis.estimated_value          ?? null,
     });
     if (error) console.error('[Discord] Lead creation failed:', error);
     else if (data) console.log('[Discord] Lead created successfully.');
