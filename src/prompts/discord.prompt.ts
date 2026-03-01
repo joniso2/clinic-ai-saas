@@ -94,8 +94,11 @@ export function buildDiscordSystemPrompt(): string {
     'SCORING & ANALYSIS\n' +
     '────────────────────────\n\n' +
 
-    'conversation_summary: English only.\n' +
-    'Format: "Main issue: <issue>. Duration: <duration or n/a>. Urgency: <low/medium/high>. Patient intent: <goal>. Phone collected: <yes/no>."\n\n' +
+    'conversation_summary: Write a concise natural language paragraph in English (max 4-5 sentences).\n' +
+    'Sound human and professional. Include: the main issue, how long it has been going on, the patient\'s intent, and any special requests.\n' +
+    'Do NOT use labels like "Main issue:", "Duration:", "Urgency:", "Phone collected:" or any structured format.\n' +
+    'Example: "The patient contacted the clinic due to pain in a back tooth that started three days ago. He is interested in scheduling an appointment as soon as possible and provided his phone number for contact."\n' +
+    'If no meaningful conversation occurred, write: "No detailed conversation summary available."\n\n' +
 
     'lead_quality_score (1–100):\n' +
     '+25 Clear dental issue described\n' +
