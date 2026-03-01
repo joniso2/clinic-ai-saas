@@ -77,22 +77,24 @@ export async function processDiscordMessage(params: {
       return { reply: safeReply };
     }
 
-    // If no datetime provided but we have name + phone — auto-book the closest available slot
+    // If no datetime — check if patient wants earliest slot or needs to choose
     let resolvedDatetimeRaw = datetimeRaw;
-    if (!resolvedDatetimeRaw && clinicId) {
-      console.log('[Discord] No datetime provided — finding closest available slot');
-      const now = new Date();
-      const suggestions = await appointmentService.suggestClosestAvailable(clinicId, now, 1);
-      if (suggestions.length > 0) {
-        resolvedDatetimeRaw = suggestions[0];
-        console.log('[Discord] Auto-selected slot:', resolvedDatetimeRaw);
-      } else {
-        return { reply: 'מצטערים, אין זמינות בשבועות הקרובים. פנה אלינו ישירות לתיאום.' };
-      }
-    }
-
     if (!resolvedDatetimeRaw) {
-      return { reply: analysis.reply ?? 'באיזה תאריך ושעה תרצה לקבוע?' };
+      // Only auto-book if reply is PENDING_SCHEDULE (patient wants earliest/any slot)
+      if (analysis.reply === 'PENDING_SCHEDULE' && clinicId) {
+        console.log('[Discord] PENDING_SCHEDULE with no datetime — finding closest available slot');
+        const now = new Date();
+        const suggestions = await appointmentService.suggestClosestAvailable(clinicId, now, 1);
+        if (suggestions.length > 0) {
+          resolvedDatetimeRaw = suggestions[0];
+          console.log('[Discord] Auto-selected slot:', resolvedDatetimeRaw);
+        } else {
+          return { reply: 'מצטערים, אין זמינות בשבועות הקרובים. פנה אלינו ישירות לתיאום.' };
+        }
+      } else {
+        // Patient hasn't specified — let the AI reply guide them to choose a date
+        return { reply: analysis.reply ?? 'באיזה תאריך ושעה תרצה לקבוע?' };
+      }
     }
 
     if (!clinicId) {
