@@ -22,7 +22,7 @@ export function EditLeadModal({
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [interest, setInterest] = useState('');
-  const [status, setStatus] = useState<LeadStatus>('New');
+  const [status, setStatus] = useState<LeadStatus>('Pending');
 
   useEffect(() => {
     if (lead) {
@@ -30,7 +30,7 @@ export function EditLeadModal({
       setEmail(lead.email ?? '');
       setPhone(lead.phone ?? '');
       setInterest(lead.interest ?? '');
-      setStatus((lead.status as LeadStatus) ?? 'New');
+      setStatus((lead.status as LeadStatus) ?? 'Pending');
     }
   }, [lead]);
 
@@ -124,9 +124,11 @@ export function EditLeadModal({
               onChange={(e) => setStatus(e.target.value as LeadStatus)}
               className="mt-1 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/70 px-3 py-2 text-sm text-slate-900 dark:text-zinc-100 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
             >
-              <option value="New">New</option>
+              <option value="Pending">Pending</option>
               <option value="Contacted">Contacted</option>
+              <option value="Appointment scheduled">Appointment scheduled</option>
               <option value="Closed">Closed</option>
+              <option value="Disqualified">Disqualified</option>
             </select>
           </div>
           <div className="flex justify-end gap-3 pt-4">

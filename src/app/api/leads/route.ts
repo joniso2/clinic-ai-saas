@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     phone: parsed.phone ?? null,
     email: parsed.email ?? null,
     interest: parsed.interest ?? null,
-    status: parsed.status ?? 'New',
+    status: parsed.status ?? 'Pending',
   });
 
   if (error) {

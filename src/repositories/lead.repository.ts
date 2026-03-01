@@ -65,7 +65,7 @@ export async function createLead(payload: CreateLeadPayload): Promise<{
     full_name: payload.full_name,
     phone:     payload.phone ?? null,
     email:     payload.email ?? null,
-    status:    payload.status ?? 'New',
+    status:    payload.status ?? 'Pending',
   };
   if (payload.source !== undefined)                   insertPayload.source                   = payload.source;
   if (payload.interest !== undefined)                 insertPayload.interest                 = payload.interest;

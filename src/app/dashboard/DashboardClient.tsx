@@ -25,7 +25,7 @@ export default function DashboardClient() {
   const [newLeadPhone, setNewLeadPhone] = useState('');
   const [newLeadEmail, setNewLeadEmail] = useState('');
   const [newLeadInterest, setNewLeadInterest] = useState('');
-  const [newLeadStatus, setNewLeadStatus] = useState<LeadStatus>('New');
+  const [newLeadStatus, setNewLeadStatus] = useState<LeadStatus>('Pending');
   const [submittingLead, setSubmittingLead] = useState(false);
 
   const [drawerLead, setDrawerLead] = useState<Lead | null>(null);
@@ -112,7 +112,7 @@ export default function DashboardClient() {
       setNewLeadPhone('');
       setNewLeadEmail('');
       setNewLeadInterest('');
-      setNewLeadStatus('New');
+      setNewLeadStatus('Pending');
     }
 
     setSubmittingLead(false);
@@ -138,6 +138,37 @@ export default function DashboardClient() {
 
   const handleMarkContacted = async (leadId: string) => {
     await handleUpdateLeadStatus(leadId, 'Contacted');
+  };
+
+  const handleRejectLead = async (leadId: string, reason: string) => {
+    const rejectedAt = new Date().toISOString();
+    const res = await fetch(`/api/leads/${leadId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        status: 'Disqualified',
+        reject_reason: reason,
+        rejected_at: rejectedAt,
+      }),
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setError((json as { error?: string }).error ?? 'Failed to update');
+      return;
+    }
+    setLeads((prev) =>
+      prev.map((l) =>
+        l.id === leadId
+          ? { ...l, status: 'Disqualified', reject_reason: reason, rejected_at: rejectedAt }
+          : l
+      )
+    );
+    setDrawerLead((prev) =>
+      prev?.id === leadId
+        ? { ...prev, status: 'Disqualified', reject_reason: reason, rejected_at: rejectedAt }
+        : prev
+    );
   };
 
   const handleScheduleFollowUp = async (leadId: string) => {
@@ -319,10 +350,11 @@ export default function DashboardClient() {
                 onChange={(e) => setNewLeadStatus(e.target.value as LeadStatus)}
                 className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
               >
-                <option value="New">New</option>
+                <option value="Pending">Pending</option>
                 <option value="Contacted">Contacted</option>
                 <option value="Appointment scheduled">Appointment scheduled</option>
                 <option value="Closed">Closed</option>
+                <option value="Disqualified">Disqualified</option>
               </select>
             </div>
           </div>
@@ -378,6 +410,7 @@ export default function DashboardClient() {
           onScheduleFollowUp={handleScheduleFollowUp}
           onScheduleAppointment={(lead) => setAppointmentLead(lead)}
           nextAppointmentsByLeadId={nextAppointmentsByLeadId}
+          onRejectLead={handleRejectLead}
         />
       )}
 

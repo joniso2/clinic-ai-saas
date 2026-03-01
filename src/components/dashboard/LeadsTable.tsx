@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   MoreHorizontal,
@@ -27,14 +27,15 @@ const PRIORITY_STYLES: Record<Priority, string> = {
 };
 
 const STATUS_BADGE_STYLES: Record<string, string> = {
-  New: 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/60',
+  Pending: 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/60',
   Contacted: 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60',
   'Appointment scheduled': 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60',
   Closed: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60',
   Converted: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60',
+  Disqualified: 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-500 border border-zinc-200 dark:border-zinc-700',
 };
 
-const STATUS_OPTIONS: LeadStatus[] = ['New', 'Contacted', 'Appointment scheduled', 'Closed'];
+const STATUS_OPTIONS: LeadStatus[] = ['Pending', 'Contacted', 'Appointment scheduled', 'Closed', 'Disqualified'];
 
 type SortKey = 'revenue' | 'created' | 'name' | 'score';
 
@@ -47,6 +48,218 @@ function formatDateDDMMYYYY(value: string): string {
   return `${day}/${month}/${year}`;
 }
 
+function formatDateTime(value: string): string {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleString('en-GB', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
+// ─── Pending Review Modal ────────────────────────────────────────────────────
+
+const REJECT_REASONS = [
+  'Not relevant inquiry',
+  'Price not suitable',
+  'Duplicate lead',
+  'No response from client',
+  'Outside service area',
+] as const;
+
+type RejectReason = typeof REJECT_REASONS[number];
+
+function PendingReviewModal({
+  lead,
+  nextAppointment,
+  onAccept,
+  onReject,
+  onClose,
+}: {
+  lead: Lead;
+  nextAppointment?: string;
+  onAccept: () => void;
+  onReject: (reason: RejectReason) => void;
+  onClose: () => void;
+}) {
+  const [mode, setMode] = useState<'main' | 'reject'>('main');
+  const [rejectReason, setRejectReason] = useState<RejectReason | ''>('');
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  const priority = getDisplayPriority(lead);
+  const hasAppointment = !!nextAppointment;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div className="relative w-full max-w-sm rounded-2xl border border-zinc-700/60 bg-zinc-900 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+        <div className="px-5 py-4 border-b border-zinc-800">
+          <h2 className="text-base font-semibold text-zinc-100">Review Lead</h2>
+        </div>
+
+        <div className="px-5 py-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-zinc-100">{lead.full_name || 'Unnamed lead'}</span>
+            <span className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-medium ${PRIORITY_STYLES[priority]}`}>
+              {priority}
+            </span>
+          </div>
+
+          {(lead.lead_quality_score ?? lead.lead_score) != null && (
+            <div className="flex items-center gap-2 text-xs text-zinc-400">
+              <span className="font-medium text-zinc-300">Score</span>
+              <span>{lead.lead_quality_score ?? lead.lead_score}/100</span>
+            </div>
+          )}
+
+          {nextAppointment && (
+            <div className="flex items-center gap-2 text-xs text-zinc-400">
+              <Calendar className="h-3.5 w-3.5 shrink-0" />
+              <span>Appointment: {new Intl.DateTimeFormat('he-IL', {
+                timeZone: 'Asia/Jerusalem',
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', hour12: false,
+              }).format(new Date(nextAppointment))}</span>
+            </div>
+          )}
+        </div>
+
+        {mode === 'main' && (
+          <div className="px-5 pb-5 space-y-3">
+            <button
+              type="button"
+              disabled={!hasAppointment}
+              onClick={onAccept}
+              title={!hasAppointment ? 'No appointment scheduled for this lead' : undefined}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2.5 text-sm font-semibold text-white transition"
+            >
+              ✓ Accept &amp; Confirm Appointment
+            </button>
+            {!hasAppointment && (
+              <p className="text-center text-xs text-zinc-500">Schedule an appointment first to accept.</p>
+            )}
+            <div className="border-t border-zinc-800 pt-3">
+              <button
+                type="button"
+                onClick={() => setMode('reject')}
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-zinc-700 hover:border-zinc-500 bg-transparent px-4 py-2.5 text-sm font-medium text-zinc-400 hover:text-zinc-200 transition"
+              >
+                ✕ Reject Lead
+              </button>
+            </div>
+          </div>
+        )}
+
+        {mode === 'reject' && (
+          <div className="px-5 pb-5 space-y-4">
+            <p className="text-xs font-medium text-zinc-400">Select a reason to continue:</p>
+            <div className="space-y-2">
+              {REJECT_REASONS.map((reason) => (
+                <label key={reason} className="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="reject-reason"
+                    value={reason}
+                    checked={rejectReason === reason}
+                    onChange={() => setRejectReason(reason)}
+                    className="h-4 w-4 accent-indigo-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-zinc-300 group-hover:text-zinc-100 transition">{reason}</span>
+                </label>
+              ))}
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => { setMode('main'); setRejectReason(''); }}
+                className="flex-1 rounded-xl border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-400 hover:text-zinc-200 transition"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                disabled={!rejectReason}
+                onClick={() => rejectReason && onReject(rejectReason as RejectReason)}
+                className="flex-1 rounded-xl bg-red-700 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2 text-sm font-semibold text-white transition"
+              >
+                Confirm Reject
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Toast ───────────────────────────────────────────────────────────────────
+
+function Toast({ message, onDone }: { message: string; onDone: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 3000);
+    return () => clearTimeout(t);
+  }, [onDone]);
+  return (
+    <div className="fixed bottom-6 left-1/2 z-[70] -translate-x-1/2 rounded-xl bg-zinc-800 border border-zinc-700 px-4 py-2.5 text-sm text-zinc-200 shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-200">
+      {message}
+    </div>
+  );
+}
+
+// ─── Phone Contact Modal ─────────────────────────────────────────────────────
+
+function PhoneContactModal({ phone, onClose }: { phone: string; onClose: () => void }) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  const waNumber = phone.replace(/\D/g, '').replace(/^0/, '972');
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div className="relative w-full max-w-xs rounded-2xl border border-zinc-700/60 bg-zinc-900 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+        <div className="px-5 py-4 border-b border-zinc-800">
+          <h2 className="text-base font-semibold text-zinc-100">Contact via</h2>
+        </div>
+        <div className="px-5 py-4 space-y-3">
+          <a
+            href={`tel:${phone}`}
+            className="flex items-center gap-3 w-full rounded-xl border border-zinc-700 hover:border-zinc-500 px-4 py-3 text-sm font-medium text-zinc-200 hover:text-white transition"
+          >
+            <Phone className="h-4 w-4 shrink-0 text-emerald-400" />
+            Phone Call
+          </a>
+          <a
+            href={`https://wa.me/${waNumber}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 w-full rounded-xl border border-zinc-700 hover:border-zinc-500 px-4 py-3 text-sm font-medium text-zinc-200 hover:text-white transition"
+          >
+            <svg className="h-4 w-4 shrink-0 text-green-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Table Component ────────────────────────────────────────────────────
+
 export function LeadsTable({
   leads,
   onView,
@@ -57,6 +270,7 @@ export function LeadsTable({
   onScheduleFollowUp,
   onScheduleAppointment,
   nextAppointmentsByLeadId,
+  onRejectLead,
 }: {
   leads: Lead[];
   onView: (lead: Lead) => void;
@@ -67,6 +281,7 @@ export function LeadsTable({
   onScheduleFollowUp: (leadId: string) => void;
   onScheduleAppointment: (lead: Lead) => void;
   nextAppointmentsByLeadId?: Record<string, string | undefined>;
+  onRejectLead?: (leadId: string, reason: string) => void;
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<Priority | ''>('');
@@ -75,16 +290,21 @@ export function LeadsTable({
   const [sortDesc, setSortDesc] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [rowMenuId, setRowMenuId] = useState<string | null>(null);
-  const [rowMenuCoords, setRowMenuCoords] = useState<
-    | {
-        top: number;
-        left: number;
-      }
-    | null
-  >(null);
+  const [rowMenuCoords, setRowMenuCoords] = useState<{ top: number; left: number } | null>(null);
+  const [pendingReviewLead, setPendingReviewLead] = useState<Lead | null>(null);
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
+  const [toast, setToast] = useState<string | null>(null);
+  const [phoneModalPhone, setPhoneModalPhone] = useState<string | null>(null);
+
+  const isDisqualifiedView = statusFilter === 'Disqualified';
 
   const filteredAndSorted = useMemo(() => {
     let list = [...leads];
+
+    // Default: exclude Disqualified unless explicitly selected
+    if (!statusFilter) {
+      list = list.filter((l) => (l.status ?? 'Pending') !== 'Disqualified');
+    }
 
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
@@ -98,15 +318,14 @@ export function LeadsTable({
       list = list.filter((l) => getDisplayPriority(l) === priorityFilter);
     }
     if (statusFilter) {
-      list = list.filter((l) => (l.status ?? 'New') === statusFilter);
+      list = list.filter((l) => (l.status ?? 'Pending') === statusFilter);
     }
 
     list.sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
         case 'revenue':
-          cmp =
-            (a.estimated_deal_value ?? 0) - (b.estimated_deal_value ?? 0);
+          cmp = (a.estimated_deal_value ?? 0) - (b.estimated_deal_value ?? 0);
           break;
         case 'name':
           cmp = (a.full_name ?? '').localeCompare(b.full_name ?? '');
@@ -115,9 +334,7 @@ export function LeadsTable({
           cmp = (a.lead_quality_score ?? a.lead_score ?? 0) - (b.lead_quality_score ?? b.lead_score ?? 0);
           break;
         default:
-          cmp =
-            new Date(a.created_at).getTime() -
-            new Date(b.created_at).getTime();
+          cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       }
       return sortDesc ? -cmp : cmp;
     });
@@ -137,9 +354,7 @@ export function LeadsTable({
     if (selectedIds.size === filteredAndSorted.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(
-        new Set(filteredAndSorted.map((l) => l.id))
-      );
+      setSelectedIds(new Set(filteredAndSorted.map((l) => l.id)));
     }
   };
 
@@ -151,9 +366,29 @@ export function LeadsTable({
     return p === 'Urgent' || (p === 'High' && next);
   };
 
+  const handleAccept = (lead: Lead) => {
+    onStatusChange(lead.id, 'Appointment scheduled');
+    setPendingReviewLead(null);
+  };
+
+  const handleReject = (lead: Lead, reason: string) => {
+    setRemovingIds((prev) => new Set(prev).add(lead.id));
+    setTimeout(() => {
+      onStatusChange(lead.id, 'Disqualified');
+      onRejectLead?.(lead.id, reason);
+      setRemovingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(lead.id);
+        return next;
+      });
+      setToast('Lead moved to Disqualified');
+    }, 300);
+    setPendingReviewLead(null);
+  };
+
   return (
     <div className="space-y-4">
-      {/* Toolbar: search, filters, sort */}
+      {/* Toolbar */}
       <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 card-shadow sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
@@ -168,9 +403,7 @@ export function LeadsTable({
           </div>
           <select
             value={priorityFilter}
-            onChange={(e) =>
-              setPriorityFilter((e.target.value || '') as Priority | '')
-            }
+            onChange={(e) => setPriorityFilter((e.target.value || '') as Priority | '')}
             className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-slate-700 dark:text-zinc-300 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
           >
             <option value="">All priorities</option>
@@ -185,9 +418,11 @@ export function LeadsTable({
             className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-slate-700 dark:text-zinc-300 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
           >
             <option value="">All statuses</option>
-            <option value="New">New</option>
+            <option value="Pending">Pending</option>
+            <option value="Appointment scheduled">Appointment scheduled</option>
             <option value="Contacted">Contacted</option>
             <option value="Closed">Closed</option>
+            <option value="Disqualified">Disqualified</option>
           </select>
           <div className="flex items-center gap-1">
             <label className="text-xs text-slate-500 dark:text-zinc-500">Sort:</label>
@@ -207,9 +442,7 @@ export function LeadsTable({
               className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-2 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-700"
               title={sortDesc ? 'Descending' : 'Ascending'}
             >
-              <ChevronDown
-                className={`h-4 w-4 transition ${sortDesc ? '' : 'rotate-180'}`}
-              />
+              <ChevronDown className={`h-4 w-4 transition ${sortDesc ? '' : 'rotate-180'}`} />
             </button>
           </div>
         </div>
@@ -251,41 +484,26 @@ export function LeadsTable({
                 <th className="w-10 px-4 py-3 text-left">
                   <input
                     type="checkbox"
-                    checked={
-                      filteredAndSorted.length > 0 &&
-                      selectedIds.size === filteredAndSorted.length
-                    }
+                    checked={filteredAndSorted.length > 0 && selectedIds.size === filteredAndSorted.length}
                     onChange={toggleSelectAll}
                     className="h-4 w-4 rounded border-slate-300 dark:border-zinc-600 text-slate-900 focus:ring-slate-900"
                   />
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-                  Contact
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-                  Priority
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-                  Value
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-                  Score
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-                  Source
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-                  Last contact
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-                  Next follow-up
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-                  Next appointment
-                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Contact</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Priority</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Value</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Score</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Source</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Last contact</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Next follow-up</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Next appointment</th>
+                {isDisqualifiedView && (
+                  <>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Reject reason</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Rejected at</th>
+                  </>
+                )}
                 <th className="w-12 px-4 py-3" />
               </tr>
             </thead>
@@ -293,10 +511,13 @@ export function LeadsTable({
               {filteredAndSorted.map((lead) => {
                 const priority = getDisplayPriority(lead);
                 const urgent = isUrgent(lead);
+                const isRemoving = removingIds.has(lead.id);
                 return (
                   <tr
                     key={lead.id}
-                    className={`group transition-colors ${
+                    className={`group transition-all duration-300 ${
+                      isRemoving ? 'opacity-0 scale-95' : 'opacity-100'
+                    } ${
                       urgent
                         ? 'bg-red-50/40 dark:bg-red-950/20 hover:bg-red-50/70 dark:hover:bg-red-950/30'
                         : 'hover:bg-slate-50 dark:hover:bg-zinc-700/40'
@@ -313,10 +534,7 @@ export function LeadsTable({
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
                         {urgent && (
-                          <span
-                            className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-red-500"
-                            title="Requires urgent attention"
-                          />
+                          <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-red-500" title="Requires urgent attention" />
                         )}
                         <div>
                           <button
@@ -326,68 +544,67 @@ export function LeadsTable({
                           >
                             {lead.full_name || 'Unnamed lead'}
                           </button>
-                          <p className="text-xs text-slate-400 dark:text-zinc-500">
-                            {lead.email || '—'}
-                          </p>
+                          <p className="text-xs text-slate-400 dark:text-zinc-500">{lead.email || '—'}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-medium ${PRIORITY_STYLES[priority]}`}
-                      >
+                      <span className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-medium ${PRIORITY_STYLES[priority]}`}>
                         {priority}
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700 dark:text-zinc-300">
-                      {(lead.estimated_deal_value ?? 0) > 0
-                        ? formatCurrency(lead.estimated_deal_value!)
-                        : '—'}
+                      {(lead.estimated_deal_value ?? 0) > 0 ? formatCurrency(lead.estimated_deal_value!) : '—'}
                     </td>
                     <td className="px-4 py-3">
                       {(lead.lead_quality_score ?? lead.lead_score) != null ? (
                         <span className="text-sm font-medium text-slate-900 dark:text-zinc-100">
                           {lead.lead_quality_score ?? lead.lead_score}
                         </span>
-                      ) : (
-                        '—'
-                      )}
+                      ) : '—'}
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          STATUS_BADGE_STYLES[lead.status ?? 'New'] ?? STATUS_BADGE_STYLES['New']
-                        }`}
-                      >
-                        {lead.status ?? 'New'}
-                      </span>
+                      {lead.status === 'Pending' ? (
+                        <button
+                          type="button"
+                          onClick={() => setPendingReviewLead(lead)}
+                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${STATUS_BADGE_STYLES['Pending']}`}
+                          title="Click to review this lead"
+                        >
+                          Pending
+                        </button>
+                      ) : (
+                        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_BADGE_STYLES[lead.status ?? 'Pending'] ?? STATUS_BADGE_STYLES['Pending']}`}>
+                          {lead.status ?? 'Pending'}
+                        </span>
+                      )}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600 dark:text-zinc-400">{lead.source ?? '—'}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600 dark:text-zinc-400">
+                      {lead.last_contact_date ? formatDateDDMMYYYY(lead.last_contact_date) : '—'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600 dark:text-zinc-400">
-                      {lead.source ?? '—'}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600 dark:text-zinc-400">
-                      {lead.last_contact_date
-                        ? formatDateDDMMYYYY(lead.last_contact_date)
-                        : '—'}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600 dark:text-zinc-400">
-                      {lead.next_follow_up_date
-                        ? formatDateDDMMYYYY(lead.next_follow_up_date)
-                        : '—'}
+                      {lead.next_follow_up_date ? formatDateDDMMYYYY(lead.next_follow_up_date) : '—'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600 dark:text-zinc-400">
                       {nextAppointmentsByLeadId?.[lead.id]
                         ? new Intl.DateTimeFormat('he-IL', {
                             timeZone: 'Asia/Jerusalem',
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: false,
+                            day: '2-digit', month: '2-digit', year: 'numeric',
+                            hour: '2-digit', minute: '2-digit', hour12: false,
                           }).format(new Date(nextAppointmentsByLeadId[lead.id]!))
                         : '—'}
                     </td>
+                    {isDisqualifiedView && (
+                      <>
+                        <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600 dark:text-zinc-400">
+                          {lead.reject_reason ?? '—'}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600 dark:text-zinc-400">
+                          {lead.rejected_at ? formatDateTime(lead.rejected_at) : '—'}
+                        </td>
+                      </>
+                    )}
                     <td className="relative px-4 py-3">
                       <div className="flex items-center gap-1">
                         <button
@@ -406,6 +623,16 @@ export function LeadsTable({
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
+                        {lead.phone && (
+                          <button
+                            type="button"
+                            onClick={() => setPhoneModalPhone(lead.phone!)}
+                            className="rounded-lg p-1.5 text-slate-500 dark:text-zinc-400 transition hover:bg-slate-100 dark:hover:bg-zinc-700 hover:text-slate-700 dark:hover:text-zinc-200"
+                            title="Contact"
+                          >
+                            <Phone className="h-4 w-4" />
+                          </button>
+                        )}
                         <div className="relative">
                           <button
                             type="button"
@@ -415,22 +642,15 @@ export function LeadsTable({
                                 setRowMenuCoords(null);
                                 return;
                               }
-                              const rect =
-                                (e.currentTarget as HTMLElement).getBoundingClientRect();
+                              const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
                               const estimatedMenuHeight = 220;
                               const viewportHeight = window.innerHeight;
                               let top = rect.bottom + window.scrollY;
-                              if (
-                                top + estimatedMenuHeight >
-                                window.scrollY + viewportHeight - 8
-                              ) {
+                              if (top + estimatedMenuHeight > window.scrollY + viewportHeight - 8) {
                                 top = rect.top + window.scrollY - estimatedMenuHeight;
                               }
                               setRowMenuId(lead.id);
-                              setRowMenuCoords({
-                                top,
-                                left: rect.right + window.scrollX,
-                              });
+                              setRowMenuCoords({ top, left: rect.right + window.scrollX });
                             }}
                             className="rounded-lg p-1.5 text-slate-500 dark:text-zinc-400 transition hover:bg-slate-100 dark:hover:bg-zinc-700 hover:text-slate-700 dark:hover:text-zinc-200"
                             title="More"
@@ -441,42 +661,28 @@ export function LeadsTable({
                             <>
                               <div
                                 className="fixed inset-0 z-10"
-                                onClick={() => {
-                                  setRowMenuId(null);
-                                  setRowMenuCoords(null);
-                                }}
+                                onClick={() => { setRowMenuId(null); setRowMenuCoords(null); }}
                                 aria-hidden="true"
                               />
                               <div
                                 className="fixed z-20 w-48 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 py-1 shadow-lg dark:shadow-black/30"
-                                style={{
-                                  top: rowMenuCoords.top,
-                                  left: rowMenuCoords.left - 192,
-                                }}
+                                style={{ top: rowMenuCoords.top, left: rowMenuCoords.left - 192 }}
                               >
                                 <select
-                                  value={lead.status ?? 'New'}
+                                  value={lead.status ?? 'Pending'}
                                   onChange={(e) => {
-                                    onStatusChange(
-                                      lead.id,
-                                      e.target.value as LeadStatus
-                                    );
+                                    onStatusChange(lead.id, e.target.value as LeadStatus);
                                     setRowMenuId(null);
                                   }}
                                   className="w-full border-0 bg-transparent px-3 py-2 text-left text-sm text-slate-700 dark:text-zinc-300 focus:ring-0"
                                 >
                                   {STATUS_OPTIONS.map((s) => (
-                                    <option key={s} value={s}>
-                                      {s}
-                                    </option>
+                                    <option key={s} value={s}>{s}</option>
                                   ))}
                                 </select>
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    onMarkContacted(lead.id);
-                                    setRowMenuId(null);
-                                  }}
+                                  onClick={() => { onMarkContacted(lead.id); setRowMenuId(null); }}
                                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700"
                                 >
                                   <Phone className="h-3.5 w-3.5" />
@@ -484,10 +690,7 @@ export function LeadsTable({
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    onScheduleFollowUp(lead.id);
-                                    setRowMenuId(null);
-                                  }}
+                                  onClick={() => { onScheduleFollowUp(lead.id); setRowMenuId(null); }}
                                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700"
                                 >
                                   <Calendar className="h-3.5 w-3.5" />
@@ -495,10 +698,7 @@ export function LeadsTable({
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    onScheduleAppointment(lead);
-                                    setRowMenuId(null);
-                                  }}
+                                  onClick={() => { onScheduleAppointment(lead); setRowMenuId(null); }}
                                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700"
                                 >
                                   <Calendar className="h-3.5 w-3.5" />
@@ -506,10 +706,7 @@ export function LeadsTable({
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    onDelete(lead);
-                                    setRowMenuId(null);
-                                  }}
+                                  onClick={() => { onDelete(lead); setRowMenuId(null); }}
                                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
@@ -530,15 +727,33 @@ export function LeadsTable({
 
         {filteredAndSorted.length === 0 && (
           <div className="px-6 py-16 text-center">
-            <p className="text-sm font-medium text-slate-800 dark:text-zinc-200">
-              No leads match your filters.
-            </p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-zinc-500">
-              Try adjusting search or filters, or add a new lead.
-            </p>
+            <p className="text-sm font-medium text-slate-800 dark:text-zinc-200">No leads match your filters.</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-zinc-500">Try adjusting search or filters, or add a new lead.</p>
           </div>
         )}
       </div>
+
+      {/* Pending Review Modal */}
+      {pendingReviewLead && (
+        <PendingReviewModal
+          lead={pendingReviewLead}
+          nextAppointment={nextAppointmentsByLeadId?.[pendingReviewLead.id]}
+          onAccept={() => handleAccept(pendingReviewLead)}
+          onReject={(reason) => handleReject(pendingReviewLead, reason)}
+          onClose={() => setPendingReviewLead(null)}
+        />
+      )}
+
+      {/* Phone Contact Modal */}
+      {phoneModalPhone && (
+        <PhoneContactModal
+          phone={phoneModalPhone}
+          onClose={() => setPhoneModalPhone(null)}
+        />
+      )}
+
+      {/* Toast */}
+      {toast && <Toast message={toast} onDone={() => setToast(null)} />}
     </div>
   );
 }

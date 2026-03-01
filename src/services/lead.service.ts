@@ -201,7 +201,7 @@ export async function processDiscordMessage(params: {
       phone:                    analysis.phone ?? null,
       email:                    analysis.email ?? null,
       interest:                 analysis.interest ?? null,
-      status:                   'New',
+      status:                   'Pending',
       source:                   'discord',
       conversation_summary:     analysis.conversation_summary     ?? null,
       lead_quality_score:       analysis.lead_quality_score       ?? null,
