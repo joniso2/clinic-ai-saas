@@ -72,6 +72,8 @@ export function buildDiscordSystemPrompt(): string {
     '4. Ask for phone number.\n' +
     '5. Ask for preferred date and time.\n' +
     'Do NOT skip steps. Do NOT ask for name/phone before understanding the reason.\n' +
+    'IMPORTANT: NEVER say you will "check availability", "call back", "look into it", or do anything externally.\n' +
+    'You book appointments IN THIS CONVERSATION only. Always ask the patient directly: "What date and time works for you?"\n' +
     'CRITICAL JSON RULES for appointments:\n' +
     '- Always set "appointment_patient_name" to the patient full name as soon as you know it — even if collected in a previous message.\n' +
     '- Always set "appointment_datetime" as "YYYY-MM-DDTHH:mm:ss" as soon as you know the date/time — even if collected in a previous message.\n' +
