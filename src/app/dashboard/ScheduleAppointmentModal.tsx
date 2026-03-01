@@ -12,7 +12,7 @@ type Props = {
 };
 
 export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) {
-  const [patientName, setPatientName] = useState(lead.full_name ?? '');
+  const [patientName] = useState(lead.full_name ?? '');
   const [date, setDate] = useState(() => {
     const now = new Date();
     const day = String(now.getDate()).padStart(2, '0');
@@ -21,7 +21,7 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
     return `${day}/${month}/${year}`;
   });
   const [time, setTime] = useState('08:00');
-  const [type, setType] = useState<AppointmentType>('new');
+  const type: AppointmentType = 'new';
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -121,9 +121,8 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
             <input
               type="text"
               value={patientName}
-              onChange={(e) => setPatientName(e.target.value)}
-              required
-              className="block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-slate-900"
+              readOnly
+              className="block w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600 cursor-default focus:outline-none"
             />
           </div>
 
@@ -157,17 +156,6 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-700">Type</label>
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value as AppointmentType)}
-              className="block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-slate-900"
-            >
-              <option value="new">New appointment</option>
-              <option value="follow_up">Follow-up</option>
-            </select>
-          </div>
         </div>
 
         <div className="flex justify-end gap-3 border-t border-slate-100 px-5 py-3">
