@@ -18,7 +18,7 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
     const day = String(now.getDate()).padStart(2, '0');
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const year = now.getFullYear();
-    return `${day}/${month}/${year}`;
+    return `${day}/${month}/${year}`; // stored as DD/MM/YYYY internally
   });
   const [time, setTime] = useState('08:00');
   const type: AppointmentType = 'new';
@@ -129,16 +129,27 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-slate-700">
-                Date (DD/MM/YYYY)
+                Date
               </label>
-              <input
-                type="text"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                placeholder="DD/MM/YYYY"
-                required
-                className="block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-slate-900"
-              />
+              <div className="relative">
+                <input
+                  type="date"
+                  value={(() => {
+                    const parts = date.split('/');
+                    if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    return '';
+                  })()}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val) {
+                      const [y, m, d] = val.split('-');
+                      setDate(`${d}/${m}/${y}`);
+                    }
+                  }}
+                  required
+                  className="block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-slate-900 cursor-pointer"
+                />
+              </div>
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-slate-700">
