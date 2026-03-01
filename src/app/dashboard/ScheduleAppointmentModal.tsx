@@ -132,29 +132,32 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
                 Date
               </label>
               <div className="relative">
-                <div className="flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus-within:ring-1 focus-within:ring-slate-900">
+                <div className="flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900">
                   <span className="flex-1 tabular-nums">{date}</span>
-                  <label className="cursor-pointer text-slate-400 hover:text-slate-700 transition-colors">
-                    <CalendarIcon className="h-4 w-4" />
-                    <input
-                      type="date"
-                      value={(() => {
-                        const parts = date.split('/');
-                        if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
-                        return '';
-                      })()}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val) {
-                          const [y, m, d] = val.split('-');
-                          setDate(`${d}/${m}/${y}`);
-                        }
-                      }}
-                      required
-                      className="sr-only"
-                    />
-                  </label>
+                  <CalendarIcon className="h-4 w-4 text-slate-400 cursor-pointer hover:text-slate-700 transition-colors" onClick={() => {
+                    const el = document.getElementById('appt-date-picker') as HTMLInputElement | null;
+                    el?.showPicker?.();
+                    el?.click();
+                  }} />
                 </div>
+                <input
+                  id="appt-date-picker"
+                  type="date"
+                  value={(() => {
+                    const parts = date.split('/');
+                    if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    return '';
+                  })()}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val) {
+                      const [y, m, d] = val.split('-');
+                      setDate(`${d}/${m}/${y}`);
+                    }
+                  }}
+                  required
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                />
               </div>
             </div>
             <div className="space-y-1.5">
@@ -168,7 +171,7 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
                 max="15:30"
                 onChange={(e) => setTime(e.target.value)}
                 required
-                className="block w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-slate-900"
+                className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
               />
             </div>
           </div>
