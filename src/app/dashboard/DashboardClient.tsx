@@ -83,6 +83,53 @@ export default function DashboardClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leads.length]);
 
+  // Realtime subscription — auto-update leads without page refresh
+  useEffect(() => {
+    if (!clinicId) return;
+
+    const channel = supabase
+      .channel(`leads:clinic:${clinicId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'leads',
+          filter: `clinic_id=eq.${clinicId}`,
+        },
+        (payload) => {
+          const newLead = payload.new as Lead;
+          setLeads((prev) => {
+            if (prev.find((l) => l.id === newLead.id)) return prev;
+            return [newLead, ...prev];
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'leads',
+          filter: `clinic_id=eq.${clinicId}`,
+        },
+        (payload) => {
+          const updated = payload.new as Lead;
+          setLeads((prev) =>
+            prev.map((l) => (l.id === updated.id ? { ...l, ...updated } : l))
+          );
+          setDrawerLead((prev) =>
+            prev?.id === updated.id ? { ...prev, ...updated } : prev
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [clinicId]);
+
   const handleCreateLead = async () => {
     if (!clinicId) return;
     setSubmittingLead(true);
