@@ -185,7 +185,7 @@ export async function getLeadByEmailOrPhone(
 export async function updateLead(
   id: string,
   clinicId: string,
-  data: Partial<Pick<LeadRow, 'full_name' | 'phone' | 'email' | 'interest' | 'status' | 'next_follow_up_date' | 'last_contact_date' | 'next_appointment' | 'conversation_summary' | 'lead_quality_score' | 'urgency_level' | 'priority_level' | 'sla_deadline' | 'follow_up_recommended_at' | 'callback_recommendation'>>
+  data: Partial<Pick<LeadRow, 'full_name' | 'phone' | 'email' | 'interest' | 'status' | 'next_follow_up_date' | 'last_contact_date' | 'next_appointment' | 'conversation_summary' | 'lead_quality_score' | 'urgency_level' | 'priority_level' | 'sla_deadline' | 'follow_up_recommended_at' | 'callback_recommendation'>> & { reject_reason?: string | null; rejected_at?: string | null }
 ): Promise<{ error: unknown }> {
   const supabase = getSupabaseAdminClient();
   const { error } = await supabase

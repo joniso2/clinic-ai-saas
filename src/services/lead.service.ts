@@ -147,19 +147,21 @@ export async function processDiscordMessage(params: {
     if (result.status === 'confirmed') {
       // Update existing lead with appointment details
       if (existingLead) {
-        await leadRepository.updateLead(existingLead.id, clinicId, {
+        const { error: updateErr } = await leadRepository.updateLead(existingLead.id, clinicId, {
           status:            'Pending',
           last_contact_date: new Date().toISOString(),
           next_appointment:  result.appointment.datetime,
         });
-        console.log('[Discord] Lead updated with appointment:', existingLead.id);
+        if (updateErr) console.error('[Discord] Failed to update existing lead:', updateErr);
+        else console.log('[Discord] Lead updated with appointment:', existingLead.id);
       } else if (leadId) {
-        // Newly created lead — set last_contact_date and next_appointment
-        await leadRepository.updateLead(leadId, clinicId, {
+        const { error: updateErr } = await leadRepository.updateLead(leadId, clinicId, {
+          status:            'Pending',
           last_contact_date: new Date().toISOString(),
           next_appointment:  result.appointment.datetime,
         });
-        console.log('[Discord] New lead linked to appointment:', leadId);
+        if (updateErr) console.error('[Discord] Failed to update new lead:', updateErr);
+        else console.log('[Discord] New lead linked to appointment:', leadId);
       }
       console.log('[Discord] Appointment linked to lead_id:', leadId ?? 'none');
       const time = appointmentService.formatAppointmentTime(result.appointment.datetime);
