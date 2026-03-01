@@ -56,7 +56,7 @@ client.on(Events.MessageCreate, async (message) => {
     const botId = client.user?.id;
     const conversationHistory = [];
     try {
-      const fetched = await message.channel.messages.fetch({ limit: 50 });
+      const fetched = await message.channel.messages.fetch({ limit: 30 });
       const sorted = Array.from(fetched.values())
         .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
 
@@ -85,6 +85,10 @@ client.on(Events.MessageCreate, async (message) => {
             content: (m.content || '').trim(),
           });
         }
+      }
+      // Keep only last 10 messages to reduce token usage and latency
+      if (conversationHistory.length > 10) {
+        conversationHistory.splice(0, conversationHistory.length - 10);
       }
     } catch (e) {
       console.warn('Discord bot: could not fetch history', e.message);
