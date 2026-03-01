@@ -63,20 +63,36 @@ export async function processDiscordMessage(params: {
     const datetimeRaw = analysis.appointment_datetime;
     const appointmentType = (analysis.appointment_type ?? 'new') as AppointmentType;
 
-    // Block appointment if phone missing, first message, or incomplete details
-    if (!hasPhone || isFirstMessage || !datetimeRaw || !patientName) {
-      console.log('[Discord] Appointment blocked — phone:', hasPhone, '| firstMessage:', isFirstMessage, '| datetime:', datetimeRaw, '| name:', patientName);
-      // If AI provided a valid conversational reply, use it (triage is still ongoing)
+    // Block appointment if phone missing, first message, or name missing
+    if (!hasPhone || isFirstMessage || !patientName) {
+      console.log('[Discord] Appointment blocked — phone:', hasPhone, '| firstMessage:', isFirstMessage, '| name:', patientName);
       if (analysis.reply && analysis.reply !== 'PENDING_SCHEDULE' && analysis.reply.trim().length > 0) {
         return { reply: analysis.reply };
       }
-      // Only use hardcoded fallback if AI gave no reply
       const safeReply = !hasPhone
         ? 'אשמח לעזור! כדי לקבוע את התור אצטרך את מספר הטלפון שלך.'
         : !patientName
           ? 'מה שמך המלא?'
           : 'באיזה תאריך ושעה תרצה לקבוע?';
       return { reply: safeReply };
+    }
+
+    // If no datetime provided but we have name + phone — auto-book the closest available slot
+    let resolvedDatetimeRaw = datetimeRaw;
+    if (!resolvedDatetimeRaw && clinicId) {
+      console.log('[Discord] No datetime provided — finding closest available slot');
+      const now = new Date();
+      const suggestions = await appointmentService.suggestClosestAvailable(clinicId, now, 1);
+      if (suggestions.length > 0) {
+        resolvedDatetimeRaw = suggestions[0];
+        console.log('[Discord] Auto-selected slot:', resolvedDatetimeRaw);
+      } else {
+        return { reply: 'מצטערים, אין זמינות בשבועות הקרובים. פנה אלינו ישירות לתיאום.' };
+      }
+    }
+
+    if (!resolvedDatetimeRaw) {
+      return { reply: analysis.reply ?? 'באיזה תאריך ושעה תרצה לקבוע?' };
     }
 
     if (!clinicId) {
@@ -139,7 +155,7 @@ export async function processDiscordMessage(params: {
     const result = await appointmentService.scheduleAppointment({
       clinicId,
       patientName,
-      requestedDatetimeRaw: datetimeRaw,
+      requestedDatetimeRaw: resolvedDatetimeRaw,
       type: appointmentType,
       leadId: leadId ?? undefined,
     });
