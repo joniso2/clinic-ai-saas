@@ -117,7 +117,7 @@ export async function processDiscordMessage(params: {
         phone:                    analysis.phone ?? null,
         email:                    analysis.email ?? null,
         interest:                 analysis.interest ?? null,
-        status:                   'Appointment scheduled',
+        status:                   'Pending',
         source:                   'discord',
         conversation_summary:     analysis.conversation_summary     ?? null,
         lead_quality_score:       analysis.lead_quality_score       ?? null,
@@ -148,7 +148,7 @@ export async function processDiscordMessage(params: {
       // Update existing lead with appointment details
       if (existingLead) {
         await leadRepository.updateLead(existingLead.id, clinicId, {
-          status:            'Appointment scheduled',
+          status:            'Pending',
           last_contact_date: new Date().toISOString(),
           next_appointment:  result.appointment.datetime,
         });

@@ -79,7 +79,8 @@ export function buildDiscordSystemPrompt(): string {
     '- Always set "full_name" to the patient name as soon as you know it.\n' +
     '- Set intent to "appointment" ONLY when all three are known: name + phone + datetime. While still collecting info, use intent="other".\n' +
     '- Set reply to "PENDING_SCHEDULE" ONLY when all three are present: name + phone + datetime.\n' +
-    '- If any are missing, ask for the missing detail. Do NOT set "PENDING_SCHEDULE".\n\n' +
+    '- If any are missing, ask for the missing detail. Do NOT set "PENDING_SCHEDULE".\n' +
+    '- NEVER guess or assume a datetime. If the user has not explicitly stated a date AND time, set appointment_datetime to null and ask for it.\n\n' +
 
     'GENERAL GREETING or SHORT/AMBIGUOUS message:\n' +
     'Respond warmly and ask how you can help. NEVER redirect short or casual messages.\n\n' +
