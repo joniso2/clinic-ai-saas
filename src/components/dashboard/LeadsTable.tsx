@@ -20,24 +20,30 @@ import {
 } from '@/types/leads';
 
 const PRIORITY_STYLES: Record<Priority, string> = {
-  Low: 'bg-slate-100 dark:bg-zinc-700/60 text-slate-600 dark:text-zinc-300 border border-slate-200 dark:border-zinc-600',
-  Medium: 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60',
-  High: 'bg-orange-50 dark:bg-orange-950/50 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800/60',
-  Urgent: 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/60 font-semibold',
+  Low: 'bg-zinc-800/70 text-zinc-400 border border-zinc-700/40',
+  Medium: 'bg-amber-950/50 text-amber-500/90 border border-amber-800/30',
+  High: 'bg-orange-950/50 text-orange-500/90 border border-orange-800/30',
+  Urgent: 'bg-red-950/50 text-red-400/90 border border-red-800/30',
 };
 
 const STATUS_BADGE_STYLES: Record<string, string> = {
-  Pending: 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60',
-  Contacted: 'bg-orange-50 dark:bg-orange-950/50 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800/60',
-  'Appointment scheduled': 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60',
-  Closed: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60',
-  Converted: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60',
-  Disqualified: 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-500 border border-zinc-200 dark:border-zinc-700',
+  Pending: 'bg-amber-950/40 text-amber-500/85 border border-amber-800/25',
+  Contacted: 'bg-sky-950/40 text-sky-400/80 border border-sky-800/25',
+  'Appointment scheduled': 'bg-blue-950/40 text-blue-400/80 border border-blue-800/25',
+  Closed: 'bg-emerald-950/40 text-emerald-400/80 border border-emerald-800/25',
+  Converted: 'bg-emerald-950/40 text-emerald-400/80 border border-emerald-800/25',
+  Disqualified: 'bg-zinc-800/50 text-zinc-500 border border-zinc-700/30',
 };
 
 const STATUS_OPTIONS: LeadStatus[] = ['Pending', 'Contacted', 'Appointment scheduled', 'Closed', 'Disqualified'];
 
 type SortKey = 'revenue' | 'created' | 'name' | 'score';
+
+function getScoreBarColor(score: number): string {
+  if (score >= 75) return 'bg-emerald-500/50';
+  if (score >= 45) return 'bg-amber-500/50';
+  return 'bg-red-500/40';
+}
 
 function formatDateDDMMYYYY(value: string): string {
   const d = new Date(value);
@@ -118,8 +124,11 @@ function PendingReviewModal({
 
           {(lead.lead_quality_score ?? lead.lead_score) != null && (
             <div className="flex items-center gap-2 text-xs text-zinc-400">
-              <span className="font-medium text-zinc-300">Score</span>
-              <span>{lead.lead_quality_score ?? lead.lead_score}/100</span>
+              <span className="font-medium text-zinc-400">Score</span>
+              <span className="tabular-nums">
+                <span className="font-semibold text-zinc-200">{lead.lead_quality_score ?? lead.lead_score}</span>
+                <span className="text-zinc-600">/100</span>
+              </span>
             </div>
           )}
 
@@ -398,24 +407,24 @@ export function LeadsTable({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Toolbar */}
-      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 card-shadow sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col gap-3 rounded-xl border border-zinc-800/70 bg-zinc-900/90 px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-2.5">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-zinc-500" />
+            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
             <input
               type="search"
               placeholder="Search by name or email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 py-2 pl-10 pr-4 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500 sm:w-56"
+              className="w-full rounded-lg border border-zinc-700/60 bg-zinc-800/60 py-2 pl-9 pr-4 text-sm text-zinc-200 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500/50 transition-colors duration-150 sm:w-56"
             />
           </div>
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter((e.target.value || '') as Priority | '')}
-            className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-slate-700 dark:text-zinc-300 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
+            className="rounded-lg border border-zinc-700/60 bg-zinc-800/60 px-3 py-2 text-sm text-zinc-300 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500/50 transition-colors duration-150"
           >
             <option value="">All priorities</option>
             <option value="Low">Low</option>
@@ -426,7 +435,7 @@ export function LeadsTable({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-slate-700 dark:text-zinc-300 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
+            className="rounded-lg border border-zinc-700/60 bg-zinc-800/60 px-3 py-2 text-sm text-zinc-300 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500/50 transition-colors duration-150"
           >
             <option value="">All statuses</option>
             <option value="Pending">Pending</option>
@@ -435,12 +444,12 @@ export function LeadsTable({
             <option value="Closed">Closed</option>
             <option value="Disqualified">Disqualified</option>
           </select>
-          <div className="flex items-center gap-1">
-            <label className="text-xs text-slate-500 dark:text-zinc-500">Sort:</label>
+          <div className="flex items-center gap-1.5">
+            <label className="text-[11px] text-zinc-500">Sort:</label>
             <select
               value={sortKey}
               onChange={(e) => setSortKey(e.target.value as SortKey)}
-              className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-slate-700 dark:text-zinc-300 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
+              className="rounded-lg border border-zinc-700/60 bg-zinc-800/60 px-3 py-2 text-sm text-zinc-300 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500/50 transition-colors duration-150"
             >
               <option value="created">Date created</option>
               <option value="revenue">Revenue</option>
@@ -450,16 +459,16 @@ export function LeadsTable({
             <button
               type="button"
               onClick={() => setSortDesc((d) => !d)}
-              className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-2 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-700"
+              className="rounded-lg border border-zinc-700/60 bg-zinc-800/60 p-2 text-zinc-400 hover:bg-zinc-700/60 hover:text-zinc-200 transition-colors duration-150"
               title={sortDesc ? 'Descending' : 'Ascending'}
             >
-              <ChevronDown className={`h-4 w-4 transition ${sortDesc ? '' : 'rotate-180'}`} />
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${sortDesc ? '' : 'rotate-180'}`} />
             </button>
           </div>
         </div>
         {selectedIds.size > 0 && (
-          <div className="flex items-center gap-2 rounded-xl bg-slate-100 dark:bg-zinc-700/60 px-3 py-2">
-            <span className="text-sm font-medium text-slate-700 dark:text-zinc-300">
+          <div className="flex items-center gap-2 rounded-lg border border-zinc-700/40 bg-zinc-800/60 px-3 py-2">
+            <span className="text-xs font-medium text-zinc-300">
               {selectedIds.size} selected
             </span>
             <button
@@ -471,14 +480,14 @@ export function LeadsTable({
                 });
                 setSelectedIds(new Set());
               }}
-              className="rounded-lg bg-red-100 dark:bg-red-950/60 px-2.5 py-1.5 text-xs font-semibold text-red-700 dark:text-red-400 transition hover:bg-red-200 dark:hover:bg-red-900/60"
+              className="rounded-md bg-red-950/60 px-2.5 py-1 text-xs font-medium text-red-400 transition-colors duration-150 hover:bg-red-900/60 hover:text-red-300"
             >
               Delete selected
             </button>
             <button
               type="button"
               onClick={() => setSelectedIds(new Set())}
-              className="text-xs font-medium text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200"
+              className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors duration-150"
             >
               Clear
             </button>
@@ -487,161 +496,184 @@ export function LeadsTable({
       </div>
 
       {/* Table */}
-      <div className="relative rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 card-shadow overflow-hidden">
+      <div className="relative rounded-xl border border-zinc-800/60 bg-zinc-900 shadow-2xl shadow-black/30 overflow-hidden ring-1 ring-white/[0.03]">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-100 dark:divide-zinc-700">
+          <table className="min-w-full">
             <thead>
-              <tr className="bg-slate-50 dark:bg-zinc-700/60 border-b border-slate-200 dark:border-zinc-700">
+              <tr className="border-b border-zinc-800/60">
                 <th className="w-10 px-4 py-3 text-left">
                   <input
                     type="checkbox"
                     checked={filteredAndSorted.length > 0 && selectedIds.size === filteredAndSorted.length}
                     onChange={toggleSelectAll}
-                    className="h-4 w-4 rounded border-slate-300 dark:border-zinc-600 text-slate-900 focus:ring-slate-900"
+                    className="h-3.5 w-3.5 rounded border-zinc-600 bg-zinc-800 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
                   />
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Contact</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Priority</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Value</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Score</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Source</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Last contact</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Next follow-up</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Next appointment</th>
+                <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-zinc-500">Contact</th>
+                <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-zinc-500">Priority</th>
+                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-zinc-500">Value</th>
+                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-zinc-500">Score</th>
+                <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-zinc-500">Status</th>
+                <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-zinc-500">Source</th>
+                <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-zinc-500">Last contact</th>
+                <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-zinc-500">Next follow-up</th>
+                <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-zinc-500">Next appointment</th>
                 {isDisqualifiedView && (
                   <>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Reject reason</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Rejected at</th>
+                    <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-zinc-500">Reject reason</th>
+                    <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-zinc-500">Rejected at</th>
                   </>
                 )}
                 <th className="w-12 px-4 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-zinc-700 bg-white dark:bg-zinc-800">
+            <tbody>
               {filteredAndSorted.map((lead) => {
                 const priority = getDisplayPriority(lead);
                 const urgent = isUrgent(lead);
                 const isRemoving = removingIds.has(lead.id);
+                const isSelected = selectedIds.has(lead.id);
+                const accentBorder = isSelected
+                  ? 'border-l-indigo-500/60'
+                  : urgent
+                    ? 'border-l-red-600/50'
+                    : 'border-l-transparent group-hover:border-l-zinc-600/50';
                 return (
                   <tr
                     key={lead.id}
-                    className={`group transition-all duration-300 ${
-                      isRemoving ? 'opacity-0 scale-95' : 'opacity-100'
-                    } ${
-                      urgent
-                        ? 'bg-red-50/40 dark:bg-red-950/20 hover:bg-red-50/70 dark:hover:bg-red-950/30'
-                        : 'hover:bg-slate-50 dark:hover:bg-zinc-700/40'
-                    }`}
+                    className={[
+                      'group relative border-b border-zinc-800/40 transition-colors duration-150 ease-in-out animate-in fade-in duration-200',
+                      'active:bg-zinc-800/70 focus-within:bg-zinc-800/25',
+                      isRemoving ? 'opacity-0 scale-y-95 pointer-events-none' : 'opacity-100',
+                      isSelected
+                        ? 'bg-indigo-950/30 hover:bg-indigo-950/40'
+                        : urgent
+                          ? 'bg-red-950/15 hover:bg-red-950/25'
+                          : 'hover:bg-zinc-800/40',
+                    ].join(' ')}
                   >
-                    <td className="px-4 py-3">
+                    <td className={`px-4 py-3.5 border-l-2 transition-[border-color] duration-150 ${accentBorder}`}>
                       <input
                         type="checkbox"
-                        checked={selectedIds.has(lead.id)}
+                        checked={isSelected}
                         onChange={() => toggleSelect(lead.id)}
-                        className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                        className="h-3.5 w-3.5 rounded border-zinc-600 bg-zinc-800 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
                       />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3.5">
                       <div className="flex items-center gap-2.5">
                         {urgent && (
-                          <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-red-500" title="Requires urgent attention" />
+                          <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-red-500/90" title="Requires urgent attention" />
                         )}
                         <div>
                           <button
                             type="button"
                             onClick={() => onView(lead)}
-                            className="font-semibold text-slate-900 dark:text-zinc-100 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition-colors"
+                            className="text-sm font-semibold text-zinc-100 hover:text-indigo-400 transition-colors duration-150"
                           >
                             {lead.full_name || 'Unnamed lead'}
                           </button>
-                          <p className="text-xs text-slate-400 dark:text-zinc-500">{lead.email || '—'}</p>
+                          <p className="text-[11px] text-zinc-500 mt-0.5">{lead.email || <span className="italic text-zinc-500/60">No email</span>}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-medium ${PRIORITY_STYLES[priority]}`}>
+                    <td className="px-4 py-3.5">
+                      <span className={`inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium tracking-wide ${PRIORITY_STYLES[priority]}`}>
                         {priority}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700 dark:text-zinc-300">
-                      {(lead.estimated_deal_value ?? 0) > 0 ? formatCurrency(lead.estimated_deal_value!) : '—'}
+                    <td className="whitespace-nowrap px-4 py-3.5 text-right text-sm tabular-nums text-zinc-300">
+                      {(lead.estimated_deal_value ?? 0) > 0 ? formatCurrency(lead.estimated_deal_value!) : <span className="text-[11px] italic text-zinc-500/60">No value</span>}
                     </td>
-                    <td className="px-4 py-3">
-                      {(lead.lead_quality_score ?? lead.lead_score) != null ? (
-                        <span className="text-sm font-medium text-slate-900 dark:text-zinc-100">
-                          {lead.lead_quality_score ?? lead.lead_score}
-                        </span>
-                      ) : '—'}
+                    <td className="px-4 py-3.5 text-right">
+                      {(lead.lead_quality_score ?? lead.lead_score) != null ? (() => {
+                        const score = lead.lead_quality_score ?? lead.lead_score ?? 0;
+                        return (
+                          <div className="inline-flex flex-col items-end gap-1.5">
+                            <span className="tabular-nums leading-none">
+                              <span className="text-sm font-semibold text-zinc-200">{score}</span>
+                              <span className="text-[10px] font-normal text-zinc-600">/100</span>
+                            </span>
+                            <div className="h-px w-10 rounded-full bg-zinc-800/80 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${getScoreBarColor(score)}`}
+                                style={{ width: `${score}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })() : <span className="text-[11px] italic text-zinc-500/60">No score</span>}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3.5">
                       {lead.status === 'Pending' ? (
                         <button
                           type="button"
                           onClick={() => setPendingReviewLead(lead)}
-                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${STATUS_BADGE_STYLES['Pending']}`}
+                          className={`inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium tracking-wide cursor-pointer transition-all duration-150 hover:brightness-110 hover:shadow-sm ${STATUS_BADGE_STYLES['Pending']}`}
                           title="Click to review this lead"
                         >
                           Pending
                         </button>
                       ) : (
-                        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_BADGE_STYLES[lead.status ?? 'Pending'] ?? STATUS_BADGE_STYLES['Pending']}`}>
+                        <span className={`inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium tracking-wide ${STATUS_BADGE_STYLES[lead.status ?? 'Pending'] ?? STATUS_BADGE_STYLES['Pending']}`}>
                           {lead.status ?? 'Pending'}
                         </span>
                       )}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600 dark:text-zinc-400">{lead.source ?? '—'}</td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600 dark:text-zinc-400">
-                      {lead.last_contact_date ? formatDateDDMMYYYY(lead.last_contact_date) : '—'}
+                    <td className="whitespace-nowrap px-4 py-3.5 text-xs text-zinc-500">
+                      {lead.source ?? <span className="text-[11px] italic text-zinc-500/60">Unknown</span>}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600 dark:text-zinc-400">
-                      {lead.next_follow_up_date ? formatDateDDMMYYYY(lead.next_follow_up_date) : '—'}
+                    <td className="whitespace-nowrap px-4 py-3.5 text-xs tabular-nums text-zinc-500">
+                      {lead.last_contact_date ? formatDateDDMMYYYY(lead.last_contact_date) : <span className="text-[11px] italic text-zinc-500/60">No contact yet</span>}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600 dark:text-zinc-400">
+                    <td className="whitespace-nowrap px-4 py-3.5 text-xs tabular-nums text-zinc-500">
+                      {lead.next_follow_up_date ? formatDateDDMMYYYY(lead.next_follow_up_date) : <span className="text-[11px] italic text-zinc-500/60">No follow-up</span>}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3.5 text-xs tabular-nums text-zinc-500">
                       {nextAppointmentsByLeadId?.[lead.id]
                         ? new Intl.DateTimeFormat('he-IL', {
                             timeZone: 'Asia/Jerusalem',
                             day: '2-digit', month: '2-digit', year: 'numeric',
                             hour: '2-digit', minute: '2-digit', hour12: false,
                           }).format(new Date(nextAppointmentsByLeadId[lead.id]!))
-                        : '—'}
+                        : <span className="text-[11px] italic text-zinc-500/60">Not scheduled</span>}
                     </td>
                     {isDisqualifiedView && (
                       <>
-                        <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600 dark:text-zinc-400">
-                          {lead.reject_reason ?? '—'}
+                        <td className="whitespace-nowrap px-4 py-3.5 text-xs text-zinc-500">
+                          {lead.reject_reason ?? <span className="text-[11px] italic text-zinc-500/60">No reason given</span>}
                         </td>
-                        <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600 dark:text-zinc-400">
-                          {lead.rejected_at ? formatDateTime(lead.rejected_at) : '—'}
+                        <td className="whitespace-nowrap px-4 py-3.5 text-xs tabular-nums text-zinc-500">
+                          {lead.rejected_at ? formatDateTime(lead.rejected_at) : <span className="text-[11px] italic text-zinc-500/60">Unknown</span>}
                         </td>
                       </>
                     )}
-                    <td className="relative px-4 py-3">
-                      <div className="flex items-center gap-1">
+                    <td className="relative px-4 py-3.5">
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
                         <button
                           type="button"
                           onClick={() => onView(lead)}
-                          className="rounded-lg p-1.5 text-slate-500 dark:text-zinc-400 transition hover:bg-slate-100 dark:hover:bg-zinc-700 hover:text-slate-700 dark:hover:text-zinc-200"
-                          title="View"
+                          className="rounded-md p-1.5 text-zinc-500 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-zinc-700/50 hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500/60"
+                          title="View lead"
                         >
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-3.5 w-3.5" />
                         </button>
                         <button
                           type="button"
                           onClick={() => onEdit(lead)}
-                          className="rounded-lg p-1.5 text-slate-500 dark:text-zinc-400 transition hover:bg-slate-100 dark:hover:bg-zinc-700 hover:text-slate-700 dark:hover:text-zinc-200"
-                          title="Edit"
+                          className="rounded-md p-1.5 text-zinc-500 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-zinc-700/50 hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500/60"
+                          title="Edit lead"
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Pencil className="h-3.5 w-3.5" />
                         </button>
                         {lead.phone && (
                           <button
                             type="button"
                             onClick={() => setPhoneModalPhone(lead.phone!)}
-                            className="rounded-lg p-1.5 text-slate-500 dark:text-zinc-400 transition hover:bg-slate-100 dark:hover:bg-zinc-700 hover:text-slate-700 dark:hover:text-zinc-200"
-                            title="Contact"
+                            className="rounded-md p-1.5 text-zinc-500 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-zinc-700/50 hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500/60"
+                            title="Contact lead"
                           >
-                            <Phone className="h-4 w-4" />
+                            <Phone className="h-3.5 w-3.5" />
                           </button>
                         )}
                         <div className="relative">
@@ -663,10 +695,10 @@ export function LeadsTable({
                               setRowMenuId(lead.id);
                               setRowMenuCoords({ top, left: rect.right + window.scrollX });
                             }}
-                            className="rounded-lg p-1.5 text-slate-500 dark:text-zinc-400 transition hover:bg-slate-100 dark:hover:bg-zinc-700 hover:text-slate-700 dark:hover:text-zinc-200"
-                            title="More"
+                            className="rounded-md p-1.5 text-zinc-500 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-zinc-700/50 hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500/60"
+                            title="More actions"
                           >
-                            <MoreHorizontal className="h-4 w-4" />
+                            <MoreHorizontal className="h-3.5 w-3.5" />
                           </button>
                           {rowMenuId === lead.id && rowMenuCoords && (
                             <>
@@ -676,7 +708,7 @@ export function LeadsTable({
                                 aria-hidden="true"
                               />
                               <div
-                                className="fixed z-20 w-48 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 py-1 shadow-lg dark:shadow-black/30"
+                                className="fixed z-20 w-48 rounded-xl border border-zinc-700/60 bg-zinc-900 py-1 shadow-2xl shadow-black/40 ring-1 ring-black/20"
                                 style={{ top: rowMenuCoords.top, left: rowMenuCoords.left - 192 }}
                               >
                                 <select
@@ -685,40 +717,42 @@ export function LeadsTable({
                                     onStatusChange(lead.id, e.target.value as LeadStatus);
                                     setRowMenuId(null);
                                   }}
-                                  className="w-full border-0 bg-transparent px-3 py-2 text-left text-sm text-slate-700 dark:text-zinc-300 focus:ring-0"
+                                  className="w-full border-0 bg-transparent px-3 py-2 text-left text-sm text-zinc-300 focus:ring-0"
                                 >
                                   {STATUS_OPTIONS.map((s) => (
                                     <option key={s} value={s}>{s}</option>
                                   ))}
                                 </select>
+                                <div className="my-1 border-t border-zinc-800/60" />
                                 <button
                                   type="button"
                                   onClick={() => { onMarkContacted(lead.id); setRowMenuId(null); }}
-                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700"
+                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 transition-colors duration-100"
                                 >
-                                  <Phone className="h-3.5 w-3.5" />
+                                  <Phone className="h-3.5 w-3.5 text-zinc-500" />
                                   Mark as contacted
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => { onScheduleFollowUp(lead.id); setRowMenuId(null); }}
-                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700"
+                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 transition-colors duration-100"
                                 >
-                                  <Calendar className="h-3.5 w-3.5" />
+                                  <Calendar className="h-3.5 w-3.5 text-zinc-500" />
                                   Schedule follow-up
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => { onScheduleAppointment(lead); setRowMenuId(null); }}
-                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700"
+                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 transition-colors duration-100"
                                 >
-                                  <Calendar className="h-3.5 w-3.5" />
+                                  <Calendar className="h-3.5 w-3.5 text-zinc-500" />
                                   Schedule appointment
                                 </button>
+                                <div className="my-1 border-t border-zinc-800/60" />
                                 <button
                                   type="button"
                                   onClick={() => { onDelete(lead); setRowMenuId(null); }}
-                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
+                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-400 hover:bg-red-950/40 hover:text-red-300 transition-colors duration-100"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
                                   Delete
@@ -738,8 +772,8 @@ export function LeadsTable({
 
         {filteredAndSorted.length === 0 && (
           <div className="px-6 py-16 text-center">
-            <p className="text-sm font-medium text-slate-800 dark:text-zinc-200">No leads match your filters.</p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-zinc-500">Try adjusting search or filters, or add a new lead.</p>
+            <p className="text-sm font-medium text-zinc-300">No leads match your filters.</p>
+            <p className="mt-1 text-xs text-zinc-500">Try adjusting search or filters, or add a new lead.</p>
           </div>
         )}
       </div>
