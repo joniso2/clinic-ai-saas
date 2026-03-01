@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
           full_name:  patient_name.trim(),
           phone:      phone ?? null,
           email:      email ?? null,
-          status:     'Appointment scheduled',
+          status:     'Pending',
           source:     'calendar',
         });
         if (leadErr) console.error('[Appointments] Lead creation failed:', leadErr);
@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
       // Update lead with appointment details
       if (resolvedLeadId) {
         await leadRepository.updateLead(resolvedLeadId, clinicId, {
-          status:            'Appointment scheduled',
+          status:            'Pending',
           last_contact_date: new Date().toISOString(),
           next_appointment:  result.appointment.datetime,
         });
