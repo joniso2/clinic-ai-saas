@@ -75,12 +75,14 @@ function PendingReviewModal({
   onAccept,
   onReject,
   onClose,
+  onScheduleAppointment,
 }: {
   lead: Lead;
   nextAppointment?: string;
   onAccept: () => void;
   onReject: (reason: RejectReason) => void;
   onClose: () => void;
+  onScheduleAppointment: (lead: Lead) => void;
 }) {
   const [mode, setMode] = useState<'main' | 'reject'>('main');
   const [rejectReason, setRejectReason] = useState<RejectReason | ''>('');
@@ -135,17 +137,26 @@ function PendingReviewModal({
 
         {mode === 'main' && (
           <div className="px-5 pb-5 space-y-3">
-            <button
-              type="button"
-              disabled={!hasAppointment}
-              onClick={onAccept}
-              title={!hasAppointment ? 'No appointment scheduled for this lead' : undefined}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2.5 text-sm font-semibold text-white transition"
-            >
-              ✓ Accept &amp; Confirm Appointment
-            </button>
-            {!hasAppointment && (
-              <p className="text-center text-xs text-zinc-500">Schedule an appointment first to accept.</p>
+            {hasAppointment ? (
+              <button
+                type="button"
+                onClick={onAccept}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition"
+              >
+                ✓ Accept &amp; Confirm Appointment
+              </button>
+            ) : (
+              <div className="rounded-xl border border-dashed border-zinc-700 bg-zinc-800/50 px-4 py-4 text-center space-y-3">
+                <p className="text-xs text-zinc-400">No appointment scheduled yet.</p>
+                <button
+                  type="button"
+                  onClick={() => { onClose(); onScheduleAppointment(lead); }}
+                  className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition"
+                >
+                  <Calendar className="h-3.5 w-3.5" />
+                  Schedule Appointment
+                </button>
+              </div>
             )}
             <div className="border-t border-zinc-800 pt-3">
               <button
@@ -741,6 +752,7 @@ export function LeadsTable({
           onAccept={() => handleAccept(pendingReviewLead)}
           onReject={(reason) => handleReject(pendingReviewLead, reason)}
           onClose={() => setPendingReviewLead(null)}
+          onScheduleAppointment={(lead) => { setPendingReviewLead(null); onScheduleAppointment(lead); }}
         />
       )}
 
