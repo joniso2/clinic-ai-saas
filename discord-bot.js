@@ -46,22 +46,45 @@ client.on(Events.MessageCreate, async (message) => {
       return;
     }
 
+    // /new command — reset conversation
+    if (content.toLowerCase() === '/new') {
+      await message.reply('✅ Conversation reset. How can I help you?');
+      return;
+    }
+
     const userId = message.author.id;
     const botId = client.user?.id;
     const conversationHistory = [];
     try {
-      const fetched = await message.channel.messages.fetch({ limit: 25 });
-      const fromThisUserOrBot = fetched
-        .filter((m) => m.author.id === userId || m.author.id === botId)
+      const fetched = await message.channel.messages.fetch({ limit: 50 });
+      const sorted = Array.from(fetched.values())
         .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
-      const list = Array.from(fromThisUserOrBot.values());
-      const currentIndex = list.findIndex((m) => m.id === message.id);
-      const forHistory = currentIndex >= 0 ? list.slice(0, currentIndex) : list;
-      for (const m of forHistory) {
-        conversationHistory.push({
-          role: m.author.bot ? 'assistant' : 'user',
-          content: (m.content || '').trim(),
-        });
+
+      // Find the most recent /new command before the current message
+      const currentIndex = sorted.findIndex((m) => m.id === message.id);
+      const beforeCurrent = currentIndex >= 0 ? sorted.slice(0, currentIndex) : sorted;
+
+      // Find last /new reset point
+      let resetIndex = -1;
+      for (let i = beforeCurrent.length - 1; i >= 0; i--) {
+        if ((beforeCurrent[i].content || '').trim().toLowerCase() === '/new') {
+          resetIndex = i;
+          break;
+        }
+      }
+
+      // Only use messages after the last /new
+      const relevantMessages = resetIndex >= 0
+        ? beforeCurrent.slice(resetIndex + 1)
+        : beforeCurrent;
+
+      for (const m of relevantMessages) {
+        if (m.author.id === userId || m.author.id === botId) {
+          conversationHistory.push({
+            role: m.author.bot ? 'assistant' : 'user',
+            content: (m.content || '').trim(),
+          });
+        }
       }
     } catch (e) {
       console.warn('Discord bot: could not fetch history', e.message);
