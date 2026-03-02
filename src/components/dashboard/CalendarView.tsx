@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, X, Plus, Calendar } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Plus, Calendar, Phone, MessageCircle, Sparkles } from 'lucide-react';
 import type { Appointment, AppointmentType } from '@/types/appointments';
+import type { Lead, LeadStatus } from '@/types/leads';
+import { LeadDetailDrawer } from '@/components/dashboard/LeadDetailDrawer';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -68,14 +70,47 @@ type AppointmentModalProps = {
   onClose: () => void;
   onDelete: (id: string) => void;
   onAdd: (day: number) => void;
+  onViewLead: (lead: Lead) => void;
 };
 
 function AppointmentDayModal({
-  day, month, year, appointments, onClose, onDelete, onAdd,
+  day, month, year, appointments, onClose, onDelete, onAdd, onViewLead,
 }: AppointmentModalProps) {
+  const [leadCache, setLeadCache] = useState<Record<string, Lead>>({});
+
+  useEffect(() => {
+    const ids = appointments.map((a) => a.lead_id).filter(Boolean) as string[];
+    if (ids.length === 0) return;
+    Promise.all(
+      ids.map((id) =>
+        fetch(`/api/leads/${id}`, { credentials: 'include' })
+          .then((r) => r.ok ? r.json() : null)
+          .catch(() => null),
+      ),
+    ).then((results) => {
+      const cache: Record<string, Lead> = {};
+      results.forEach((res, i) => {
+        if (res?.lead) cache[ids[i]] = res.lead as Lead;
+      });
+      setLeadCache(cache);
+    });
+  }, [appointments]);
+
   const dateLabel = new Intl.DateTimeFormat('he-IL', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   }).format(new Date(year, month - 1, day));
+
+  function formatPhone(raw: string): string {
+    const digits = raw.replace(/\D/g, '');
+    if (digits.length === 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+    return raw;
+  }
+
+  function waHref(raw: string): string {
+    const digits = raw.replace(/\D/g, '');
+    const normalized = digits.startsWith('0') ? `972${digits.slice(1)}` : digits;
+    return `https://wa.me/${normalized}`;
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
@@ -90,28 +125,72 @@ function AppointmentDayModal({
           </button>
         </div>
 
-        <div className="max-h-72 overflow-y-auto px-5 py-3 space-y-2">
+        <div className="max-h-[480px] overflow-y-auto px-5 py-3 space-y-3">
           {appointments.length === 0 && (
             <p className="py-6 text-center text-sm text-slate-400 dark:text-zinc-500">No appointments on this day.</p>
           )}
-          {appointments.map((apt) => (
-            <div key={apt.id}
-              className="flex items-start justify-between rounded-xl border border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/60 px-3 py-2.5 transition-colors hover:bg-slate-100/70 dark:hover:bg-zinc-700/60">
-              <div>
-                <p className="text-sm font-semibold text-slate-900 dark:text-zinc-100">{apt.patient_name}</p>
-                <p className="mt-0.5 text-xs font-medium text-slate-500 dark:text-zinc-400">{formatTime(apt.datetime)}</p>
-                <span className={`mt-1.5 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
-                  TYPE_PILL[apt.type] ?? TYPE_PILL['new']
-                }`}>
-                  {apt.type === 'follow_up' ? 'Follow-up' : 'New Patient'}
-                </span>
+          {appointments.map((apt) => {
+            const lead = apt.lead_id ? leadCache[apt.lead_id] : undefined;
+            const phone = lead?.phone ?? null;
+            const interest = lead?.interest ?? null;
+
+            return (
+              <div key={apt.id}
+                className="rounded-xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-800/60 px-4 py-3 transition-colors hover:bg-slate-50/70 dark:hover:bg-zinc-700/50">
+                {/* Row 1: name + time + delete */}
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-zinc-100 leading-tight">{apt.patient_name}</p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">{formatTime(apt.datetime)}</p>
+                      <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        TYPE_PILL[apt.type] ?? TYPE_PILL['new']
+                      }`}>
+                        {apt.type === 'follow_up' ? 'Follow-up' : 'New Patient'}
+                      </span>
+                    </div>
+                  </div>
+                  <button onClick={() => onDelete(apt.id)}
+                    className="shrink-0 rounded-full p-1.5 text-slate-300 dark:text-zinc-600 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-400 dark:hover:text-red-400 transition-colors">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                {/* Row 2: phone + WhatsApp */}
+                {phone && (
+                  <div className="mt-2.5 flex items-center gap-3">
+                    <a href={`tel:${phone}`}
+                      className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors">
+                      <Phone className="h-3 w-3 shrink-0" />
+                      {formatPhone(phone)}
+                    </a>
+                    <a href={waHref(phone)} target="_blank" rel="noreferrer"
+                      className="flex items-center gap-1 text-xs text-emerald-500 hover:text-emerald-600 transition-colors">
+                      <MessageCircle className="h-3 w-3 shrink-0" />
+                      WhatsApp
+                    </a>
+                  </div>
+                )}
+
+                {/* Row 3: main issue */}
+                {interest && (
+                  <p className="mt-1.5 text-xs text-slate-400 dark:text-zinc-500 truncate">
+                    Main issue: {interest}
+                  </p>
+                )}
+
+                {/* Row 4: AI Summary button */}
+                {lead && (
+                  <button
+                    onClick={() => onViewLead(lead)}
+                    className="mt-3 flex items-center gap-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-1.5 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">
+                    <Sparkles className="h-3 w-3" />
+                    AI Summary
+                  </button>
+                )}
               </div>
-              <button onClick={() => onDelete(apt.id)}
-                className="ml-3 mt-0.5 rounded-full p-1.5 text-slate-400 dark:text-zinc-500 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-500 dark:hover:text-red-400 transition-colors">
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="border-t border-slate-100 dark:border-zinc-800 px-5 py-3">
@@ -273,6 +352,8 @@ export function CalendarView() {
   const [selectedDay,  setSelectedDay]  = useState<number | null>(null);
   const [showNewForm,  setShowNewForm]  = useState(false);
   const [prefillDate,  setPrefillDate]  = useState<string | undefined>(undefined);
+  const [drawerLead,   setDrawerLead]   = useState<Lead | null>(null);
+  const [drawerOpen,   setDrawerOpen]   = useState(false);
 
   const todayStr = toIsraelDateString(today.toISOString());
 
@@ -478,8 +559,19 @@ export function CalendarView() {
           onClose={() => setSelectedDay(null)}
           onDelete={handleDelete}
           onAdd={handleAddFromDay}
+          onViewLead={(lead) => { setDrawerLead(lead); setDrawerOpen(true); }}
         />
       )}
+
+      <LeadDetailDrawer
+        lead={drawerLead}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onStatusChange={() => {}}
+        onMarkContacted={() => {}}
+        onScheduleFollowUp={() => {}}
+        onEdit={() => {}}
+      />
 
       {showNewForm && (
         <NewAppointmentForm
