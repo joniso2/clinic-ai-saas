@@ -99,21 +99,21 @@ export default function PricingPage() {
 
   return (
     <>
-      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between flex-row-reverse sm:justify-end">
-        <div className="text-right">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500">לוח בקרה</p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-zinc-100 sm:text-3xl">תמחור</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">ניהול שירותים ומחירים למרפאה.</p>
-        </div>
+      <div className="mb-6 text-right">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500">לוח בקרה</p>
+        <h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-zinc-100 sm:text-3xl">תמחור</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">ניהול שירותים ומחירים למרפאה.</p>
         {canEdit && (
-          <button
-            type="button"
-            onClick={() => { setEditService(null); setModal('add'); }}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 dark:bg-zinc-100 px-5 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-lg transition hover:bg-slate-800 dark:hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-zinc-400 focus:ring-offset-2 flex-row-reverse"
-          >
-            <Plus className="h-4 w-4" />
-            הוסף שירות
-          </button>
+          <div className="mt-4 flex justify-end">
+            <button
+              type="button"
+              onClick={() => { setEditService(null); setModal('add'); }}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 dark:bg-zinc-100 px-5 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-lg transition hover:bg-slate-800 dark:hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-zinc-400 focus:ring-offset-2 flex-row-reverse"
+            >
+              <Plus className="h-4 w-4" />
+              הוסף שירות
+            </button>
+          </div>
         )}
       </div>
 
@@ -131,8 +131,8 @@ export default function PricingPage() {
 
       {!loading && !error && services.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 dark:border-zinc-700/80 bg-white dark:bg-zinc-900 p-16 text-center shadow-sm">
-          <p className="text-slate-700 dark:text-zinc-300 font-semibold">לא הוגדרו שירותים למרפאה זו</p>
-          <p className="mt-2 text-sm text-slate-500 dark:text-zinc-500">הוסף שירות כדי להתחיל תמחור</p>
+          <p className="text-slate-700 dark:text-zinc-300 font-semibold">לא הוגדרו שירותים למרפאה זו.</p>
+          <p className="mt-2 text-sm text-slate-500 dark:text-zinc-500">הוסף שירות כדי להתחיל תמחור.</p>
           {canEdit && (
             <button
               type="button"
@@ -140,7 +140,7 @@ export default function PricingPage() {
               className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-zinc-100 px-5 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-md transition hover:bg-slate-800 dark:hover:bg-white hover:shadow-lg"
             >
               <Plus className="h-4 w-4" />
-              הוסף שירות
+              הוסף שירות ראשון
             </button>
           )}
         </div>
@@ -148,33 +148,33 @@ export default function PricingPage() {
 
       {!loading && !error && services.length > 0 && (
         <div className="rounded-2xl border border-slate-200 dark:border-zinc-700/80 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden ring-1 ring-slate-900/[0.03] dark:ring-white/[0.03]">
-          <div className="overflow-x-auto" dir="rtl">
-            <table className="min-w-full">
+          <div className="overflow-x-auto overflow-y-visible" dir="rtl">
+            <table className="min-w-full border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-zinc-700">
-                  <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">שם שירות</th>
-                  <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">מחיר</th>
-                  <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">כינויים</th>
-                  <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">סטטוס</th>
-                  {canEdit && <th className="w-28 px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">פעולות</th>}
+                <tr className="sticky top-0 z-10 border-b border-slate-200 dark:border-zinc-700 bg-slate-100/95 dark:bg-zinc-800/95">
+                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">שם שירות</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">מחיר</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">כינויים</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">סטטוס</th>
+                  {canEdit && <th className="w-28 px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">פעולות</th>}
                 </tr>
               </thead>
               <tbody>
                 {services.map((s) => (
-                  <tr key={s.id} className="border-b border-slate-100 dark:border-zinc-800/60 transition-colors hover:bg-slate-50/80 dark:hover:bg-zinc-800/40">
-                    <td className="px-4 py-3.5 text-right font-medium text-slate-900 dark:text-zinc-100">{s.service_name}</td>
-                    <td className="px-4 py-3.5 text-right tabular-nums text-slate-700 dark:text-zinc-300">{formatCurrencyILS(s.price)}</td>
-                    <td className="px-4 py-3.5 text-right text-sm text-slate-500 dark:text-zinc-400">
+                  <tr key={s.id} className="border-b border-slate-100 dark:border-zinc-800/50 transition-colors duration-150 hover:bg-slate-50/80 dark:hover:bg-zinc-800/30">
+                    <td className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-zinc-100">{s.service_name}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-slate-700 dark:text-zinc-300">{formatCurrencyILS(s.price)}</td>
+                    <td className="px-4 py-3 text-right text-sm text-slate-500 dark:text-zinc-400">
                       {Array.isArray(s.aliases) && s.aliases.length > 0 ? s.aliases.join(', ') : '—'}
                     </td>
-                    <td className="px-4 py-3.5 text-right">
-                      <span className={`inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium ${s.is_active ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-400' : 'bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400'}`}>
+                    <td className="px-4 py-3 text-right">
+                      <span className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold ${s.is_active ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-400' : 'bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-zinc-400'}`}>
                         {s.is_active ? 'פעיל' : 'מושבת'}
                       </span>
                     </td>
                     {canEdit && (
-                      <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-1 flex-row-reverse justify-end">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2 flex-row-reverse justify-end">
                           <button
                             type="button"
                             onClick={() => handleToggleActive(s)}

@@ -51,17 +51,17 @@ export async function getClinicServicesForClinic(clinicId: string): Promise<Clin
 }
 
 /**
- * Build the pricing block string for the system prompt.
+ * Build the pricing block string for the system prompt (Hebrew format).
+ * Injected into Discord LLM so bot uses latest clinic_services.
  */
 export function buildPricingBlock(services: ClinicServiceForPrompt[]): string {
   if (services.length === 0) return '';
-  return services
-    .map((s) => {
-      const aliases = (s.aliases ?? []).filter(Boolean).join(', ');
-      const extra = aliases ? ` (${aliases})` : '';
-      return `- ${s.service_name}${extra}: ${s.price} ₪`;
-    })
-    .join('\n');
+  const lines = services.map((s) => {
+    const name = (s.service_name ?? '').trim();
+    const price = Number(s.price);
+    return `${name}: ${price} ₪`;
+  });
+  return 'שירותי המרפאה והמחירים:\n\n' + lines.join('\n\n');
 }
 
 /**

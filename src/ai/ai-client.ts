@@ -20,7 +20,6 @@ export type DiscordAnalysisResult = {
   reply?: string;
   // Intelligence fields
   conversation_summary?:     string | null;
-  lead_quality_score?:       number | null;  // 1–100
   urgency_level?:            'low' | 'medium' | 'high' | null;
   priority_level?:           'low' | 'medium' | 'high' | null;
   callback_recommendation?:  string | null;

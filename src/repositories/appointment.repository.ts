@@ -21,7 +21,6 @@ export type CreateAppointmentPayload = {
   // Intelligence fields
   appointment_summary?: string | null;
   urgency_level?: 'low' | 'medium' | 'high' | null;
-  lead_quality_score?: number | null;
   priority_level?: 'low' | 'medium' | 'high' | null;
 };
 
@@ -93,7 +92,7 @@ export async function createAppointment(
   const { data, error } = await supabase
     .from('appointments')
     .insert(payload)
-    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id, appointment_summary, urgency_level, lead_quality_score, priority_level')
+    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id, appointment_summary, urgency_level, priority_level')
     .single();
 
   if (error) return { data: null, error };

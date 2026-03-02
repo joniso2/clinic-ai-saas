@@ -15,26 +15,9 @@ import type { AppointmentType } from '@/types/appointments';
 
 const DISCORD_GUILD_UNMAPPED_REPLY = 'אנא פנה לשרת הרשמי של המרפאה לצורך המשך טיפול.';
 
-function calculateLeadScore(params: {
-  interest: string | null | undefined;
-  urgency_level: string | null | undefined;
-  phone: string | null | undefined;
-  intent: string | null | undefined;
-}): number {
-  let score = 0;
-  if (params.interest && params.interest.trim().length > 0) score += 25;
-  if (params.urgency_level === 'high') score += 20;
-  if (params.phone && String(params.phone).trim().length > 0) score += 20;
-  if (params.intent === 'appointment') score += 20;
-  if ((params.intent === 'question' || params.intent === 'other') && !params.phone && params.urgency_level !== 'high') {
-    return Math.min(score, 30);
-  }
-  return score;
-}
-
-function calculatePriorityLevel(urgency_level: string | null | undefined, score: number): 'low' | 'medium' | 'high' {
-  if (urgency_level === 'high' || score >= 70) return 'high';
-  if (urgency_level === 'medium' || (score >= 40 && score <= 69)) return 'medium';
+function calculatePriorityLevel(urgency_level: string | null | undefined): 'low' | 'medium' | 'high' {
+  if (urgency_level === 'high') return 'high';
+  if (urgency_level === 'medium') return 'medium';
   return 'low';
 }
 
@@ -102,18 +85,11 @@ export async function processDiscordMessage(params: {
     systemPrompt,
   });
 
-  const lead_quality_score = calculateLeadScore({
-    interest: analysis.interest,
-    urgency_level: analysis.urgency_level,
-    phone: analysis.phone,
-    intent: analysis.intent,
-  });
-  const priority_level = calculatePriorityLevel(analysis.urgency_level, lead_quality_score);
+  const priority_level = calculatePriorityLevel(analysis.urgency_level);
   const estimated_deal_value = estimateDealValueFromServices(analysis.interest, services);
 
   const intel = computeIntelligenceTimestamps({
-    urgency_level:      analysis.urgency_level ?? null,
-    lead_quality_score,
+    urgency_level: analysis.urgency_level ?? null,
   });
 
   // Override SLA with clinic-configured target if set
@@ -222,7 +198,6 @@ export async function processDiscordMessage(params: {
         status:                   'Pending',
         source:                   'discord',
         conversation_summary:     analysis.conversation_summary ?? null,
-        lead_quality_score:       lead_quality_score,
         urgency_level:            analysis.urgency_level ?? null,
         priority_level:           priority_level,
         sla_deadline:             intel.sla_deadline,
@@ -312,7 +287,6 @@ export async function processDiscordMessage(params: {
       status:                   autoMarkContacted ? 'Contacted' : 'Pending',
       source:                   'discord',
       conversation_summary:     analysis.conversation_summary ?? null,
-      lead_quality_score:       lead_quality_score,
       urgency_level:            analysis.urgency_level ?? null,
       priority_level:           priority_level,
       sla_deadline:             intel.sla_deadline,

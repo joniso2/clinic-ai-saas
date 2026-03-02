@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   Building2,
   DollarSign,
@@ -116,6 +116,7 @@ export default function SuperAdminPage() {
   const [creatingClinic, setCreatingClinic] = useState(false);
   const [creatingUser, setCreatingUser] = useState(false);
   const [actingUser, setActingUser] = useState<string | null>(null);
+  const [clinicStatusFilter, setClinicStatusFilter] = useState<string>('');
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -124,28 +125,31 @@ export default function SuperAdminPage() {
 
   const fetchClinics = useCallback(async () => {
     const res = await fetch('/api/super-admin/clinics');
-    if (!res.ok) throw new Error('Failed to load clinics');
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = data.error || res.statusText || 'טעינת קליניקות נכשלה';
+      throw new Error(msg);
+    }
     setClinics(data.clinics ?? []);
   }, []);
 
   const fetchMappings = useCallback(async () => {
     const res = await fetch('/api/super-admin/discord');
-    if (!res.ok) throw new Error('Failed to load Discord');
+    if (!res.ok) throw new Error('טעינת מיפויי דיסקורד נכשלה');
     const data = await res.json();
     setMappings(data.mappings ?? []);
   }, []);
 
   const fetchServices = useCallback(async (clinicId: string) => {
     const res = await fetch(`/api/super-admin/services?clinic_id=${encodeURIComponent(clinicId)}`);
-    if (!res.ok) throw new Error('Failed to load services');
+    if (!res.ok) throw new Error('טעינת שירותים נכשלה');
     const data = await res.json();
     setServices(data.services ?? []);
   }, []);
 
   const fetchStats = useCallback(async () => {
     const res = await fetch('/api/super-admin/stats');
-    if (!res.ok) throw new Error('Failed to load stats');
+    if (!res.ok) throw new Error('טעינת סטטיסטיקות נכשלה');
     const data = await res.json();
     setStats(data);
   }, []);
@@ -378,9 +382,15 @@ export default function SuperAdminPage() {
     if (section === 'pricing' && selectedClinicId) fetchServices(selectedClinicId);
   }, [section, selectedClinicId, fetchServices]);
 
-  const filteredClinics = clinics.filter(
-    (c) => !clinicSearch || (c.name ?? '').toLowerCase().includes(clinicSearch.toLowerCase())
+  const filteredClinics = useMemo(
+    () => clinics.filter((c) => !clinicSearch || (c.name ?? '').toLowerCase().includes(clinicSearch.toLowerCase())),
+    [clinics, clinicSearch]
   );
+  const filteredClinicsByStatus = useMemo(() => {
+    if (!clinicStatusFilter) return filteredClinics;
+    if (clinicStatusFilter === 'active') return filteredClinics.filter((c) => (c as ClinicRow).status !== 'inactive');
+    return filteredClinics.filter((c) => (c as ClinicRow).status === 'inactive');
+  }, [filteredClinics, clinicStatusFilter]);
 
   const handleAddService = async () => {
     if (!selectedClinicId || !formServiceName.trim() || formPrice === '') return;
@@ -397,7 +407,7 @@ export default function SuperAdminPage() {
           is_active: formActive,
         }),
       });
-      if (!res.ok) throw new Error((await res.json()).error ?? 'Failed');
+      if (!res.ok) throw new Error((await res.json()).error ?? 'הפעולה נכשלה');
       showToast('השירות נוסף בהצלחה');
       setServiceModal(null);
       setFormServiceName('');
@@ -426,7 +436,7 @@ export default function SuperAdminPage() {
           is_active: formActive,
         }),
       });
-      if (!res.ok) throw new Error((await res.json()).error ?? 'Failed');
+      if (!res.ok) throw new Error((await res.json()).error ?? 'הפעולה נכשלה');
       showToast('השירות עודכן');
       setServiceModal(null);
       setEditingService(null);
@@ -474,7 +484,7 @@ export default function SuperAdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ guild_id: formGuildId.trim(), clinic_id: formClinicId }),
       });
-      if (!res.ok) throw new Error((await res.json()).error ?? 'Failed');
+      if (!res.ok) throw new Error((await res.json()).error ?? 'הפעולה נכשלה');
       showToast('המיפוי נוסף');
       setDiscordModal(false);
       setFormGuildId('');
@@ -562,8 +572,11 @@ export default function SuperAdminPage() {
 
           {/* סקירה (Overview) */}
           {section === 'overview' && (
-            <section className="space-y-6">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-zinc-100 text-right">סקירה</h2>
+            <section className="space-y-6" dir="rtl">
+              <div className="text-right">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-zinc-100">סקירה</h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">מבט על המערכת והמדדים העיקריים.</p>
+              </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
                 <div className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-5 shadow-sm text-right">
                   <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">סך קליניקות פעילות</p>
@@ -631,90 +644,108 @@ export default function SuperAdminPage() {
           )}
 
           {!loading && section === 'clinics' && (
-            <section className="space-y-4">
-              <div className="flex flex-row-reverse justify-between items-center gap-4 flex-wrap">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-zinc-100">קליניקות</h2>
+            <section className="space-y-4" dir="rtl">
+              <div className="flex flex-row-reverse justify-between items-start gap-4 flex-wrap">
+                <div className="text-right">
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-zinc-100">מרכז ניהול קליניקות</h2>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">ניהול מלא של כל הקליניקות במערכת.</p>
+                </div>
                 <button
                   type="button"
                   onClick={() => { setCreateClinicOpen(true); setCreateClinicSuccess(null); }}
-                  className="inline-flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 px-4 py-2.5 text-sm font-semibold shadow-sm hover:opacity-90"
+                  className="inline-flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 px-4 py-2.5 text-sm font-semibold shadow-sm hover:opacity-90 flex-row-reverse"
                 >
                   <Plus className="h-4 w-4" />
                   צור קליניקה חדשה
                 </button>
               </div>
-              <div className="relative">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="חיפוש קליניקה"
-                  value={clinicSearch}
-                  onChange={(e) => setClinicSearch(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 py-2.5 pr-10 pl-4 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400"
-                />
+              <div className="flex flex-row-reverse gap-3 flex-wrap">
+                <div className="relative min-w-[200px]">
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-zinc-500" />
+                  <input
+                    type="text"
+                    placeholder="חיפוש קליניקה"
+                    value={clinicSearch}
+                    onChange={(e) => setClinicSearch(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 py-2.5 pr-10 pl-4 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 text-right"
+                  />
+                </div>
+                <select
+                  dir="rtl"
+                  className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 py-2.5 px-4 text-sm text-slate-900 dark:text-zinc-100 text-right min-w-[140px]"
+                  value={clinicStatusFilter}
+                  onChange={(e) => setClinicStatusFilter(e.target.value)}
+                >
+                  <option value="">כל הסטטוסים</option>
+                  <option value="active">פעיל</option>
+                  <option value="inactive">מושבת</option>
+                </select>
               </div>
               <div className="rounded-xl border border-slate-200 dark:border-zinc-700 overflow-hidden bg-white dark:bg-zinc-800 shadow-sm">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800/80">
-                      <th className="text-right py-3 px-4 font-semibold text-slate-700 dark:text-zinc-300">שם קליניקה</th>
-                      <th className="text-right py-3 px-4 font-semibold text-slate-700 dark:text-zinc-300">סטטוס</th>
-                      <th className="text-right py-3 px-4 font-semibold text-slate-700 dark:text-zinc-300">לידים</th>
-                      <th className="text-right py-3 px-4 font-semibold text-slate-700 dark:text-zinc-300">תורים</th>
-                      <th className="text-right py-3 px-4 font-semibold text-slate-700 dark:text-zinc-300">Discord</th>
-                      <th className="text-right py-3 px-4 font-semibold text-slate-700 dark:text-zinc-300">פעולות</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredClinics.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="py-8 px-4 text-center text-slate-500 dark:text-zinc-400">
-                          אין קליניקות במערכת
-                        </td>
+                <div className="overflow-x-auto" dir="rtl">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-zinc-700 bg-slate-100/95 dark:bg-zinc-800/95">
+                        <th className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">שם קליניקה</th>
+                        <th className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">סטטוס</th>
+                        <th className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">מספר משתמשים</th>
+                        <th className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">מספר לידים</th>
+                        <th className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">תכנית</th>
+                        <th className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">בריאות מערכת</th>
+                        <th className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">פעולות</th>
                       </tr>
-                    ) : (
-                      filteredClinics.map((c) => (
-                        <tr key={c.id} className="border-b border-slate-100 dark:border-zinc-700/50 hover:bg-slate-50 dark:hover:bg-zinc-800/50">
-                          <td className="py-3 px-4 font-medium text-slate-900 dark:text-zinc-100">{c.name ?? c.id}</td>
-                          <td className="py-3 px-4">
-                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                              (c as ClinicRow).status === 'inactive' ? 'bg-slate-200 dark:bg-zinc-600 text-slate-600 dark:text-zinc-400' : 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300'
-                            }`}>
-                              {(c as ClinicRow).status === 'inactive' ? 'מושבת' : 'פעיל'}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-slate-600 dark:text-zinc-400">{c.leads_count}</td>
-                          <td className="py-3 px-4 text-slate-600 dark:text-zinc-400">{c.appointments_count}</td>
-                          <td className="py-3 px-4">
-                            {c.discord_connected ? (
-                              <span className="text-emerald-600 dark:text-emerald-400 text-xs">מחובר</span>
-                            ) : (
-                              <span className="text-amber-600 dark:text-amber-400 text-xs">לא מחובר</span>
-                            )}
-                          </td>
-                          <td className="py-3 px-4">
-                            <button
-                              type="button"
-                              onClick={() => { setClinicDrawerId(c.id); setClinicDrawerTab('users'); }}
-                              className="text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 text-xs font-medium"
-                            >
-                              ניהול
-                            </button>
+                    </thead>
+                    <tbody>
+                      {filteredClinicsByStatus.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="py-12 px-4 text-center text-slate-500 dark:text-zinc-400">
+                            <p className="font-medium">אין קליניקות במערכת</p>
+                            <p className="text-xs mt-1">צור קליניקה חדשה כדי להתחיל.</p>
                           </td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                      ) : (
+                        filteredClinicsByStatus.map((c) => (
+                          <tr key={c.id} className="border-b border-slate-100 dark:border-zinc-700/50 hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 transition-colors">
+                            <td className="py-3 px-4 font-medium text-slate-900 dark:text-zinc-100">{c.name ?? c.id}</td>
+                            <td className="py-3 px-4">
+                              <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold ${
+                                (c as ClinicRow).status === 'inactive' ? 'bg-slate-200 dark:bg-zinc-600 text-slate-600 dark:text-zinc-400' : 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300'
+                              }`}>
+                                {(c as ClinicRow).status === 'inactive' ? 'מושבת' : 'פעיל'}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-slate-600 dark:text-zinc-400 tabular-nums">—</td>
+                            <td className="py-3 px-4 text-slate-600 dark:text-zinc-400 tabular-nums">{c.leads_count}</td>
+                            <td className="py-3 px-4 text-slate-600 dark:text-zinc-400">{(c as ClinicRow).plan_id ?? '—'}</td>
+                            <td className="py-3 px-4">
+                              <span className={`inline-flex h-2.5 w-2.5 rounded-full ${
+                                (c as ClinicRow).status === 'inactive' ? 'bg-red-500' : c.discord_connected ? 'bg-emerald-500' : 'bg-amber-500'
+                              }`} title={(c as ClinicRow).status === 'inactive' ? 'מושבת' : c.discord_connected ? 'תקין' : 'חלקי'} />
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2 flex-row-reverse justify-end">
+                                <button type="button" onClick={() => { setClinicDrawerId(c.id); setClinicDrawerTab('users'); }} className="text-xs font-medium text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100">ניהול</button>
+                                <button type="button" onClick={() => handleImpersonate(c.id)} disabled={!!actingUser} className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium bg-slate-100 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-600"><LogIn className="h-3.5 w-3.5" />התחבר כקליניקה</button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </section>
           )}
 
           {section === 'pricing' && (
-            <section className="space-y-4">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-zinc-100">תמחור</h2>
+            <section className="space-y-4" dir="rtl">
+              <div className="text-right">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-zinc-100">ניהול תמחור מערכת</h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">יצירת תבניות תמחור, שיוך לקליניקות וניהול תכניות מנוי.</p>
+              </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-zinc-300 mb-1.5">בחר קליניקה לניהול תמחור</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-zinc-300 mb-1.5 text-right">בחר קליניקה לניהול תמחור</label>
                 <select
                   value={selectedClinicId ?? ''}
                   onChange={(e) => setSelectedClinicId(e.target.value || null)}
@@ -790,35 +821,38 @@ export default function SuperAdminPage() {
           )}
 
           {!loading && section === 'integrations' && (
-            <section className="space-y-6">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-zinc-100 text-right">אינטגרציות</h2>
+            <section className="space-y-6" dir="rtl">
+              <div className="text-right">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-zinc-100">מרכז אינטגרציות</h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">סטטוס חיבורים: דיסקורד, וואטסאפ, Webhook, קריאות API ו־LLM.</p>
+              </div>
               <div className="grid sm:grid-cols-2 gap-4">
-                <div className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-5 shadow-sm">
+                <div className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-5 shadow-sm text-right">
                   <div className="flex items-center gap-3 flex-row-reverse justify-end">
-                    <Bot className="h-8 w-8 text-indigo-500 dark:text-indigo-400" />
-                    <div className="text-right">
-                      <h3 className="font-semibold text-slate-900 dark:text-zinc-100">Discord</h3>
+                    <Bot className="h-8 w-8 text-indigo-500 dark:text-indigo-400 shrink-0" />
+                    <div>
+                      <h3 className="font-semibold text-slate-900 dark:text-zinc-100">דיסקורד</h3>
                       <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">מיפוי שרת־קליניקה</p>
                     </div>
                   </div>
-                  <p className="mt-3 text-sm text-slate-600 dark:text-zinc-400 text-right">ניהול מיפויי Guild למטה.</p>
+                  <p className="mt-3 text-sm text-slate-600 dark:text-zinc-400">ניהול מיפויי שרת למטה.</p>
                 </div>
-                <div className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-5 shadow-sm">
+                <div className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-5 shadow-sm text-right">
                   <div className="flex items-center gap-3 flex-row-reverse justify-end">
-                    <div className="h-8 w-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                    <div className="h-8 w-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center shrink-0">
                       <span className="text-emerald-600 dark:text-emerald-400 text-lg font-bold">W</span>
                     </div>
-                    <div className="text-right">
-                      <h3 className="font-semibold text-slate-900 dark:text-zinc-100">WhatsApp</h3>
-                      <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">API & Webhook</p>
+                    <div>
+                      <h3 className="font-semibold text-slate-900 dark:text-zinc-100">וואטסאפ</h3>
+                      <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">API ו־Webhook</p>
                     </div>
                   </div>
-                  <p className="mt-3 text-sm text-slate-600 dark:text-zinc-400 text-right">לא מחובר — יוגדר בהמשך.</p>
+                  <p className="mt-3 text-sm text-slate-600 dark:text-zinc-400">לא מחובר — יוגדר בהמשך.</p>
                 </div>
               </div>
               {clinics.some((c) => !c.discord_connected) && (
                 <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-800 dark:text-amber-200 text-right">
-                  קליניקה שלא מופיעה למטה אינה מחוברת ל-Discord.
+                  קליניקה שלא מופיעה למטה אינה מחוברת לדיסקורד.
                 </div>
               )}
               <div className="flex justify-end">
@@ -831,12 +865,13 @@ export default function SuperAdminPage() {
                   הוסף מיפוי
                 </button>
               </div>
-              <h3 className="text-sm font-semibold text-slate-700 dark:text-zinc-300 text-right">מיפויי Discord</h3>
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-zinc-300 text-right">מיפויי דיסקורד</h3>
               <div className="rounded-xl border border-slate-200 dark:border-zinc-700 overflow-hidden bg-white dark:bg-zinc-800 shadow-sm">
+                <div className="overflow-x-auto" dir="rtl">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800/80">
-                      <th className="text-right py-3 px-4 font-semibold text-slate-700 dark:text-zinc-300">מזהה שרת (Guild)</th>
+                      <th className="text-right py-3 px-4 font-semibold text-slate-700 dark:text-zinc-300">מזהה שרת</th>
                       <th className="text-right py-3 px-4 font-semibold text-slate-700 dark:text-zinc-300">שם קליניקה</th>
                       <th className="text-right py-3 px-4 font-semibold text-slate-700 dark:text-zinc-300">סטטוס</th>
                       <th className="text-right py-3 px-4 font-semibold text-slate-700 dark:text-zinc-300">פעולות</th>
@@ -863,45 +898,74 @@ export default function SuperAdminPage() {
                     )}
                   </tbody>
                 </table>
+                </div>
               </div>
             </section>
           )}
 
           {section === 'traffic' && (
-            <section className="space-y-4">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-zinc-100 text-right">תעבורה וביצועים</h2>
-              <div className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-6 shadow-sm">
+            <section className="space-y-4" dir="rtl">
+              <div className="text-right">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-zinc-100">מערכת ניטור ביצועים</h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">סך קריאות LLM, שיעור שגיאות, זמן תגובה, צריכת טוקנים ועלות משוערת.</p>
+              </div>
+              <div className="flex flex-row-reverse gap-2 flex-wrap mb-4">
+                {(['7', '30', '90'] as const).map((d) => (
+                  <button key={d} type="button" className="rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700/50">
+                    {d} ימים
+                  </button>
+                ))}
+              </div>
+              <div className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-6 shadow-sm text-right">
                 <div className="flex items-center gap-2 mb-4 flex-row-reverse justify-end">
                   <span className="h-2 w-2 rounded-full bg-emerald-500" />
                   <span className="text-sm font-medium text-slate-700 dark:text-zinc-300">מערכת פעילה</span>
                 </div>
-                <p className="text-sm text-slate-500 dark:text-zinc-400 text-right">מדדי API, webhooks ו־LLM יופיעו כאן.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 text-right">
+                  <div><p className="text-xs text-slate-500 dark:text-zinc-400">סך קריאות LLM</p><p className="mt-1 text-lg font-bold text-slate-900 dark:text-zinc-100 tabular-nums">—</p></div>
+                  <div><p className="text-xs text-slate-500 dark:text-zinc-400">שיעור שגיאות</p><p className="mt-1 text-lg font-bold text-slate-900 dark:text-zinc-100 tabular-nums">—</p></div>
+                  <div><p className="text-xs text-slate-500 dark:text-zinc-400">זמן תגובה ממוצע</p><p className="mt-1 text-lg font-bold text-slate-900 dark:text-zinc-100 tabular-nums">—</p></div>
+                  <div><p className="text-xs text-slate-500 dark:text-zinc-400">צריכת טוקנים</p><p className="mt-1 text-lg font-bold text-slate-900 dark:text-zinc-100 tabular-nums">—</p></div>
+                  <div><p className="text-xs text-slate-500 dark:text-zinc-400">עלות משוערת</p><p className="mt-1 text-lg font-bold text-slate-900 dark:text-zinc-100 tabular-nums">—</p></div>
+                </div>
+                <p className="mt-4 text-xs text-slate-400 dark:text-zinc-500">נתונים ייטענו כאשר יתאפשר.</p>
               </div>
             </section>
           )}
 
           {section === 'ai' && (
-            <section className="space-y-4">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-zinc-100 text-right">AI & מודלים</h2>
-              <div className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-6 shadow-sm">
-                <p className="text-sm text-slate-500 dark:text-zinc-400 text-right">הגדרת מודל גלובלי, טמפרטורה, טוקנים ושליטה בפרומפטים לפי קליניקה.</p>
+            <section className="space-y-4" dir="rtl">
+              <div className="text-right">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-zinc-100">מרכז שליטה ב־AI</h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">בחירת מודל ברירת מחדל, שכתוב לפי קליניקה, טמפרטורה, טוקנים, תבניות פרומפט ומסנני בטיחות.</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-6 shadow-sm text-right">
+                <p className="text-sm text-slate-500 dark:text-zinc-400">הגדרת מודל גלובלי, טמפרטורה, טוקנים ושליטה בפרומפטים לפי קליניקה. כלי בדיקת שיחה ותצוגת פרומפט סופי יופיעו כאן.</p>
               </div>
             </section>
           )}
 
           {section === 'users' && (
-            <section className="space-y-4">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-zinc-100 text-right">משתמשים והרשאות</h2>
-              <div className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-6 shadow-sm">
-                <p className="text-sm text-slate-500 dark:text-zinc-400 text-right">צפייה בכל המשתמשים, קידום/הורדה, איפוס סיסמה וניהול קליניקות.</p>
+            <section className="space-y-4" dir="rtl">
+              <div className="text-right">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-zinc-100">ניהול משתמשי מערכת</h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">יצירת מנהל מערכת, שינוי תפקידים, איפוס סיסמה, ניתוק כפוי, השעיית משתמש, היסטוריית התחברויות ויומן פעולות.</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-6 shadow-sm text-right">
+                <p className="text-sm text-slate-500 dark:text-zinc-400">ניהול משתמשים מתבצע מתוך כל קליניקה בלשונית &quot;קליניקות&quot; → ניהול → משתמשים.</p>
               </div>
             </section>
           )}
 
           {section === 'settings' && (
-            <section className="space-y-4">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-zinc-100 text-right">הגדרות מערכת</h2>
-              <p className="text-slate-600 dark:text-zinc-400 text-sm text-right">הגדרות פלטפורמה יופיעו כאן.</p>
+            <section className="space-y-4" dir="rtl">
+              <div className="text-right">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-zinc-100">הגדרות מערכת כלליות</h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">דגלי פיצ׳רים, מצב תחזוקה, ניהול מפתחות API, מגבלות מערכת, תצורת אימייל ורמת לוגים.</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-6 shadow-sm text-right">
+                <p className="text-sm text-slate-500 dark:text-zinc-400">הגדרות פלטפורמה יוגדרו בהמשך.</p>
+              </div>
             </section>
           )}
         </div>
@@ -1174,11 +1238,11 @@ export default function SuperAdminPage() {
       {discordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setDiscordModal(false)}>
           <div className="rounded-2xl bg-white dark:bg-zinc-800 shadow-xl max-w-md w-full p-6 border border-slate-200 dark:border-zinc-700" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-zinc-100 mb-4">הוסף מיפוי Discord</h3>
-            <div className="space-y-3">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-zinc-100 mb-4 text-right">הוסף מיפוי דיסקורד</h3>
+            <div className="space-y-3 text-right">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-zinc-300 mb-1">Guild ID</label>
-                <input type="text" value={formGuildId} onChange={(e) => setFormGuildId(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-4 py-2.5 text-sm font-mono" placeholder="מזהה שרת הדיסקורד" />
+                <label className="block text-sm font-medium text-slate-700 dark:text-zinc-300 mb-1">מזהה שרת (Guild ID)</label>
+                <input type="text" value={formGuildId} onChange={(e) => setFormGuildId(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-4 py-2.5 text-sm font-mono text-right" placeholder="מזהה שרת הדיסקורד" dir="rtl" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-zinc-300 mb-1">קליניקה</label>

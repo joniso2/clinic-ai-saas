@@ -180,7 +180,7 @@ export function buildDiscordSystemPrompt(settings?: AISettings): string {
     '- Never output anything outside the JSON.\n\n' +
 
     (pricesText
-      ? `Clinic price list (indicative only — final price set by doctor):\n${pricesText}\n\n`
+      ? `${pricesText}\n\n(מחירים להנחיה בלבד — המחיר הסופי נקבע על ידי הרופא במרפאה.)\n\n`
       : '')
   );
 }

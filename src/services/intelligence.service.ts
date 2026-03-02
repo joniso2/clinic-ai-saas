@@ -7,14 +7,13 @@ export type IntelligenceTimestamps = {
 
 /**
  * Deterministically computes SLA deadline and follow-up timestamp from
- * urgency_level and lead_quality_score returned by the AI.
+ * urgency_level returned by the AI.
  * Keeping timestamp logic in code (not in the AI prompt) ensures consistency.
  */
 export function computeIntelligenceTimestamps(params: {
   urgency_level?: UrgencyLevel | null;
-  lead_quality_score?: number | null;
 }): IntelligenceTimestamps {
-  const { urgency_level, lead_quality_score } = params;
+  const { urgency_level } = params;
 
   if (!urgency_level) {
     return { sla_deadline: null, follow_up_recommended_at: null };
@@ -31,11 +30,9 @@ export function computeIntelligenceTimestamps(params: {
 
   const sla_deadline = new Date(now + SLA_OFFSETS[urgency_level]).toISOString();
 
-  // Follow-up recommendation based on urgency + quality score
+  // Follow-up recommendation based on urgency
   let followUpOffsetMs: number;
-  const score = lead_quality_score ?? 0;
-
-  if (urgency_level === 'high' || score >= 70) {
+  if (urgency_level === 'high') {
     followUpOffsetMs = 4 * 60 * 60 * 1000;      // same day (~4h)
   } else if (urgency_level === 'medium') {
     followUpOffsetMs = 24 * 60 * 60 * 1000;     // next day

@@ -113,8 +113,27 @@ export async function upsertClinicSettings(
 export type TeamMember = {
   user_id: string;
   email: string;
+  full_name: string | null;
   role: string;
+  job_title: string | null;
+  banned_until: string | null;
+  last_sign_in_at: string | null;
 };
+
+const ROLE_TO_DB: Record<string, 'CLINIC_ADMIN' | 'STAFF'> = {
+  מנהל: 'CLINIC_ADMIN',
+  רופא: 'STAFF',
+  מזכירה: 'STAFF',
+  תומך: 'STAFF',
+};
+
+export const ROLE_DISPLAY_OPTIONS = ['מנהל', 'רופא', 'מזכירה', 'תומך'] as const;
+
+export function getRoleDisplay(dbRole: string, jobTitle: string | null): string {
+  if (dbRole === 'CLINIC_ADMIN') return 'מנהל';
+  if (jobTitle && ROLE_DISPLAY_OPTIONS.includes(jobTitle as typeof ROLE_DISPLAY_OPTIONS[number])) return jobTitle;
+  return 'צוות';
+}
 
 export async function getTeamMembers(clinicId: string): Promise<TeamMember[]> {
   const supabase = getAdminClient();
@@ -129,17 +148,79 @@ export async function getTeamMembers(clinicId: string): Promise<TeamMember[]> {
   const members: TeamMember[] = [];
   for (const row of rows) {
     try {
-      const { data: authUser } = await supabase.auth.admin.getUserById(row.user_id);
+      const { data: authData } = await supabase.auth.admin.getUserById(row.user_id);
+      const u = authData?.user;
+      const meta = (u?.user_metadata as { full_name?: string; job_title?: string } | undefined) ?? {};
       members.push({
         user_id: row.user_id,
-        email: authUser?.user?.email ?? '—',
-        role: row.role ?? 'member',
+        email: u?.email ?? '—',
+        full_name: meta.full_name ?? null,
+        role: row.role ?? 'STAFF',
+        job_title: meta.job_title ?? null,
+        banned_until: u?.banned_until ?? null,
+        last_sign_in_at: u?.last_sign_in_at ?? null,
       });
     } catch {
-      members.push({ user_id: row.user_id, email: '—', role: row.role ?? 'member' });
+      members.push({
+        user_id: row.user_id,
+        email: '—',
+        full_name: null,
+        role: row.role ?? 'STAFF',
+        job_title: null,
+        banned_until: null,
+        last_sign_in_at: null,
+      });
     }
   }
   return members;
+}
+
+export async function createTeamMember(params: {
+  clinicId: string;
+  email: string;
+  password: string;
+  full_name: string;
+  role_display: string;
+}): Promise<{ error: Error | null; member: TeamMember | null }> {
+  const supabase = getAdminClient();
+  const dbRole = ROLE_TO_DB[params.role_display] ?? 'STAFF';
+  const jobTitle = params.role_display !== 'מנהל' ? params.role_display : null;
+
+  const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+    email: params.email.trim().toLowerCase(),
+    password: params.password,
+    email_confirm: true,
+    user_metadata: { full_name: params.full_name.trim(), job_title: jobTitle },
+  });
+
+  if (authError) {
+    if (authError.message.includes('already registered') || authError.message.includes('already exists')) {
+      return { error: new Error('האימייל כבר רשום במערכת'), member: null };
+    }
+    return { error: authError, member: null };
+  }
+
+  if (!authUser.user) return { error: new Error('יצירת משתמש נכשלה'), member: null };
+
+  const { error: insertError } = await supabase
+    .from('clinic_users')
+    .insert({ user_id: authUser.user.id, clinic_id: params.clinicId, role: dbRole });
+
+  if (insertError) {
+    await supabase.auth.admin.deleteUser(authUser.user.id);
+    return { error: insertError, member: null };
+  }
+
+  const member: TeamMember = {
+    user_id: authUser.user.id,
+    email: authUser.user.email ?? params.email,
+    full_name: params.full_name.trim(),
+    role: dbRole,
+    job_title: jobTitle,
+    banned_until: null,
+    last_sign_in_at: null,
+  };
+  return { error: null, member };
 }
 
 export async function inviteTeamMember(clinicId: string, email: string, role: string) {
@@ -147,9 +228,10 @@ export async function inviteTeamMember(clinicId: string, email: string, role: st
   const { data, error } = await supabase.auth.admin.inviteUserByEmail(email);
   if (error || !data?.user) return { error: error ?? new Error('Invite failed') };
 
+  const dbRole = role === 'CLINIC_ADMIN' ? 'CLINIC_ADMIN' : 'STAFF';
   const { error: insertError } = await supabase
     .from('clinic_users')
-    .insert({ clinic_id: clinicId, user_id: data.user.id, role });
+    .insert({ clinic_id: clinicId, user_id: data.user.id, role: dbRole });
 
   return { error: insertError ?? null, user: data.user };
 }
@@ -164,12 +246,38 @@ export async function removeTeamMember(clinicId: string, userId: string) {
   return { error };
 }
 
-export async function updateTeamMemberRole(clinicId: string, userId: string, role: string) {
+export async function updateTeamMemberRole(clinicId: string, userId: string, roleDisplay: string) {
   const supabase = getAdminClient();
+  const dbRole = ROLE_TO_DB[roleDisplay] ?? 'STAFF';
+  const jobTitle = roleDisplay !== 'מנהל' ? roleDisplay : null;
+
   const { error } = await supabase
     .from('clinic_users')
-    .update({ role })
+    .update({ role: dbRole })
     .eq('clinic_id', clinicId)
     .eq('user_id', userId);
-  return { error };
+  if (error) return { error };
+
+  const { data: u } = await supabase.auth.admin.getUserById(userId);
+  const meta = (u?.user?.user_metadata as Record<string, unknown>) ?? {};
+  const { error: metaErr } = await supabase.auth.admin.updateUserById(userId, {
+    user_metadata: { ...meta, job_title: jobTitle },
+  });
+  return { error: metaErr ?? null };
+}
+
+export async function setTeamMemberBanned(clinicId: string, userId: string, banned: boolean): Promise<{ error: Error | null }> {
+  const supabase = getAdminClient();
+  const { data: row } = await supabase
+    .from('clinic_users')
+    .select('user_id')
+    .eq('clinic_id', clinicId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (!row) return { error: new Error('משתמש לא נמצא בקליניקה זו') };
+
+  const { error } = await supabase.auth.admin.updateUserById(userId, {
+    ban_duration: banned ? '876000h' : 'none',
+  });
+  return { error: error ?? null };
 }

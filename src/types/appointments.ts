@@ -11,7 +11,6 @@ export type Appointment = {
   // Intelligence fields
   appointment_summary?: string | null;
   urgency_level?: 'low' | 'medium' | 'high' | null;
-  lead_quality_score?: number | null;
   priority_level?: 'low' | 'medium' | 'high' | null;
 };
 

@@ -99,7 +99,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, []);
 
   const navItems = isSuperAdmin
-    ? [{ id: 'super-admin', label: 'לוח בקרה', icon: SettingsIcon, href: SUPER_ADMIN_HREF }]
+    ? [{ id: 'super-admin', label: 'מנהל מערכת', icon: SettingsIcon, href: SUPER_ADMIN_HREF }]
     : NAV_ITEMS;
 
   const isActive = (href: string) => {
@@ -144,14 +144,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Desktop: solid (overrides the blur layer) */}
         <div className="absolute inset-0 hidden md:block bg-white dark:bg-zinc-900" />
 
-        <div className="relative flex h-full w-full items-center flex-row-reverse">
+        <div className="relative flex h-full w-full items-center">
+          {/* RTL: first = end (right), so logo on right; user zone has flex-1 + justify-end = left */}
 
           {/* ── Logo zone (desktop, RTL: right side) ── */}
-          <div className="hidden md:flex h-full w-64 shrink-0 items-center gap-3 border-slate-200 dark:border-zinc-800 pl-4 pr-5 border-e border-slate-200 dark:border-zinc-800">
+          <div className="hidden md:flex h-full w-64 shrink-0 items-center gap-3 border-e border-slate-200 dark:border-zinc-800 pl-4 pr-5">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-slate-800 to-slate-950 text-white shadow-sm">
               <span className="text-sm font-bold leading-none">λ</span>
             </div>
-            <div className="flex min-w-0 flex-col leading-tight">
+            <div className="flex min-w-0 flex-col leading-tight text-right">
               <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-zinc-500">קליניקת AI</span>
               <span className="truncate text-sm font-semibold text-slate-900 dark:text-zinc-100">
                 {clinicName ?? 'ניהול מרפאה'}
@@ -214,13 +215,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </button>
           </div>
 
-          {/* ── Desktop left zone (RTL: user info on left) ── */}
-          <div className="hidden md:flex flex-1 items-center justify-start px-8">
-            <div className="flex items-center gap-5 flex-row-reverse">
-              <div className="hidden sm:flex flex-col items-start leading-tight">
-<span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-                {isSuperAdmin ? 'מנהל מערכת' : clinicId ? (role === 'STAFF' ? 'צוות' : 'מנהל קליניקה') : 'לא מקושר לקליניקה'}
-              </span>
+          {/* ── Desktop user zone (RTL: left side; content aligned end = left) ── */}
+          <div className="hidden md:flex flex-1 items-center justify-end px-8">
+            <div className="flex items-center gap-5">
+              <div className="hidden sm:flex flex-col items-end leading-tight text-right">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-zinc-500">
+                  {isSuperAdmin ? 'מנהל מערכת' : clinicId ? (role === 'STAFF' ? 'צוות' : 'מנהל קליניקה') : 'לא מקושר לקליניקה'}
+                </span>
                 <span className="text-sm font-medium text-slate-600 dark:text-zinc-400">{userEmail ?? 'משתמש'}</span>
               </div>
               <div className="hidden sm:block h-5 w-px bg-slate-200 dark:bg-zinc-700" />

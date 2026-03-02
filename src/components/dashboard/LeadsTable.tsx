@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Search,
@@ -16,6 +16,82 @@ import {
 import type { Lead } from '@/types/leads';
 import { getDisplayPriority, type Priority, type LeadStatus } from '@/types/leads';
 import { STATUS_LABELS, PRIORITY_LABELS, SOURCE_LABELS, formatCurrencyILS } from '@/lib/hebrew';
+
+// RTL filter dropdown: label (left) + chevron (right), no absolute chevron
+function FilterDropdown<T extends string>({
+  value,
+  options,
+  getLabel,
+  onChange,
+  minWidth = '140px',
+  open,
+  onOpenChange,
+  id,
+}: {
+  value: T;
+  options: T[];
+  getLabel: (v: T) => string;
+  onChange: (v: T) => void;
+  minWidth?: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  id: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onOpenChange(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open, onOpenChange]);
+
+  return (
+    <div ref={ref} className="relative" style={{ minWidth }}>
+      <button
+        type="button"
+        onClick={() => onOpenChange(!open)}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-label={getLabel(value)}
+        id={id}
+        dir="rtl"
+        className="flex flex-row-reverse items-center justify-between gap-2 w-full rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3 py-2 text-sm text-right text-slate-700 dark:text-zinc-300 focus:border-slate-400 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:focus:ring-zinc-500/50 transition-colors duration-150 hover:border-slate-300 dark:hover:border-zinc-600"
+      >
+        <span className="truncate">{getLabel(value)}</span>
+        <ChevronDown className="h-4 w-4 shrink-0 text-slate-500 dark:text-zinc-400" />
+      </button>
+      {open && (
+        <ul
+          role="listbox"
+          aria-labelledby={id}
+          className="absolute top-full end-0 mt-1 z-50 min-w-full rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg py-1 max-h-60 overflow-auto"
+          dir="rtl"
+        >
+          {options.map((opt) => (
+            <li key={opt} role="option" aria-selected={value === opt}>
+              <button
+                type="button"
+                onClick={() => {
+                  onChange(opt);
+                  onOpenChange(false);
+                }}
+                className={`w-full px-3 py-2 text-sm text-right transition-colors ${
+                  value === opt
+                    ? 'bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 font-medium'
+                    : 'text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800/60'
+                }`}
+              >
+                {getLabel(opt)}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 const PRIORITY_STYLES: Record<Priority, string> = {
   Low: 'bg-zinc-100 text-zinc-500 border border-zinc-200 dark:bg-zinc-800/70 dark:text-zinc-400 dark:border-zinc-700/40',
@@ -35,13 +111,13 @@ const STATUS_BADGE_STYLES: Record<string, string> = {
 
 const STATUS_OPTIONS: LeadStatus[] = ['Pending', 'Contacted', 'Appointment scheduled', 'Closed', 'Disqualified'];
 
-type SortKey = 'revenue' | 'created' | 'name' | 'score';
+type SortKey = 'revenue' | 'created' | 'name';
 
-function getScoreBarColor(score: number): string {
-  if (score >= 75) return 'bg-emerald-500/50';
-  if (score >= 45) return 'bg-amber-500/50';
-  return 'bg-red-500/40';
-}
+const SORT_LABELS: Record<SortKey, string> = {
+  created: 'תאריך יצירה',
+  revenue: 'הכנסה',
+  name: 'שם',
+};
 
 function formatDateDDMMYYYY(value: string): string {
   const d = new Date(value);
@@ -119,16 +195,6 @@ function PendingReviewModal({
               {PRIORITY_LABELS[priority] ?? priority}
             </span>
           </div>
-
-          {(lead.lead_quality_score ?? lead.lead_score) != null && (
-            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-zinc-400">
-              <span className="font-medium">ציון</span>
-              <span className="tabular-nums">
-                <span className="font-semibold text-slate-800 dark:text-zinc-200">{lead.lead_quality_score ?? lead.lead_score}</span>
-                <span className="text-slate-400 dark:text-zinc-600">/100</span>
-              </span>
-            </div>
-          )}
 
           {nextAppointment && (
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-zinc-400">
@@ -306,6 +372,7 @@ export function LeadsTable({
   const [priorityFilter, setPriorityFilter] = useState<Priority | ''>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [sortKey, setSortKey] = useState<SortKey>('created');
+  const [openFilter, setOpenFilter] = useState<'priority' | 'status' | 'sort' | null>(null);
   const [sortDesc, setSortDesc] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [rowMenuId, setRowMenuId] = useState<string | null>(null);
@@ -357,9 +424,6 @@ export function LeadsTable({
           break;
         case 'name':
           cmp = (a.full_name ?? '').localeCompare(b.full_name ?? '');
-          break;
-        case 'score':
-          cmp = (a.lead_quality_score ?? a.lead_score ?? 0) - (b.lead_quality_score ?? b.lead_score ?? 0);
           break;
         default:
           cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
@@ -429,44 +493,38 @@ export function LeadsTable({
               className="w-full rounded-lg border border-slate-200 bg-white py-2 pr-9 pl-4 text-sm text-right text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:border-zinc-700/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:placeholder:text-zinc-500 dark:focus:border-zinc-500 dark:focus:ring-zinc-500/50 transition-colors duration-150 sm:w-56"
             />
           </div>
-          <select
-            dir="rtl"
+          <FilterDropdown
+            id="filter-priority"
             value={priorityFilter}
-            onChange={(e) => setPriorityFilter((e.target.value || '') as Priority | '')}
-            className="min-w-[140px] rounded-lg border border-slate-200 bg-white py-2 pr-3 pl-8 text-sm text-right text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:border-zinc-700/60 dark:bg-zinc-800/60 dark:text-zinc-300 dark:focus:border-zinc-500 dark:focus:ring-zinc-500/50 transition-colors duration-150 [direction:rtl]"
-          >
-            <option value="">כל העדיפויות</option>
-            <option value="Low">{PRIORITY_LABELS.Low}</option>
-            <option value="Medium">{PRIORITY_LABELS.Medium}</option>
-            <option value="High">{PRIORITY_LABELS.High}</option>
-            <option value="Urgent">{PRIORITY_LABELS.Urgent}</option>
-          </select>
-          <select
-            dir="rtl"
+            options={['', 'Low', 'Medium', 'High', 'Urgent'] as (Priority | '')[]}
+            getLabel={(v) => (v === '' ? 'כל העדיפויות' : (PRIORITY_LABELS[v as Priority] ?? v))}
+            onChange={(v) => setPriorityFilter(v as Priority | '')}
+            open={openFilter === 'priority'}
+            onOpenChange={(o) => setOpenFilter(o ? 'priority' : null)}
+            minWidth="140px"
+          />
+          <FilterDropdown
+            id="filter-status"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="min-w-[140px] rounded-lg border border-slate-200 bg-white py-2 pr-3 pl-8 text-sm text-right text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:border-zinc-700/60 dark:bg-zinc-800/60 dark:text-zinc-300 dark:focus:border-zinc-500 dark:focus:ring-zinc-500/50 transition-colors duration-150 [direction:rtl]"
-          >
-            <option value="">כל הסטטוסים</option>
-            <option value="Pending">{STATUS_LABELS.Pending}</option>
-            <option value="Appointment scheduled">{STATUS_LABELS['Appointment scheduled']}</option>
-            <option value="Contacted">{STATUS_LABELS.Contacted}</option>
-            <option value="Closed">{STATUS_LABELS.Closed}</option>
-            <option value="Disqualified">{STATUS_LABELS.Disqualified}</option>
-          </select>
+            options={['', 'Pending', 'Appointment scheduled', 'Contacted', 'Closed', 'Disqualified']}
+            getLabel={(v) => (v === '' ? 'כל הסטטוסים' : (STATUS_LABELS[v as LeadStatus] ?? v))}
+            onChange={setStatusFilter}
+            open={openFilter === 'status'}
+            onOpenChange={(o) => setOpenFilter(o ? 'status' : null)}
+            minWidth="140px"
+          />
           <div className="flex items-center gap-2 flex-row-reverse">
             <label className="text-[11px] text-slate-500 dark:text-zinc-500 shrink-0">מיון:</label>
-            <select
-              dir="rtl"
+            <FilterDropdown
+              id="filter-sort"
               value={sortKey}
-              onChange={(e) => setSortKey(e.target.value as SortKey)}
-              className="min-w-[130px] rounded-lg border border-slate-200 bg-white py-2 pr-3 pl-8 text-sm text-right text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:border-zinc-700/60 dark:bg-zinc-800/60 dark:text-zinc-300 dark:focus:border-zinc-500 dark:focus:ring-zinc-500/50 transition-colors duration-150 [direction:rtl]"
-            >
-              <option value="created">תאריך יצירה</option>
-              <option value="revenue">הכנסה</option>
-              <option value="name">שם</option>
-              <option value="score">ציון ליד</option>
-            </select>
+              options={['created', 'revenue', 'name']}
+              getLabel={(v) => SORT_LABELS[v]}
+              onChange={(v) => setSortKey(v)}
+              open={openFilter === 'sort'}
+              onOpenChange={(o) => setOpenFilter(o ? 'sort' : null)}
+              minWidth="130px"
+            />
             <button
               type="button"
               onClick={() => setSortDesc((d) => !d)}
@@ -477,11 +535,15 @@ export function LeadsTable({
             </button>
           </div>
         </div>
-        {selectedIds.size > 0 && (
-          <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 dark:border-zinc-700/40 dark:bg-zinc-800/60 px-3 py-2">
-            <span className="text-xs font-medium text-slate-700 dark:text-zinc-300">
-              {selectedIds.size} נבחרו
-            </span>
+      </div>
+
+      {/* Bulk action bar — above table when at least one selected */}
+      {selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900/95 px-4 py-3 shadow-sm flex-row-reverse justify-end">
+          <span className="text-sm font-medium text-slate-700 dark:text-zinc-200">
+            נבחרו {selectedIds.size} לידים
+          </span>
+          <div className="flex items-center gap-2 flex-row-reverse">
             <button
               type="button"
               onClick={() => {
@@ -491,49 +553,61 @@ export function LeadsTable({
                 });
                 setSelectedIds(new Set());
               }}
-              className="rounded-md bg-red-50 px-2.5 py-1 text-xs font-medium text-red-600 transition-colors duration-150 hover:bg-red-100 hover:text-red-700 dark:bg-red-950/60 dark:text-red-400 dark:hover:bg-red-900/60 dark:hover:text-red-300"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-zinc-600 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
             >
-              מחק נבחרים
+              מחיקה
             </button>
             <button
               type="button"
-              onClick={() => setSelectedIds(new Set())}
-              className="text-xs text-slate-500 hover:text-slate-700 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors duration-150"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-zinc-600 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
             >
-              נקה
+              שינוי סטטוס
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-zinc-600 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+            >
+              ייצוא
             </button>
           </div>
-        )}
-      </div>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set())}
+            className="text-xs text-slate-500 hover:text-slate-700 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors"
+          >
+            ביטול
+          </button>
+        </div>
+      )}
 
       {/* Table */}
       <div className="relative rounded-xl border border-slate-200 bg-white dark:border-zinc-800/60 dark:bg-zinc-900 shadow-sm shadow-slate-200/50 dark:shadow-2xl dark:shadow-black/30 overflow-hidden ring-1 ring-slate-900/[0.03] dark:ring-white/[0.03]">
-        <div className="overflow-x-auto" dir="rtl">
-          <table className="min-w-full">
+        <div className="overflow-x-auto overflow-y-visible" dir="rtl">
+          <table className="min-w-full border-collapse">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-zinc-800/60">
-                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">איש קשר</th>
-                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">עדיפות</th>
-                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">שווי</th>
-                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">ציון</th>
-                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">סטטוס</th>
-                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">מקור</th>
-                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">קשר אחרון</th>
-                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">מעקב הבא</th>
-                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">תור הבא</th>
+              <tr className="sticky top-0 z-10 border-b border-slate-200 dark:border-zinc-700 bg-slate-100/95 dark:bg-zinc-800/95 text-right">
+                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">איש קשר</th>
+                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">עדיפות</th>
+                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">שווי</th>
+                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">סטטוס</th>
+                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">מקור</th>
+                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">תאריך</th>
+                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">מעקב הבא</th>
+                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">תור הבא</th>
                 {isDisqualifiedView && (
                   <>
-                    <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">סיבת הסרה</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">הוסר בתאריך</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">סיבת הסרה</th>
+                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">הוסר בתאריך</th>
                   </>
                 )}
-                <th className="w-12 px-4 py-3" />
+                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 w-[1%]">פעולות</th>
                 <th className="w-10 px-4 py-3 text-right">
                   <input
                     type="checkbox"
                     checked={filteredAndSorted.length > 0 && selectedIds.size === filteredAndSorted.length}
                     onChange={toggleSelectAll}
-                    className="h-3.5 w-3.5 rounded border-slate-300 bg-white dark:border-zinc-600 dark:bg-zinc-800 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
+                    className="h-4 w-4 rounded border-slate-300 bg-white dark:border-zinc-600 dark:bg-zinc-800 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
+                    aria-label="בחר הכל"
                   />
                 </th>
               </tr>
@@ -553,18 +627,18 @@ export function LeadsTable({
                   <tr
                     key={lead.id}
                     className={[
-                      'group relative border-b border-slate-200/80 dark:border-zinc-800/40 transition-colors duration-150 ease-in-out animate-in fade-in duration-200',
-                      'active:bg-slate-100 focus-within:bg-slate-50 dark:active:bg-zinc-800/70 dark:focus-within:bg-zinc-800/25',
+                      'group relative border-b border-slate-100 dark:border-zinc-800/50 transition-colors duration-200 ease-out',
+                      'hover:bg-slate-50/80 dark:hover:bg-zinc-800/30',
                       isRemoving ? 'opacity-0 scale-y-95 pointer-events-none' : 'opacity-100',
                       isSelected
-                        ? 'bg-indigo-50 hover:bg-indigo-100/70 dark:bg-indigo-950/30 dark:hover:bg-indigo-950/40'
+                        ? 'bg-indigo-50/80 dark:bg-indigo-950/25 hover:bg-indigo-50 dark:hover:bg-indigo-950/30'
                         : urgent
-                          ? 'bg-red-50/60 hover:bg-red-50 dark:bg-red-950/15 dark:hover:bg-red-950/25'
-                          : 'hover:bg-slate-50 dark:hover:bg-zinc-800/40',
+                          ? 'bg-red-50/50 dark:bg-red-950/10 hover:bg-red-50/70 dark:hover:bg-red-950/20'
+                          : '',
                     ].join(' ')}
                   >
-                    <td className={`px-4 py-3.5 ${accentBorder} transition-[border-color] duration-150`}>
-                      <div className="flex items-center gap-2.5 flex-row-reverse justify-end">
+                    <td className={`px-4 py-3 ${accentBorder} transition-[border-color] duration-150`}>
+                      <div className="flex items-center gap-2 flex-row-reverse justify-end">
                         {urgent && (
                           <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-red-500/90" title="דורש טיפול דחוף" />
                         )}
@@ -572,121 +646,95 @@ export function LeadsTable({
                           <button
                             type="button"
                             onClick={() => onView(lead)}
-                            className="text-sm font-semibold text-slate-900 hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-400 transition-colors duration-150"
+                            className="block text-right text-sm font-bold text-slate-900 hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-400 transition-colors duration-150"
                           >
                             {lead.full_name || 'ליד ללא שם'}
                           </button>
-                          <p className="text-[11px] text-slate-500 dark:text-zinc-500 mt-0.5 text-right">{lead.email || <span className="italic text-slate-400/80 dark:text-zinc-500/60">אין אימייל</span>}</p>
+                          <p className="text-xs text-slate-500 dark:text-zinc-500 mt-0.5 text-right">{lead.email || <span className="italic text-slate-400 dark:text-zinc-500/80">אין אימייל</span>}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3.5 text-right">
-                      <span className={`inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium tracking-wide ${PRIORITY_STYLES[priority]}`}>
+                    <td className="px-4 py-3 text-right align-middle">
+                      <span className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold tracking-wide ${PRIORITY_STYLES[priority]}`}>
                         {PRIORITY_LABELS[priority] ?? priority}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3.5 text-right text-sm tabular-nums text-slate-700 dark:text-zinc-300">
-                      {(lead.estimated_deal_value ?? 0) > 0 ? formatCurrencyILS(lead.estimated_deal_value!) : <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">אין שווי</span>}
+                    <td className="whitespace-nowrap px-4 py-3 text-right text-sm tabular-nums text-slate-700 dark:text-zinc-300 align-middle">
+                      {(lead.estimated_deal_value ?? 0) > 0 ? formatCurrencyILS(lead.estimated_deal_value!) : <span className="text-xs italic text-slate-400 dark:text-zinc-500/80">אין שווי</span>}
                     </td>
-                    <td className="px-4 py-3.5 text-right">
-                      {(lead.lead_quality_score ?? lead.lead_score) != null ? (() => {
-                        const score = lead.lead_quality_score ?? lead.lead_score ?? 0;
-                        return (
-                          <div className="inline-flex flex-col items-end gap-1.5">
-                            <span className="tabular-nums leading-none">
-                              <span className="text-sm font-semibold text-slate-800 dark:text-zinc-200">{score}</span>
-                              <span className="text-[10px] font-normal text-slate-400 dark:text-zinc-600">/100</span>
-                            </span>
-                            <div className="h-px w-10 rounded-full bg-slate-200 dark:bg-zinc-800/80 overflow-hidden">
-                              <div
-                                className={`h-full rounded-full transition-all duration-500 ${getScoreBarColor(score)}`}
-                                style={{ width: `${score}%` }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })() : <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">אין ציון</span>}
-                    </td>
-                    <td className="px-4 py-3.5 text-right">
+                    <td className="px-4 py-3 text-right align-middle">
                       {lead.status === 'Pending' ? (
                         <button
                           type="button"
                           onClick={() => setPendingReviewLead(lead)}
-                          className={`inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium tracking-wide cursor-pointer transition-all duration-150 hover:brightness-110 hover:shadow-sm ${STATUS_BADGE_STYLES['Pending']}`}
+                          className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold tracking-wide cursor-pointer transition-all duration-150 hover:brightness-110 hover:shadow-sm ${STATUS_BADGE_STYLES['Pending']}`}
                           title="לחץ לסקירת הליד"
                         >
                           {STATUS_LABELS.Pending}
                         </button>
                       ) : (
-                        <span className={`inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium tracking-wide ${STATUS_BADGE_STYLES[lead.status ?? 'Pending'] ?? STATUS_BADGE_STYLES['Pending']}`}>
+                        <span className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold tracking-wide ${STATUS_BADGE_STYLES[lead.status ?? 'Pending'] ?? STATUS_BADGE_STYLES['Pending']}`}>
                           {STATUS_LABELS[lead.status ?? 'Pending'] ?? lead.status ?? STATUS_LABELS.Pending}
                         </span>
                       )}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3.5 text-xs text-slate-500 dark:text-zinc-500 text-right">
-                      {(lead.source && SOURCE_LABELS[lead.source]) ? SOURCE_LABELS[lead.source] : (lead.source || <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">לא ידוע</span>)}
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600 dark:text-zinc-400 text-right align-middle">
+                      {(lead.source && SOURCE_LABELS[lead.source]) ? SOURCE_LABELS[lead.source] : (lead.source || <span className="italic text-slate-400 dark:text-zinc-500/80">לא ידוע</span>)}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3.5 text-xs tabular-nums text-slate-500 dark:text-zinc-500 text-right">
-                      {lead.last_contact_date ? formatDateDDMMYYYY(lead.last_contact_date) : <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">עדיין לא נוצר קשר</span>}
+                    <td className="whitespace-nowrap px-4 py-3 text-xs tabular-nums text-slate-600 dark:text-zinc-400 text-right align-middle">
+                      {lead.last_contact_date ? formatDateDDMMYYYY(lead.last_contact_date) : <span className="italic text-slate-400 dark:text-zinc-500/80">עדיין לא נוצר קשר</span>}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3.5 text-xs tabular-nums text-slate-500 dark:text-zinc-500 text-right">
-                      {lead.next_follow_up_date ? formatDateDDMMYYYY(lead.next_follow_up_date) : <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">אין מעקב</span>}
+                    <td className="whitespace-nowrap px-4 py-3 text-xs tabular-nums text-slate-600 dark:text-zinc-400 text-right align-middle">
+                      {lead.next_follow_up_date ? formatDateDDMMYYYY(lead.next_follow_up_date) : <span className="italic text-slate-400 dark:text-zinc-500/80">אין מעקב</span>}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3.5 text-xs tabular-nums text-slate-500 dark:text-zinc-500 text-right">
+                    <td className="whitespace-nowrap px-4 py-3 text-xs tabular-nums text-slate-600 dark:text-zinc-400 text-right align-middle">
                       {nextAppointmentsByLeadId?.[lead.id]
                         ? new Intl.DateTimeFormat('he-IL', {
                             timeZone: 'Asia/Jerusalem',
                             day: '2-digit', month: '2-digit', year: 'numeric',
                             hour: '2-digit', minute: '2-digit', hour12: false,
                           }).format(new Date(nextAppointmentsByLeadId[lead.id]!))
-                        : <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">לא נקבע</span>}
+                        : <span className="italic text-slate-400 dark:text-zinc-500/80">לא נקבע</span>}
                     </td>
                     {isDisqualifiedView && (
                       <>
-                        <td className="whitespace-nowrap px-4 py-3.5 text-xs text-slate-500 dark:text-zinc-500 text-right">
-                          {lead.reject_reason ?? <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">לא צוינה סיבה</span>}
+                        <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600 dark:text-zinc-400 text-right align-middle">
+                          {lead.reject_reason ?? <span className="italic text-slate-400 dark:text-zinc-500/80">לא צוינה סיבה</span>}
                         </td>
-                        <td className="whitespace-nowrap px-4 py-3.5 text-xs tabular-nums text-slate-500 dark:text-zinc-500 text-right">
-                          {lead.rejected_at ? formatDateTime(lead.rejected_at) : <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">לא ידוע</span>}
+                        <td className="whitespace-nowrap px-4 py-3 text-xs tabular-nums text-slate-600 dark:text-zinc-400 text-right align-middle">
+                          {lead.rejected_at ? formatDateTime(lead.rejected_at) : <span className="italic text-slate-400 dark:text-zinc-500/80">לא ידוע</span>}
                         </td>
                       </>
                     )}
-                    <td className="relative px-4 py-3.5">
-                      <div className="flex items-center gap-1 flex-row-reverse justify-end">
+                    <td className="relative px-4 py-3 align-middle">
+                      <div className="flex items-center justify-end gap-2 flex-row-reverse">
                         <button
                           type="button"
                           onClick={() => onView(lead)}
-                          className="rounded-md p-1.5 text-slate-500 dark:text-zinc-400 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400/60 dark:focus-visible:ring-zinc-500/60"
-                          title="צפה בליד"
+                          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-zinc-700 dark:hover:text-zinc-100 transition-colors duration-150"
+                          title="צפייה"
                         >
-                          <Eye className="h-3.5 w-3.5" />
+                          <Eye className="h-3.5 w-3.5 shrink-0" />
+                          <span className="hidden sm:inline">צפייה</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => onEdit(lead)}
-                          className="rounded-md p-1.5 text-slate-500 dark:text-zinc-400 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400/60 dark:focus-visible:ring-zinc-500/60"
-                          title="ערוך ליד"
+                          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-zinc-700 dark:hover:text-zinc-100 transition-colors duration-150"
+                          title="עריכה"
                         >
-                          <Pencil className="h-3.5 w-3.5" />
+                          <Pencil className="h-3.5 w-3.5 shrink-0" />
+                          <span className="hidden sm:inline">עריכה</span>
                         </button>
-                        {nextAppointmentsByLeadId?.[lead.id] && (
-                          <button
-                            type="button"
-                            onClick={() => goToCalendarForDate(nextAppointmentsByLeadId![lead.id]!)}
-                            className="rounded-md p-1.5 text-slate-500 dark:text-zinc-400 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400/60 dark:focus-visible:ring-zinc-500/60"
-                            title="פתח בלוח שנה"
-                          >
-                            <CalendarIcon className="h-3.5 w-3.5" />
-                          </button>
-                        )}
                         {lead.phone && (
                           <button
                             type="button"
                             onClick={() => setPhoneModalPhone(lead.phone!)}
-                            className="rounded-md p-1.5 text-slate-500 dark:text-zinc-400 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400/60 dark:focus-visible:ring-zinc-500/60"
-                            title="יצירת קשר"
+                            className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-zinc-700 dark:hover:text-zinc-100 transition-colors duration-150"
+                            title="חיוג"
                           >
-                            <Phone className="h-3.5 w-3.5" />
+                            <Phone className="h-3.5 w-3.5 shrink-0" />
+                            <span className="hidden sm:inline">חיוג</span>
                           </button>
                         )}
                         <div className="relative">
@@ -708,10 +756,10 @@ export function LeadsTable({
                               setRowMenuId(lead.id);
                               setRowMenuCoords({ top, left: rect.right + window.scrollX });
                             }}
-                            className="rounded-md p-1.5 text-slate-500 dark:text-zinc-400 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400/60 dark:focus-visible:ring-zinc-500/60"
-                            title="פעולות נוספות"
+                            className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-zinc-700 dark:hover:text-zinc-100 transition-colors duration-150"
+                            title="עוד"
                           >
-                            <MoreHorizontal className="h-3.5 w-3.5" />
+                            <MoreHorizontal className="h-3.5 w-3.5 shrink-0" />
                           </button>
                           {rowMenuId === lead.id && rowMenuCoords && (
                             <>
@@ -776,12 +824,13 @@ export function LeadsTable({
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3.5 text-right">
+                    <td className="px-4 py-3 text-right align-middle">
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleSelect(lead.id)}
-                        className="h-3.5 w-3.5 rounded border-slate-300 bg-white dark:border-zinc-600 dark:bg-zinc-800 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
+                        className="h-4 w-4 rounded border-slate-300 bg-white dark:border-zinc-600 dark:bg-zinc-800 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
+                        aria-label="בחר ליד"
                       />
                     </td>
                   </tr>

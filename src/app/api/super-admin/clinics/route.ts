@@ -13,13 +13,16 @@ function getSupabaseAdmin() {
 export async function GET() {
   const user = await requireSuperAdmin();
   if (!user) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'Super Admin role required. Ensure your user has a clinic_users row with role = SUPER_ADMIN.' },
+      { status: 403 }
+    );
   }
 
   const supabase = getSupabaseAdmin();
   const { data: clinics, error: clinicsError } = await supabase
     .from('clinics')
-    .select('id, name, plan_id, status')
+    .select('id, name')
     .order('name');
 
   if (clinicsError) {
@@ -38,6 +41,8 @@ export async function GET() {
       ]);
       return {
         ...c,
+        plan_id: (c as { plan_id?: string }).plan_id ?? null,
+        status: (c as { status?: string }).status ?? 'active',
         leads_count: leadsRes.count ?? 0,
         appointments_count: appointmentsRes.count ?? 0,
         discord_connected: connectedClinicIds.has(c.id),
