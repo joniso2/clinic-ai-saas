@@ -24,14 +24,14 @@ import { BillingTab }      from '@/components/dashboard/settings/BillingTab';
 type TabId = 'general' | 'scheduling' | 'automation' | 'ai' | 'integrations' | 'team' | 'security' | 'billing';
 
 const TABS: { id: TabId; label: string; icon: React.ElementType; description: string }[] = [
-  { id: 'general',      label: 'General',      icon: Building2,   description: 'Profile, contact info, locale' },
-  { id: 'scheduling',   label: 'Scheduling',   icon: CalendarDays, description: 'Hours, slots, booking rules' },
-  { id: 'automation',   label: 'Automation',   icon: Zap,         description: 'Lead & booking rules' },
-  { id: 'ai',          label: 'AI',           icon: BrainCircuit, description: 'Tone, length, enforcement' },
-  { id: 'integrations', label: 'Integrations', icon: Plug2,       description: 'Discord, webhooks' },
-  { id: 'team',         label: 'Team',         icon: Users,       description: 'Members & roles' },
-  { id: 'security',     label: 'Security',     icon: ShieldCheck, description: '2FA, sessions, audit' },
-  { id: 'billing',      label: 'Billing',      icon: CreditCard,  description: 'Plan, usage, payment' },
+  { id: 'general',      label: 'כללי',           icon: Building2,   description: 'פרופיל, פרטי קשר, שפה' },
+  { id: 'scheduling',   label: 'תזמון',          icon: CalendarDays, description: 'שעות, חריצים, כללי הזמנה' },
+  { id: 'automation',   label: 'אוטומציה',       icon: Zap,         description: 'כללי לידים והזמנות' },
+  { id: 'ai',          label: 'AI',             icon: BrainCircuit, description: 'טון, אורך, אכיפה' },
+  { id: 'integrations', label: 'אינטגרציות',     icon: Plug2,       description: 'דיסקורד, webhooks' },
+  { id: 'team',         label: 'צוות',           icon: Users,       description: 'חברים והרשאות' },
+  { id: 'security',     label: 'אבטחה',          icon: ShieldCheck, description: 'אימות דו־שלבי, סשנים' },
+  { id: 'billing',      label: 'חיוב',           icon: CreditCard,  description: 'תוכנית, שימוש, תשלום' },
 ];
 
 export function SettingsTab({
@@ -66,7 +66,7 @@ export function SettingsTab({
   };
 
   return (
-    <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-7">
+    <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-7 flex-row-reverse lg:flex-row-reverse">
       {/* ── Sidebar / tab nav ─────────────────────────────────────────────── */}
       <nav className="lg:w-52 shrink-0">
         {/* Mobile: horizontal scroll */}
@@ -102,7 +102,7 @@ export function SettingsTab({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-inset ${
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-right transition-colors focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-inset flex-row-reverse justify-end ${
                   active
                     ? 'bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm'
                     : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700/60'

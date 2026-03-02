@@ -22,9 +22,13 @@ export type KPIConversionBreakdown = {
 };
 
 export type KPIEfficiency = {
-  avgResponseTimeHours: number | null;     // lead created → first contact
-  avgTimeToAppointmentDays: number | null; // lead created → next_appointment
-  avgCloseTimeDays: number | null;         // lead created → closed (via last_contact_date)
+  avgResponseTimeHours: number | null;
+  medianResponseTimeHours: number | null;
+  pctWithin30Min: number | null;   // % of leads with first contact within 30 min
+  pctWithin1Hour: number | null;
+  avgTimeToAppointmentDays: number | null;
+  avgCloseTimeDays: number | null;
+  responseTimeSparkline: number[]; // 7 points: avg response hours per day (recent 7 days)
 };
 
 export type FunnelStage = {
@@ -48,11 +52,21 @@ export type Insight = {
   message: string;
 };
 
+export type KPICountWithTrend = {
+  current: number;
+  previous: number;
+  changePct: number | null;
+};
+
 export type AnalyticsData = {
   kpi: {
     discordRevenue: KPIDiscordRevenue;
     conversionBreakdown: KPIConversionBreakdown;
     efficiency: KPIEfficiency;
+    leadsCount: KPICountWithTrend;
+    closeRate: KPICountWithTrend;       // current/previous are percentages
+    appointmentsCount: KPICountWithTrend;
+    cancelledAppointments: number;      // not tracked yet, always 0
   };
   funnel: FunnelStage[];
   sourceTable: SourceTableRow[];
@@ -79,6 +93,13 @@ function daysDiff(from: string, to: string): number {
 function average(nums: number[]): number | null {
   if (nums.length === 0) return null;
   return nums.reduce((a, b) => a + b, 0) / nums.length;
+}
+
+function median(nums: number[]): number | null {
+  if (nums.length === 0) return null;
+  const sorted = [...nums].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid]! : (sorted[mid - 1]! + sorted[mid]!) / 2;
 }
 
 function isConverted(status: string | null): boolean {
@@ -174,11 +195,30 @@ function computeSourceTable(leads: AnalyticsLeadRow[]): SourceTableRow[] {
 
 // ─── Efficiency ──────────────────────────────────────────────────────────────
 
-function computeEfficiency(leads: AnalyticsLeadRow[]): KPIEfficiency {
+function computeResponseTimeSparkline(leads: AnalyticsLeadRow[], toDate: Date): number[] {
+  return Array.from({ length: 7 }, (_, i) => {
+    const day = new Date(toDate);
+    day.setDate(day.getDate() - (6 - i));
+    const dayStr = day.toDateString();
+    const dayLeads = leads.filter(
+      (l) => l.last_contact_date && l.created_at && new Date(l.created_at).toDateString() === dayStr
+    );
+    const hours = dayLeads
+      .map((l) => hoursDiff(l.created_at, l.last_contact_date!))
+      .filter((h) => h >= 0 && h < 720);
+    return hours.length > 0 ? hours.reduce((a, b) => a + b, 0) / hours.length : 0;
+  });
+}
+
+function computeEfficiency(leads: AnalyticsLeadRow[], rangeTo: string): KPIEfficiency {
   const responseTimes = leads
     .filter((l) => l.last_contact_date && l.created_at)
     .map((l) => hoursDiff(l.created_at, l.last_contact_date!))
-    .filter((h) => h >= 0 && h < 720); // exclude outliers > 30 days
+    .filter((h) => h >= 0 && h < 720);
+
+  const totalWithContact = responseTimes.length;
+  const pct30 = totalWithContact > 0 ? pct(responseTimes.filter((h) => h <= 0.5).length, totalWithContact) : null;
+  const pct60 = totalWithContact > 0 ? pct(responseTimes.filter((h) => h <= 1).length, totalWithContact) : null;
 
   const timeToAppt = leads
     .filter((l) => l.next_appointment && l.created_at)
@@ -192,12 +232,23 @@ function computeEfficiency(leads: AnalyticsLeadRow[]): KPIEfficiency {
 
   return {
     avgResponseTimeHours:     average(responseTimes),
+    medianResponseTimeHours:  median(responseTimes),
+    pctWithin30Min:          pct30,
+    pctWithin1Hour:          pct60,
     avgTimeToAppointmentDays: average(timeToAppt),
     avgCloseTimeDays:         average(closeTimes),
+    responseTimeSparkline:    computeResponseTimeSparkline(leads, new Date(rangeTo)),
   };
 }
 
-// ─── Insights (deterministic rule-based) ────────────────────────────────────
+// ─── Insights (Hebrew, actionable) ────────────────────────────────────────────
+
+const STAGE_NAMES_HE: Record<string, string> = {
+  Leads: 'ליד',
+  Contacted: 'קשר',
+  Appointments: 'תור',
+  Closed: 'סגור',
+};
 
 function computeInsights(
   funnel: FunnelStage[],
@@ -207,60 +258,65 @@ function computeInsights(
 ): Insight[] {
   const insights: Insight[] = [];
 
-  // Revenue trend
   if (discordRevenue.changePct !== null) {
     if (discordRevenue.changePct >= 10) {
-      insights.push({ type: 'success', message: `Discord revenue is up ${discordRevenue.changePct}% vs the previous period` });
+      insights.push({ type: 'success', message: `הכנסה פוטנציאלית מדיסקורד עלתה ב־${discordRevenue.changePct}% לעומת התקופה הקודמת.` });
     } else if (discordRevenue.changePct <= -10) {
-      insights.push({ type: 'warning', message: `Discord revenue dropped ${Math.abs(discordRevenue.changePct)}% vs the previous period` });
+      insights.push({ type: 'warning', message: `הכנסה פוטנציאלית מדיסקורד ירדה ב־${Math.abs(discordRevenue.changePct)}% לעומת התקופה הקודמת.` });
     }
   }
 
-  // Worst drop-off stage
   const worstStage = funnel.find((s) => s.isWorstDropOff);
   if (worstStage) {
-    const stagePrev = funnel[funnel.indexOf(worstStage) - 1]?.name ?? 'previous stage';
-    insights.push({
-      type: 'warning',
-      message: `Biggest drop-off is ${stagePrev} → ${worstStage.name} (${worstStage.dropOffPct}% drop-off)`,
-    });
-  }
-
-  // Response time
-  if (efficiency.avgResponseTimeHours !== null) {
-    const h = Math.round(efficiency.avgResponseTimeHours * 10) / 10;
-    insights.push({
-      type: h > 4 ? 'warning' : 'info',
-      message: `Average response time is ${h} hour${h === 1 ? '' : 's'}`,
-    });
-    if (h > 0.5) {
+    const idx = funnel.indexOf(worstStage);
+    const prevName = idx > 0 ? (STAGE_NAMES_HE[funnel[idx - 1]!.name] ?? funnel[idx - 1]!.name) : 'השלב הקודם';
+    const currName = STAGE_NAMES_HE[worstStage.name] ?? worstStage.name;
+    if (worstStage.name === 'Closed') {
       insights.push({
-        type: 'info',
-        message: 'Improving response time under 30 minutes could significantly increase conversion',
+        type: 'warning',
+        message: `הירידה הגדולה ביותר מתרחשת בין תור לסגירה (${worstStage.dropOffPct}% נשירה) — כדאי לבדוק תהליך פולואפ לאחר קביעת תור.`,
+      });
+    } else {
+      insights.push({
+        type: 'warning',
+        message: `הירידה הגדולה ביותר מתרחשת בין ${prevName} ל־${currName} (${worstStage.dropOffPct}% נשירה) — מומלץ לחזק את השלב הזה.`,
       });
     }
   }
 
-  // Contact → Appointment rate
+  if (efficiency.avgResponseTimeHours !== null) {
+    const h = Math.round(efficiency.avgResponseTimeHours * 10) / 10;
+    const hoursText = h < 1 ? `${Math.round(h * 60)} דקות` : `${h} שעות`;
+    insights.push({
+      type: h > 4 ? 'warning' : 'info',
+      message: `זמן התגובה הממוצע עומד על ${hoursText} — מומלץ לשפר מתחת לשעה אחת לשיפור אחוזי הסגירה.`,
+    });
+    if (h > 0.5) {
+      insights.push({
+        type: 'info',
+        message: 'מענה תוך 30 דקות עשוי להעלות משמעותית את אחוזי ההמרה.',
+      });
+    }
+  }
+
   if (convBreakdown.contactToAppointment > 0 && convBreakdown.contactToAppointment < 40) {
     insights.push({
       type: 'warning',
-      message: `Only ${convBreakdown.contactToAppointment}% of contacted leads book an appointment — refine your follow-up scripts`,
+      message: `רק ${convBreakdown.contactToAppointment}% מלידים שנוצר איתם קשר קבעו תור — כדאי לשפר סקריפטים ופולואפ.`,
     });
   }
 
-  // Appointment → Closed rate
   if (convBreakdown.appointmentToClosed > 0 && convBreakdown.appointmentToClosed < 60) {
     insights.push({
       type: 'info',
-      message: `${convBreakdown.appointmentToClosed}% appointment-to-close rate — following up after visits can improve this`,
+      message: `אחוז המרה מתור לסגירה עומד על ${convBreakdown.appointmentToClosed}% — פולואפ אחרי ביקור יכול לשפר.`,
     });
   }
 
   if (insights.length === 0) {
     insights.push({
       type: 'success',
-      message: 'Your pipeline is performing well across all conversion stages!',
+      message: 'צינור הלידים מתפקד טוב בכל שלבי ההמרה. המשך כך.',
     });
   }
 
@@ -320,13 +376,23 @@ export async function getAnalytics(
   const appointments = currentLeads.filter((l) => isAppointmentStage(l.status)).length;
   const closed       = currentLeads.filter((l) => isConverted(l.status)).length;
 
+  const prevTotal        = (prevLeads ?? []).length;
+  const prevAppointments = (prevLeads ?? []).filter((l) => isAppointmentStage(l.status)).length;
+  const prevClosed       = (prevLeads ?? []).filter((l) => isConverted(l.status)).length;
+  const prevCloseRate    = prevTotal > 0 ? pct(prevClosed, prevTotal) : 0;
+  const closeRatePct     = total > 0 ? pct(closed, total) : 0;
+
+  const leadsChangePct     = prevTotal > 0 ? Math.round(((total - prevTotal) / prevTotal) * 100) : null;
+  const appointmentsChange = prevAppointments > 0 ? Math.round(((appointments - prevAppointments) / prevAppointments) * 100) : null;
+  const closeRateChange    = prevCloseRate > 0 ? Math.round(((closeRatePct - prevCloseRate) / prevCloseRate) * 100) : null;
+
   const conversionBreakdown: KPIConversionBreakdown = {
     leadToContact:        pct(contacted, total),
     contactToAppointment: pct(appointments, contacted),
     appointmentToClosed:  pct(closed, appointments),
   };
 
-  const efficiency    = computeEfficiency(currentLeads);
+  const efficiency    = computeEfficiency(currentLeads, range.to);
   const funnel        = computeFunnel(currentLeads);
   const sourceTable   = computeSourceTable(currentLeads);
   const sparkline     = computeDiscordSparkline(currentLeads, new Date(range.to));
@@ -343,7 +409,15 @@ export async function getAnalytics(
 
   return {
     data: {
-      kpi: { discordRevenue, conversionBreakdown, efficiency },
+      kpi: {
+        discordRevenue,
+        conversionBreakdown,
+        efficiency,
+        leadsCount:        { current: total, previous: prevTotal, changePct: leadsChangePct },
+        closeRate:         { current: closeRatePct, previous: prevCloseRate, changePct: closeRateChange },
+        appointmentsCount: { current: appointments, previous: prevAppointments, changePct: appointmentsChange },
+        cancelledAppointments: 0,
+      },
       funnel,
       sourceTable,
       insights,

@@ -1,0 +1,2 @@
+-- Superseded by: supabase/migrations/006_multitenant_super_admin.sql
+-- Use the full migration (006 + 007) for multi-tenant + Super Admin setup.

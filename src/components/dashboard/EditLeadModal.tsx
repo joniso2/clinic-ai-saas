@@ -62,7 +62,7 @@ export function EditLeadModal({
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
-      aria-label="Edit lead"
+      aria-label="ערוך ליד"
     >
       <div
         className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
@@ -70,19 +70,19 @@ export function EditLeadModal({
       />
       <div className="relative w-full max-w-lg rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-4">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-zinc-100">Edit lead</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-zinc-100 text-right">ערוך ליד</h2>
           <button
             type="button"
             onClick={onClose}
             className="rounded-xl p-2 text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200"
-            aria-label="Close"
+            aria-label="סגור"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300">Name</label>
+            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 text-right">שם</label>
             <input
               type="text"
               value={name}
@@ -91,7 +91,7 @@ export function EditLeadModal({
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300">Email</label>
+            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 text-right">אימייל</label>
             <input
               type="email"
               value={email}
@@ -100,7 +100,7 @@ export function EditLeadModal({
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300">Phone</label>
+            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 text-right">טלפון</label>
             <input
               type="tel"
               value={phone}
@@ -109,7 +109,7 @@ export function EditLeadModal({
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300">Interest</label>
+            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 text-right">עניין</label>
             <input
               type="text"
               value={interest}
@@ -118,33 +118,33 @@ export function EditLeadModal({
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300">Status</label>
+            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 text-right">סטטוס</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as LeadStatus)}
-              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/70 px-3 py-2 text-sm text-slate-900 dark:text-zinc-100 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
+              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/70 px-3 py-2 text-sm text-slate-900 dark:text-zinc-100 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500 text-right"
             >
-              <option value="Pending">Pending</option>
-              <option value="Contacted">Contacted</option>
-              <option value="Appointment scheduled">Appointment scheduled</option>
-              <option value="Closed">Closed</option>
-              <option value="Disqualified">Disqualified</option>
+              <option value="Pending">ממתין</option>
+              <option value="Contacted">נוצר קשר</option>
+              <option value="Appointment scheduled">תור נקבע</option>
+              <option value="Closed">נסגר</option>
+              <option value="Disqualified">הוסר</option>
             </select>
           </div>
-          <div className="flex justify-end gap-3 pt-4">
+          <div className="flex justify-start gap-3 pt-4 flex-row-reverse">
             <button
               type="button"
               onClick={onClose}
               className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2 text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700"
             >
-              Cancel
+              ביטול
             </button>
             <button
               type="submit"
               disabled={loading}
               className="rounded-xl bg-slate-900 dark:bg-zinc-100 px-4 py-2 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-slate-800 dark:hover:bg-white disabled:opacity-60"
             >
-              {loading ? 'Saving…' : 'Save changes'}
+              {loading ? 'שומר…' : 'שמור שינויים'}
             </button>
           </div>
         </form>

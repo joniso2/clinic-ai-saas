@@ -4,10 +4,10 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Users, BarChart3, Settings as SettingsIcon, Calendar as CalendarIcon } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { id: 'leads',     label: 'Leads',     icon: Users,         href: '/dashboard' },
-  { id: 'calendar',  label: 'Calendar',  icon: CalendarIcon,  href: '/dashboard/calendar' },
-  { id: 'analytics', label: 'Analytics', icon: BarChart3,      href: '/dashboard/analytics' },
-  { id: 'settings',  label: 'Settings',  icon: SettingsIcon,  href: '/dashboard/settings' },
+  { id: 'leads',     label: 'לידים',     icon: Users,         href: '/dashboard' },
+  { id: 'calendar',  label: 'תורים',    icon: CalendarIcon,  href: '/dashboard/calendar' },
+  { id: 'analytics', label: 'אנליטיקה', icon: BarChart3,      href: '/dashboard/analytics' },
+  { id: 'settings',  label: 'הגדרות',   icon: SettingsIcon,  href: '/dashboard/settings' },
 ] as const;
 
 export default function BottomNav() {

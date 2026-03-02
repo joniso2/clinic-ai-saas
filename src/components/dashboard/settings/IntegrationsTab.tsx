@@ -117,7 +117,7 @@ export function IntegrationsTab() {
               ) : (
                 <div className="rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/20 px-4 py-3">
                   <p className="text-sm text-amber-800 dark:text-amber-400">
-                    Set <code className="font-mono text-xs bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">DISCORD_BOT_TOKEN</code> and <code className="font-mono text-xs bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">DISCORD_DEFAULT_CLINIC_ID</code> in your environment variables to enable the Discord bot.
+                    Set <code className="font-mono text-xs bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">DISCORD_BOT_TOKEN</code> in your environment, then map your Discord server to this clinic in the Super Admin panel (Discord section).
                   </p>
                 </div>
               )}

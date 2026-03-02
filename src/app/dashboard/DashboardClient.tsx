@@ -41,12 +41,12 @@ export default function DashboardClient() {
     const res = await fetch('/api/leads', { credentials: 'include' });
     const json = await res.json().catch(() => ({})) as { leads?: Lead[]; error?: string };
     if (!res.ok) {
-      setError(json.error ?? 'Failed to load leads');
+      setError(json.error ?? 'טעינת לידים נכשלה');
       setLeads([]);
     } else {
       setLeads(json.leads ?? []);
       if (json.error === 'Clinic not set for user') {
-        setError('No clinic linked to your account. Ask an admin to assign your user to a clinic.');
+        setError('אין קליניקה מקושרת לחשבון. פנה למנהל לשיוך למרפאה.');
       } else {
         setError(null);
       }
@@ -337,11 +337,11 @@ export default function DashboardClient() {
 
   return (
     <>
-      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500">Dashboard</p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-zinc-100 sm:text-3xl">Leads</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">Review and manage leads for your clinic.</p>
+      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between flex-row-reverse sm:justify-end">
+        <div className="text-right">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500">לוח בקרה</p>
+          <h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-zinc-100 sm:text-3xl">לידים</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">צפייה וניהול לידים במרפאה.</p>
         </div>
       </div>
 
@@ -351,81 +351,81 @@ export default function DashboardClient() {
         </div>
       )}
 
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 px-3 py-2 text-sm text-slate-600 dark:text-zinc-300 card-shadow">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between flex-row-reverse sm:justify-end">
+        <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 px-3 py-2 text-sm text-slate-600 dark:text-zinc-300 card-shadow flex-row-reverse">
           <span className="h-2 w-2 rounded-full bg-emerald-500" />
-          {leads.length} leads in pipeline
+          {leads.length} לידים במעקב
         </div>
         <button
           type="button"
           onClick={() => setShowNewLeadForm(true)}
           className="inline-flex items-center justify-center rounded-xl bg-slate-900 dark:bg-zinc-100 px-5 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 dark:hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-zinc-400 focus:ring-offset-2"
         >
-          Add New Lead
+          הוסף ליד
         </button>
       </div>
 
       {showNewLeadForm && (
         <div className="mb-8 rounded-2xl border border-slate-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 p-6 card-shadow">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">New lead</h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">Add a contact to your pipeline.</p>
+          <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100 text-right">ליד חדש</h2>
+          <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400 text-right">הוסף איש קשר לצינור המכירות.</p>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Name</label>
+              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300 text-right block">שם</label>
               <input
                 type="text"
                 value={newLeadName}
                 onChange={(e) => setNewLeadName(e.target.value)}
-                className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
-                placeholder="Jane Doe"
+                className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500 text-right"
+                placeholder="שם מלא"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Email</label>
+              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300 text-right block">אימייל</label>
               <input
                 type="email"
                 value={newLeadEmail}
                 onChange={(e) => setNewLeadEmail(e.target.value)}
-                className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
-                placeholder="jane@example.com"
+                className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500 text-right"
+                placeholder="דוגמה@example.com"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Phone</label>
+              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300 text-right block">טלפון</label>
               <input
                 type="tel"
                 value={newLeadPhone}
                 onChange={(e) => setNewLeadPhone(e.target.value)}
-                className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
-                placeholder="+1 (555) 123-4567"
+                className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500 text-right"
+                placeholder="05X-XXX-XXXX"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Interest</label>
+              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300 text-right block">עניין</label>
               <input
                 type="text"
                 value={newLeadInterest}
                 onChange={(e) => setNewLeadInterest(e.target.value)}
-                className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
-                placeholder="Treatment or service"
+                className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500 text-right"
+                placeholder="טיפול או שירות"
               />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
-              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Status</label>
+              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300 text-right block">סטטוס</label>
               <select
                 value={newLeadStatus}
                 onChange={(e) => setNewLeadStatus(e.target.value as LeadStatus)}
-                className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
+                className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500 text-right"
               >
-                <option value="Pending">Pending</option>
-                <option value="Contacted">Contacted</option>
-                <option value="Appointment scheduled">Appointment scheduled</option>
-                <option value="Closed">Closed</option>
-                <option value="Disqualified">Disqualified</option>
+                <option value="Pending">ממתין</option>
+                <option value="Contacted">נוצר קשר</option>
+                <option value="Appointment scheduled">תור נקבע</option>
+                <option value="Closed">נסגר</option>
+                <option value="Disqualified">הוסר</option>
               </select>
             </div>
           </div>
-          <div className="mt-6 flex justify-end gap-3">
+          <div className="mt-6 flex justify-start gap-3 flex-row-reverse">
             <button
               type="button"
               onClick={() => {
@@ -436,7 +436,7 @@ export default function DashboardClient() {
               disabled={submittingLead}
               className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-zinc-300 shadow-sm transition hover:bg-slate-50 dark:hover:bg-zinc-700 disabled:opacity-60"
             >
-              Cancel
+              ביטול
             </button>
             <button
               type="button"
@@ -444,7 +444,7 @@ export default function DashboardClient() {
               onClick={handleCreateLead}
               className="rounded-xl bg-slate-900 dark:bg-zinc-100 px-4 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-sm transition hover:bg-slate-800 dark:hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-zinc-400 focus:ring-offset-2 disabled:opacity-60"
             >
-              {submittingLead ? 'Saving…' : 'Save Lead'}
+              {submittingLead ? 'שומר…' : 'שמור ליד'}
             </button>
           </div>
         </div>
@@ -496,13 +496,13 @@ export default function DashboardClient() {
 
       <ConfirmDeleteModal
         open={!!deleteLead}
-        title="Delete lead"
+        title="מחק ליד"
         message={
           deleteLead
-            ? `Are you sure you want to delete "${deleteLead.full_name || 'this lead'}"? This cannot be undone.`
+            ? `האם למחוק את "${deleteLead.full_name || 'הליד'}"? לא ניתן לשחזר.`
             : ''
         }
-        confirmLabel="Delete"
+        confirmLabel="מחק"
         onConfirm={handleDeleteLead}
         onCancel={() => setDeleteLead(null)}
         loading={deleting}

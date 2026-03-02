@@ -22,10 +22,8 @@ export async function GET() {
 
   const settings = await settingsService.getClinicSettings(clinicId);
 
-  // Append server-side integration status (non-sensitive)
-  const discordConfigured = !!(
-    process.env.DISCORD_BOT_TOKEN && process.env.DISCORD_DEFAULT_CLINIC_ID
-  );
+  // Append server-side integration status (non-sensitive). Clinic→guild mapping is in discord_guilds (Super Admin).
+  const discordConfigured = !!(process.env.DISCORD_BOT_TOKEN);
 
   return NextResponse.json({ ...settings, _discord_configured: discordConfigured });
 }

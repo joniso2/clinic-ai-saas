@@ -14,12 +14,8 @@ import {
   X,
 } from 'lucide-react';
 import type { Lead } from '@/types/leads';
-import {
-  getDisplayPriority,
-  formatCurrency,
-  type Priority,
-  type LeadStatus,
-} from '@/types/leads';
+import { getDisplayPriority, type Priority, type LeadStatus } from '@/types/leads';
+import { STATUS_LABELS, PRIORITY_LABELS, SOURCE_LABELS, formatCurrencyILS } from '@/lib/hebrew';
 
 const PRIORITY_STYLES: Record<Priority, string> = {
   Low: 'bg-zinc-100 text-zinc-500 border border-zinc-200 dark:bg-zinc-800/70 dark:text-zinc-400 dark:border-zinc-700/40',
@@ -68,11 +64,11 @@ function formatDateTime(value: string): string {
 // ─── Pending Review Modal ────────────────────────────────────────────────────
 
 const REJECT_REASONS = [
-  'Not relevant inquiry',
-  'Price not suitable',
-  'Duplicate lead',
-  'No response from client',
-  'Outside service area',
+  'פנייה לא רלוונטית',
+  'מחיר לא מתאים',
+  'ליד כפול',
+  'אין תגובה מלקוח',
+  'מחוץ לאזור שירות',
 ] as const;
 
 type RejectReason = typeof REJECT_REASONS[number];
@@ -113,20 +109,20 @@ function PendingReviewModal({
       />
       <div className="relative w-full max-w-sm rounded-2xl border border-slate-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-900 shadow-xl dark:shadow-2xl animate-in fade-in zoom-in-95 duration-150">
         <div className="px-5 py-4 border-b border-slate-100 dark:border-zinc-800">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">Review Lead</h2>
+          <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100 text-right">סקירת ליד</h2>
         </div>
 
         <div className="px-5 py-4 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-slate-900 dark:text-zinc-100">{lead.full_name || 'Unnamed lead'}</span>
+            <span className="text-sm font-medium text-slate-900 dark:text-zinc-100">{lead.full_name || 'ליד ללא שם'}</span>
             <span className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-medium ${PRIORITY_STYLES[priority]}`}>
-              {priority}
+              {PRIORITY_LABELS[priority] ?? priority}
             </span>
           </div>
 
           {(lead.lead_quality_score ?? lead.lead_score) != null && (
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-zinc-400">
-              <span className="font-medium">Score</span>
+              <span className="font-medium">ציון</span>
               <span className="tabular-nums">
                 <span className="font-semibold text-slate-800 dark:text-zinc-200">{lead.lead_quality_score ?? lead.lead_score}</span>
                 <span className="text-slate-400 dark:text-zinc-600">/100</span>
@@ -137,7 +133,7 @@ function PendingReviewModal({
           {nextAppointment && (
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-zinc-400">
               <CalendarIcon className="h-3.5 w-3.5 shrink-0" />
-              <span>Appointment: {new Intl.DateTimeFormat('he-IL', {
+              <span>תור: {new Intl.DateTimeFormat('he-IL', {
                 timeZone: 'Asia/Jerusalem',
                 day: '2-digit', month: '2-digit', year: 'numeric',
                 hour: '2-digit', minute: '2-digit', hour12: false,
@@ -154,18 +150,18 @@ function PendingReviewModal({
                 onClick={onAccept}
                 className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition"
               >
-                ✓ Accept &amp; Confirm Appointment
+                ✓ אשר ואישור תור
               </button>
             ) : (
               <div className="rounded-xl border border-dashed border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800/50 px-4 py-4 text-center space-y-3">
-                <p className="text-xs text-slate-500 dark:text-zinc-400">No appointment scheduled yet.</p>
+                <p className="text-xs text-slate-500 dark:text-zinc-400">עדיין לא נקבע תור.</p>
                 <button
                   type="button"
                   onClick={() => { onClose(); onScheduleAppointment(lead); }}
                   className="inline-flex items-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 px-4 py-2 text-sm font-semibold text-white dark:text-slate-900 transition"
                 >
                   <CalendarIcon className="h-3.5 w-3.5" />
-                  Schedule Appointment
+                  קבע תור
                 </button>
               </div>
             )}
@@ -176,7 +172,7 @@ function PendingReviewModal({
                 className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-zinc-700 hover:border-slate-300 dark:hover:border-zinc-500 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-zinc-300 transition"
               >
                 <X className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />
-                Reject Lead
+                הסר ליד
               </button>
             </div>
           </div>
@@ -184,7 +180,7 @@ function PendingReviewModal({
 
         {mode === 'reject' && (
           <div className="px-5 pb-5 space-y-4">
-            <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">Select a reason to continue:</p>
+            <p className="text-xs font-medium text-slate-500 dark:text-zinc-400">בחר סיבה להמשך:</p>
             <div className="space-y-2">
               {REJECT_REASONS.map((reason) => (
                 <label key={reason} className="flex items-center gap-3 cursor-pointer group">
@@ -196,7 +192,7 @@ function PendingReviewModal({
                     onChange={() => setRejectReason(reason)}
                     className="h-4 w-4 accent-indigo-500 cursor-pointer"
                   />
-                  <span className="text-sm text-slate-700 dark:text-zinc-300 group-hover:text-slate-900 dark:group-hover:text-zinc-100 transition">{reason}</span>
+                  <span className="text-sm text-slate-700 dark:text-zinc-300 group-hover:text-slate-900 dark:group-hover:text-zinc-100 transition text-right">{reason}</span>
                 </label>
               ))}
             </div>
@@ -206,7 +202,7 @@ function PendingReviewModal({
                 onClick={() => { setMode('main'); setRejectReason(''); }}
                 className="flex-1 rounded-xl border border-slate-200 dark:border-zinc-700 px-4 py-2 text-sm font-medium text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 transition"
               >
-                Back
+                חזרה
               </button>
               <button
                 type="button"
@@ -214,7 +210,7 @@ function PendingReviewModal({
                 onClick={() => rejectReason && onReject(rejectReason as RejectReason)}
                 className="flex-1 rounded-xl bg-red-600 hover:bg-red-500 dark:bg-red-700 dark:hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2 text-sm font-semibold text-white transition"
               >
-                Confirm Reject
+                אשר הסרה
               </button>
             </div>
           </div>
@@ -254,7 +250,7 @@ function PhoneContactModal({ phone, onClose }: { phone: string; onClose: () => v
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div className="relative w-full max-w-xs rounded-2xl border border-slate-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-900 shadow-xl dark:shadow-2xl animate-in fade-in zoom-in-95 duration-150">
         <div className="px-5 py-4 border-b border-slate-100 dark:border-zinc-800">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">Contact via</h2>
+          <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100 text-right">יצירת קשר</h2>
         </div>
         <div className="px-5 py-4 space-y-2.5">
           <a
@@ -262,7 +258,7 @@ function PhoneContactModal({ phone, onClose }: { phone: string; onClose: () => v
             className="flex items-center gap-3 w-full rounded-xl border border-slate-200 dark:border-zinc-700 hover:border-slate-300 dark:hover:border-zinc-500 hover:bg-slate-50 dark:hover:bg-zinc-800/60 px-4 py-3 text-sm font-medium text-slate-700 dark:text-zinc-200 hover:text-slate-900 dark:hover:text-white transition"
           >
             <Phone className="h-4 w-4 shrink-0 text-emerald-500 dark:text-emerald-400" />
-            Phone Call
+            שיחה
           </a>
           <a
             href={`https://wa.me/${waNumber}`}
@@ -413,7 +409,7 @@ export function LeadsTable({
         next.delete(lead.id);
         return next;
       });
-      setToast('Lead moved to Disqualified');
+      setToast('הליד הועבר להסרה');
     }, 300);
     setPendingReviewLead(null);
   };
@@ -421,58 +417,61 @@ export function LeadsTable({
   return (
     <div className="space-y-3">
       {/* Toolbar */}
-      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white dark:border-zinc-800/70 dark:bg-zinc-900/90 px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-2.5">
+      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white dark:border-zinc-800/70 dark:bg-zinc-900/90 px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between flex-row-reverse">
+        <div className="flex flex-wrap items-center gap-3 flex-row-reverse justify-end">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 dark:text-zinc-500" />
+            <Search className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 dark:text-zinc-500 pointer-events-none" />
             <input
               type="search"
-              placeholder="Search by name or email..."
+              placeholder="חיפוש לפי שם או אימייל..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:border-zinc-700/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:placeholder:text-zinc-500 dark:focus:border-zinc-500 dark:focus:ring-zinc-500/50 transition-colors duration-150 sm:w-56"
+              className="w-full rounded-lg border border-slate-200 bg-white py-2 pr-9 pl-4 text-sm text-right text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:border-zinc-700/60 dark:bg-zinc-800/60 dark:text-zinc-200 dark:placeholder:text-zinc-500 dark:focus:border-zinc-500 dark:focus:ring-zinc-500/50 transition-colors duration-150 sm:w-56"
             />
           </div>
           <select
+            dir="rtl"
             value={priorityFilter}
             onChange={(e) => setPriorityFilter((e.target.value || '') as Priority | '')}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:border-zinc-700/60 dark:bg-zinc-800/60 dark:text-zinc-300 dark:focus:border-zinc-500 dark:focus:ring-zinc-500/50 transition-colors duration-150"
+            className="min-w-[140px] rounded-lg border border-slate-200 bg-white py-2 pr-3 pl-8 text-sm text-right text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:border-zinc-700/60 dark:bg-zinc-800/60 dark:text-zinc-300 dark:focus:border-zinc-500 dark:focus:ring-zinc-500/50 transition-colors duration-150 [direction:rtl]"
           >
-            <option value="">All priorities</option>
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-            <option value="Urgent">Urgent</option>
+            <option value="">כל העדיפויות</option>
+            <option value="Low">{PRIORITY_LABELS.Low}</option>
+            <option value="Medium">{PRIORITY_LABELS.Medium}</option>
+            <option value="High">{PRIORITY_LABELS.High}</option>
+            <option value="Urgent">{PRIORITY_LABELS.Urgent}</option>
           </select>
           <select
+            dir="rtl"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:border-zinc-700/60 dark:bg-zinc-800/60 dark:text-zinc-300 dark:focus:border-zinc-500 dark:focus:ring-zinc-500/50 transition-colors duration-150"
+            className="min-w-[140px] rounded-lg border border-slate-200 bg-white py-2 pr-3 pl-8 text-sm text-right text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:border-zinc-700/60 dark:bg-zinc-800/60 dark:text-zinc-300 dark:focus:border-zinc-500 dark:focus:ring-zinc-500/50 transition-colors duration-150 [direction:rtl]"
           >
-            <option value="">All statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="Appointment scheduled">Appointment scheduled</option>
-            <option value="Contacted">Contacted</option>
-            <option value="Closed">Closed</option>
-            <option value="Disqualified">Disqualified</option>
+            <option value="">כל הסטטוסים</option>
+            <option value="Pending">{STATUS_LABELS.Pending}</option>
+            <option value="Appointment scheduled">{STATUS_LABELS['Appointment scheduled']}</option>
+            <option value="Contacted">{STATUS_LABELS.Contacted}</option>
+            <option value="Closed">{STATUS_LABELS.Closed}</option>
+            <option value="Disqualified">{STATUS_LABELS.Disqualified}</option>
           </select>
-          <div className="flex items-center gap-1.5">
-            <label className="text-[11px] text-slate-500 dark:text-zinc-500">Sort:</label>
+          <div className="flex items-center gap-2 flex-row-reverse">
+            <label className="text-[11px] text-slate-500 dark:text-zinc-500 shrink-0">מיון:</label>
             <select
+              dir="rtl"
               value={sortKey}
               onChange={(e) => setSortKey(e.target.value as SortKey)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:border-zinc-700/60 dark:bg-zinc-800/60 dark:text-zinc-300 dark:focus:border-zinc-500 dark:focus:ring-zinc-500/50 transition-colors duration-150"
+              className="min-w-[130px] rounded-lg border border-slate-200 bg-white py-2 pr-3 pl-8 text-sm text-right text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:border-zinc-700/60 dark:bg-zinc-800/60 dark:text-zinc-300 dark:focus:border-zinc-500 dark:focus:ring-zinc-500/50 transition-colors duration-150 [direction:rtl]"
             >
-              <option value="created">Date created</option>
-              <option value="revenue">Revenue</option>
-              <option value="name">Name</option>
-              <option value="score">Lead score</option>
+              <option value="created">תאריך יצירה</option>
+              <option value="revenue">הכנסה</option>
+              <option value="name">שם</option>
+              <option value="score">ציון ליד</option>
             </select>
             <button
               type="button"
               onClick={() => setSortDesc((d) => !d)}
-              className="rounded-lg border border-slate-200 bg-white p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:border-zinc-700/60 dark:bg-zinc-800/60 dark:text-zinc-400 dark:hover:bg-zinc-700/60 dark:hover:text-zinc-200 transition-colors duration-150"
-              title={sortDesc ? 'Descending' : 'Ascending'}
+              className="rounded-lg border border-slate-200 bg-white p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:border-zinc-700/60 dark:bg-zinc-800/60 dark:text-zinc-400 dark:hover:bg-zinc-700/60 dark:hover:text-zinc-200 transition-colors duration-150 shrink-0"
+              title={sortDesc ? 'יורד' : 'עולה'}
             >
               <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${sortDesc ? '' : 'rotate-180'}`} />
             </button>
@@ -481,7 +480,7 @@ export function LeadsTable({
         {selectedIds.size > 0 && (
           <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 dark:border-zinc-700/40 dark:bg-zinc-800/60 px-3 py-2">
             <span className="text-xs font-medium text-slate-700 dark:text-zinc-300">
-              {selectedIds.size} selected
+              {selectedIds.size} נבחרו
             </span>
             <button
               type="button"
@@ -494,14 +493,14 @@ export function LeadsTable({
               }}
               className="rounded-md bg-red-50 px-2.5 py-1 text-xs font-medium text-red-600 transition-colors duration-150 hover:bg-red-100 hover:text-red-700 dark:bg-red-950/60 dark:text-red-400 dark:hover:bg-red-900/60 dark:hover:text-red-300"
             >
-              Delete selected
+              מחק נבחרים
             </button>
             <button
               type="button"
               onClick={() => setSelectedIds(new Set())}
               className="text-xs text-slate-500 hover:text-slate-700 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors duration-150"
             >
-              Clear
+              נקה
             </button>
           </div>
         )}
@@ -509,11 +508,27 @@ export function LeadsTable({
 
       {/* Table */}
       <div className="relative rounded-xl border border-slate-200 bg-white dark:border-zinc-800/60 dark:bg-zinc-900 shadow-sm shadow-slate-200/50 dark:shadow-2xl dark:shadow-black/30 overflow-hidden ring-1 ring-slate-900/[0.03] dark:ring-white/[0.03]">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" dir="rtl">
           <table className="min-w-full">
             <thead>
               <tr className="border-b border-slate-200 dark:border-zinc-800/60">
-                <th className="w-10 px-4 py-3 text-left">
+                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">איש קשר</th>
+                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">עדיפות</th>
+                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">שווי</th>
+                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">ציון</th>
+                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">סטטוס</th>
+                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">מקור</th>
+                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">קשר אחרון</th>
+                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">מעקב הבא</th>
+                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">תור הבא</th>
+                {isDisqualifiedView && (
+                  <>
+                    <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">סיבת הסרה</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">הוסר בתאריך</th>
+                  </>
+                )}
+                <th className="w-12 px-4 py-3" />
+                <th className="w-10 px-4 py-3 text-right">
                   <input
                     type="checkbox"
                     checked={filteredAndSorted.length > 0 && selectedIds.size === filteredAndSorted.length}
@@ -521,22 +536,6 @@ export function LeadsTable({
                     className="h-3.5 w-3.5 rounded border-slate-300 bg-white dark:border-zinc-600 dark:bg-zinc-800 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
                   />
                 </th>
-                <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">Contact</th>
-                <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">Priority</th>
-                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">Value</th>
-                <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">Score</th>
-                <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">Status</th>
-                <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">Source</th>
-                <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">Last contact</th>
-                <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">Next follow-up</th>
-                <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">Next appointment</th>
-                {isDisqualifiedView && (
-                  <>
-                    <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">Reject reason</th>
-                    <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-slate-500 dark:text-zinc-500">Rejected at</th>
-                  </>
-                )}
-                <th className="w-12 px-4 py-3" />
               </tr>
             </thead>
             <tbody>
@@ -546,10 +545,10 @@ export function LeadsTable({
                 const isRemoving = removingIds.has(lead.id);
                 const isSelected = selectedIds.has(lead.id);
                 const accentBorder = isSelected
-                  ? 'border-l-indigo-500/60'
+                  ? 'border-s-2 border-s-indigo-500/60'
                   : urgent
-                    ? 'border-l-red-500/50'
-                    : 'border-l-transparent group-hover:border-l-slate-300 dark:group-hover:border-l-zinc-600/50';
+                    ? 'border-s-2 border-s-red-500/50'
+                    : 'border-s-2 border-s-transparent group-hover:border-s-slate-300 dark:group-hover:border-s-zinc-600/50';
                 return (
                   <tr
                     key={lead.id}
@@ -564,38 +563,30 @@ export function LeadsTable({
                           : 'hover:bg-slate-50 dark:hover:bg-zinc-800/40',
                     ].join(' ')}
                   >
-                    <td className={`px-4 py-3.5 border-l-2 transition-[border-color] duration-150 ${accentBorder}`}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleSelect(lead.id)}
-                        className="h-3.5 w-3.5 rounded border-slate-300 bg-white dark:border-zinc-600 dark:bg-zinc-800 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
-                      />
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-2.5">
+                    <td className={`px-4 py-3.5 ${accentBorder} transition-[border-color] duration-150`}>
+                      <div className="flex items-center gap-2.5 flex-row-reverse justify-end">
                         {urgent && (
-                          <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-red-500/90" title="Requires urgent attention" />
+                          <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-red-500/90" title="דורש טיפול דחוף" />
                         )}
-                        <div>
+                        <div className="min-w-0 text-right">
                           <button
                             type="button"
                             onClick={() => onView(lead)}
                             className="text-sm font-semibold text-slate-900 hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-400 transition-colors duration-150"
                           >
-                            {lead.full_name || 'Unnamed lead'}
+                            {lead.full_name || 'ליד ללא שם'}
                           </button>
-                          <p className="text-[11px] text-slate-500 dark:text-zinc-500 mt-0.5">{lead.email || <span className="italic text-slate-400/80 dark:text-zinc-500/60">No email</span>}</p>
+                          <p className="text-[11px] text-slate-500 dark:text-zinc-500 mt-0.5 text-right">{lead.email || <span className="italic text-slate-400/80 dark:text-zinc-500/60">אין אימייל</span>}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-4 py-3.5 text-right">
                       <span className={`inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium tracking-wide ${PRIORITY_STYLES[priority]}`}>
-                        {priority}
+                        {PRIORITY_LABELS[priority] ?? priority}
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3.5 text-right text-sm tabular-nums text-slate-700 dark:text-zinc-300">
-                      {(lead.estimated_deal_value ?? 0) > 0 ? formatCurrency(lead.estimated_deal_value!) : <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">No value</span>}
+                      {(lead.estimated_deal_value ?? 0) > 0 ? formatCurrencyILS(lead.estimated_deal_value!) : <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">אין שווי</span>}
                     </td>
                     <td className="px-4 py-3.5 text-right">
                       {(lead.lead_quality_score ?? lead.lead_score) != null ? (() => {
@@ -614,59 +605,59 @@ export function LeadsTable({
                             </div>
                           </div>
                         );
-                      })() : <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">No score</span>}
+                      })() : <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">אין ציון</span>}
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-4 py-3.5 text-right">
                       {lead.status === 'Pending' ? (
                         <button
                           type="button"
                           onClick={() => setPendingReviewLead(lead)}
                           className={`inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium tracking-wide cursor-pointer transition-all duration-150 hover:brightness-110 hover:shadow-sm ${STATUS_BADGE_STYLES['Pending']}`}
-                          title="Click to review this lead"
+                          title="לחץ לסקירת הליד"
                         >
-                          Pending
+                          {STATUS_LABELS.Pending}
                         </button>
                       ) : (
                         <span className={`inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium tracking-wide ${STATUS_BADGE_STYLES[lead.status ?? 'Pending'] ?? STATUS_BADGE_STYLES['Pending']}`}>
-                          {lead.status ?? 'Pending'}
+                          {STATUS_LABELS[lead.status ?? 'Pending'] ?? lead.status ?? STATUS_LABELS.Pending}
                         </span>
                       )}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3.5 text-xs text-slate-500 dark:text-zinc-500">
-                      {lead.source ?? <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">Unknown</span>}
+                    <td className="whitespace-nowrap px-4 py-3.5 text-xs text-slate-500 dark:text-zinc-500 text-right">
+                      {(lead.source && SOURCE_LABELS[lead.source]) ? SOURCE_LABELS[lead.source] : (lead.source || <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">לא ידוע</span>)}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3.5 text-xs tabular-nums text-slate-500 dark:text-zinc-500">
-                      {lead.last_contact_date ? formatDateDDMMYYYY(lead.last_contact_date) : <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">No contact yet</span>}
+                    <td className="whitespace-nowrap px-4 py-3.5 text-xs tabular-nums text-slate-500 dark:text-zinc-500 text-right">
+                      {lead.last_contact_date ? formatDateDDMMYYYY(lead.last_contact_date) : <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">עדיין לא נוצר קשר</span>}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3.5 text-xs tabular-nums text-slate-500 dark:text-zinc-500">
-                      {lead.next_follow_up_date ? formatDateDDMMYYYY(lead.next_follow_up_date) : <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">No follow-up</span>}
+                    <td className="whitespace-nowrap px-4 py-3.5 text-xs tabular-nums text-slate-500 dark:text-zinc-500 text-right">
+                      {lead.next_follow_up_date ? formatDateDDMMYYYY(lead.next_follow_up_date) : <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">אין מעקב</span>}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3.5 text-xs tabular-nums text-slate-500 dark:text-zinc-500">
+                    <td className="whitespace-nowrap px-4 py-3.5 text-xs tabular-nums text-slate-500 dark:text-zinc-500 text-right">
                       {nextAppointmentsByLeadId?.[lead.id]
                         ? new Intl.DateTimeFormat('he-IL', {
                             timeZone: 'Asia/Jerusalem',
                             day: '2-digit', month: '2-digit', year: 'numeric',
                             hour: '2-digit', minute: '2-digit', hour12: false,
                           }).format(new Date(nextAppointmentsByLeadId[lead.id]!))
-                        : <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">Not scheduled</span>}
+                        : <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">לא נקבע</span>}
                     </td>
                     {isDisqualifiedView && (
                       <>
-                        <td className="whitespace-nowrap px-4 py-3.5 text-xs text-slate-500 dark:text-zinc-500">
-                          {lead.reject_reason ?? <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">No reason given</span>}
+                        <td className="whitespace-nowrap px-4 py-3.5 text-xs text-slate-500 dark:text-zinc-500 text-right">
+                          {lead.reject_reason ?? <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">לא צוינה סיבה</span>}
                         </td>
-                        <td className="whitespace-nowrap px-4 py-3.5 text-xs tabular-nums text-slate-500 dark:text-zinc-500">
-                          {lead.rejected_at ? formatDateTime(lead.rejected_at) : <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">Unknown</span>}
+                        <td className="whitespace-nowrap px-4 py-3.5 text-xs tabular-nums text-slate-500 dark:text-zinc-500 text-right">
+                          {lead.rejected_at ? formatDateTime(lead.rejected_at) : <span className="text-[11px] italic text-slate-400/80 dark:text-zinc-500/60">לא ידוע</span>}
                         </td>
                       </>
                     )}
                     <td className="relative px-4 py-3.5">
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 flex-row-reverse justify-end">
                         <button
                           type="button"
                           onClick={() => onView(lead)}
                           className="rounded-md p-1.5 text-slate-500 dark:text-zinc-400 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400/60 dark:focus-visible:ring-zinc-500/60"
-                          title="View lead"
+                          title="צפה בליד"
                         >
                           <Eye className="h-3.5 w-3.5" />
                         </button>
@@ -674,7 +665,7 @@ export function LeadsTable({
                           type="button"
                           onClick={() => onEdit(lead)}
                           className="rounded-md p-1.5 text-slate-500 dark:text-zinc-400 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400/60 dark:focus-visible:ring-zinc-500/60"
-                          title="Edit lead"
+                          title="ערוך ליד"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
@@ -683,7 +674,7 @@ export function LeadsTable({
                             type="button"
                             onClick={() => goToCalendarForDate(nextAppointmentsByLeadId![lead.id]!)}
                             className="rounded-md p-1.5 text-slate-500 dark:text-zinc-400 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400/60 dark:focus-visible:ring-zinc-500/60"
-                            title="Open in calendar"
+                            title="פתח בלוח שנה"
                           >
                             <CalendarIcon className="h-3.5 w-3.5" />
                           </button>
@@ -693,7 +684,7 @@ export function LeadsTable({
                             type="button"
                             onClick={() => setPhoneModalPhone(lead.phone!)}
                             className="rounded-md p-1.5 text-slate-500 dark:text-zinc-400 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400/60 dark:focus-visible:ring-zinc-500/60"
-                            title="Contact lead"
+                            title="יצירת קשר"
                           >
                             <Phone className="h-3.5 w-3.5" />
                           </button>
@@ -718,7 +709,7 @@ export function LeadsTable({
                               setRowMenuCoords({ top, left: rect.right + window.scrollX });
                             }}
                             className="rounded-md p-1.5 text-slate-500 dark:text-zinc-400 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400/60 dark:focus-visible:ring-zinc-500/60"
-                            title="More actions"
+                            title="פעולות נוספות"
                           >
                             <MoreHorizontal className="h-3.5 w-3.5" />
                           </button>
@@ -742,7 +733,7 @@ export function LeadsTable({
                                   className="w-full border-0 bg-transparent px-3 py-2 text-left text-sm text-slate-700 dark:text-zinc-300 focus:ring-0"
                                 >
                                   {STATUS_OPTIONS.map((s) => (
-                                    <option key={s} value={s}>{s}</option>
+                                    <option key={s} value={s}>{STATUS_LABELS[s] ?? s}</option>
                                   ))}
                                 </select>
                                 <div className="my-1 border-t border-slate-200 dark:border-zinc-800/60" />
@@ -752,7 +743,7 @@ export function LeadsTable({
                                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 transition-colors duration-100"
                                 >
                                   <Phone className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
-                                  Mark as contacted
+                                  סמן נוצר קשר
                                 </button>
                                 <button
                                   type="button"
@@ -760,7 +751,7 @@ export function LeadsTable({
                                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 transition-colors duration-100"
                                 >
                                   <CalendarIcon className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
-                                  Schedule follow-up
+                                  קבע מעקב
                                 </button>
                                 <button
                                   type="button"
@@ -768,7 +759,7 @@ export function LeadsTable({
                                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 transition-colors duration-100"
                                 >
                                   <CalendarIcon className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
-                                  Schedule appointment
+                                  קבע תור
                                 </button>
                                 <div className="my-1 border-t border-slate-200 dark:border-zinc-800/60" />
                                 <button
@@ -777,13 +768,21 @@ export function LeadsTable({
                                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-950/40 dark:hover:text-red-300 transition-colors duration-100"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
-                                  Delete
+                                  מחק
                                 </button>
                               </div>
                             </>
                           )}
                         </div>
                       </div>
+                    </td>
+                    <td className="px-4 py-3.5 text-right">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelect(lead.id)}
+                        className="h-3.5 w-3.5 rounded border-slate-300 bg-white dark:border-zinc-600 dark:bg-zinc-800 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
+                      />
                     </td>
                   </tr>
                 );
@@ -794,8 +793,8 @@ export function LeadsTable({
 
         {filteredAndSorted.length === 0 && (
           <div className="px-6 py-16 text-center">
-            <p className="text-sm font-medium text-slate-700 dark:text-zinc-300">No leads match your filters.</p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-zinc-500">Try adjusting search or filters, or add a new lead.</p>
+            <p className="text-sm font-medium text-slate-700 dark:text-zinc-300">אין לידים התואמים את הסינון.</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-zinc-500">נסה לשנות חיפוש או סינון, או הוסף ליד חדש.</p>
           </div>
         )}
       </div>

@@ -9,10 +9,10 @@ import { LeadDetailDrawer } from '@/components/dashboard/LeadDetailDrawer';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const ISRAEL_TZ = 'Asia/Jerusalem';
-const DAY_NAMES  = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAY_NAMES  = ['א\'', 'ב\'', 'ג\'', 'ד\'', 'ה\'', 'ו\'', 'ש\''];
 const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
+  'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר',
 ];
 
 function toIsraelDateString(utcIso: string): string {
@@ -115,19 +115,19 @@ function AppointmentDayModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 px-5 py-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Appointments</p>
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 px-5 py-4 flex-row-reverse">
+          <div className="text-right">
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-zinc-400">תורים</p>
             <h2 className="mt-0.5 text-base font-semibold text-slate-900 dark:text-zinc-100">{dateLabel}</h2>
           </div>
-          <button onClick={onClose} className="rounded-full p-1.5 text-slate-400 dark:text-zinc-500 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors">
+          <button onClick={onClose} className="rounded-full p-1.5 text-slate-400 dark:text-zinc-500 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors" aria-label="סגור">
             <X className="h-4 w-4" />
           </button>
         </div>
 
         <div className="max-h-[480px] overflow-y-auto px-5 py-3 space-y-3">
           {appointments.length === 0 && (
-            <p className="py-6 text-center text-sm text-slate-400 dark:text-zinc-500">No appointments on this day.</p>
+            <p className="py-6 text-center text-sm text-slate-400 dark:text-zinc-500">אין תורים ביום זה.</p>
           )}
           {appointments.map((apt) => {
             const lead = apt.lead_id ? leadCache[apt.lead_id] : undefined;
@@ -146,7 +146,7 @@ function AppointmentDayModal({
                       <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                         TYPE_PILL[apt.type] ?? TYPE_PILL['new']
                       }`}>
-                        {apt.type === 'follow_up' ? 'Follow-up' : 'New Patient'}
+                        {apt.type === 'follow_up' ? 'מעקב' : 'חדש'}
                       </span>
                     </div>
                   </div>
@@ -167,7 +167,7 @@ function AppointmentDayModal({
                     <a href={waHref(phone)} target="_blank" rel="noreferrer"
                       className="flex items-center gap-1 text-xs text-emerald-500 hover:text-emerald-600 transition-colors">
                       <MessageCircle className="h-3 w-3 shrink-0" />
-                      WhatsApp
+                      וואטסאפ
                     </a>
                   </div>
                 )}
@@ -175,7 +175,7 @@ function AppointmentDayModal({
                 {/* Row 3: main issue */}
                 {interest && (
                   <p className="mt-1.5 text-xs text-slate-400 dark:text-zinc-500 truncate">
-                    Main issue: {interest}
+                    עניין עיקרי: {interest}
                   </p>
                 )}
 
@@ -196,7 +196,7 @@ function AppointmentDayModal({
         <div className="border-t border-slate-100 dark:border-zinc-800 px-5 py-3">
           <button onClick={() => { onClose(); onAdd(day); }}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 dark:bg-zinc-100 px-4 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-slate-800 dark:hover:bg-white transition-colors">
-            <Plus className="h-4 w-4" /> Add Appointment
+            <Plus className="h-4 w-4" /> הוסף תור
           </button>
         </div>
       </div>
@@ -236,7 +236,7 @@ function NewAppointmentForm({ prefillDate, onClose, onSuccess }: NewAppointmentF
 
     const parts = date.split('/');
     if (parts.length !== 3) {
-      setError('Please use date format DD/MM/YYYY');
+      setError('השתמש בפורמט תאריך DD/MM/YYYY');
       setSubmitting(false);
       return;
     }
@@ -245,7 +245,7 @@ function NewAppointmentForm({ prefillDate, onClose, onSuccess }: NewAppointmentF
     const month = parseInt(monthStr, 10);
     const year = parseInt(yearStr, 10);
     if (!day || !month || !year) {
-      setError('Please use date format DD/MM/YYYY');
+      setError('השתמש בפורמט תאריך DD/MM/YYYY');
       setSubmitting(false);
       return;
     }
@@ -269,9 +269,9 @@ function NewAppointmentForm({ prefillDate, onClose, onSuccess }: NewAppointmentF
         .slice(0, 3)
         .map(formatFullDateTime)
         .join('\n');
-      setError(`This slot is taken. Closest available:\n${alts}`);
+      setError(`המועד תפוס. המועדים הפנויים הקרובים:\n${alts}`);
     } else {
-      setError(json.message ?? json.error ?? 'Failed to schedule');
+      setError(json.message ?? json.error ?? 'לא ניתן לקבוע תור');
     }
     setSubmitting(false);
   }
@@ -279,10 +279,10 @@ function NewAppointmentForm({ prefillDate, onClose, onSuccess }: NewAppointmentF
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
       <form onSubmit={handleSubmit} className="w-full max-w-md rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 px-5 py-4">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">New Appointment</h2>
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 px-5 py-4 flex-row-reverse">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100 text-right">תור חדש</h2>
           <button type="button" onClick={onClose}
-            className="rounded-full p-1.5 text-slate-400 dark:text-zinc-500 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors">
+            className="rounded-full p-1.5 text-slate-400 dark:text-zinc-500 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors" aria-label="סגור">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -294,43 +294,43 @@ function NewAppointmentForm({ prefillDate, onClose, onSuccess }: NewAppointmentF
             </div>
           )}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Patient name</label>
+            <label className="text-xs font-medium text-slate-700 dark:text-zinc-300 text-right block">שם המטופל</label>
             <input type="text" value={patientName} onChange={(e) => setPatientName(e.target.value)}
-              required placeholder="Full name"
+              required placeholder="שם מלא"
               className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/50 focus:border-indigo-400 transition" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Date (DD/MM/YYYY)</label>
+              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300 text-right block">תאריך (DD/MM/YYYY)</label>
               <input type="text" value={date} onChange={(e) => setDate(e.target.value)}
                 placeholder="DD/MM/YYYY" required
                 className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/50 focus:border-indigo-400 transition" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Time (08:00–16:00)</label>
+              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300 text-right block">שעה (08:00–16:00)</label>
               <input type="time" value={time} min="08:00" max="15:30"
                 onChange={(e) => setTime(e.target.value)} required
                 className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/50 focus:border-indigo-400 transition" />
             </div>
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-700 dark:text-zinc-300">Type</label>
+            <label className="text-xs font-medium text-slate-700 dark:text-zinc-300 text-right block">סוג</label>
             <select value={type} onChange={(e) => setType(e.target.value as AppointmentType)}
-              className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/50 focus:border-indigo-400 transition">
-              <option value="new">New appointment</option>
-              <option value="follow_up">Follow-up</option>
+              className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/50 focus:border-indigo-400 transition text-right">
+              <option value="new">תור חדש</option>
+              <option value="follow_up">מעקב</option>
             </select>
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 border-t border-slate-100 dark:border-zinc-800 px-5 py-3">
+        <div className="flex justify-start gap-3 border-t border-slate-100 dark:border-zinc-800 px-5 py-3 flex-row-reverse">
           <button type="button" onClick={onClose} disabled={submitting}
             className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 disabled:opacity-50 transition-colors">
-            Cancel
+            ביטול
           </button>
           <button type="submit" disabled={submitting}
             className="rounded-xl bg-slate-900 dark:bg-zinc-100 px-4 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-slate-800 dark:hover:bg-white disabled:opacity-50 transition-colors">
-            {submitting ? 'Scheduling…' : 'Schedule'}
+            {submitting ? 'קובע…' : 'קבע תור'}
           </button>
         </div>
       </form>
@@ -372,7 +372,7 @@ export function CalendarView({ initialDate }: { initialDate?: string } = {}) {
     const res = await fetch(`/api/appointments?month=${m}&year=${y}`, { credentials: 'include' });
     const json = await res.json();
     if (!res.ok) {
-      setError(json.error ?? 'Failed to load appointments');
+      setError(json.error ?? 'טעינת תורים נכשלה');
       setAppointments([]);
     } else {
       setAppointments((json.appointments ?? []) as Appointment[]);
@@ -423,59 +423,59 @@ export function CalendarView({ initialDate }: { initialDate?: string } = {}) {
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 card-shadow overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-700 bg-slate-50/60 dark:bg-zinc-700/60 px-5 py-4">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-700 bg-slate-50/60 dark:bg-zinc-700/60 px-5 py-4 flex-row-reverse">
+        <div className="flex items-center gap-3 flex-row-reverse">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900">
             <Calendar className="h-4 w-4" />
           </div>
-          <div>
+          <div className="text-right">
             <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">
               {MONTH_NAMES[month - 1]} {year}
             </h2>
             {!loading && (
               <p className="text-xs text-slate-500 dark:text-zinc-400">
-                {totalThisMonth} appointment{totalThisMonth !== 1 ? 's' : ''} this month
+                {totalThisMonth} תור{totalThisMonth !== 1 ? 'ים' : ''} החודש
               </p>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={prevMonth}
-            className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-2 text-slate-500 dark:text-zinc-400 shadow-sm hover:bg-slate-50 dark:hover:bg-zinc-700 hover:border-slate-300 dark:hover:border-zinc-600 transition-colors">
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => { setYear(today.getFullYear()); setMonth(today.getMonth() + 1); }}
-            className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-300 shadow-sm hover:bg-slate-50 dark:hover:bg-zinc-700 hover:border-slate-300 dark:hover:border-zinc-600 transition-colors">
-            Today
-          </button>
+        <div className="flex items-center gap-2 flex-row-reverse">
           <button onClick={nextMonth}
             className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-2 text-slate-500 dark:text-zinc-400 shadow-sm hover:bg-slate-50 dark:hover:bg-zinc-700 hover:border-slate-300 dark:hover:border-zinc-600 transition-colors">
             <ChevronRight className="h-4 w-4" />
           </button>
+          <button
+            onClick={() => { setYear(today.getFullYear()); setMonth(today.getMonth() + 1); }}
+            className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-300 shadow-sm hover:bg-slate-50 dark:hover:bg-zinc-700 hover:border-slate-300 dark:hover:border-zinc-600 transition-colors">
+            היום
+          </button>
+          <button onClick={prevMonth}
+            className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-2 text-slate-500 dark:text-zinc-400 shadow-sm hover:bg-slate-50 dark:hover:bg-zinc-700 hover:border-slate-300 dark:hover:border-zinc-600 transition-colors">
+            <ChevronLeft className="h-4 w-4" />
+          </button>
           <button onClick={() => { setPrefillDate(undefined); setShowNewForm(true); }}
-            className="ml-1 flex items-center gap-1.5 rounded-xl bg-slate-900 dark:bg-zinc-100 px-3 py-2 text-xs font-semibold text-white dark:text-zinc-900 hover:bg-slate-800 dark:hover:bg-white transition-colors shadow-sm">
-            <Plus className="h-3.5 w-3.5" /> New
+            className="mr-1 flex items-center gap-1.5 rounded-xl bg-slate-900 dark:bg-zinc-100 px-3 py-2 text-xs font-semibold text-white dark:text-zinc-900 hover:bg-slate-800 dark:hover:bg-white transition-colors shadow-sm flex-row-reverse">
+            <Plus className="h-3.5 w-3.5" /> חדש
           </button>
         </div>
       </div>
 
       {/* Legend */}
       {!loading && totalThisMonth > 0 && (
-        <div className="flex items-center gap-4 border-b border-slate-100 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-5 py-2.5">
-          <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-4 border-b border-slate-100 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-5 py-2.5 flex-row-reverse justify-end">
+          <div className="flex items-center gap-1.5 flex-row-reverse">
             <span className="h-2.5 w-2.5 rounded-full bg-blue-400" />
-            <span className="text-xs text-slate-600 dark:text-zinc-400">{newCount} New</span>
+            <span className="text-xs text-slate-600 dark:text-zinc-400">{newCount} חדש</span>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-row-reverse">
             <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-            <span className="text-xs text-slate-600 dark:text-zinc-400">{followUpCount} Follow-up</span>
+            <span className="text-xs text-slate-600 dark:text-zinc-400">{followUpCount} מעקב</span>
           </div>
         </div>
       )}
 
       {/* Day header row */}
-      <div className="grid grid-cols-7 border-b border-slate-100 dark:border-zinc-700 bg-slate-50/40 dark:bg-zinc-700/60">
+      <div className="grid grid-cols-7 border-b border-slate-100 dark:border-zinc-700 bg-slate-50/40 dark:bg-zinc-700/60" dir="rtl">
         {DAY_NAMES.map((d) => (
           <div key={d} className="py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
             {d}
@@ -515,7 +515,7 @@ export function CalendarView({ initialDate }: { initialDate?: string } = {}) {
                 <button
                   key={dayStr}
                   onClick={() => setSelectedDay(day)}
-                  className={`group relative min-h-[96px] cursor-pointer border-b border-r border-slate-100 dark:border-zinc-700/60 p-2 text-left transition-all hover:bg-slate-50 dark:hover:bg-zinc-700/80 ${
+                  className={`group relative min-h-[96px] cursor-pointer border-b border-r border-slate-100 dark:border-zinc-700/60 p-2 text-right transition-all hover:bg-slate-50 dark:hover:bg-zinc-700/80 ${
                     di === 6 ? 'border-r-0' : ''
                   } ${densityStyle}`}
                 >
@@ -549,7 +549,7 @@ export function CalendarView({ initialDate }: { initialDate?: string } = {}) {
                     ))}
                     {dayApts.length > 2 && (
                       <div className="px-1 text-[10px] font-medium text-slate-500 dark:text-zinc-400">
-                        +{dayApts.length - 2} more
+                        +{dayApts.length - 2} נוספים
                       </div>
                     )}
                   </div>

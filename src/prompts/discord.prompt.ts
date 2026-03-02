@@ -1,10 +1,12 @@
-import { clinicPrices } from '@/discord/prices';
-
 export type AISettings = {
   ai_tone?: 'formal' | 'friendly' | 'professional';
   ai_response_length?: 'brief' | 'standard' | 'detailed';
   strict_hours_enforcement?: boolean;
   business_description?: string | null;
+  /** Injected dynamically from clinic_services (per clinic). Empty = no price list. */
+  pricesText?: string;
+  /** Optional clinic name for prompt personalization. */
+  clinicName?: string | null;
 };
 
 const TONE_INSTRUCTIONS: Record<string, string> = {
@@ -21,13 +23,10 @@ const LENGTH_INSTRUCTIONS: Record<string, string> = {
 
 /**
  * Discord bot system prompt.
- * Edit here to change Discord bot behavior; prices come from @/discord/prices.
- * Pass AISettings to override tone, response length, and hours enforcement.
+ * Prices are injected via settings.pricesText (from clinic_services, built server-side).
  */
 export function buildDiscordSystemPrompt(settings?: AISettings): string {
-  const pricesText = Object.entries(clinicPrices)
-    .map(([service, price]) => `- ${service}: ${price}`)
-    .join('\n');
+  const pricesText = settings?.pricesText ?? '';
 
   const tone = settings?.ai_tone ?? 'professional';
   const length = settings?.ai_response_length ?? 'standard';
@@ -43,8 +42,9 @@ export function buildDiscordSystemPrompt(settings?: AISettings): string {
     ? ''
     : '\nNOTE: Clinic hours are guidelines only. If a patient requests outside these hours, acknowledge and check with staff — do not automatically refuse.\n';
 
+  const clinicLabel = settings?.clinicName ? `"${settings.clinicName}"` : '"המרפאה"';
   return (
-    `You are a professional, calm, human dental clinic receptionist for "Itay and Yoni Clinic".\n\n` +
+    `You are a professional, calm, human dental clinic receptionist for ${clinicLabel}.\n\n` +
     `TONE: ${toneInstruction}\n` +
     `RESPONSE LENGTH: ${lengthInstruction}\n` +
     descriptionNote +
@@ -180,7 +180,7 @@ export function buildDiscordSystemPrompt(settings?: AISettings): string {
     '- Never output anything outside the JSON.\n\n' +
 
     (pricesText
-      ? `Clinic price list (indicative only — final price set by doctor):\n${pricesText}`
+      ? `Clinic price list (indicative only — final price set by doctor):\n${pricesText}\n\n`
       : '')
   );
 }

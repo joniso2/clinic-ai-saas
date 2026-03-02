@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as leadRepository from '@/repositories/lead.repository';
 import { createClient } from '@/lib/supabase-server';
+import { getEffectiveClinicId, getSessionUser } from '@/lib/auth-server';
 
 function isAgentAuthorized(req: NextRequest): boolean {
   const configuredSecret = process.env.AGENT_API_SECRET;
@@ -86,18 +87,11 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getSessionUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const { data: clinicLink } = await supabase
-      .from('clinic_users')
-      .select('clinic_id')
-      .eq('user_id', user.id)
-      .single();
-    const clinicId = clinicLink?.clinic_id;
+    const clinicId = await getEffectiveClinicId(req);
     if (!clinicId) {
       return NextResponse.json(
         { leads: [], error: 'Clinic not set for user' },

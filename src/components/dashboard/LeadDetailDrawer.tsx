@@ -5,10 +5,10 @@ import { X, Mail, Phone, Calendar, Tag, DollarSign, Brain, AlertTriangle, Clock 
 import type { Lead } from '@/types/leads';
 import {
   getDisplayPriority,
-  formatCurrency,
   type Priority,
   type LeadStatus,
 } from '@/types/leads';
+import { formatCurrencyILS, STATUS_LABELS, PRIORITY_LABELS, SOURCE_LABELS } from '@/lib/hebrew';
 
 const PRIORITY_STYLES: Record<Priority, string> = {
   Low: 'bg-slate-100 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300',
@@ -54,7 +54,7 @@ function ScoreBar({ score }: { score: number }) {
     pct >= 40 ? 'bg-amber-400' :
                 'bg-red-400';
   return (
-    <div className="flex items-center gap-2.5">
+    <div className="flex items-center gap-2.5 flex-row-reverse">
       <span className="text-xl font-bold tabular-nums text-slate-900 dark:text-zinc-100 leading-none">
         {score}
         <span className="text-xs font-normal text-slate-400 dark:text-zinc-500">/100</span>
@@ -80,7 +80,7 @@ function SlaDeadline({ value }: { value: string }) {
     }`}>
       {passed && <AlertTriangle className="h-3 w-3 shrink-0" />}
       {!passed && <Clock className="h-3 w-3 shrink-0" />}
-      <span>{passed ? 'Overdue · ' : ''}{formatDateTime(value)}</span>
+      <span>{passed ? 'באיחור · ' : ''}{formatDateTime(value)}</span>
     </div>
   );
 }
@@ -101,26 +101,26 @@ function PhoneContactModal({ phone, onClose }: { phone: string; onClose: () => v
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div className="relative w-full max-w-xs rounded-2xl border border-slate-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-900 shadow-xl dark:shadow-2xl animate-in fade-in zoom-in-95 duration-150">
         <div className="px-5 py-4 border-b border-slate-100 dark:border-zinc-800">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">Contact via</h2>
+          <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100 text-right">יצירת קשר</h2>
         </div>
         <div className="px-5 py-4 space-y-2.5">
           <a
             href={`tel:${phone}`}
-            className="flex items-center gap-3 w-full rounded-xl border border-slate-200 dark:border-zinc-700 hover:border-slate-300 dark:hover:border-zinc-500 hover:bg-slate-50 dark:hover:bg-zinc-800/60 px-4 py-3 text-sm font-medium text-slate-700 dark:text-zinc-200 hover:text-slate-900 dark:hover:text-white transition"
+            className="flex items-center gap-3 w-full rounded-xl border border-slate-200 dark:border-zinc-700 hover:border-slate-300 dark:hover:border-zinc-500 hover:bg-slate-50 dark:hover:bg-zinc-800/60 px-4 py-3 text-sm font-medium text-slate-700 dark:text-zinc-200 hover:text-slate-900 dark:hover:text-white transition flex-row-reverse justify-end text-right"
           >
             <Phone className="h-4 w-4 shrink-0 text-emerald-500 dark:text-emerald-400" />
-            Phone Call
+            שיחה
           </a>
           <a
             href={`https://wa.me/${waNumber}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 w-full rounded-xl border border-slate-200 dark:border-zinc-700 hover:border-slate-300 dark:hover:border-zinc-500 hover:bg-slate-50 dark:hover:bg-zinc-800/60 px-4 py-3 text-sm font-medium text-slate-700 dark:text-zinc-200 hover:text-slate-900 dark:hover:text-white transition"
+            className="flex items-center gap-3 w-full rounded-xl border border-slate-200 dark:border-zinc-700 hover:border-slate-300 dark:hover:border-zinc-500 hover:bg-slate-50 dark:hover:bg-zinc-800/60 px-4 py-3 text-sm font-medium text-slate-700 dark:text-zinc-200 hover:text-slate-900 dark:hover:text-white transition flex-row-reverse justify-end text-right"
           >
             <svg className="h-4 w-4 shrink-0 text-green-500 dark:text-green-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
             </svg>
-            WhatsApp
+            וואטסאפ
           </a>
         </div>
       </div>
@@ -144,10 +144,10 @@ function AIIntelligenceSection({ lead }: { lead: Lead }) {
 
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-zinc-700/60 bg-slate-50/60 dark:bg-zinc-800/40 overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200/70 dark:border-zinc-700/40">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200/70 dark:border-zinc-700/40 flex-row-reverse justify-end">
         <Brain className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400 shrink-0" />
         <span className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-zinc-400">
-          AI Intelligence
+          מודיעין AI
         </span>
       </div>
 
@@ -156,8 +156,8 @@ function AIIntelligenceSection({ lead }: { lead: Lead }) {
         {/* Conversation Summary — natural language paragraph only */}
         {lead.conversation_summary && (
           <div>
-            <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 mb-1.5">Conversation summary</p>
-            <p className="text-sm text-slate-700 dark:text-zinc-300 leading-relaxed">
+            <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 mb-1.5 text-right">סיכום שיחה</p>
+            <p className="text-sm text-slate-700 dark:text-zinc-300 leading-relaxed text-right">
               {lead.conversation_summary}
             </p>
           </div>
@@ -168,7 +168,7 @@ function AIIntelligenceSection({ lead }: { lead: Lead }) {
           <div className="grid grid-cols-1 gap-3">
             {lead.lead_quality_score != null && (
               <div>
-                <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 mb-1.5">Lead quality score</p>
+                <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 mb-1.5 text-right">ציון איכות ליד</p>
                 <ScoreBar score={lead.lead_quality_score} />
               </div>
             )}
@@ -176,7 +176,7 @@ function AIIntelligenceSection({ lead }: { lead: Lead }) {
               <div className="flex flex-wrap gap-2">
                 {lead.urgency_level && (
                   <div>
-                    <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 mb-1">Urgency</p>
+                    <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 mb-1 text-right">דחיפות</p>
                     <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-medium capitalize ${URGENCY_STYLES[lead.urgency_level] ?? ''}`}>
                       {lead.urgency_level}
                     </span>
@@ -184,7 +184,7 @@ function AIIntelligenceSection({ lead }: { lead: Lead }) {
                 )}
                 {lead.priority_level && (
                   <div>
-                    <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 mb-1">Priority</p>
+                    <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 mb-1 text-right">עדיפות</p>
                     <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-medium capitalize ${PRIORITY_LEVEL_STYLES[lead.priority_level] ?? ''}`}>
                       {lead.priority_level}
                     </span>
@@ -204,13 +204,13 @@ function AIIntelligenceSection({ lead }: { lead: Lead }) {
         <div className="space-y-3">
           {lead.sla_deadline && (
             <div>
-              <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 mb-1.5">SLA deadline</p>
+              <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 mb-1.5 text-right">דדליין SLA</p>
               <SlaDeadline value={lead.sla_deadline} />
             </div>
           )}
           {lead.follow_up_recommended_at && (
             <div>
-              <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 mb-1.5">Follow-up recommended</p>
+              <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 mb-1.5 text-right">מעקב מומלץ</p>
               <span className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium bg-slate-50 dark:bg-zinc-800/60 text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700">
                 <Clock className="h-3 w-3 shrink-0" />
                 {formatDateTime(lead.follow_up_recommended_at)}
@@ -219,8 +219,8 @@ function AIIntelligenceSection({ lead }: { lead: Lead }) {
           )}
           {lead.callback_recommendation && (
             <div className="rounded-xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 px-3.5 py-3">
-              <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 mb-1">Callback recommendation</p>
-              <p className="text-xs text-slate-700 dark:text-zinc-300 leading-relaxed">
+              <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 mb-1 text-right">המלצה להתקשרות</p>
+              <p className="text-xs text-slate-700 dark:text-zinc-300 leading-relaxed text-right">
                 {lead.callback_recommendation}
               </p>
             </div>
@@ -286,15 +286,15 @@ export function LeadDetailDrawer({
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
         aria-modal="true"
-        aria-label="Lead details"
+        aria-label="פרטי ליד"
       >
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 px-6 py-4">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-zinc-100">Lead details</h2>
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 px-6 py-4 flex-row-reverse">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-zinc-100 text-right">פרטי ליד</h2>
           <button
             type="button"
             onClick={onClose}
             className="rounded-xl p-2 text-slate-500 dark:text-zinc-400 transition hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
-            aria-label="Close"
+            aria-label="סגור"
           >
             <X className="h-5 w-5" />
           </button>
@@ -303,19 +303,19 @@ export function LeadDetailDrawer({
         <div className="flex-1 overflow-y-auto px-6 py-5">
           <div className="space-y-6">
             <div>
-              <h3 className="text-xl font-semibold text-slate-900 dark:text-zinc-100">
-                {lead.full_name || 'Unnamed lead'}
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-zinc-100 text-right">
+                {lead.full_name || 'ליד ללא שם'}
               </h3>
-              <div className="mt-2 flex flex-wrap gap-2">
+              <div className="mt-2 flex flex-wrap gap-2 flex-row-reverse justify-end">
                 <span className={`rounded-lg px-2.5 py-1 text-xs font-medium ${PRIORITY_STYLES[priority]}`}>
-                  {priority}
+                  {PRIORITY_LABELS[priority] ?? priority}
                 </span>
                 <span className="rounded-lg bg-slate-100 dark:bg-zinc-700 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-zinc-300">
-                  {status}
+                  {STATUS_LABELS[status] ?? status}
                 </span>
                 {lead.source && (
                   <span className="rounded-lg bg-indigo-50 dark:bg-indigo-950/50 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-400">
-                    {lead.source}
+                    {SOURCE_LABELS[lead.source] ?? lead.source}
                   </span>
                 )}
               </div>
@@ -323,19 +323,19 @@ export function LeadDetailDrawer({
 
             <dl className="grid gap-4">
               {lead.email && (
-                <div className="flex gap-3">
+                <div className="flex gap-3 flex-row-reverse text-right">
                   <Mail className="mt-0.5 h-4 w-4 shrink-0 text-slate-400 dark:text-zinc-500" />
-                  <div>
-                    <dt className="text-xs font-medium text-slate-500 dark:text-zinc-400">Email</dt>
+                  <div className="min-w-0">
+                    <dt className="text-xs font-medium text-slate-500 dark:text-zinc-400">אימייל</dt>
                     <dd className="text-sm text-slate-900 dark:text-zinc-100">{lead.email}</dd>
                   </div>
                 </div>
               )}
               {lead.phone && (
-                <div className="flex gap-3">
+                <div className="flex gap-3 flex-row-reverse text-right">
                   <Phone className="mt-0.5 h-4 w-4 shrink-0 text-slate-400 dark:text-zinc-500" />
-                  <div>
-                    <dt className="text-xs font-medium text-slate-500 dark:text-zinc-400">Phone</dt>
+                  <div className="min-w-0">
+                    <dt className="text-xs font-medium text-slate-500 dark:text-zinc-400">טלפון</dt>
                     <dd>
                       <button
                         type="button"
@@ -349,39 +349,39 @@ export function LeadDetailDrawer({
                 </div>
               )}
               {lead.interest && (
-                <div className="flex gap-3">
+                <div className="flex gap-3 flex-row-reverse text-right">
                   <Tag className="mt-0.5 h-4 w-4 shrink-0 text-slate-400 dark:text-zinc-500" />
-                  <div>
-                    <dt className="text-xs font-medium text-slate-500 dark:text-zinc-400">Interest</dt>
+                  <div className="min-w-0">
+                    <dt className="text-xs font-medium text-slate-500 dark:text-zinc-400">עניין</dt>
                     <dd className="text-sm text-slate-900 dark:text-zinc-100">{lead.interest}</dd>
                   </div>
                 </div>
               )}
               {(lead.estimated_deal_value ?? 0) > 0 && (
-                <div className="flex gap-3">
+                <div className="flex gap-3 flex-row-reverse text-right">
                   <DollarSign className="mt-0.5 h-4 w-4 shrink-0 text-slate-400 dark:text-zinc-500" />
-                  <div>
-                    <dt className="text-xs font-medium text-slate-500 dark:text-zinc-400">Deal value</dt>
+                  <div className="min-w-0">
+                    <dt className="text-xs font-medium text-slate-500 dark:text-zinc-400">שווי עסקה</dt>
                     <dd className="text-sm font-medium text-slate-900 dark:text-zinc-100">
-                      {formatCurrency(lead.estimated_deal_value!)}
+                      {formatCurrencyILS(lead.estimated_deal_value!)}
                     </dd>
                   </div>
                 </div>
               )}
-              <div className="flex gap-3">
+              <div className="flex gap-3 flex-row-reverse text-right">
                 <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-slate-400 dark:text-zinc-500" />
-                <div>
-                  <dt className="text-xs font-medium text-slate-500 dark:text-zinc-400">Created</dt>
+                <div className="min-w-0">
+                  <dt className="text-xs font-medium text-slate-500 dark:text-zinc-400">נוצר</dt>
                   <dd className="text-sm text-slate-900 dark:text-zinc-100">
                     {formatDateDDMMYYYY(lead.created_at)}
                   </dd>
                 </div>
               </div>
               {lead.last_contact_date && (
-                <div className="flex gap-3">
+                <div className="flex gap-3 flex-row-reverse text-right">
                   <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-slate-400 dark:text-zinc-500" />
-                  <div>
-                    <dt className="text-xs font-medium text-slate-500 dark:text-zinc-400">Last contact</dt>
+                  <div className="min-w-0">
+                    <dt className="text-xs font-medium text-slate-500 dark:text-zinc-400">קשר אחרון</dt>
                     <dd className="text-sm text-slate-900 dark:text-zinc-100">
                       {formatDateDDMMYYYY(lead.last_contact_date)}
                     </dd>
@@ -389,10 +389,10 @@ export function LeadDetailDrawer({
                 </div>
               )}
               {lead.next_follow_up_date && (
-                <div className="flex gap-3">
+                <div className="flex gap-3 flex-row-reverse text-right">
                   <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-slate-400 dark:text-zinc-500" />
-                  <div>
-                    <dt className="text-xs font-medium text-slate-500 dark:text-zinc-400">Next follow-up</dt>
+                  <div className="min-w-0">
+                    <dt className="text-xs font-medium text-slate-500 dark:text-zinc-400">מעקב הבא</dt>
                     <dd className="text-sm text-slate-900 dark:text-zinc-100">
                       {formatDateDDMMYYYY(lead.next_follow_up_date)}
                     </dd>
@@ -400,10 +400,10 @@ export function LeadDetailDrawer({
                 </div>
               )}
               {lead.lead_score != null && (
-                <div className="flex gap-3">
+                <div className="flex gap-3 flex-row-reverse text-right">
                   <div className="mt-0.5 h-4 w-4 shrink-0 rounded bg-slate-200 dark:bg-zinc-700" />
-                  <div>
-                    <dt className="text-xs font-medium text-slate-500 dark:text-zinc-400">Lead score</dt>
+                  <div className="min-w-0">
+                    <dt className="text-xs font-medium text-slate-500 dark:text-zinc-400">ציון ליד</dt>
                     <dd className="text-sm font-medium text-slate-900 dark:text-zinc-100">
                       {lead.lead_score}/100
                     </dd>
@@ -422,44 +422,42 @@ export function LeadDetailDrawer({
             <select
               value={status}
               onChange={(e) => onStatusChange(lead.id, e.target.value as LeadStatus)}
-              className="flex-1 min-w-0 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm font-medium text-slate-700 dark:text-zinc-300 focus:border-slate-400 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:focus:ring-zinc-500/50 transition-colors"
+              className="flex-1 min-w-0 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm font-medium text-slate-700 dark:text-zinc-300 focus:border-slate-400 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:focus:ring-zinc-500/50 transition-colors text-right"
             >
-              <option value="Pending">Pending</option>
-              <option value="Contacted">Contacted</option>
-              <option value="Appointment scheduled">Appointment scheduled</option>
-              <option value="Closed">Closed</option>
-              <option value="Disqualified">Disqualified</option>
+              <option value="Pending">ממתין</option>
+              <option value="Contacted">נוצר קשר</option>
+              <option value="Appointment scheduled">תור נקבע</option>
+              <option value="Closed">נסגר</option>
+              <option value="Disqualified">הוסר</option>
             </select>
-            {/* Grouped quick actions */}
-            <div className="flex shrink-0 items-center gap-px rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800/60 p-1">
+            <div className="flex shrink-0 items-center gap-px rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800/60 p-1 flex-row-reverse">
               <button
                 type="button"
                 onClick={() => onMarkContacted(lead.id)}
-                title="Mark as contacted"
-                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700 hover:text-slate-900 dark:hover:text-zinc-100 transition-colors"
+                title="סמן נוצר קשר"
+                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700 hover:text-slate-900 dark:hover:text-zinc-100 transition-colors flex-row-reverse"
               >
                 <Phone className="h-3.5 w-3.5 shrink-0" />
-                <span className="hidden sm:inline">Contacted</span>
+                <span className="hidden sm:inline">נוצר קשר</span>
               </button>
               <div className="h-4 w-px bg-slate-200 dark:bg-zinc-700 mx-0.5" />
               <button
                 type="button"
                 onClick={() => onScheduleFollowUp(lead.id)}
-                title="Schedule follow-up"
-                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700 hover:text-slate-900 dark:hover:text-zinc-100 transition-colors"
+                title="קבע מעקב"
+                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700 hover:text-slate-900 dark:hover:text-zinc-100 transition-colors flex-row-reverse"
               >
                 <Calendar className="h-3.5 w-3.5 shrink-0" />
-                <span className="hidden sm:inline">Follow-up</span>
+                <span className="hidden sm:inline">מעקב</span>
               </button>
             </div>
           </div>
-          {/* Primary CTA */}
           <button
             type="button"
             onClick={() => onEdit(lead)}
-            className="w-full rounded-xl bg-slate-900 dark:bg-zinc-100 px-4 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-sm transition hover:bg-slate-800 dark:hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/20 dark:focus:ring-zinc-100/20 focus:ring-offset-1"
+            className="w-full rounded-xl bg-slate-900 dark:bg-zinc-100 px-4 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-sm transition hover:bg-slate-800 dark:hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/20 dark:focus:ring-zinc-100/20 focus:ring-offset-1 text-right"
           >
-            Edit lead
+            ערוך ליד
           </button>
         </div>
       </aside>

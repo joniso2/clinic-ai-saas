@@ -29,11 +29,14 @@ export async function handleDiscordWebhook(
       )
     : [];
 
+  const guildId = typeof body.guild_id === 'string' ? body.guild_id : undefined;
+
   try {
     const { reply } = await processDiscordMessage({
       content,
       authorName,
       conversationHistory,
+      guildId,
     });
     return Response.json({ reply });
   } catch (err) {

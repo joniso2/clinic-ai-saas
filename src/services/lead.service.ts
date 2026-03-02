@@ -1,26 +1,19 @@
 import { runStructuredPrompt } from '@/ai/ai-client';
-import { clinicPrices } from '@/discord/prices';
 import * as leadRepository from '@/repositories/lead.repository';
 import * as appointmentService from '@/services/appointment.service';
 import { computeIntelligenceTimestamps } from '@/services/intelligence.service';
 import { getClinicSettings } from '@/services/settings.service';
 import { buildDiscordSystemPrompt } from '@/prompts/discord.prompt';
+import {
+  getClinicIdByGuildId,
+  getClinicServicesForClinic,
+  buildPricingBlock,
+  estimateDealValueFromServices,
+  getClinicName,
+} from '@/services/discord-guild.service';
 import type { AppointmentType } from '@/types/appointments';
 
-/** Normalize interest string and match to clinicPrices key; return numeric value or null. */
-function estimateDealValueFromInterest(interest: string | null | undefined): number | null {
-  if (!interest || typeof interest !== 'string') return null;
-  const normalized = interest.toLowerCase().trim();
-  if (!normalized) return null;
-  const keys = Object.keys(clinicPrices);
-  const key = keys.find(k => normalized === k || normalized.includes(k) || k.includes(normalized));
-  if (!key) return null;
-  const priceStr = clinicPrices[key];
-  const numbers = priceStr.replace(/,/g, '').match(/\d+/g);
-  if (!numbers || numbers.length === 0) return null;
-  const nums = numbers.map(Number);
-  return nums.length === 1 ? nums[0]! : Math.round((nums[0]! + nums[nums.length - 1]!) / 2);
-}
+const DISCORD_GUILD_UNMAPPED_REPLY = 'אנא פנה לשרת הרשמי של המרפאה לצורך המשך טיפול.';
 
 function calculateLeadScore(params: {
   interest: string | null | undefined;
@@ -62,26 +55,34 @@ export async function processDiscordMessage(params: {
   authorName?: string;
   channelName?: string;
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  guildId?: string | null;
 }): Promise<ProcessDiscordMessageResult> {
-  const { content, authorName, channelName, conversationHistory } = params;
+  const { content, authorName, channelName, conversationHistory, guildId } = params;
   const history = conversationHistory ?? [];
 
-  const clinicId = process.env.DISCORD_DEFAULT_CLINIC_ID;
+  const clinicId = await getClinicIdByGuildId(guildId ?? null);
+  if (!clinicId) {
+    return { reply: DISCORD_GUILD_UNMAPPED_REPLY };
+  }
 
-  // ── Fetch clinic settings (non-blocking; fall back to defaults on failure) ──
-  const settings = clinicId ? await getClinicSettings(clinicId).catch(() => null) : null;
+  const [settings, services, clinicName] = await Promise.all([
+    getClinicSettings(clinicId).catch(() => null),
+    getClinicServicesForClinic(clinicId),
+    getClinicName(clinicId),
+  ]);
+  const pricesText = buildPricingBlock(services);
 
-  // Automation flags (from settings, with safe defaults)
   const requirePhoneForBooking      = settings?.require_phone_before_booking      ?? true;
   const autoCreateOnFirstMessage    = settings?.auto_create_lead_on_first_message ?? false;
   const autoMarkContacted           = settings?.auto_mark_contacted               ?? false;
 
-  // Build a prompt that reflects current AI behavior settings
   const systemPrompt = buildDiscordSystemPrompt({
     ai_tone:                 settings?.ai_tone                 ?? 'professional',
     ai_response_length:      settings?.ai_response_length      ?? 'standard',
     strict_hours_enforcement: settings?.strict_hours_enforcement ?? true,
     business_description:    settings?.business_description    ?? null,
+    pricesText,
+    clinicName,
   });
 
   // Scheduling config derived from settings
@@ -108,7 +109,7 @@ export async function processDiscordMessage(params: {
     intent: analysis.intent,
   });
   const priority_level = calculatePriorityLevel(analysis.urgency_level, lead_quality_score);
-  const estimated_deal_value = estimateDealValueFromInterest(analysis.interest);
+  const estimated_deal_value = estimateDealValueFromServices(analysis.interest, services);
 
   const intel = computeIntelligenceTimestamps({
     urgency_level:      analysis.urgency_level ?? null,
@@ -182,8 +183,7 @@ export async function processDiscordMessage(params: {
     }
 
     if (!clinicId) {
-      console.error('[Discord] DISCORD_DEFAULT_CLINIC_ID is not set.');
-      return { reply: 'מצטערים, לא ניתן לקבוע תור כרגע. פנה אלינו ישירות.' };
+      return { reply: DISCORD_GUILD_UNMAPPED_REPLY };
     }
 
     // ── Upsert lead by email/phone first, then fall back to name ────────────────
