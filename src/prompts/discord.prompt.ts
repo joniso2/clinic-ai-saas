@@ -120,10 +120,10 @@ export function buildDiscordSystemPrompt(settings?: AISettings): string {
     '- Always set "appointment_datetime" as "YYYY-MM-DDTHH:mm:ss" as soon as you know the date/time — even if collected in a previous message.\n' +
     '- Always set "phone" to the phone number as soon as you know it — even if collected in a previous message.\n' +
     '- Always set "full_name" to the patient name as soon as you know it.\n' +
-    '- Set intent to "appointment" ONLY when all three are known: name + phone + datetime. While still collecting info, use intent="other".\n' +
-    '- Set reply to "PENDING_SCHEDULE" ONLY when all three are present: name + phone + datetime.\n' +
-    '- If any are missing, ask for the missing detail. Do NOT set "PENDING_SCHEDULE".\n' +
-    '- NEVER guess or assume a datetime. If the user has not explicitly stated a date AND time, set appointment_datetime to null and ask for it.\n\n' +
+    '- Set intent to "appointment" as soon as name AND phone are known and the user is in a booking flow (datetime may still be missing — the system will then ask for it). While still collecting name or phone, use intent="other".\n' +
+    '- Set reply to "PENDING_SCHEDULE" ONLY when all three are present: name + phone + datetime (and patient wants earliest slot).\n' +
+    '- If datetime is missing but name+phone are present: set intent="appointment", appointment_datetime=null, and set reply to a short ask for preferred date/time (e.g. "באיזה תאריך ושעה תרצה לקבוע?"). The system may override with the same question.\n' +
+    '- NEVER guess or assume a datetime. If the user has not explicitly stated a date AND time, set appointment_datetime to null.\n\n' +
 
     'GENERAL GREETING or SHORT/AMBIGUOUS message:\n' +
     'Respond warmly and ask how you can help. NEVER redirect short or casual messages.\n\n' +
