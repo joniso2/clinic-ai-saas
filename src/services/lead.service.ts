@@ -99,15 +99,18 @@ export async function processDiscordMessage(params: {
     // Block appointment if phone missing (per setting), first message, or name missing
     if ((requirePhoneForBooking && !hasPhone) || isFirstMessage || !patientName) {
       console.log('[Discord] Appointment blocked — phone:', hasPhone, '| firstMessage:', isFirstMessage, '| name:', patientName);
+      // Always enforce the correct missing field — never let AI override this order
+      if (requirePhoneForBooking && !hasPhone) {
+        return { reply: 'אשמח לעזור! כדי לקבוע את התור אצטרך את מספר הטלפון שלך.' };
+      }
+      if (!patientName) {
+        return { reply: 'מה שמך המלא?' };
+      }
+      // isFirstMessage — let AI reply guide if available, otherwise ask for date
       if (analysis.reply && analysis.reply !== 'PENDING_SCHEDULE' && analysis.reply.trim().length > 0) {
         return { reply: analysis.reply };
       }
-      const safeReply = !hasPhone
-        ? 'אשמח לעזור! כדי לקבוע את התור אצטרך את מספר הטלפון שלך.'
-        : !patientName
-          ? 'מה שמך המלא?'
-          : 'באיזה תאריך ושעה תרצה לקבוע?';
-      return { reply: safeReply };
+      return { reply: 'באיזה תאריך ושעה תרצה לקבוע?' };
     }
 
     // If no datetime — check if patient wants earliest slot or needs to choose
