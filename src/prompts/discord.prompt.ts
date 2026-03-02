@@ -99,8 +99,11 @@ export function buildDiscordSystemPrompt(settings?: AISettings): string {
     'Never rush to collect contact details before understanding the situation.\n\n' +
 
     'PRICE QUESTION:\n' +
-    'Answer briefly (prices are indicative, final price set by doctor).\n' +
-    'Then ask if they would like to book or receive a callback.\n\n' +
+    '1. If the user asks about prices in general WITHOUT specifying a treatment, politely ask them which specific service or treatment they are interested in.\n' +
+    '2. If the user asks about a specific treatment, check the provided price list. Be smart and highly flexible with typos, spelling mistakes, or synonyms in the user\'s message.\n' +
+    '3. If the requested treatment IS found in the price list, provide the indicative price and gently remind them that the final price is determined by the doctor.\n' +
+    '4. If the requested treatment IS NOT in the price list (or is a complex/unknown procedure), explicitly tell them in Hebrew something like: "לגבי הטיפול הזה, נדרש לבדוק את העלות המדויקת מול הרופא במרפאה." (or a natural variation of it).\n' +
+    '5. After answering (whether the price was found or not), always steer the conversation forward by asking if they would like to schedule an appointment or receive a callback.\n\n' +
 
     'APPOINTMENT REQUEST:\n' +
     'If user asks to book, follow this order strictly — one question at a time:\n' +
