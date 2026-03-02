@@ -198,8 +198,17 @@ export async function updateLead(
 
 export async function deleteLead(id: string, clinicId: string): Promise<{ error: unknown }> {
   const supabase = getSupabaseAdminClient();
-  const { error } = await supabase.from('leads').delete().eq('id', id).eq('clinic_id', clinicId);
-  return { error: error ?? null };
+  const { data, error } = await supabase
+    .from('leads')
+    .delete()
+    .eq('id', id)
+    .eq('clinic_id', clinicId)
+    .select('id');
+  if (error) return { error };
+  if (!data || data.length === 0) {
+    return { error: new Error('Lead not found or already deleted') };
+  }
+  return { error: null };
 }
 
 // ─── Analytics ───────────────────────────────────────────────────────────────

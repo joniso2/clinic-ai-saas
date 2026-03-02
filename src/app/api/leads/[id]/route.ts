@@ -7,7 +7,12 @@ async function getClinicIdFromSession(): Promise<string | null> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  return (user.app_metadata as { clinic_id?: string } | null)?.clinic_id ?? null;
+  const { data: clinicLink } = await supabase
+    .from('clinic_users')
+    .select('clinic_id')
+    .eq('user_id', user.id)
+    .single();
+  return clinicLink?.clinic_id ?? null;
 }
 
 /** Build ISO datetime for 09:00 Israel time on the given date (YYYY-MM-DD). */
@@ -110,9 +115,10 @@ export async function DELETE(
   const { error } = await leadRepository.deleteLead(id, clinicId);
   if (error) {
     console.error('Error deleting lead:', error);
+    const notFound = error instanceof Error && error.message.includes('not found');
     return NextResponse.json(
-      { error: 'Failed to delete lead' },
-      { status: 500 },
+      { error: notFound ? 'Lead not found or already deleted' : 'Failed to delete lead' },
+      { status: notFound ? 404 : 500 },
     );
   }
   return NextResponse.json({ ok: true });

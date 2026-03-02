@@ -100,18 +100,21 @@ export async function createAppointment(
   return { data: data as Appointment, error: null };
 }
 
-/** Delete an appointment by id + clinicId (ownership check). */
+/** Delete an appointment by id + clinicId (ownership check). Returns the deleted row's lead_id if any. */
 export async function deleteAppointment(
   id: string,
   clinicId: string,
-): Promise<{ error: unknown }> {
+): Promise<{ data: { lead_id: string | null } | null; error: unknown }> {
   const supabase = getSupabaseAdminClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('appointments')
     .delete()
     .eq('id', id)
-    .eq('clinic_id', clinicId);
-  return { error: error ?? null };
+    .eq('clinic_id', clinicId)
+    .select('lead_id')
+    .maybeSingle();
+  if (error) return { data: null, error };
+  return { data: data as { lead_id: string | null } | null, error: null };
 }
 
 /** Delete all appointments linked to a lead (used when updating/clearing lead follow-up). */

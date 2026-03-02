@@ -197,7 +197,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-/** DELETE /api/appointments?id=UUID */
+/** DELETE /api/appointments?id=UUID — deletes the appointment and, if it had a lead_id, the associated lead. */
 export async function DELETE(req: NextRequest) {
   try {
     const clinicId = await getClinicIdFromSession();
@@ -210,13 +210,19 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
-    const { error } = await appointmentRepo.deleteAppointment(id, clinicId);
+    const { data: deleted, error } = await appointmentRepo.deleteAppointment(id, clinicId);
     if (error) {
       console.error('DELETE /api/appointments error:', error);
       return NextResponse.json(
         { error: 'Failed to delete appointment' },
         { status: 500 },
       );
+    }
+    if (deleted?.lead_id) {
+      const { error: leadErr } = await leadRepository.deleteLead(deleted.lead_id, clinicId);
+      if (leadErr) {
+        console.error('DELETE /api/appointments: lead delete failed:', leadErr);
+      }
     }
     return NextResponse.json({ ok: true });
   } catch (err) {

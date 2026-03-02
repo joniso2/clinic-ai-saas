@@ -37,6 +37,22 @@ export default function DashboardClient() {
   const [appointmentLead, setAppointmentLead] = useState<Lead | null>(null);
   const [nextAppointmentsByLeadId, setNextAppointmentsByLeadId] = useState<Record<string, string>>({});
 
+  const fetchLeads = async () => {
+    const res = await fetch('/api/leads', { credentials: 'include' });
+    const json = await res.json().catch(() => ({})) as { leads?: Lead[]; error?: string };
+    if (!res.ok) {
+      setError(json.error ?? 'Failed to load leads');
+      setLeads([]);
+    } else {
+      setLeads(json.leads ?? []);
+      if (json.error === 'Clinic not set for user') {
+        setError('No clinic linked to your account. Ask an admin to assign your user to a clinic.');
+      } else {
+        setError(null);
+      }
+    }
+  };
+
   useEffect(() => {
     const load = async () => {
       const {
@@ -58,20 +74,7 @@ export default function DashboardClient() {
 
       setClinicId(clinicIdFromMetadata);
 
-      const res = await fetch('/api/leads', { credentials: 'include' });
-      const json = await res.json().catch(() => ({})) as { leads?: Lead[]; error?: string };
-      if (!res.ok) {
-        setError(json.error ?? 'Failed to load leads');
-        setLeads([]);
-      } else {
-        setLeads(json.leads ?? []);
-        if (json.error === 'Clinic not set for user') {
-          setError('No clinic linked to your account. Ask an admin to assign your user to a clinic.');
-        } else {
-          setError(null);
-        }
-      }
-
+      await fetchLeads();
       setLoading(false);
     };
 
@@ -121,6 +124,20 @@ export default function DashboardClient() {
           setDrawerLead((prev) =>
             prev?.id === updated.id ? { ...prev, ...updated } : prev
           );
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'leads',
+          filter: `clinic_id=eq.${clinicId}`,
+        },
+        (payload) => {
+          const deletedId = (payload.old as { id: string }).id;
+          setLeads((prev) => prev.filter((l) => l.id !== deletedId));
+          setDrawerLead((prev) => (prev?.id === deletedId ? null : prev));
         }
       )
       .subscribe();
@@ -299,6 +316,7 @@ export default function DashboardClient() {
   const handleDeleteLead = async () => {
     if (!deleteLead) return;
     setDeleting(true);
+    setError(null);
     const res = await fetch(`/api/leads/${deleteLead.id}`, {
       method: 'DELETE',
       credentials: 'include',
@@ -309,9 +327,11 @@ export default function DashboardClient() {
       setDeleting(false);
       return;
     }
-    setLeads((prev) => prev.filter((l) => l.id !== deleteLead.id));
+    const deletedId = deleteLead.id;
     setDeleteLead(null);
-    setDrawerLead((prev) => (prev?.id === deleteLead.id ? null : prev));
+    setDrawerLead((prev) => (prev?.id === deletedId ? null : prev));
+    setLeads((prev) => prev.filter((l) => l.id !== deletedId));
+    await fetchLeads();
     setDeleting(false);
   };
 
