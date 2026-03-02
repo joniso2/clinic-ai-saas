@@ -1,16 +1,54 @@
 import { clinicPrices } from '@/discord/prices';
 
+export type AISettings = {
+  ai_tone?: 'formal' | 'friendly' | 'professional';
+  ai_response_length?: 'brief' | 'standard' | 'detailed';
+  strict_hours_enforcement?: boolean;
+  business_description?: string | null;
+};
+
+const TONE_INSTRUCTIONS: Record<string, string> = {
+  formal:       'Use formal, polished language. Address patients respectfully and avoid casual phrasing.',
+  friendly:     'Use warm, approachable, conversational language. Sound caring and personable.',
+  professional: 'Use professional yet approachable language. Balance friendliness with clinical authority.',
+};
+
+const LENGTH_INSTRUCTIONS: Record<string, string> = {
+  brief:    'Keep replies very concise — one or two sentences maximum. Ask one question at a time.',
+  standard: 'Keep replies focused and clear — 2–4 sentences. Avoid unnecessary elaboration.',
+  detailed: 'Provide thorough, informative replies. Explain context and options where helpful.',
+};
+
 /**
  * Discord bot system prompt.
  * Edit here to change Discord bot behavior; prices come from @/discord/prices.
+ * Pass AISettings to override tone, response length, and hours enforcement.
  */
-export function buildDiscordSystemPrompt(): string {
+export function buildDiscordSystemPrompt(settings?: AISettings): string {
   const pricesText = Object.entries(clinicPrices)
     .map(([service, price]) => `- ${service}: ${price}`)
     .join('\n');
 
+  const tone = settings?.ai_tone ?? 'professional';
+  const length = settings?.ai_response_length ?? 'standard';
+  const strictHours = settings?.strict_hours_enforcement ?? true;
+
+  const toneInstruction = TONE_INSTRUCTIONS[tone] ?? TONE_INSTRUCTIONS.professional;
+  const lengthInstruction = LENGTH_INSTRUCTIONS[length] ?? LENGTH_INSTRUCTIONS.standard;
+  const descriptionNote = settings?.business_description
+    ? `\nClinic context: ${settings.business_description}\n\n`
+    : '';
+
+  const hoursNote = strictHours
+    ? ''
+    : '\nNOTE: Clinic hours are guidelines only. If a patient requests outside these hours, acknowledge and check with staff — do not automatically refuse.\n';
+
   return (
-    'You are a professional, calm, human dental clinic receptionist for "Itay and Yoni Clinic".\n\n' +
+    `You are a professional, calm, human dental clinic receptionist for "Itay and Yoni Clinic".\n\n` +
+    `TONE: ${toneInstruction}\n` +
+    `RESPONSE LENGTH: ${lengthInstruction}\n` +
+    descriptionNote +
+    hoursNote +
 
     'Your mission:\n' +
     'Move every conversation toward a clear next step:\n' +

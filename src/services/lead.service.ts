@@ -2,6 +2,8 @@ import { runStructuredPrompt } from '@/ai/ai-client';
 import * as leadRepository from '@/repositories/lead.repository';
 import * as appointmentService from '@/services/appointment.service';
 import { computeIntelligenceTimestamps } from '@/services/intelligence.service';
+import { getClinicSettings } from '@/services/settings.service';
+import { buildDiscordSystemPrompt } from '@/prompts/discord.prompt';
 import type { AppointmentType } from '@/types/appointments';
 
 export type ProcessDiscordMessageResult = {
@@ -25,11 +27,39 @@ export async function processDiscordMessage(params: {
   const { content, authorName, channelName, conversationHistory } = params;
   const history = conversationHistory ?? [];
 
+  const clinicId = process.env.DISCORD_DEFAULT_CLINIC_ID;
+
+  // ── Fetch clinic settings (non-blocking; fall back to defaults on failure) ──
+  const settings = clinicId ? await getClinicSettings(clinicId).catch(() => null) : null;
+
+  // Automation flags (from settings, with safe defaults)
+  const requirePhoneForBooking      = settings?.require_phone_before_booking      ?? true;
+  const autoCreateOnFirstMessage    = settings?.auto_create_lead_on_first_message ?? false;
+  const autoMarkContacted           = settings?.auto_mark_contacted               ?? false;
+
+  // Build a prompt that reflects current AI behavior settings
+  const systemPrompt = buildDiscordSystemPrompt({
+    ai_tone:                 settings?.ai_tone                 ?? 'professional',
+    ai_response_length:      settings?.ai_response_length      ?? 'standard',
+    strict_hours_enforcement: settings?.strict_hours_enforcement ?? true,
+    business_description:    settings?.business_description    ?? null,
+  });
+
+  // Scheduling config derived from settings
+  const schedulingConfig: appointmentService.SchedulingConfig = {
+    slotMinutes:           settings?.slot_minutes              ?? 30,
+    bufferMinutes:         settings?.buffer_minutes            ?? 0,
+    maxPerDay:             settings?.max_appointments_per_day  ?? null,
+    minBookingNoticeHours: settings?.min_booking_notice_hours  ?? 0,
+    maxSuggestionDays:     settings?.max_booking_window_days   ?? 14,
+  };
+
   const analysis = await runStructuredPrompt({
     text: content,
     authorName,
     channelName,
     conversationHistory: history,
+    systemPrompt,
   });
 
   const intel = computeIntelligenceTimestamps({
@@ -37,13 +67,16 @@ export async function processDiscordMessage(params: {
     lead_quality_score: analysis.lead_quality_score ?? null,
   });
 
-  const clinicId = process.env.DISCORD_DEFAULT_CLINIC_ID;
+  // Override SLA with clinic-configured target if set
+  if (settings?.sla_target_minutes && settings.sla_target_minutes !== 60) {
+    intel.sla_deadline = new Date(Date.now() + settings.sla_target_minutes * 60_000).toISOString();
+  }
 
-  // Hard rule: phone is mandatory for any lead or appointment action
+  // Hard rule: phone is mandatory for booking (unless setting disabled)
   const hasPhone = typeof analysis.phone === 'string' && analysis.phone.trim().length > 0;
 
-  // Hard rule: is_new_lead cannot be true without a phone number
-  if (analysis.is_new_lead && !hasPhone) {
+  // Hard rule: is_new_lead cannot be true without phone (unless auto_create_lead_on_first_message)
+  if (analysis.is_new_lead && !hasPhone && !autoCreateOnFirstMessage) {
     analysis.is_new_lead = false;
   }
 
@@ -63,8 +96,8 @@ export async function processDiscordMessage(params: {
     const datetimeRaw = analysis.appointment_datetime;
     const appointmentType = (analysis.appointment_type ?? 'new') as AppointmentType;
 
-    // Block appointment if phone missing, first message, or name missing
-    if (!hasPhone || isFirstMessage || !patientName) {
+    // Block appointment if phone missing (per setting), first message, or name missing
+    if ((requirePhoneForBooking && !hasPhone) || isFirstMessage || !patientName) {
       console.log('[Discord] Appointment blocked — phone:', hasPhone, '| firstMessage:', isFirstMessage, '| name:', patientName);
       if (analysis.reply && analysis.reply !== 'PENDING_SCHEDULE' && analysis.reply.trim().length > 0) {
         return { reply: analysis.reply };
@@ -84,7 +117,7 @@ export async function processDiscordMessage(params: {
       if (analysis.reply === 'PENDING_SCHEDULE' && clinicId) {
         console.log('[Discord] PENDING_SCHEDULE with no datetime — finding closest available slot');
         const now = new Date();
-        const suggestions = await appointmentService.suggestClosestAvailable(clinicId, now, 1);
+        const suggestions = await appointmentService.suggestClosestAvailable(clinicId, now, 1, schedulingConfig);
         if (suggestions.length > 0) {
           resolvedDatetimeRaw = suggestions[0];
           console.log('[Discord] Auto-selected slot:', resolvedDatetimeRaw);
@@ -160,6 +193,7 @@ export async function processDiscordMessage(params: {
       requestedDatetimeRaw: resolvedDatetimeRaw,
       type: appointmentType,
       leadId: leadId ?? undefined,
+      config: schedulingConfig,
     });
 
     if (result.status === 'confirmed') {
@@ -212,16 +246,19 @@ export async function processDiscordMessage(params: {
   }
 
   // ── LEAD INTENT ─────────────────────────────────────────────────────────────
-  // Hard rule: phone is mandatory — no lead without it
-  if (analysis.is_new_lead && analysis.full_name && hasPhone && clinicId) {
+  // Allow creation without phone only if auto_create_lead_on_first_message is enabled
+  const canCreateLead = analysis.is_new_lead && analysis.full_name && clinicId &&
+    (hasPhone || autoCreateOnFirstMessage);
+
+  if (canCreateLead) {
     console.log('[Discord] Creating lead:', analysis.full_name, '| clinic_id:', clinicId);
     const { data, error } = await leadRepository.createLead({
       clinic_id:                clinicId,
-      full_name:                analysis.full_name,
+      full_name:                analysis.full_name!,
       phone:                    analysis.phone ?? null,
       email:                    analysis.email ?? null,
       interest:                 analysis.interest ?? null,
-      status:                   'Pending',
+      status:                   autoMarkContacted ? 'Contacted' : 'Pending',
       source:                   'discord',
       conversation_summary:     analysis.conversation_summary     ?? null,
       lead_quality_score:       analysis.lead_quality_score       ?? null,

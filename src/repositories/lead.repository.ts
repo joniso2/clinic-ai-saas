@@ -201,3 +201,34 @@ export async function deleteLead(id: string, clinicId: string): Promise<{ error:
   const { error } = await supabase.from('leads').delete().eq('id', id).eq('clinic_id', clinicId);
   return { error: error ?? null };
 }
+
+// ─── Analytics ───────────────────────────────────────────────────────────────
+
+export type AnalyticsLeadRow = {
+  id: string;
+  status: string | null;
+  source: string | null;
+  created_at: string;
+  last_contact_date: string | null;
+  next_appointment: string | null;
+  estimated_deal_value: number | null;
+};
+
+/** Fetch minimal lead fields needed for analytics within a date range. */
+export async function getLeadsForAnalytics(
+  clinicId: string,
+  from: string,
+  to: string,
+): Promise<{ data: AnalyticsLeadRow[] | null; error: unknown }> {
+  const supabase = getSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from('leads')
+    .select('id, status, source, created_at, last_contact_date, next_appointment, estimated_deal_value')
+    .eq('clinic_id', clinicId)
+    .gte('created_at', from)
+    .lte('created_at', to)
+    .order('created_at', { ascending: true });
+
+  if (error) return { data: null, error };
+  return { data: (data ?? []) as AnalyticsLeadRow[], error: null };
+}

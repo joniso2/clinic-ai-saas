@@ -52,13 +52,15 @@ export async function runStructuredPrompt(params: {
   authorName?: string;
   channelName?: string;
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  /** Override the default system prompt (used to inject AI behavior settings). */
+  systemPrompt?: string;
 }): Promise<DiscordAnalysisResult> {
   if (!process.env.OPENAI_API_KEY) {
     console.error('OPENAI_API_KEY is not configured.');
     return { is_new_lead: false, reply: 'AI not configured.' };
   }
 
-  const { text, authorName, channelName, conversationHistory = [] } = params;
+  const { text, authorName, channelName, conversationHistory = [], systemPrompt } = params;
 
   // Short-circuit: pure greetings never need AI — always reply warmly
   if (GREETING_PATTERNS.test(text.trim())) {
@@ -70,7 +72,7 @@ export async function runStructuredPrompt(params: {
   const todayIso = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' });
 
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-    { role: 'system', content: discordSystemPrompt },
+    { role: 'system', content: systemPrompt ?? discordSystemPrompt },
     { role: 'system', content: `Today's date (Israel time): ${todayIso}${authorName ? `. Patient name hint: ${authorName}` : ''}` },
   ];
 

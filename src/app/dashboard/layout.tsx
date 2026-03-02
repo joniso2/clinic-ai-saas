@@ -193,7 +193,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className={`inline-flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold
                   transition-all duration-200 ease-out active:scale-[0.98]
                   ${active
-                    ? 'bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-md shadow-slate-900/20'
+                    ? 'bg-slate-100 text-slate-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-100 dark:shadow-black/20'
                     : 'text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200'
                   }`}
                 style={{ touchAction: 'manipulation' }}
@@ -221,7 +221,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   onClick={() => router.push(href)}
                   className={`inline-flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200 ease-out ${
                     active
-                      ? 'bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-md shadow-slate-900/20'
+                      ? 'bg-slate-100 text-slate-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-100 dark:shadow-black/20'
                       : 'text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200 hover:scale-[1.03]'
                   }`}
                 >

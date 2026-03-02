@@ -1,12 +1,23 @@
 import * as appointmentRepo from '@/repositories/appointment.repository';
 import type { Appointment, AppointmentType, ScheduleResult } from '@/types/appointments';
 
-// ─── Clinic constants ───────────────────────────────────────────────────────
+// ─── Clinic constants (used as fallback defaults) ───────────────────────────
 const CLINIC_OPEN_HOUR    = 8;   // 08:00 Israel time
 const CLINIC_CLOSE_HOUR   = 16;  // 16:00 Israel time
 const SLOT_MINUTES        = 30;  // appointment slot length
 const FOLLOW_UP_MIN_DAYS  = 7;   // minimum days between appointments
 const MAX_SUGGESTION_DAYS = 14;  // how many days forward to scan for alternatives
+
+// ─── Scheduling config (injected from clinic settings) ──────────────────────
+export type SchedulingConfig = {
+  openHour?: number;
+  closeHour?: number;
+  slotMinutes?: number;
+  bufferMinutes?: number;
+  maxPerDay?: number | null;
+  minBookingNoticeHours?: number;
+  maxSuggestionDays?: number;
+};
 
 // ─── Timezone helpers ────────────────────────────────────────────────────────
 /** Returns the hour (0-23) for a UTC Date in Israel time (Asia/Jerusalem). */
@@ -112,39 +123,42 @@ export async function validateFollowUp(
 
 /**
  * Find the closest available slot at or after `afterDate`.
- * Scans up to MAX_SUGGESTION_DAYS days forward.
+ * Scans up to maxSuggestionDays days forward.
  * Returns an array of up to 3 ISO suggestion strings, or [] if none found.
  */
 export async function suggestClosestAvailable(
   clinicId: string,
   afterDate: Date,
   count = 3,
+  config?: SchedulingConfig,
 ): Promise<string[]> {
+  const openHour  = config?.openHour  ?? CLINIC_OPEN_HOUR;
+  const closeHour = config?.closeHour ?? CLINIC_CLOSE_HOUR;
+  const slotMins  = config?.slotMinutes  ?? SLOT_MINUTES;
+  const bufferMins = config?.bufferMinutes ?? 0;
+  const maxDays   = config?.maxSuggestionDays ?? MAX_SUGGESTION_DAYS;
+
   const suggestions: string[] = [];
   let cursor = ceilToSlot(afterDate);
 
-  const limit = new Date(afterDate.getTime() + MAX_SUGGESTION_DAYS * 86_400_000);
+  const limit = new Date(afterDate.getTime() + maxDays * 86_400_000);
 
   while (suggestions.length < count && cursor < limit) {
     const hour = israelHour(cursor);
 
-    // Skip outside clinic hours
-    if (hour < CLINIC_OPEN_HOUR) {
-      // Jump to open time of this day
+    if (hour < openHour) {
       const day = israelDateString(cursor);
-      cursor = new Date(`${day}T${String(CLINIC_OPEN_HOUR).padStart(2, '0')}:00:00+02:00`);
+      cursor = new Date(`${day}T${String(openHour).padStart(2, '0')}:00:00+02:00`);
       continue;
     }
-    if (hour >= CLINIC_CLOSE_HOUR) {
-      // Jump to next day open time
+    if (hour >= closeHour) {
       const nextDay = new Date(cursor.getTime() + 86_400_000);
       const nextDayStr = israelDateString(nextDay);
-      cursor = new Date(`${nextDayStr}T${String(CLINIC_OPEN_HOUR).padStart(2, '0')}:00:00+02:00`);
+      cursor = new Date(`${nextDayStr}T${String(openHour).padStart(2, '0')}:00:00+02:00`);
       continue;
     }
 
-    // Check if slot is free
-    const slotEnd = addMinutes(cursor, SLOT_MINUTES);
+    const slotEnd = addMinutes(cursor, slotMins + bufferMins);
     const { data: taken } = await appointmentRepo.getAppointmentsInRange(
       clinicId,
       cursor.toISOString(),
@@ -155,7 +169,7 @@ export async function suggestClosestAvailable(
       suggestions.push(cursor.toISOString());
     }
 
-    cursor = addMinutes(cursor, SLOT_MINUTES);
+    cursor = addMinutes(cursor, slotMins);
   }
 
   return suggestions;
@@ -167,31 +181,63 @@ export type ScheduleAppointmentParams = {
   requestedDatetimeRaw: string;
   type: AppointmentType;
   leadId?: string | null;
+  config?: SchedulingConfig;
 };
 
 /**
  * Main entry point for scheduling.
  * Validates hours, follow-up rules, and overlap, then creates the appointment
  * or returns structured alternatives.
+ * Pass `config` to apply clinic-level scheduling rules from settings.
  */
 export async function scheduleAppointment(params: ScheduleAppointmentParams): Promise<ScheduleResult> {
-  const { clinicId, patientName, requestedDatetimeRaw, type, leadId } = params;
+  const { clinicId, patientName, requestedDatetimeRaw, type, leadId, config } = params;
+
+  const openHour   = config?.openHour   ?? CLINIC_OPEN_HOUR;
+  const closeHour  = config?.closeHour  ?? CLINIC_CLOSE_HOUR;
+  const slotMins   = config?.slotMinutes   ?? SLOT_MINUTES;
+  const bufferMins = config?.bufferMinutes ?? 0;
+  const maxPerDay  = config?.maxPerDay  ?? null;
+  const minNoticeMins = (config?.minBookingNoticeHours ?? 0) * 60;
 
   const requestedDate = parseRequestedDatetime(requestedDatetimeRaw);
 
   console.log('[AppointmentService] scheduling — raw:', requestedDatetimeRaw, '| parsed UTC:', requestedDate.toISOString(), '| israelHour:', israelHour(requestedDate), '| type:', type);
 
-  // 1. Enforce opening hours
-  if (!enforceOpeningHours(requestedDate)) {
-    console.log('[AppointmentService] blocked: outside_hours');
-    return {
-      status: 'outside_hours',
-      openHour:  CLINIC_OPEN_HOUR,
-      closeHour: CLINIC_CLOSE_HOUR,
-    };
+  // 0. Minimum booking notice
+  if (minNoticeMins > 0) {
+    const earliest = new Date(Date.now() + minNoticeMins * 60_000);
+    if (requestedDate < earliest) {
+      console.log('[AppointmentService] blocked: too soon (min notice)');
+      const suggestions = await suggestClosestAvailable(clinicId, earliest, 3, config);
+      return { status: 'unavailable', suggestions };
+    }
   }
 
-  // 2. Follow-up rule
+  // 1. Enforce opening hours (using config-resolved values)
+  const hour = israelHour(requestedDate);
+  if (hour < openHour || hour >= closeHour) {
+    console.log('[AppointmentService] blocked: outside_hours');
+    return { status: 'outside_hours', openHour, closeHour };
+  }
+
+  // 2. Max appointments per day
+  if (maxPerDay !== null) {
+    const dayStr = israelDateString(requestedDate);
+    const daySlots = await getTakenSlotsOnDay(clinicId, dayStr);
+    if (daySlots.length >= maxPerDay) {
+      console.log('[AppointmentService] blocked: max per day reached');
+      const suggestions = await suggestClosestAvailable(
+        clinicId,
+        addMinutes(requestedDate, slotMins),
+        3,
+        config,
+      );
+      return { status: 'unavailable', suggestions };
+    }
+  }
+
+  // 3. Follow-up rule
   if (type === 'follow_up') {
     const followUpCheck = await validateFollowUp(clinicId, patientName, requestedDate);
     if (!followUpCheck.valid) {
@@ -202,8 +248,8 @@ export async function scheduleAppointment(params: ScheduleAppointmentParams): Pr
     }
   }
 
-  // 3. Check slot availability (no overlap within the slot window)
-  const slotEnd = addMinutes(requestedDate, SLOT_MINUTES);
+  // 4. Check slot availability (no overlap within the slot + buffer window)
+  const slotEnd = addMinutes(requestedDate, slotMins + bufferMins);
   const { data: existing } = await appointmentRepo.getAppointmentsInRange(
     clinicId,
     requestedDate.toISOString(),
@@ -214,12 +260,14 @@ export async function scheduleAppointment(params: ScheduleAppointmentParams): Pr
     console.log('[AppointmentService] blocked: slot taken —', existing.map(a => a.datetime));
     const suggestions = await suggestClosestAvailable(
       clinicId,
-      addMinutes(requestedDate, SLOT_MINUTES),
+      addMinutes(requestedDate, slotMins),
+      3,
+      config,
     );
     return { status: 'unavailable', suggestions };
   }
 
-  // 4. Create the appointment
+  // 5. Create the appointment
   const { data, error } = await appointmentRepo.createAppointment({
     clinic_id:    clinicId,
     patient_name: patientName,
@@ -230,8 +278,7 @@ export async function scheduleAppointment(params: ScheduleAppointmentParams): Pr
 
   if (error || !data) {
     console.error('[AppointmentService] create failed:', error);
-    // Try to suggest alternatives instead of silently failing
-    const suggestions = await suggestClosestAvailable(clinicId, requestedDate);
+    const suggestions = await suggestClosestAvailable(clinicId, requestedDate, 3, config);
     return { status: 'unavailable', suggestions };
   }
 
