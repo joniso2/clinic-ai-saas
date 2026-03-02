@@ -340,7 +340,7 @@ function NewAppointmentForm({ prefillDate, onClose, onSuccess }: NewAppointmentF
 
 // ─── Main CalendarView ────────────────────────────────────────────────────────
 
-export function CalendarView() {
+export function CalendarView({ initialDate }: { initialDate?: string } = {}) {
   const today = new Date();
   const [year,  setYear]  = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1);
@@ -356,6 +356,15 @@ export function CalendarView() {
   const [drawerOpen,   setDrawerOpen]   = useState(false);
 
   const todayStr = toIsraelDateString(today.toISOString());
+
+  useEffect(() => {
+    if (!initialDate || !/^\d{4}-\d{2}-\d{2}$/.test(initialDate)) return;
+    const [y, m, d] = initialDate.split('-').map(Number);
+    if (!d || d < 1 || d > 31 || !m || m < 1 || m > 12) return;
+    setYear(y);
+    setMonth(m);
+    setSelectedDay(d);
+  }, [initialDate]);
 
   const fetchAppointments = useCallback(async (y: number, m: number) => {
     setLoading(true);

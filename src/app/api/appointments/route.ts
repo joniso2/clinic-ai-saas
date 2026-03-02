@@ -51,7 +51,16 @@ export async function GET(req: NextRequest) {
         { status: 500 },
       );
     }
-    return NextResponse.json({ appointments: data ?? [] });
+    const list = data ?? [];
+    for (const apt of list) {
+      if (apt.lead_id || !apt.patient_name?.trim()) continue;
+      const { data: leadByName } = await leadRepository.getLeadByClinicAndName(
+        clinicId,
+        apt.patient_name.trim(),
+      );
+      if (leadByName) (apt as { lead_id?: string | null }).lead_id = leadByName.id;
+    }
+    return NextResponse.json({ appointments: list });
   } catch (err) {
     console.error('GET /api/appointments unexpected error:', err);
     return NextResponse.json(

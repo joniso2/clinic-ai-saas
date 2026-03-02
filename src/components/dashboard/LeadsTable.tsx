@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Search,
   MoreHorizontal,
@@ -8,7 +9,7 @@ import {
   Trash2,
   Eye,
   Phone,
-  Calendar,
+  Calendar as CalendarIcon,
   ChevronDown,
   X,
 } from 'lucide-react';
@@ -135,7 +136,7 @@ function PendingReviewModal({
 
           {nextAppointment && (
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-zinc-400">
-              <Calendar className="h-3.5 w-3.5 shrink-0" />
+              <CalendarIcon className="h-3.5 w-3.5 shrink-0" />
               <span>Appointment: {new Intl.DateTimeFormat('he-IL', {
                 timeZone: 'Asia/Jerusalem',
                 day: '2-digit', month: '2-digit', year: 'numeric',
@@ -163,7 +164,7 @@ function PendingReviewModal({
                   onClick={() => { onClose(); onScheduleAppointment(lead); }}
                   className="inline-flex items-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 px-4 py-2 text-sm font-semibold text-white dark:text-slate-900 transition"
                 >
-                  <Calendar className="h-3.5 w-3.5" />
+                  <CalendarIcon className="h-3.5 w-3.5" />
                   Schedule Appointment
                 </button>
               </div>
@@ -317,8 +318,17 @@ export function LeadsTable({
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<string | null>(null);
   const [phoneModalPhone, setPhoneModalPhone] = useState<string | null>(null);
+  const router = useRouter();
 
   const isDisqualifiedView = statusFilter === 'Disqualified';
+
+  function goToCalendarForDate(isoDatetime: string) {
+    const d = new Date(isoDatetime);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    router.push(`/dashboard/calendar?date=${y}-${m}-${day}`);
+  }
 
   const filteredAndSorted = useMemo(() => {
     let list = [...leads];
@@ -651,11 +661,11 @@ export function LeadsTable({
                       </>
                     )}
                     <td className="relative px-4 py-3.5">
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
+                      <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => onView(lead)}
-                          className="rounded-md p-1.5 text-slate-400 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-slate-100 hover:text-slate-700 dark:text-zinc-500 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400/60 dark:focus-visible:ring-zinc-500/60"
+                          className="rounded-md p-1.5 text-slate-500 dark:text-zinc-400 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400/60 dark:focus-visible:ring-zinc-500/60"
                           title="View lead"
                         >
                           <Eye className="h-3.5 w-3.5" />
@@ -663,16 +673,26 @@ export function LeadsTable({
                         <button
                           type="button"
                           onClick={() => onEdit(lead)}
-                          className="rounded-md p-1.5 text-slate-400 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-slate-100 hover:text-slate-700 dark:text-zinc-500 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400/60 dark:focus-visible:ring-zinc-500/60"
+                          className="rounded-md p-1.5 text-slate-500 dark:text-zinc-400 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400/60 dark:focus-visible:ring-zinc-500/60"
                           title="Edit lead"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
+                        {nextAppointmentsByLeadId?.[lead.id] && (
+                          <button
+                            type="button"
+                            onClick={() => goToCalendarForDate(nextAppointmentsByLeadId![lead.id]!)}
+                            className="rounded-md p-1.5 text-slate-500 dark:text-zinc-400 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400/60 dark:focus-visible:ring-zinc-500/60"
+                            title="Open in calendar"
+                          >
+                            <CalendarIcon className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                         {lead.phone && (
                           <button
                             type="button"
                             onClick={() => setPhoneModalPhone(lead.phone!)}
-                            className="rounded-md p-1.5 text-slate-400 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-slate-100 hover:text-slate-700 dark:text-zinc-500 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400/60 dark:focus-visible:ring-zinc-500/60"
+                            className="rounded-md p-1.5 text-slate-500 dark:text-zinc-400 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400/60 dark:focus-visible:ring-zinc-500/60"
                             title="Contact lead"
                           >
                             <Phone className="h-3.5 w-3.5" />
@@ -697,7 +717,7 @@ export function LeadsTable({
                               setRowMenuId(lead.id);
                               setRowMenuCoords({ top, left: rect.right + window.scrollX });
                             }}
-                            className="rounded-md p-1.5 text-slate-400 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-slate-100 hover:text-slate-700 dark:text-zinc-500 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400/60 dark:focus-visible:ring-zinc-500/60"
+                            className="rounded-md p-1.5 text-slate-500 dark:text-zinc-400 transition-all duration-[130ms] ease-out hover:scale-105 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400/60 dark:focus-visible:ring-zinc-500/60"
                             title="More actions"
                           >
                             <MoreHorizontal className="h-3.5 w-3.5" />
@@ -739,7 +759,7 @@ export function LeadsTable({
                                   onClick={() => { onScheduleFollowUp(lead.id); setRowMenuId(null); }}
                                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 transition-colors duration-100"
                                 >
-                                  <Calendar className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
+                                  <CalendarIcon className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
                                   Schedule follow-up
                                 </button>
                                 <button
@@ -747,7 +767,7 @@ export function LeadsTable({
                                   onClick={() => { onScheduleAppointment(lead); setRowMenuId(null); }}
                                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 transition-colors duration-100"
                                 >
-                                  <Calendar className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
+                                  <CalendarIcon className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
                                   Schedule appointment
                                 </button>
                                 <div className="my-1 border-t border-slate-200 dark:border-zinc-800/60" />
