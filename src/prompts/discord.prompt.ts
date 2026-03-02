@@ -134,7 +134,7 @@ export function buildDiscordSystemPrompt(settings?: AISettings): string {
     'Do NOT treat greetings, small talk, thanks, or short casual messages as off-topic.\n\n' +
 
     '────────────────────────\n' +
-    'SCORING & ANALYSIS\n' +
+    'ANALYSIS (extract only — do not compute scores or values)\n' +
     '────────────────────────\n\n' +
 
     'conversation_summary: Write a concise natural language paragraph in English (max 4-5 sentences).\n' +
@@ -143,20 +143,11 @@ export function buildDiscordSystemPrompt(settings?: AISettings): string {
     'Example: "The patient contacted the clinic due to pain in a back tooth that started three days ago. He is interested in scheduling an appointment as soon as possible and provided his phone number for contact."\n' +
     'If no meaningful conversation occurred, write: "No detailed conversation summary available."\n\n' +
 
-    'lead_quality_score (1–100):\n' +
-    '+25 Clear dental issue described\n' +
-    '+20 Pain or urgency mentioned\n' +
-    '+20 Phone number provided\n' +
-    '+20 Explicit intent to book\n' +
-    '+15 Specific treatment mentioned\n' +
-    'Max 30 if only price curiosity with no urgency and no phone.\n\n' +
-
     'urgency_level: "high" = pain/swelling/bleeding/emergency. "medium" = booking within 1 week or worsening. "low" = general inquiry.\n\n' +
 
-    'priority_level: "high" if urgency=high OR score≥70. "medium" if urgency=medium OR score 40–69. "low" otherwise.\n\n' +
+    'interest: The treatment or service the patient is interested in (e.g. cleaning, check-up, root canal). Raw text only — no numbers.\n\n' +
 
     'callback_recommendation: 1–2 short business-focused sentences for clinic staff.\n\n' +
-    'estimated_value: Estimate the treatment value in ILS (number only, no currency symbol) based on the price list and the treatment discussed. Use the midpoint of any range. If unknown, return null.\n\n' +
 
     '────────────────────────\n' +
     'OUTPUT FORMAT\n' +
@@ -175,11 +166,8 @@ export function buildDiscordSystemPrompt(settings?: AISettings): string {
     '  "appointment_patient_name": string | null,\n' +
     '  "reply": string,\n' +
     '  "conversation_summary": string | null,\n' +
-    '  "lead_quality_score": integer | null,\n' +
     '  "urgency_level": "low" | "medium" | "high" | null,\n' +
-    '  "priority_level": "low" | "medium" | "high" | null,\n' +
-    '  "callback_recommendation": string | null,\n' +
-    '  "estimated_value": number | null\n' +
+    '  "callback_recommendation": string | null\n' +
     '}\n\n' +
 
     'Rules:\n' +

@@ -134,7 +134,7 @@ export async function getLeadById(
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
     .from('leads')
-    .select('id, full_name, email, phone, interest, status, created_at, next_follow_up_date')
+    .select('id, clinic_id, full_name, email, phone, interest, status, source, created_at, next_follow_up_date, last_contact_date, next_appointment, conversation_summary, lead_quality_score, urgency_level, priority_level, sla_deadline, follow_up_recommended_at, callback_recommendation')
     .eq('id', leadId)
     .eq('clinic_id', clinicId)
     .maybeSingle();

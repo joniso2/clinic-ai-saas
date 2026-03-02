@@ -33,6 +33,17 @@ const client = new Client({
 
 client.once(Events.ClientReady, (readyClient) => {
   console.log(`Bot logged in as ${readyClient.user.tag}`);
+
+  // Keep the Next.js app warm so it doesn't go to sleep on Railway
+  if (process.env.APP_URL) {
+    setInterval(async () => {
+      try {
+        await doFetch(`${process.env.APP_URL}/api/health`, { method: 'GET' });
+      } catch (e) {
+        console.warn('Discord bot: keep-alive ping failed', e.message);
+      }
+    }, 5 * 60 * 1000); // every 5 minutes
+  }
 });
 
 client.on(Events.MessageCreate, async (message) => {
@@ -107,13 +118,21 @@ client.on(Events.MessageCreate, async (message) => {
       console.error('Discord bot: APP_URL is not set in .env.local');
       return;
     }
-    const response = await doFetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+    let response;
+    try {
+      response = await doFetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       const text = await response.text();

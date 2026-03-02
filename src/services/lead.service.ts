@@ -1,10 +1,49 @@
 import { runStructuredPrompt } from '@/ai/ai-client';
+import { clinicPrices } from '@/discord/prices';
 import * as leadRepository from '@/repositories/lead.repository';
 import * as appointmentService from '@/services/appointment.service';
 import { computeIntelligenceTimestamps } from '@/services/intelligence.service';
 import { getClinicSettings } from '@/services/settings.service';
 import { buildDiscordSystemPrompt } from '@/prompts/discord.prompt';
 import type { AppointmentType } from '@/types/appointments';
+
+/** Normalize interest string and match to clinicPrices key; return numeric value or null. */
+function estimateDealValueFromInterest(interest: string | null | undefined): number | null {
+  if (!interest || typeof interest !== 'string') return null;
+  const normalized = interest.toLowerCase().trim();
+  if (!normalized) return null;
+  const keys = Object.keys(clinicPrices);
+  const key = keys.find(k => normalized === k || normalized.includes(k) || k.includes(normalized));
+  if (!key) return null;
+  const priceStr = clinicPrices[key];
+  const numbers = priceStr.replace(/,/g, '').match(/\d+/g);
+  if (!numbers || numbers.length === 0) return null;
+  const nums = numbers.map(Number);
+  return nums.length === 1 ? nums[0]! : Math.round((nums[0]! + nums[nums.length - 1]!) / 2);
+}
+
+function calculateLeadScore(params: {
+  interest: string | null | undefined;
+  urgency_level: string | null | undefined;
+  phone: string | null | undefined;
+  intent: string | null | undefined;
+}): number {
+  let score = 0;
+  if (params.interest && params.interest.trim().length > 0) score += 25;
+  if (params.urgency_level === 'high') score += 20;
+  if (params.phone && String(params.phone).trim().length > 0) score += 20;
+  if (params.intent === 'appointment') score += 20;
+  if ((params.intent === 'question' || params.intent === 'other') && !params.phone && params.urgency_level !== 'high') {
+    return Math.min(score, 30);
+  }
+  return score;
+}
+
+function calculatePriorityLevel(urgency_level: string | null | undefined, score: number): 'low' | 'medium' | 'high' {
+  if (urgency_level === 'high' || score >= 70) return 'high';
+  if (urgency_level === 'medium' || (score >= 40 && score <= 69)) return 'medium';
+  return 'low';
+}
 
 export type ProcessDiscordMessageResult = {
   reply: string | null;
@@ -62,9 +101,18 @@ export async function processDiscordMessage(params: {
     systemPrompt,
   });
 
+  const lead_quality_score = calculateLeadScore({
+    interest: analysis.interest,
+    urgency_level: analysis.urgency_level,
+    phone: analysis.phone,
+    intent: analysis.intent,
+  });
+  const priority_level = calculatePriorityLevel(analysis.urgency_level, lead_quality_score);
+  const estimated_deal_value = estimateDealValueFromInterest(analysis.interest);
+
   const intel = computeIntelligenceTimestamps({
     urgency_level:      analysis.urgency_level ?? null,
-    lead_quality_score: analysis.lead_quality_score ?? null,
+    lead_quality_score,
   });
 
   // Override SLA with clinic-configured target if set
@@ -173,14 +221,14 @@ export async function processDiscordMessage(params: {
         interest:                 analysis.interest ?? null,
         status:                   'Pending',
         source:                   'discord',
-        conversation_summary:     analysis.conversation_summary     ?? null,
-        lead_quality_score:       analysis.lead_quality_score       ?? null,
-        urgency_level:            analysis.urgency_level            ?? null,
-        priority_level:           analysis.priority_level           ?? null,
+        conversation_summary:     analysis.conversation_summary ?? null,
+        lead_quality_score:       lead_quality_score,
+        urgency_level:            analysis.urgency_level ?? null,
+        priority_level:           priority_level,
         sla_deadline:             intel.sla_deadline,
         follow_up_recommended_at: intel.follow_up_recommended_at,
-        callback_recommendation:  analysis.callback_recommendation  ?? null,
-        estimated_deal_value:     analysis.estimated_value          ?? null,
+        callback_recommendation:  analysis.callback_recommendation ?? null,
+        estimated_deal_value:     estimated_deal_value,
       });
       if (createErr) {
         console.error('[Discord] Lead creation for appointment failed:', createErr);
@@ -263,14 +311,14 @@ export async function processDiscordMessage(params: {
       interest:                 analysis.interest ?? null,
       status:                   autoMarkContacted ? 'Contacted' : 'Pending',
       source:                   'discord',
-      conversation_summary:     analysis.conversation_summary     ?? null,
-      lead_quality_score:       analysis.lead_quality_score       ?? null,
-      urgency_level:            analysis.urgency_level            ?? null,
-      priority_level:           analysis.priority_level           ?? null,
+      conversation_summary:     analysis.conversation_summary ?? null,
+      lead_quality_score:       lead_quality_score,
+      urgency_level:            analysis.urgency_level ?? null,
+      priority_level:           priority_level,
       sla_deadline:             intel.sla_deadline,
       follow_up_recommended_at: intel.follow_up_recommended_at,
-      callback_recommendation:  analysis.callback_recommendation  ?? null,
-      estimated_deal_value:     analysis.estimated_value          ?? null,
+      callback_recommendation:  analysis.callback_recommendation ?? null,
+      estimated_deal_value:     estimated_deal_value,
     });
     if (error) console.error('[Discord] Lead creation failed:', error);
     else if (data) console.log('[Discord] Lead created successfully.');

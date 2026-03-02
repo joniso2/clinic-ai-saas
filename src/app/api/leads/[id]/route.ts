@@ -15,6 +15,23 @@ function toIsraelNineAm(dateStr: string): string {
   return `${dateStr}T09:00:00+02:00`;
 }
 
+/** GET /api/leads/[id] – return single lead for calendar/drawer. */
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const clinicId = await getClinicIdFromSession();
+  if (!clinicId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const { id: leadId } = await params;
+  const { data: lead, error } = await leadRepository.getLeadById(leadId, clinicId);
+  if (error || !lead) {
+    return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
+  }
+  return NextResponse.json({ lead });
+}
+
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

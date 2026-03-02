@@ -52,13 +52,16 @@ export async function GET(req: NextRequest) {
       );
     }
     const list = data ?? [];
-    for (const apt of list) {
-      if (apt.lead_id || !apt.patient_name?.trim()) continue;
-      const { data: leadByName } = await leadRepository.getLeadByClinicAndName(
-        clinicId,
-        apt.patient_name.trim(),
-      );
-      if (leadByName) (apt as { lead_id?: string | null }).lead_id = leadByName.id;
+    const needLead = list.filter((a) => !a.lead_id && a.patient_name?.trim());
+    if (needLead.length > 0) {
+      const { data: clinicLeads } = await leadRepository.getLeadsByClinicId(clinicId);
+      const leads = clinicLeads ?? [];
+      const norm = (s: string) => s.trim().replace(/\s+/g, ' ');
+      for (const apt of needLead) {
+        const aptName = norm(apt.patient_name!);
+        const lead = leads.find((l) => norm(l.full_name ?? '') === aptName);
+        if (lead) (apt as { lead_id?: string | null }).lead_id = lead.id;
+      }
     }
     return NextResponse.json({ appointments: list });
   } catch (err) {
