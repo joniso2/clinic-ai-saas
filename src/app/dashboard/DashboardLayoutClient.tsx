@@ -289,7 +289,7 @@ export function DashboardLayoutClient({ children, initialRole, initialUserEmail 
         </nav>
       </MobileDrawer>
 
-      {/* RTL: flex-row (no reverse) places first child (aside) on the right. */}
+        {/* RTL: flex-row (no reverse) places first child (aside) on the right. */}
       <div className="flex flex-1 min-h-0">
         <aside className="hidden md:flex w-[268px] shrink-0 flex-col border-e border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-8 transition-colors duration-300 text-right">
           <nav className="flex flex-col gap-1">

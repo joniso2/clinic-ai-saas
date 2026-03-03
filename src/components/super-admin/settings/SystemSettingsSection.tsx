@@ -24,7 +24,7 @@ function Toggle({ checked, onChange, size = 'md' }: { checked: boolean; onChange
   return (
     <button type="button" onClick={() => onChange(!checked)}
       className={`relative inline-flex rounded-full transition-colors shrink-0 ${s ? 'h-4 w-8' : 'h-5 w-9'} ${checked ? 'bg-indigo-600' : 'bg-zinc-700'}`}>
-      <span className={`absolute top-0.5 rounded-full bg-white shadow transition-all ${s ? 'h-3 w-3' : 'h-4 w-4'} ${checked ? (s ? 'right-0.5' : 'right-0.5') : 'left-0.5'}`} />
+      <span className={`absolute top-0.5 rounded-full bg-zinc-200 shadow transition-all ${s ? 'h-3 w-3' : 'h-4 w-4'} ${checked ? 'end-0.5' : 'start-0.5'}`} />
     </button>
   );
 }
@@ -121,10 +121,10 @@ export default function SystemSettingsSection() {
   return (
     <div dir="rtl" className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between flex-row-reverse flex-wrap gap-4">
-        <div className="text-right">
-          <h2 className="text-xl font-bold text-zinc-100">הגדרות מערכת</h2>
-          <p className="mt-0.5 text-sm text-zinc-400">דגלי פיצ׳רים, מצב תחזוקה, מגבלות קצב, הגדרות אימייל ומפתחות API.</p>
+      <div className="flex items-start justify-between flex-wrap gap-4">
+        <div className="min-w-0 flex-1 text-right">
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100 text-right">הגדרות מערכת</h2>
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-zinc-400 text-right">דגלי פיצ׳רים, מצב תחזוקה, מגבלות קצב, הגדרות אימייל ומפתחות API.</p>
         </div>
         <button type="button" onClick={handleSave}
           className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition-colors ${saved ? 'bg-emerald-600 text-white' : 'bg-indigo-600 hover:bg-indigo-500 text-white'}`}>

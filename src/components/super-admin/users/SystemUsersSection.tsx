@@ -146,10 +146,10 @@ export default function SystemUsersSection() {
   return (
     <div dir="rtl" className="space-y-8">
       {/* Header */}
-      <div className="flex items-start justify-between flex-row-reverse flex-wrap gap-4">
-        <div className="text-right">
-          <h2 className="text-xl font-bold text-zinc-100">משתמשי מערכת</h2>
-          <p className="mt-0.5 text-sm text-zinc-400">ניהול מנהלי-על, תפקידים, הרשאות ויומן פעולות.</p>
+      <div className="flex items-start justify-between flex-wrap gap-4">
+        <div className="min-w-0 flex-1 text-right">
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100 text-right">משתמשי מערכת</h2>
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-zinc-400 text-right">ניהול מנהלי-על, תפקידים, הרשאות ויומן פעולות.</p>
         </div>
         <button type="button" onClick={() => setCreateOpen(true)}
           className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 text-sm font-semibold transition-colors flex-row-reverse">
@@ -284,7 +284,7 @@ export default function SystemUsersSection() {
       )}
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-xl bg-zinc-100 text-zinc-900 px-4 py-2.5 text-sm font-medium shadow-xl">{toast}</div>
+        <div className="fixed bottom-6 start-1/2 -translate-x-1/2 z-50 rounded-xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 px-4 py-2.5 text-sm font-medium shadow-xl">{toast}</div>
       )}
     </div>
   );

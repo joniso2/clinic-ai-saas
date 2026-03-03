@@ -107,64 +107,64 @@ export default function IntegrationsSection() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-8">
-        <h2 className="text-2xl font-semibold text-zinc-100 mb-2">מרכז אינטגרציות</h2>
-        <p className="text-sm text-zinc-400 mb-6">סטטוס חיבורים פלטפורמה-רחבים — Discord, WhatsApp, ו-Webhooks.</p>
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-8">
+        <h2 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100 text-right mb-2">מרכז אינטגרציות</h2>
+        <p className="text-sm text-slate-500 dark:text-zinc-400 text-right mb-6">סטטוס חיבורים פלטפורמה-רחבים — Discord, WhatsApp, ו-Webhooks.</p>
       </div>
 
       {/* Platform status cards */}
       <div className="grid sm:grid-cols-3 gap-4">
         {/* Discord */}
-        <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-6 hover:border-zinc-600 transition-all duration-200">
+        <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-6 hover:border-slate-300 dark:hover:border-zinc-600 transition-all duration-200">
           <div className="flex items-center justify-between flex-row-reverse mb-3">
             <div className="flex items-center gap-2.5 flex-row-reverse">
               <Bot className="h-6 w-6 text-indigo-400" />
-              <span className="font-semibold text-zinc-100">Discord</span>
+              <span className="font-semibold text-slate-900 dark:text-zinc-100">Discord</span>
             </div>
             <StatusIcon status={discordStatus} />
           </div>
           <div className="space-y-1">
-            <p className="text-2xl font-bold text-zinc-100 tabular-nums tracking-tight">{discordConnected}/{discordTotal}</p>
-            <p className="text-xs text-zinc-500">לקוחות מחוברים</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-zinc-100 tabular-nums tracking-tight">{discordConnected}/{discordTotal}</p>
+            <p className="text-xs text-slate-500 dark:text-zinc-500">לקוחות מחוברים</p>
           </div>
-          <div className="mt-3 bg-zinc-800 rounded-full h-1.5 overflow-hidden border border-zinc-700">
+          <div className="mt-3 bg-slate-200 dark:bg-zinc-800 rounded-full h-1.5 overflow-hidden border border-slate-200 dark:border-zinc-700">
             <div className="h-full rounded-full bg-indigo-500 transition-all duration-700"
               style={{ width: discordTotal > 0 ? `${(discordConnected / discordTotal) * 100}%` : '0%' }} />
           </div>
         </div>
 
         {/* WhatsApp */}
-        <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-6 hover:border-zinc-600 transition-all duration-200">
+        <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-6 hover:border-slate-300 dark:hover:border-zinc-600 transition-all duration-200">
           <div className="flex items-center justify-between flex-row-reverse mb-3">
             <div className="flex items-center gap-2.5 flex-row-reverse">
               <div className="h-6 w-6 rounded-md bg-emerald-600 flex items-center justify-center shrink-0">
                 <span className="text-white text-xs font-bold">W</span>
               </div>
-              <span className="font-semibold text-zinc-100">WhatsApp</span>
+              <span className="font-semibold text-slate-900 dark:text-zinc-100">WhatsApp</span>
             </div>
             <StatusIcon status="coming_soon" />
           </div>
           <div className="space-y-1">
-            <p className="text-2xl font-bold text-zinc-500 tabular-nums tracking-tight">0/{discordTotal}</p>
-            <p className="text-xs text-zinc-500">לא מוגדר עדיין</p>
+            <p className="text-2xl font-bold text-slate-500 dark:text-zinc-500 tabular-nums tracking-tight">0/{discordTotal}</p>
+            <p className="text-xs text-slate-500 dark:text-zinc-500">לא מוגדר עדיין</p>
           </div>
-          <div className="mt-3 rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-[11px] text-zinc-500">
+          <div className="mt-3 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 px-3 py-2 text-[11px] text-slate-500 dark:text-zinc-500">
             יוגדר בגרסה הבאה
           </div>
         </div>
 
         {/* Webhooks */}
-        <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-6 hover:border-zinc-600 transition-all duration-200">
+        <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-6 hover:border-slate-300 dark:hover:border-zinc-600 transition-all duration-200">
           <div className="flex items-center justify-between flex-row-reverse mb-3">
             <div className="flex items-center gap-2.5 flex-row-reverse">
               <Webhook className="h-6 w-6 text-violet-400" />
-              <span className="font-semibold text-zinc-100">Webhooks</span>
+              <span className="font-semibold text-slate-900 dark:text-zinc-100">Webhooks</span>
             </div>
             <StatusIcon status="warning" />
           </div>
           <div className="space-y-1">
-            <p className="text-2xl font-bold text-zinc-100 tabular-nums tracking-tight">{MOCK_WEBHOOK_LOGS.filter((l) => l.status === 'success').length}/{MOCK_WEBHOOK_LOGS.length}</p>
-            <p className="text-xs text-zinc-500">הצלחות ב-24 שעות</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-zinc-100 tabular-nums tracking-tight">{MOCK_WEBHOOK_LOGS.filter((l) => l.status === 'success').length}/{MOCK_WEBHOOK_LOGS.length}</p>
+            <p className="text-xs text-slate-500 dark:text-zinc-500">הצלחות ב-24 שעות</p>
           </div>
           <p className="mt-2 text-[11px] text-amber-400">
             {MOCK_WEBHOOK_LOGS.filter((l) => l.status === 'failed').length} כשלונות
@@ -175,9 +175,9 @@ export default function IntegrationsSection() {
       {/* Discord mappings */}
       <div>
         <div className="flex items-center justify-between flex-row-reverse mb-4">
-          <h3 className="text-sm font-semibold text-zinc-300">מיפויי Discord</h3>
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-zinc-300">מיפויי Discord</h3>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={fetchAll} className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition-colors" title="רענן">
+            <button type="button" onClick={fetchAll} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300 transition-colors" title="רענן">
               <RefreshCw className="h-4 w-4" />
             </button>
             <button type="button" onClick={() => { setModalOpen(true); setFClinicId(tenants[0]?.id ?? ''); setFGuildId(''); }}
@@ -187,9 +187,9 @@ export default function IntegrationsSection() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-zinc-700 overflow-hidden bg-zinc-900">
+        <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 overflow-hidden bg-white dark:bg-zinc-900">
           {loading ? (
-            <div className="py-10 text-center text-zinc-500 text-sm">טוען…</div>
+            <div className="py-10 text-center text-slate-500 dark:text-zinc-500 text-sm">טוען…</div>
           ) : (
             <table className="w-full text-sm" dir="rtl">
               <thead>

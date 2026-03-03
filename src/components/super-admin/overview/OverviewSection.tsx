@@ -41,11 +41,11 @@ export default function OverviewSection({ initialData }: OverviewSectionProps) {
   return (
     <section className="space-y-8">
       {/* Header */}
-      <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-8">
-        <div className="flex items-start justify-between flex-wrap gap-4 flex-row-reverse">
-          <div className="mb-0">
-            <h2 className="text-2xl font-semibold text-zinc-100 mb-2">סקירה כללית</h2>
-            <p className="text-sm text-zinc-400 mb-6">
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-8">
+        <div className="flex items-start justify-between flex-wrap gap-4">
+          <div className="mb-0 min-w-0 flex-1 text-right">
+            <h2 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100 text-right mb-2">סקירה כללית</h2>
+            <p className="text-sm text-slate-500 dark:text-zinc-400 text-right mb-6">
               מצב הפלטפורמה בזמן אמת — KPIs, מגמות, ושימוש AI.
             </p>
           </div>

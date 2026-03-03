@@ -345,11 +345,11 @@ export default function TenantManagementSection() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-8">
-        <div className="flex flex-row-reverse justify-between items-start gap-4 flex-wrap">
-          <div>
-            <h2 className="text-2xl font-semibold text-zinc-100 mb-2">מרכז ניהול לקוחות</h2>
-            <p className="text-sm text-zinc-400 mb-6">ניהול מלא של כל הלקוחות — סטטוס, תכנית, משתמשים ופעולות.</p>
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-8">
+        <div className="flex justify-between items-start gap-4 flex-wrap">
+          <div className="min-w-0 flex-1 text-right">
+            <h2 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100 mb-2">מרכז ניהול לקוחות</h2>
+            <p className="text-sm text-slate-500 dark:text-zinc-400 mb-6">ניהול מלא של כל הלקוחות — סטטוס, תכנית, משתמשים ופעולות.</p>
           </div>
           <button
             type="button"
@@ -363,7 +363,7 @@ export default function TenantManagementSection() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-row-reverse gap-3 flex-wrap">
+      <div className="flex gap-3 flex-wrap">
         <div className="relative min-w-[220px]">
           <Search className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
           <input
@@ -371,11 +371,11 @@ export default function TenantManagementSection() {
             placeholder="חיפוש לפי שם..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 pe-10 ps-4 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500"
+            className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-2.5 pe-10 ps-4 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500 text-right"
           />
         </div>
         <select
-          className="rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 ps-4 pe-4 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500"
+          className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-2.5 ps-4 pe-4 text-sm text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 text-right"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
         >
@@ -383,19 +383,19 @@ export default function TenantManagementSection() {
           <option value="active">פעיל בלבד</option>
           <option value="inactive">מושבת בלבד</option>
         </select>
-        <div className="flex items-center gap-2 text-sm text-zinc-400 ms-auto">
+        <div className="flex items-center gap-2 text-sm text-zinc-400 me-auto">
           <span className="tabular-nums">{filtered.length}</span> לקוחות
         </div>
       </div>
 
       {/* Table */}
-      <div className="rounded-2xl border border-zinc-700 overflow-hidden bg-zinc-900">
+      <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 overflow-hidden bg-white dark:bg-zinc-900">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm text-right" dir="rtl">
             <thead>
-              <tr className="border-b border-zinc-700 bg-zinc-800">
+              <tr className="border-b border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800">
                 {['שם לקוח','סטטוס','תכנית','לידים','תורים','Discord','פעולות'].map((h) => (
-                  <th key={h} className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{h}</th>
+                  <th key={h} className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -404,7 +404,7 @@ export default function TenantManagementSection() {
                 Array.from({ length: 4 }).map((_, i) => (
                   <tr key={i} className="border-b border-zinc-800/60">
                     {Array.from({ length: 7 }).map((__, j) => (
-                      <td key={j} className="py-3 px-4">
+                      <td key={j} className="py-3 px-4 text-right">
                         <div className="h-4 rounded bg-zinc-800 animate-pulse" style={{ width: `${40 + j * 10}%` }} />
                       </td>
                     ))}
@@ -412,17 +412,17 @@ export default function TenantManagementSection() {
                 ))
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-14 text-center">
+                  <td colSpan={7} className="py-14 text-center text-zinc-400">
                     <Building2 className="h-8 w-8 text-zinc-500 ms-auto me-auto mb-2 block" />
-                    <p className="text-sm text-zinc-400 font-medium">אין לקוחות</p>
-                    <p className="text-xs text-zinc-600 mt-1">צור לקוח חדש כדי להתחיל</p>
+                    <p className="text-sm font-medium">אין לקוחות</p>
+                    <p className="text-xs text-zinc-500 mt-1">צור לקוח חדש כדי להתחיל</p>
                   </td>
                 </tr>
               ) : filtered.map((t) => (
-                <tr key={t.id} className="border-b border-zinc-700 hover:bg-zinc-800/50 transition-colors">
-                  <td className="py-3 px-4 font-medium text-zinc-100">{t.name ?? t.id}</td>
-                  <td className="py-3 px-4"><StatusBadge status={t.status} /></td>
-                  <td className="py-3 px-4">
+                <tr key={t.id} className="border-b border-slate-100 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+                  <td className="py-3 px-4 font-medium text-slate-900 dark:text-zinc-100 text-right">{t.name ?? t.id}</td>
+                  <td className="py-3 px-4 text-right"><StatusBadge status={t.status} /></td>
+                  <td className="py-3 px-4 text-right">
                     <div className="flex items-center gap-1.5 flex-row-reverse justify-end">
                       <span className="text-zinc-300 text-xs">{t.plan_id ? plans.find((p) => p.id === t.plan_id)?.name ?? t.plan_id : '—'}</span>
                       <button type="button" onClick={() => { setEditPlanTenant(t); setEditPlanValue(t.plan_id ?? ''); setEditPlanOpen(true); }} className="p-1 rounded hover:bg-zinc-700 text-zinc-500 hover:text-zinc-300">
@@ -430,10 +430,10 @@ export default function TenantManagementSection() {
                       </button>
                     </div>
                   </td>
-                  <td className="py-3 px-4 tabular-nums text-zinc-300">{t.leads_count}</td>
-                  <td className="py-3 px-4 tabular-nums text-zinc-300">{t.appointments_count}</td>
-                  <td className="py-3 px-4"><HealthDot status={t.status} discord={t.discord_connected} /></td>
-                  <td className="py-3 px-4">
+                  <td className="py-3 px-4 tabular-nums text-zinc-300 text-right">{t.leads_count}</td>
+                  <td className="py-3 px-4 tabular-nums text-zinc-300 text-right">{t.appointments_count}</td>
+                  <td className="py-3 px-4 text-right"><HealthDot status={t.status} discord={t.discord_connected} /></td>
+                  <td className="py-3 px-4 text-right">
                     <div className="flex items-center gap-1.5 flex-row-reverse justify-end">
                       <button
                         type="button"

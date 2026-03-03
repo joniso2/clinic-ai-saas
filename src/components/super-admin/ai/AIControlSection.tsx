@@ -23,7 +23,7 @@ function Slider({
       <input type="range" min={min} max={max} step={step} value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         className="w-full h-1.5 rounded-full appearance-none bg-zinc-700 accent-indigo-500 cursor-pointer" />
-      <div className="flex justify-between text-[10px] text-zinc-600 mt-0.5 flex-row-reverse">
+      <div className="flex justify-between text-[10px] text-zinc-500 mt-0.5 flex-row-reverse">
         <span>{format ? format(min) : min}</span>
         <span>{format ? format(max) : max}</span>
       </div>
@@ -38,7 +38,7 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
       <span className="text-sm text-zinc-300">{label}</span>
       <button type="button" onClick={() => onChange(!checked)}
         className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${checked ? 'bg-indigo-600' : 'bg-zinc-700'}`}>
-        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${checked ? 'right-0.5' : 'left-0.5'}`} />
+        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-zinc-200 shadow transition-all ${checked ? 'end-0.5' : 'start-0.5'}`} />
       </button>
     </div>
   );
@@ -81,8 +81,8 @@ export default function AIControlSection() {
     <div dir="rtl" className="space-y-6">
       {/* Header */}
       <div className="text-right">
-        <h2 className="text-xl font-bold text-zinc-100">מרכז שליטה AI</h2>
-        <p className="mt-0.5 text-sm text-zinc-400">בחירת מודל גלובלי, פרמטרים, היסטוריית פרומפטים ו-test console.</p>
+        <h2 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100 text-right">מרכז שליטה AI</h2>
+        <p className="mt-0.5 text-sm text-slate-500 dark:text-zinc-400 text-right">בחירת מודל גלובלי, פרמטרים, היסטוריית פרומפטים ו-test console.</p>
       </div>
 
       {/* Cost monitor strip */}
@@ -93,8 +93,8 @@ export default function AIControlSection() {
           { label: 'שיחות', value: String(history.length), icon: Brain, color: 'text-violet-400' },
           { label: 'זמן תגובה ממוצע', value: `${avgLatency}ms`, icon: Clock, color: 'text-amber-400' },
         ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="rounded-xl bg-zinc-900 border border-zinc-800 p-4 text-right">
-            <p className="text-[11px] text-zinc-400 mb-1">{label}</p>
+          <div key={label} className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-4 text-right">
+            <p className="text-[11px] text-slate-500 dark:text-zinc-400 mb-1">{label}</p>
             <p className={`text-xl font-bold tabular-nums ${color}`}>{value}</p>
           </div>
         ))}
@@ -103,8 +103,8 @@ export default function AIControlSection() {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Config panel */}
         <div className="space-y-5">
-          <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-5">
-            <h3 className="text-sm font-semibold text-zinc-200 mb-4 text-right">הגדרות מודל גלובלי</h3>
+          <div className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5">
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-zinc-200 mb-4 text-right">הגדרות מודל גלובלי</h3>
 
             {/* Model selector */}
             <div className="mb-4 text-right">
@@ -118,7 +118,7 @@ export default function AIControlSection() {
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
+                <ChevronDown className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
               </div>
               <div className="mt-2 text-[11px] text-zinc-500 space-y-0.5 text-right">
                 <p>חלון הקשר: {selectedModel.contextWindow.toLocaleString()} טוקנים</p>
@@ -142,8 +142,8 @@ export default function AIControlSection() {
           </div>
 
           {/* System prompt */}
-          <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-5">
-            <h3 className="text-sm font-semibold text-zinc-200 mb-3 text-right">System Prompt גלובלי</h3>
+          <div className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5">
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-zinc-200 mb-3 text-right">System Prompt גלובלי</h3>
             <textarea
               value={config.systemPrompt}
               onChange={(e) => setConfig((c) => ({ ...c, systemPrompt: e.target.value }))}
@@ -151,7 +151,7 @@ export default function AIControlSection() {
               className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500 resize-none text-right"
               dir="rtl"
             />
-            <p className="text-[11px] text-zinc-600 text-right mt-1">{config.systemPrompt.length} תווים</p>
+            <p className="text-[11px] text-zinc-500 text-right mt-1">{config.systemPrompt.length} תווים</p>
           </div>
 
           <button type="button" onClick={handleSave}
@@ -162,9 +162,9 @@ export default function AIControlSection() {
 
         {/* Test console */}
         <div className="space-y-5">
-          <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-5 flex flex-col">
-            <h3 className="text-sm font-semibold text-zinc-200 mb-4 text-right">Test Console</h3>
-            <div className="flex-1 min-h-[140px] rounded-xl bg-zinc-800 border border-zinc-700 p-4 mb-3 text-sm text-right overflow-y-auto">
+          <div className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5 flex flex-col">
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-zinc-200 mb-4 text-right">Test Console</h3>
+            <div className="flex-1 min-h-[140px] rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 p-4 mb-3 text-sm text-right overflow-y-auto">
               {testOutput ? (
                 <div className="space-y-3">
                   <div className="text-right">
@@ -177,7 +177,7 @@ export default function AIControlSection() {
                   </div>
                 </div>
               ) : (
-                <p className="text-zinc-600 text-center pt-6">הקלד הודעה ולחץ שלח לבדיקת תגובת ה-AI</p>
+                <p className="text-zinc-500 text-right pt-6">הקלד הודעה ולחץ שלח לבדיקת תגובת ה-AI</p>
               )}
             </div>
             <div className="flex gap-2 flex-row-reverse">

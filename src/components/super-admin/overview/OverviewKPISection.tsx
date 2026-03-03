@@ -47,20 +47,20 @@ export default function OverviewKPISection({ kpis }: OverviewKPISectionProps) {
         <div
           key={kpi.id}
           className={[
-            'rounded-2xl border p-6 flex flex-col gap-2 transition-all duration-200',
+            'rounded-2xl border p-6 flex flex-col gap-2 transition-all duration-200 text-right',
             kpi.highlight
-              ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 border-indigo-500/30'
-              : 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 hover:border-zinc-600',
+              ? 'bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-700 border-indigo-500/30'
+              : 'bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-700 hover:border-slate-300 dark:hover:border-zinc-600',
           ].join(' ')}
         >
-          <p className="text-xs font-medium text-zinc-500 leading-tight">
+          <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 leading-tight">
             {kpi.label}
           </p>
 
           <p
             className={[
               'text-2xl font-bold tabular-nums leading-none tracking-tight',
-              kpi.highlight ? 'text-indigo-200' : 'text-zinc-100',
+              kpi.highlight ? 'text-indigo-600 dark:text-indigo-200' : 'text-slate-900 dark:text-zinc-100',
             ].join(' ')}
           >
             {formatValue(kpi)}
