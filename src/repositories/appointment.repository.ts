@@ -42,14 +42,15 @@ export async function getAppointmentsByMonth(
 
   const { data, error } = await supabase
     .from('appointments')
-    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id, duration_minutes')
+    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id')
     .eq('clinic_id', clinicId)
     .gte('datetime', start)
     .lt('datetime', end)
     .order('datetime', { ascending: true });
 
   if (error) return { data: null, error };
-  return { data: (data ?? []) as Appointment[], error: null };
+  const rows = (data ?? []) as (Omit<Appointment, 'duration_minutes'> & { duration_minutes?: number })[];
+  return { data: rows.map((r) => ({ ...r, duration_minutes: r.duration_minutes ?? 30 })) as Appointment[], error: null };
 }
 
 /** Fetch appointments in an arbitrary UTC range (for availability checks). */
@@ -61,14 +62,15 @@ export async function getAppointmentsInRange(
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
     .from('appointments')
-    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id, duration_minutes')
+    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id')
     .eq('clinic_id', clinicId)
     .gte('datetime', startIso)
     .lt('datetime', endIso)
     .order('datetime', { ascending: true });
 
   if (error) return { data: null, error };
-  return { data: (data ?? []) as Appointment[], error: null };
+  const rows = (data ?? []) as (Omit<Appointment, 'duration_minutes'> & { duration_minutes?: number })[];
+  return { data: rows.map((r) => ({ ...r, duration_minutes: r.duration_minutes ?? 30 })) as Appointment[], error: null };
 }
 
 /** Get the most recent appointment for a patient (for follow-up validation). */
@@ -79,7 +81,7 @@ export async function getLastAppointmentForPatient(
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
     .from('appointments')
-    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id, duration_minutes')
+    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id')
     .eq('clinic_id', clinicId)
     .ilike('patient_name', patientName.trim())
     .order('datetime', { ascending: false })
@@ -87,7 +89,8 @@ export async function getLastAppointmentForPatient(
     .maybeSingle();
 
   if (error) return { data: null, error };
-  return { data: data as Appointment | null, error: null };
+  const row = data as ((Omit<Appointment, 'duration_minutes'> & { duration_minutes?: number }) | null);
+  return { data: row ? ({ ...row, duration_minutes: row.duration_minutes ?? 30 } as Appointment) : null, error: null };
 }
 
 /** Insert a new appointment row. */

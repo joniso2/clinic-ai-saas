@@ -85,7 +85,7 @@ export async function handleDiscordWebhook(
     const duration_ms = Date.now() - startedAt;
     let clinic_id: string | undefined;
     if (messageId && guildId) {
-      clinic_id = await getClinicIdByGuildId(guildId);
+      clinic_id = (await getClinicIdByGuildId(guildId)) ?? undefined;
       if (clinic_id) {
         const supabase = getSupabaseAdmin();
         await supabase.from('processed_messages').delete().eq('id', messageId);

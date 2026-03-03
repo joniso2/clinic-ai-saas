@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { CalendarView } from '@/components/dashboard/CalendarView';
+import { CalendarView } from '@/components/calendar/CalendarView';
 
 export function CalendarPageClient() {
   const searchParams = useSearchParams();
