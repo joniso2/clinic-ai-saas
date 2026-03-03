@@ -80,6 +80,7 @@ export async function PUT(
     }
   }
 
+  let closeWarning: string | null = null;
   const hasFollowUpChange = 'next_follow_up_date' in data;
 
   if (hasFollowUpChange) {
@@ -108,6 +109,7 @@ export async function PUT(
   }
 
   // When closing lead: create/update patient and completed appointment (CRM)
+  // If patients table is missing, we still close the lead and return success with a warning.
   if (data.status === 'Closed') {
     const value = data.estimated_deal_value!;
     const { data: lead, error: leadErr } = await leadRepository.getLeadById(leadId, clinicId);
@@ -117,7 +119,16 @@ export async function PUT(
     const name = (data.full_name ?? lead.full_name ?? '').trim() || 'Unknown';
     const rawPhone = data.phone ?? lead.phone ?? '';
     const phoneNorm = normalizePhone(rawPhone);
-    const { data: existingPatient } = await patientRepository.findPatientByNormalizedPhone(clinicId, phoneNorm);
+
+    function isPatientsTableMissing(err: unknown): boolean {
+      const msg = typeof err === 'object' && err !== null && 'message' in err
+        ? String((err as { message: string }).message)
+        : String(err);
+      return /does not exist|schema cache|relation.*patients|table.*patients/i.test(msg);
+    }
+
+    const { data: existingPatientData } = await patientRepository.findPatientByNormalizedPhone(clinicId, phoneNorm);
+    const existingPatient = existingPatientData;
 
     const forceUpdate = data.forceUpdate === true;
     const createNewAnyway = data.createNewAnyway === true;
@@ -131,42 +142,57 @@ export async function PUT(
     }
 
     const nowIso = new Date().toISOString();
-    let patientId: string;
+    let patientId: string | null = null;
+    let patientCreated = false;
 
-    if (existingPatient && forceUpdate) {
-      patientId = existingPatient.id;
-      const { error: incErr } = await patientRepository.incrementPatientVisit(
-        patientId,
-        clinicId,
-        value,
-        nowIso,
-      );
-      if (incErr) {
-        console.error('Error incrementing patient visit:', incErr);
-        return NextResponse.json({ error: 'Failed to update patient' }, { status: 500 });
+    if (existingPatient) {
+      if (forceUpdate) {
+        const { error: incErr } = await patientRepository.incrementPatientVisit(
+          existingPatient.id,
+          clinicId,
+          value,
+          nowIso,
+        );
+        if (incErr) {
+          if (isPatientsTableMissing(incErr)) {
+            patientCreated = false;
+            closeWarning = 'טבלת הלקוחות לא קיימת. הליד נסגר בהצלחה. להצגת לקוחות הרץ את המיגרציה 011 ב-Supabase.';
+          } else {
+            console.error('Error incrementing patient visit:', incErr);
+            return NextResponse.json({ error: 'Failed to update patient' }, { status: 500 });
+          }
+        } else {
+          patientId = existingPatient.id;
+          patientCreated = true;
+        }
+      } else if (createNewAnyway) {
+        const { data: newPatient, error: createErr } = await patientRepository.createPatient({
+          clinic_id: clinicId,
+          lead_id: leadId,
+          full_name: name,
+          phone: phoneNorm || rawPhone.trim() || `lead-${leadId}`,
+          total_revenue: value,
+          visits_count: 1,
+          last_visit_date: nowIso,
+        });
+        if (createErr) {
+          if (isPatientsTableMissing(createErr)) {
+            patientCreated = false;
+            closeWarning = 'טבלת הלקוחות לא קיימת. הליד נסגר בהצלחה. להצגת לקוחות הרץ את המיגרציה 011 ב-Supabase.';
+          } else {
+            console.error('Error creating patient:', createErr);
+            const errObj = createErr as { message?: string; code?: string };
+            const msg = errObj?.message ?? String(createErr);
+            const userMsg = msg.includes('violates') || errObj?.code === '23503'
+              ? 'שגיאת קישור למסד הנתונים. וודא שהמיגרציה 011 הורצה במלואה.'
+              : msg;
+            return NextResponse.json({ error: userMsg }, { status: 500 });
+          }
+        } else if (newPatient) {
+          patientId = newPatient.id;
+          patientCreated = true;
+        }
       }
-    } else if (existingPatient && createNewAnyway) {
-      const { data: newPatient, error: createErr } = await patientRepository.createPatient({
-        clinic_id: clinicId,
-        lead_id: leadId,
-        full_name: name,
-        phone: phoneNorm || rawPhone.trim() || `lead-${leadId}`,
-        total_revenue: value,
-        visits_count: 1,
-        last_visit_date: nowIso,
-      });
-      if (createErr || !newPatient) {
-        console.error('Error creating patient:', createErr);
-        const errObj = createErr as { message?: string; code?: string; details?: string };
-        const msg = errObj?.message ?? String(createErr);
-        const userMsg = msg.includes('does not exist') || msg.includes('relation')
-          ? 'טבלת הלקוחות לא קיימת. הרץ את המיגרציה 011_patients_customers ב-Supabase.'
-          : msg.includes('violates') || errObj?.code === '23503'
-            ? 'שגיאת קישור למסד הנתונים (קליניקה או טבלאות). וודא שהמיגרציה 011 הורצה במלואה.'
-            : msg;
-        return NextResponse.json({ error: userMsg }, { status: 500 });
-      }
-      patientId = newPatient.id;
     } else {
       const { data: newPatient, error: createErr } = await patientRepository.createPatient({
         clinic_id: clinicId,
@@ -177,36 +203,44 @@ export async function PUT(
         visits_count: 1,
         last_visit_date: nowIso,
       });
-      if (createErr || !newPatient) {
-        console.error('Error creating patient:', createErr);
-        const errObj = createErr as { message?: string; code?: string };
-        const msg = errObj?.message ?? String(createErr);
-        const userMsg = msg.includes('does not exist') || msg.includes('relation')
-          ? 'טבלת הלקוחות לא קיימת. הרץ את המיגרציה 011_patients_customers ב-Supabase.'
-          : msg.includes('violates') || errObj?.code === '23503'
-            ? 'שגיאת קישור למסד הנתונים (קליניקה או טבלאות). וודא שהמיגרציה 011 הורצה במלואה.'
+      if (createErr) {
+        if (isPatientsTableMissing(createErr)) {
+          patientCreated = false;
+          closeWarning = 'טבלת הלקוחות לא קיימת. הליד נסגר בהצלחה. להצגת לקוחות הרץ את המיגרציה 011 ב-Supabase.';
+        } else {
+          console.error('Error creating patient:', createErr);
+          const errObj = createErr as { message?: string; code?: string };
+          const msg = errObj?.message ?? String(createErr);
+          const userMsg = msg.includes('violates') || errObj?.code === '23503'
+            ? 'שגיאת קישור למסד הנתונים. וודא שהמיגרציה 011 הורצה במלואה.'
             : msg;
-        return NextResponse.json({ error: userMsg }, { status: 500 });
+          return NextResponse.json({ error: userMsg }, { status: 500 });
+        }
+      } else if (newPatient) {
+        patientId = newPatient.id;
+        patientCreated = true;
       }
-      patientId = newPatient.id;
     }
 
-    const { error: aptErr } = await appointmentRepository.createAppointment({
-      clinic_id: clinicId,
-      patient_name: name,
-      datetime: nowIso,
-      type: 'new',
-      lead_id: leadId,
-      patient_id: patientId,
-      status: 'completed',
-      revenue: value,
-      service_name: data.service_name ?? null,
-      notes: data.notes ?? null,
-    } as Parameters<typeof appointmentRepository.createAppointment>[0]);
-    if (aptErr) {
-      console.error('Error creating completed appointment:', aptErr);
-      return NextResponse.json({ error: 'Failed to record appointment' }, { status: 500 });
+    if (patientId && patientCreated) {
+      const { error: aptErr } = await appointmentRepository.createAppointment({
+        clinic_id: clinicId,
+        patient_name: name,
+        datetime: nowIso,
+        type: 'new',
+        lead_id: leadId,
+        patient_id: patientId,
+        status: 'completed',
+        revenue: value,
+        service_name: data.service_name ?? null,
+        notes: data.notes ?? null,
+      } as Parameters<typeof appointmentRepository.createAppointment>[0]);
+      if (aptErr) {
+        console.error('Error creating completed appointment:', aptErr);
+        // Lead still gets updated below
+      }
     }
+    // If patientCreated === false (e.g. table missing), we still update the lead and return success with warning
   }
 
   const leadUpdatePayload: Record<string, unknown> = {};
@@ -225,7 +259,7 @@ export async function PUT(
       { status: 500 },
     );
   }
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, ...(closeWarning && { warning: closeWarning }) });
 }
 
 export async function DELETE(

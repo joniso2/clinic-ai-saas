@@ -332,6 +332,7 @@ export default function DashboardClient() {
       ok?: boolean;
       existingPatient?: boolean;
       patient?: { id: string; full_name: string; phone: string };
+      warning?: string;
     };
     if (!res.ok) {
       return json.error ?? 'עדכון נכשל';
@@ -355,6 +356,7 @@ export default function DashboardClient() {
     setDrawerLead((prev) =>
       prev?.id === leadId ? { ...prev, status: 'Closed', estimated_deal_value: value } : prev
     );
+    if (json.warning) return { warning: json.warning };
     return null;
   };
 

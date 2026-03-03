@@ -176,6 +176,7 @@ export function buildDiscordSystemPrompt(settings?: AISettings): string {
     'Rules:\n' +
     '- phone must be null if not provided by user.\n' +
     '- is_new_lead = true only if phone exists.\n' +
+    '- When the user sends ONLY a phone number (e.g. digits), set full_name from the "Patient name hint" from the system message if available (e.g. Discord display name), so the lead can be saved.\n' +
     '- appointment_datetime must be null if name/phone/time are incomplete.\n' +
     '- Never output anything outside the JSON.\n\n' +
 

@@ -272,15 +272,17 @@ export async function processDiscordMessage(params: {
   }
 
   // ── LEAD INTENT ─────────────────────────────────────────────────────────────
-  // Allow creation without phone only if auto_create_lead_on_first_message is enabled
-  const canCreateLead = analysis.is_new_lead && analysis.full_name && clinicId &&
+  // Allow creation without phone only if auto_create_lead_on_first_message is enabled.
+  // When user sends only phone (e.g. "0528502722"), AI may leave full_name null — use Discord author as fallback.
+  const effectiveFullName = (analysis.full_name?.trim() || authorName?.trim() || '').trim() || null;
+  const canCreateLead = analysis.is_new_lead && effectiveFullName && clinicId &&
     (hasPhone || autoCreateOnFirstMessage);
 
   if (canCreateLead) {
-    console.log('[Discord] Creating lead:', analysis.full_name, '| clinic_id:', clinicId);
+    console.log('[Discord] Creating lead:', effectiveFullName, '| clinic_id:', clinicId);
     const { data, error } = await leadRepository.createLead({
       clinic_id:                clinicId,
-      full_name:                analysis.full_name!,
+      full_name:                effectiveFullName,
       phone:                    analysis.phone ?? null,
       email:                    analysis.email ?? null,
       interest:                 analysis.interest ?? null,
@@ -298,5 +300,8 @@ export async function processDiscordMessage(params: {
     else if (data) console.log('[Discord] Lead created successfully.');
   }
 
-  return { reply: analysis.reply ?? null };
+  const reply = (analysis.reply && analysis.reply.trim()) ? analysis.reply.trim() : null;
+  return {
+    reply: reply ?? 'מצטערים, לא הצלחתי להבין. נסה לשאול שוב או להתקשר למרפאה.',
+  };
 }

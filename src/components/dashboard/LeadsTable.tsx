@@ -996,12 +996,17 @@ export function LeadsTable({
           serviceOptions={pricingServices}
           onClose={() => setCompleteLead(null)}
           onConfirm={async (leadId, value, notes, serviceType) => {
-            const err = await onCompleteLead(leadId, value, notes, serviceType);
-            if (err) {
-              setToast(err);
-              return err;
+            const result = await onCompleteLead(leadId, value, notes, serviceType);
+            if (result != null) {
+              if (typeof result === 'object' && 'warning' in result) {
+                setToast(result.warning as string);
+              } else {
+                setToast(result as string);
+                return result as string;
+              }
+            } else {
+              setToast('הליד נסגר בהצלחה');
             }
-            setToast('הליד נסגר בהצלחה');
             setCompleteLead(null);
             return null;
           }}

@@ -15,6 +15,7 @@ import {
   Hash,
 } from 'lucide-react';
 import type { Patient } from '@/types/patients';
+import type { Lead } from '@/types/leads';
 import type { CompletedAppointmentRow } from '@/repositories/appointment.repository';
 import { formatCurrencyILS } from '@/lib/hebrew';
 import { PATIENT_STATUS_LABELS } from '@/lib/hebrew';
@@ -53,9 +54,23 @@ export function CustomersTab() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [closedLeads, setClosedLeads] = useState<Lead[]>([]);
+  const [closedLeadsLoading, setClosedLeadsLoading] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
 
   const debouncedSearch = useDebouncedValue(searchInput, 300);
+
+  const fetchClosedLeads = useCallback(async () => {
+    setClosedLeadsLoading(true);
+    const res = await fetch('/api/leads', { credentials: 'include' });
+    const json = await res.json().catch(() => ({})) as { leads?: Lead[] };
+    if (res.ok && Array.isArray(json.leads)) {
+      setClosedLeads(json.leads.filter((l) => l.status === 'Closed'));
+    } else {
+      setClosedLeads([]);
+    }
+    setClosedLeadsLoading(false);
+  }, []);
 
   const fetchCustomers = useCallback(async () => {
     const params = new URLSearchParams();
@@ -76,6 +91,10 @@ export function CustomersTab() {
     setLoading(true);
     fetchCustomers();
   }, [fetchCustomers]);
+
+  useEffect(() => {
+    if (!loading && customers.length === 0) void fetchClosedLeads();
+  }, [loading, customers.length, fetchClosedLeads]);
 
   useEffect(() => {
     if (!detailId) {
@@ -126,19 +145,53 @@ export function CustomersTab() {
 
   if (!loading && customers.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-zinc-700 bg-slate-50/50 dark:bg-zinc-900/50 px-6 py-16 text-center" dir="rtl">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500">
-          <Hash className="h-8 w-8" />
+      <div className="space-y-6" dir="rtl">
+        <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-zinc-700 bg-slate-50/50 dark:bg-zinc-900/50 px-6 py-16 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500">
+            <Hash className="h-8 w-8" />
+          </div>
+          <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-zinc-100">עדיין אין לקוחות מטופלים</h3>
+          <p className="mt-2 max-w-sm text-sm text-slate-500 dark:text-zinc-400">סגור ליד ראשון כדי להתחיל לבנות את רשימת הלקוחות שלך</p>
+          <button
+            type="button"
+            onClick={() => router.push('/dashboard')}
+            className="mt-6 rounded-xl bg-slate-900 dark:bg-zinc-100 px-5 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-sm transition hover:bg-slate-800 dark:hover:bg-white"
+          >
+            חזרה ללידים
+          </button>
         </div>
-        <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-zinc-100">עדיין אין לקוחות מטופלים</h3>
-        <p className="mt-2 max-w-sm text-sm text-slate-500 dark:text-zinc-400">סגור ליד ראשון כדי להתחיל לבנות את רשימת הלקוחות שלך</p>
-        <button
-          type="button"
-          onClick={() => router.push('/dashboard')}
-          className="mt-6 rounded-xl bg-slate-900 dark:bg-zinc-100 px-5 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-sm transition hover:bg-slate-800 dark:hover:bg-white"
-        >
-          חזרה ללידים
-        </button>
+
+        {closedLeadsLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-slate-900 dark:border-t-zinc-300" />
+          </div>
+        ) : closedLeads.length > 0 ? (
+          <div className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden">
+            <h3 className="px-4 py-3 text-sm font-semibold text-slate-700 dark:text-zinc-300 border-b border-slate-100 dark:border-zinc-800">לידים סגורים (טופלו) — מופיעים כאן עד יצירת טבלת הלקוחות</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-right" dir="rtl">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-zinc-800 text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                    <th className="py-2 px-3">שם</th>
+                    <th className="py-2 px-3">טלפון</th>
+                    <th className="py-2 px-3">שווי</th>
+                    <th className="py-2 px-3">תאריך</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {closedLeads.map((l) => (
+                    <tr key={l.id} className="border-b border-slate-100 dark:border-zinc-800/80 hover:bg-slate-50/50 dark:hover:bg-zinc-800/30 transition-colors py-2">
+                      <td className="py-2 px-3 font-medium text-slate-900 dark:text-zinc-100">{l.full_name || '—'}</td>
+                      <td className="py-2 px-3 text-slate-600 dark:text-zinc-400" dir="ltr">{l.phone || '—'}</td>
+                      <td className="py-2 px-3 font-medium text-slate-800 dark:text-zinc-200">{(l.estimated_deal_value ?? 0) > 0 ? formatCurrencyILS(l.estimated_deal_value!) : '—'}</td>
+                      <td className="py-2 px-3 text-slate-600 dark:text-zinc-400">{formatDate(l.updated_at ?? l.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : null}
       </div>
     );
   }

@@ -38,9 +38,10 @@ export async function handleDiscordWebhook(
       conversationHistory,
       guildId,
     });
-    return Response.json({ reply });
+    const safeReply = (reply && String(reply).trim()) ? reply : 'שגיאה זמנית. נסה שוב או פנה למרפאה ישירות.';
+    return Response.json({ reply: safeReply });
   } catch (err) {
     console.error('Discord webhook error:', err);
-    return Response.json({ reply: null });
+    return Response.json({ reply: 'שגיאה זמנית. נסה שוב או פנה למרפאה ישירות.' });
   }
 }
