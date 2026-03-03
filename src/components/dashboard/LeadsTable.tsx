@@ -549,7 +549,12 @@ export function LeadsTable({
   onScheduleFollowUp: (leadId: string) => void;
   onScheduleAppointment: (lead: Lead) => void;
   onUpdateDealValue?: (leadId: string, value: number) => Promise<string | null>;
-  onCompleteLead?: (leadId: string, value: number, notes?: string, serviceType?: string) => Promise<string | null>;
+  onCompleteLead?: (
+    leadId: string,
+    value: number,
+    notes?: string,
+    serviceType?: string
+  ) => Promise<string | { warning: string } | null>;
   pricingServices?: { service_name: string; price: number }[];
   nextAppointmentsByLeadId?: Record<string, string | undefined>;
   onRejectLead?: (leadId: string, reason: string) => void;
