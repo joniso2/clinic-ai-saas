@@ -81,6 +81,7 @@ function LeadDrawer({
   onNotesChange,
   onWhatsApp,
   onBackToLeads,
+  onDelete,
 }: {
   lead: Lead;
   onClose: () => void;
@@ -92,6 +93,7 @@ function LeadDrawer({
   onNotesChange: (v: string) => void;
   onWhatsApp: () => void;
   onBackToLeads: () => void;
+  onDelete: () => void;
 }) {
   const value = lead.estimated_deal_value ?? 0;
   const closeDate = lead.created_at ?? null;
@@ -138,6 +140,9 @@ function LeadDrawer({
               <button type="button" onClick={onBackToLeads} className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 dark:bg-zinc-100 px-4 py-3 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-slate-800 dark:hover:bg-white transition">
                 <ArrowRight className="h-4 w-4" /> חזרה ללידים
               </button>
+              <button type="button" onClick={onDelete} className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-slate-500 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 dark:hover:text-red-400 transition">
+                <Trash2 className="h-4 w-4" /> מחק ליד
+              </button>
             </div>
           </section>
         </div>
@@ -172,6 +177,7 @@ export function CustomersTab() {
   const [deleting, setDeleting] = useState(false);
   const [closedLeads, setClosedLeads] = useState<Lead[]>([]);
   const [closedLeadsLoading, setClosedLeadsLoading] = useState(false);
+  const [deleteLeadId, setDeleteLeadId] = useState<string | null>(null);
   const filterRef = useRef<HTMLDivElement>(null);
 
   const fetchClosedLeads = useCallback(async () => {
@@ -362,6 +368,18 @@ export function CustomersTab() {
     }
   };
 
+  const handleDeleteLead = async () => {
+    if (!deleteLeadId) return;
+    setDeleting(true);
+    const res = await fetch(`/api/leads/${deleteLeadId}`, { method: 'DELETE', credentials: 'include' });
+    setDeleting(false);
+    setDeleteLeadId(null);
+    if (res.ok) {
+      setClosedLeads((prev) => prev.filter((l) => l.id !== deleteLeadId));
+      if (detailLead?.id === deleteLeadId) closeDrawer();
+    }
+  };
+
   const filteredCount = filteredCustomers.length;
   const kpiClosedLeads = filteredClosedLeads;
   const kpiTotalRevenueLeads = kpiClosedLeads.reduce((s, l) => s + getValueLead(l), 0);
@@ -391,23 +409,23 @@ export function CustomersTab() {
     if (closedLeads.length > 0) {
       return (
         <div className="space-y-4" dir="rtl">
-          {/* Search */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between flex-row-reverse">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-zinc-500 pointer-events-none" />
+          {/* Search & toolbar */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between flex-row-reverse">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-zinc-500 pointer-events-none" />
               <input
                 type="search"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="חיפוש לפי שם או מספר טלפון..."
-                className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 pl-3 pr-10 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 dark:focus:ring-indigo-500/30 text-right"
+                placeholder="חפש לפי שם או מספר טלפון..."
+                className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 pl-3 pr-11 py-3 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 dark:focus:ring-indigo-400/30 text-right transition-shadow"
                 dir="rtl"
               />
             </div>
             <button
               type="button"
               onClick={() => router.push('/dashboard')}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-zinc-300 transition hover:bg-slate-50 dark:hover:bg-zinc-700"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-sm font-medium text-slate-700 dark:text-zinc-300 transition hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-sm"
             >
               חזרה ללידים
               <ArrowRight className="h-4 w-4" />
@@ -415,14 +433,19 @@ export function CustomersTab() {
           </div>
 
           {/* Collapsible filters */}
-          <div ref={filterRef} className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+          <div ref={filterRef} className="rounded-xl border border-slate-200 dark:border-zinc-700/80 bg-white dark:bg-zinc-900/60 overflow-hidden shadow-sm">
             <button
               type="button"
               onClick={() => setFiltersOpen(!filtersOpen)}
-              className="w-full flex items-center justify-between px-4 py-3 text-right text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition"
+              className="w-full flex items-center justify-between px-4 py-3.5 text-right text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 transition-colors"
             >
-              <span>סינון ומעבר</span>
-              {filtersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              <span className="flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 dark:bg-zinc-800">
+                  <ChevronDown className={`h-4 w-4 text-slate-500 dark:text-zinc-400 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
+                </span>
+                סינון ומעבר
+              </span>
+              {filtersOpen ? <ChevronUp className="h-4 w-4 text-slate-400 dark:text-zinc-500" /> : null}
             </button>
             {filtersOpen && (
               <div className="border-t border-slate-100 dark:border-zinc-800 px-4 py-4 space-y-4">
@@ -469,41 +492,56 @@ export function CustomersTab() {
           {/* Filter chips */}
           {hasActiveFilters && (
             <div className="flex flex-wrap items-center gap-2">
-              {dateFrom && <span className="rounded-full bg-slate-100 dark:bg-zinc-800 px-3 py-1 text-xs text-slate-600 dark:text-zinc-400">מ־ {dateFrom}</span>}
-              {dateTo && <span className="rounded-full bg-slate-100 dark:bg-zinc-800 px-3 py-1 text-xs text-slate-600 dark:text-zinc-400">עד {dateTo}</span>}
-              {revenueMinFilter !== '' && <span className="rounded-full bg-slate-100 dark:bg-zinc-800 px-3 py-1 text-xs text-slate-600 dark:text-zinc-400">שווי מינ׳ {revenueMinFilter}</span>}
-              {revenueMaxFilter !== '' && <span className="rounded-full bg-slate-100 dark:bg-zinc-800 px-3 py-1 text-xs text-slate-600 dark:text-zinc-400">שווי מקס׳ {revenueMaxFilter}</span>}
-              {withRevenueOnly && <span className="rounded-full bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 text-xs text-indigo-700 dark:text-indigo-400">עם הכנסה</span>}
-              {withoutValueOnly && <span className="rounded-full bg-amber-50 dark:bg-amber-900/30 px-3 py-1 text-xs text-amber-700 dark:text-amber-400">ללא שווי</span>}
+              {dateFrom && <span className="rounded-full bg-slate-100 dark:bg-zinc-700/80 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-300">מ־ {dateFrom}</span>}
+              {dateTo && <span className="rounded-full bg-slate-100 dark:bg-zinc-700/80 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-300">עד {dateTo}</span>}
+              {revenueMinFilter !== '' && <span className="rounded-full bg-slate-100 dark:bg-zinc-700/80 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-300">שווי מינ׳ {revenueMinFilter}</span>}
+              {revenueMaxFilter !== '' && <span className="rounded-full bg-slate-100 dark:bg-zinc-700/80 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-300">שווי מקס׳ {revenueMaxFilter}</span>}
+              {withRevenueOnly && <span className="rounded-full bg-indigo-500/10 dark:bg-indigo-400/10 px-3 py-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-300">עם הכנסה</span>}
+              {withoutValueOnly && <span className="rounded-full bg-amber-500/10 dark:bg-amber-400/10 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-300">ללא שווי</span>}
             </div>
           )}
 
-          {/* KPI strip */}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {/* KPI strip — SaaS-style */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { label: 'סה״כ לקוחות', value: String(kpiClosedLeads.length), icon: Users },
-              { label: 'סה״כ הכנסות', value: formatCurrencyILS(kpiTotalRevenueLeads), icon: DollarSign },
-              { label: 'ממוצע הכנסה ללקוח', value: kpiClosedLeads.length ? formatCurrencyILS(kpiTotalRevenueLeads / kpiClosedLeads.length) : '—', icon: DollarSign },
-              { label: 'שטופלו החודש', value: String(kpiThisMonthLeads), icon: Calendar },
-            ].map(({ label, value, icon: Icon }) => (
-              <div key={label} className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-gradient-to-br from-white to-slate-50/50 dark:from-zinc-900 dark:to-zinc-800/80 p-4 shadow-sm transition hover:shadow-md hover:-translate-y-0.5">
-                <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wider">{label}</p>
-                <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-zinc-100 tabular-nums">{value}</p>
-                <Icon className="mt-2 h-5 w-5 text-slate-300 dark:text-zinc-600" />
+              { label: 'סה״כ לקוחות', value: String(kpiClosedLeads.length), icon: Users, accent: 'indigo' },
+              { label: 'סה״כ הכנסות', value: formatCurrencyILS(kpiTotalRevenueLeads), icon: DollarSign, accent: 'emerald' },
+              { label: 'ממוצע הכנסה ללקוח', value: kpiClosedLeads.length ? formatCurrencyILS(kpiTotalRevenueLeads / kpiClosedLeads.length) : '—', icon: DollarSign, accent: 'slate' },
+              { label: 'שטופלו החודש', value: String(kpiThisMonthLeads), icon: Calendar, accent: 'violet' },
+            ].map(({ label, value, icon: Icon, accent }) => (
+              <div key={label} className="relative rounded-2xl border border-slate-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900/80 p-5 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+                <div className={`absolute left-0 top-0 h-full w-1 rounded-l-2xl ${
+                  accent === 'indigo' ? 'bg-indigo-500/80' : accent === 'emerald' ? 'bg-emerald-500/80' : accent === 'violet' ? 'bg-violet-500/80' : 'bg-slate-300 dark:bg-zinc-600'
+                }`} />
+                <div className="flex items-start justify-between gap-3 pr-1">
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wider">{label}</p>
+                    <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-zinc-100 tabular-nums tracking-tight">{value}</p>
+                  </div>
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800">
+                    <Icon className="h-5 w-5 text-slate-500 dark:text-zinc-400" />
+                  </div>
+                </div>
               </div>
             ))}
           </div>
 
           {/* Table */}
-          <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
-            <div className="border-b border-slate-100 dark:border-zinc-800 px-4 py-3 flex items-center gap-2 bg-slate-50/50 dark:bg-zinc-800/30">
-              <UserCheck className="h-5 w-5 text-slate-500 dark:text-zinc-400" />
-              <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">לידים שטופלו</h2>
+          <div className="rounded-2xl border border-slate-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900/80 shadow-sm overflow-hidden">
+            <div className="border-b border-slate-200 dark:border-zinc-700/80 px-5 py-3.5 flex items-center justify-between gap-2.5 bg-slate-50/80 dark:bg-zinc-800/50">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+                  <UserCheck className="h-5 w-5 text-slate-500 dark:text-zinc-400" />
+                </div>
+                <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">לידים שטופלו</h2>
+              </div>
             </div>
+
             <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
-              <table className="w-full text-right min-w-[520px]" dir="rtl">
-                <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-zinc-800/95 text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+              <table className="w-full text-right min-w-[560px]" dir="rtl">
+                <thead className="sticky top-0 z-10 bg-slate-50/95 dark:bg-zinc-800/95 backdrop-blur-sm text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
                   <tr className="border-b border-slate-200 dark:border-zinc-700">
+                    <th className="py-3.5 px-2 w-12" aria-label="פעולות" />
                     <th className="py-3.5 px-4">שם</th>
                     <th className="py-3.5 px-4">טלפון</th>
                     <th className="py-3.5 px-4">תאריך סגירה</th>
@@ -515,7 +553,7 @@ export function CustomersTab() {
                 <tbody>
                   {filteredClosedLeads.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-12 text-center text-sm text-slate-500 dark:text-zinc-400">
+                      <td colSpan={7} className="py-12 text-center text-sm text-slate-500 dark:text-zinc-400">
                         אין תוצאות התואמות את הסינון.
                       </td>
                     </tr>
@@ -526,6 +564,17 @@ export function CustomersTab() {
                         onClick={() => openLeadDetail(l)}
                         className="border-b border-slate-100 dark:border-zinc-800/80 last:border-0 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20 cursor-pointer transition"
                       >
+                        <td className="py-3.5 px-2 w-12" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteLeadId(l.id)}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 dark:text-zinc-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition"
+                            title="מחק ליד"
+                            aria-label="מחק ליד"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </td>
                         <td className="py-3.5 px-4 font-medium text-slate-900 dark:text-zinc-100">{l.full_name || '—'}</td>
                         <td className="py-3.5 px-4">
                           <a href={l.phone ? `tel:${l.phone}` : '#'} onClick={(e) => e.stopPropagation()} dir="ltr" className="text-indigo-600 dark:text-indigo-400 hover:underline">
@@ -557,23 +606,42 @@ export function CustomersTab() {
               onNotesChange={setDetailNotes}
               onWhatsApp={() => window.open(`https://wa.me/972${(detailLead.phone ?? '').replace(/\D/g, '').replace(/^0/, '')}`, '_blank')}
               onBackToLeads={() => { closeDrawer(); router.push('/dashboard'); }}
+              onDelete={() => { setDeleteLeadId(detailLead.id); closeDrawer(); }}
             />
+          )}
+
+          {/* Delete confirm — lead */}
+          {deleteLeadId && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+              <div className="absolute inset-0 bg-slate-900/50 dark:bg-zinc-950/70" onClick={() => setDeleteLeadId(null)} aria-hidden="true" />
+              <div className="relative rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 shadow-xl text-right max-w-sm w-full" dir="rtl">
+                <h3 className="font-semibold text-slate-900 dark:text-zinc-100">מחיקת ליד</h3>
+                <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">הליד יוסר מהרשימה. פעולה זו לא משחזרת את הליד.</p>
+                <div className="mt-5 flex gap-2 justify-start">
+                  <button type="button" onClick={() => setDeleteLeadId(null)} className="rounded-xl border border-slate-200 dark:border-zinc-600 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800">ביטול</button>
+                  <button type="button" onClick={handleDeleteLead} disabled={deleting} className="rounded-xl bg-red-600 hover:bg-red-500 text-white px-4 py-2.5 text-sm font-medium disabled:opacity-60 flex items-center gap-2">
+                    {deleting ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Trash2 className="h-4 w-4" />}
+                    מחק
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       );
     }
 
     return (
-      <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 px-6 py-14 text-center shadow-sm" dir="rtl">
-        <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500">
-          <Hash className="h-7 w-7" />
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900/80 px-8 py-16 text-center shadow-sm" dir="rtl">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500">
+          <Hash className="h-8 w-8" />
         </div>
-        <h3 className="mt-4 text-lg font-semibold text-slate-900 dark:text-zinc-100">עדיין אין לקוחות</h3>
+        <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-zinc-100">עדיין אין לקוחות</h3>
         <p className="mt-2 max-w-sm text-sm text-slate-500 dark:text-zinc-400">סגור ליד ראשון כדי להתחיל לבנות את רשימת הלקוחות.</p>
         <button
           type="button"
           onClick={() => router.push('/dashboard')}
-          className="mt-6 rounded-xl bg-slate-900 dark:bg-zinc-100 px-5 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-sm transition hover:bg-slate-800 dark:hover:bg-white"
+          className="mt-8 rounded-xl bg-slate-900 dark:bg-zinc-100 px-6 py-3 text-sm font-semibold text-white dark:text-zinc-900 shadow-sm transition hover:bg-slate-800 dark:hover:bg-white"
         >
           חזרה ללידים
         </button>
@@ -583,31 +651,40 @@ export function CustomersTab() {
 
   return (
     <>
-      {/* Search */}
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between flex-row-reverse" dir="rtl">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-zinc-500 pointer-events-none" />
+      {/* Search & toolbar */}
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between flex-row-reverse" dir="rtl">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-zinc-500 pointer-events-none" />
           <input
             type="search"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="חיפוש לפי שם או מספר טלפון..."
-            className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 pl-3 pr-10 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 dark:focus:ring-indigo-500/30 text-right"
+            placeholder="חפש לפי שם או מספר טלפון..."
+            className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 pl-3 pr-11 py-3 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 dark:focus:ring-indigo-400/30 dark:focus:border-indigo-500 transition-shadow text-right"
             dir="rtl"
           />
         </div>
-        <span className="text-sm text-slate-500 dark:text-zinc-400">{filteredCount} לקוחות</span>
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center rounded-lg bg-slate-100 dark:bg-zinc-800/80 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-zinc-300 tabular-nums">
+            {filteredCount} לקוחות
+          </span>
+        </div>
       </div>
 
       {/* Collapsible filters */}
-      <div ref={filterRef} className="mb-4 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+      <div ref={filterRef} className="mb-6 rounded-xl border border-slate-200 dark:border-zinc-700/80 bg-white dark:bg-zinc-900/60 overflow-hidden shadow-sm">
         <button
           type="button"
           onClick={() => setFiltersOpen(!filtersOpen)}
-          className="w-full flex items-center justify-between px-4 py-3 text-right text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition"
+          className="w-full flex items-center justify-between px-4 py-3.5 text-right text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 transition-colors"
         >
-          <span>סינון ומעבר</span>
-          {filtersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          <span className="flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 dark:bg-zinc-800">
+              <ChevronDown className={`h-4 w-4 text-slate-500 dark:text-zinc-400 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
+            </span>
+            סינון ומעבר
+          </span>
+          {filtersOpen ? <ChevronUp className="h-4 w-4 text-slate-400 dark:text-zinc-500" /> : null}
         </button>
         {filtersOpen && (
           <div className="border-t border-slate-100 dark:border-zinc-800 px-4 py-4 space-y-4">
@@ -661,43 +738,61 @@ export function CustomersTab() {
 
       {/* Filter chips */}
       {hasActiveFilters && (
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          {dateFrom && <span className="rounded-full bg-slate-100 dark:bg-zinc-800 px-3 py-1 text-xs text-slate-600 dark:text-zinc-400">מ־ {dateFrom}</span>}
-          {dateTo && <span className="rounded-full bg-slate-100 dark:bg-zinc-800 px-3 py-1 text-xs text-slate-600 dark:text-zinc-400">עד {dateTo}</span>}
-          {revenueMinFilter !== '' && <span className="rounded-full bg-slate-100 dark:bg-zinc-800 px-3 py-1 text-xs text-slate-600 dark:text-zinc-400">שווי מינ׳ {revenueMinFilter}</span>}
-          {revenueMaxFilter !== '' && <span className="rounded-full bg-slate-100 dark:bg-zinc-800 px-3 py-1 text-xs text-slate-600 dark:text-zinc-400">שווי מקס׳ {revenueMaxFilter}</span>}
-          {withRevenueOnly && <span className="rounded-full bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 text-xs text-indigo-700 dark:text-indigo-400">עם הכנסה</span>}
-          {withoutValueOnly && <span className="rounded-full bg-amber-50 dark:bg-amber-900/30 px-3 py-1 text-xs text-amber-700 dark:text-amber-400">ללא שווי</span>}
-          {statusFilter && <span className="rounded-full bg-slate-100 dark:bg-zinc-800 px-3 py-1 text-xs text-slate-600 dark:text-zinc-400">סטטוס: {PATIENT_STATUS_LABELS[statusFilter] ?? statusFilter}</span>}
-          {lastVisitOver6 && <span className="rounded-full bg-slate-100 dark:bg-zinc-800 px-3 py-1 text-xs text-slate-600 dark:text-zinc-400">ביקור 6+ חודשים</span>}
+        <div className="flex flex-wrap items-center gap-2 mb-5">
+          {dateFrom && <span className="rounded-full bg-slate-100 dark:bg-zinc-700/80 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-300">מ־ {dateFrom}</span>}
+          {dateTo && <span className="rounded-full bg-slate-100 dark:bg-zinc-700/80 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-300">עד {dateTo}</span>}
+          {revenueMinFilter !== '' && <span className="rounded-full bg-slate-100 dark:bg-zinc-700/80 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-300">שווי מינ׳ {revenueMinFilter}</span>}
+          {revenueMaxFilter !== '' && <span className="rounded-full bg-slate-100 dark:bg-zinc-700/80 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-300">שווי מקס׳ {revenueMaxFilter}</span>}
+          {withRevenueOnly && <span className="rounded-full bg-indigo-500/10 dark:bg-indigo-400/10 px-3 py-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-300">עם הכנסה</span>}
+          {withoutValueOnly && <span className="rounded-full bg-amber-500/10 dark:bg-amber-400/10 px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-300">ללא שווי</span>}
+          {statusFilter && <span className="rounded-full bg-slate-100 dark:bg-zinc-700/80 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-300">סטטוס: {PATIENT_STATUS_LABELS[statusFilter] ?? statusFilter}</span>}
+          {lastVisitOver6 && <span className="rounded-full bg-slate-100 dark:bg-zinc-700/80 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-300">ביקור 6+ חודשים</span>}
         </div>
       )}
 
-      {/* KPI strip */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-4">
+      {/* KPI strip — SaaS-style cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
         {[
-          { label: 'סה״כ לקוחות', value: String(kpiCustomers.length), icon: Users },
-          { label: 'סה״כ הכנסות', value: formatCurrencyILS(kpiTotalRevenueCustomers), icon: DollarSign },
-          { label: 'ממוצע הכנסה ללקוח', value: formatCurrencyILS(kpiAvgRevenue), icon: DollarSign },
-          { label: 'שטופלו החודש', value: String(kpiThisMonthCustomers), icon: Calendar },
-        ].map(({ label, value, icon: Icon }) => (
-          <div key={label} className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-gradient-to-br from-white to-slate-50/50 dark:from-zinc-900 dark:to-zinc-800/80 p-4 shadow-sm transition hover:shadow-md hover:-translate-y-0.5">
-            <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wider">{label}</p>
-            <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-zinc-100 tabular-nums">{value}</p>
-            <Icon className="mt-2 h-5 w-5 text-slate-300 dark:text-zinc-600" />
+          { label: 'סה״כ לקוחות', value: String(kpiCustomers.length), icon: Users, accent: 'indigo' },
+          { label: 'סה״כ הכנסות', value: formatCurrencyILS(kpiTotalRevenueCustomers), icon: DollarSign, accent: 'emerald' },
+          { label: 'ממוצע הכנסה ללקוח', value: formatCurrencyILS(kpiAvgRevenue), icon: DollarSign, accent: 'slate' },
+          { label: 'שטופלו החודש', value: String(kpiThisMonthCustomers), icon: Calendar, accent: 'violet' },
+        ].map(({ label, value, icon: Icon, accent }) => (
+          <div
+            key={label}
+            className="relative rounded-2xl border border-slate-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900/80 p-5 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+          >
+            <div className={`absolute left-0 top-0 h-full w-1 rounded-l-2xl ${
+              accent === 'indigo' ? 'bg-indigo-500/80' :
+              accent === 'emerald' ? 'bg-emerald-500/80' :
+              accent === 'violet' ? 'bg-violet-500/80' : 'bg-slate-300 dark:bg-zinc-600'
+            }`} />
+            <div className="flex items-start justify-between gap-3 pr-1">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 uppercase tracking-wider">{label}</p>
+                <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-zinc-100 tabular-nums tracking-tight">{value}</p>
+              </div>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800">
+                <Icon className="h-5 w-5 text-slate-500 dark:text-zinc-400" />
+              </div>
+            </div>
           </div>
         ))}
       </div>
 
       {/* Table */}
-      <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
-        <div className="border-b border-slate-100 dark:border-zinc-800 px-4 py-3 flex items-center gap-2 bg-slate-50/50 dark:bg-zinc-800/30">
-          <UserCheck className="h-5 w-5 text-slate-500 dark:text-zinc-400" />
-          <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">רשימת לקוחות</h2>
+      <div className="rounded-2xl border border-slate-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900/80 shadow-sm overflow-hidden">
+        <div className="border-b border-slate-200 dark:border-zinc-700/80 px-5 py-3.5 flex items-center justify-between gap-2.5 bg-slate-50/80 dark:bg-zinc-800/50">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white dark:bg-zinc-800 shadow-sm">
+              <UserCheck className="h-5 w-5 text-slate-500 dark:text-zinc-400" />
+            </div>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">רשימת לקוחות</h2>
+          </div>
         </div>
         <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
           <table className="w-full text-right min-w-[640px]" dir="rtl">
-            <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-zinc-800/95 text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+            <thead className="sticky top-0 z-10 bg-slate-50/95 dark:bg-zinc-800/95 backdrop-blur-sm text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
               <tr className="border-b border-slate-200 dark:border-zinc-700">
                 <th className="py-3.5 px-4">שם</th>
                 <th className="py-3.5 px-4">טלפון</th>
@@ -710,10 +805,13 @@ export function CustomersTab() {
             <tbody>
               {filteredCustomers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center">
-                    <div className="flex flex-col items-center gap-2 text-slate-500 dark:text-zinc-400">
-                      <FileText className="h-10 w-10 text-slate-300 dark:text-zinc-600" />
-                      <p className="text-sm">אין תוצאות התואמות את הסינון.</p>
+                  <td colSpan={6} className="py-16 text-center">
+                    <div className="flex flex-col items-center gap-3 text-slate-500 dark:text-zinc-400">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 dark:bg-zinc-800">
+                        <FileText className="h-7 w-7 text-slate-400 dark:text-zinc-500" />
+                      </div>
+                      <p className="text-sm font-medium">אין תוצאות התואמות את הסינון</p>
+                      <p className="text-xs text-slate-400 dark:text-zinc-500">נסה לשנות את החיפוש או הסינון</p>
                     </div>
                   </td>
                 </tr>
@@ -722,7 +820,7 @@ export function CustomersTab() {
                   <tr
                     key={c.id}
                     onClick={() => openCustomerDetail(c)}
-                    className="border-b border-slate-100 dark:border-zinc-800/80 last:border-0 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20 cursor-pointer transition"
+                    className="border-b border-slate-100 dark:border-zinc-800/80 last:border-0 hover:bg-slate-50/80 dark:hover:bg-indigo-950/20 cursor-pointer transition-colors"
                   >
                     <td className="py-3.5 px-4 font-medium text-slate-900 dark:text-zinc-100">{c.full_name}</td>
                     <td className="py-3.5 px-4">
@@ -834,20 +932,24 @@ export function CustomersTab() {
         </div>
       )}
 
-      {/* Delete confirm */}
+      {/* Delete confirm — customer (from drawer) */}
       {deleteId && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/50" onClick={() => setDeleteId(null)} aria-hidden="true" />
-          <div className="relative rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 shadow-xl text-right max-w-sm w-full" dir="rtl">
+          <div className="absolute inset-0 bg-slate-900/50 dark:bg-zinc-950/70" onClick={() => setDeleteId(null)} aria-hidden="true" />
+          <div className="relative rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 shadow-xl text-right max-w-sm w-full" dir="rtl">
             <h3 className="font-semibold text-slate-900 dark:text-zinc-100">מחיקת לקוח</h3>
             <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">הלקוח יוסר מהרשימה (מחיקה רכה). ניתן לשחזר בהמשך.</p>
-            <div className="mt-4 flex gap-2 justify-start">
-              <button type="button" onClick={() => setDeleteId(null)} className="rounded-xl border border-slate-200 dark:border-zinc-600 px-4 py-2 text-sm font-medium">ביטול</button>
-              <button type="button" onClick={handleDelete} disabled={deleting} className="rounded-xl bg-red-600 hover:bg-red-500 text-white px-4 py-2 text-sm font-medium disabled:opacity-60">מחק</button>
+            <div className="mt-5 flex gap-2 justify-start">
+              <button type="button" onClick={() => setDeleteId(null)} className="rounded-xl border border-slate-200 dark:border-zinc-600 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800">ביטול</button>
+              <button type="button" onClick={handleDelete} disabled={deleting} className="rounded-xl bg-red-600 hover:bg-red-500 text-white px-4 py-2.5 text-sm font-medium disabled:opacity-60 flex items-center gap-2">
+                {deleting ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Trash2 className="h-4 w-4" />}
+                מחק
+              </button>
             </div>
           </div>
         </div>
       )}
+
     </>
   );
 }
