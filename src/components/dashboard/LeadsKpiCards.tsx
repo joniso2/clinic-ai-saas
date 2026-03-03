@@ -1,14 +1,13 @@
 'use client';
 
 import {
-  Users,
   UserPlus,
-  AlertCircle,
+  UserCheck,
+  UserX,
+  Clock,
   DollarSign,
-  TrendingUp,
 } from 'lucide-react';
 import type { Lead } from '@/types/leads';
-import { getDisplayPriority } from '@/types/leads';
 import { formatCurrencyILS } from '@/lib/hebrew';
 
 function KpiCard({
@@ -73,52 +72,61 @@ const ACCENT = {
   },
 };
 
-export function LeadsKpiCards({ leads }: { leads: Lead[] }) {
+const CLOSED_STATUSES = ['Closed', 'Converted', 'Disqualified'];
+
+export function LeadsKpiCards({
+  leads,
+  pendingForApproval = 0,
+}: {
+  leads: Lead[];
+  pendingForApproval?: number;
+}) {
   const today = new Date().toDateString();
   const newToday = leads.filter(
     (l) => new Date(l.created_at).toDateString() === today
-  ).length;
-  const highPriority = leads.filter(
-    (l) =>
-      getDisplayPriority(l) === 'High' || getDisplayPriority(l) === 'Urgent'
   ).length;
   const totalRevenue = leads.reduce(
     (sum, l) => sum + (l.estimated_deal_value ?? 0),
     0
   );
-  const closed = leads.filter(
-    (l) => l.status === 'Closed' || l.status === 'Converted'
+  const closed = leads.filter((l) =>
+    CLOSED_STATUSES.includes(l.status ?? '')
   ).length;
-  const conversionRate =
-    leads.length > 0
-      ? `${Math.round((closed / leads.length) * 100)}%`
-      : '0%';
+  const open = leads.length - closed;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5" dir="rtl">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6" dir="rtl">
       <KpiCard
-        label="סה״כ לידים"
-        value={leads.length}
+        label="לידים פתוחים"
+        value={open}
         sub="במעקב"
-        icon={Users}
+        icon={UserCheck}
+        iconContainerClass={ACCENT.blue.icon}
+        borderAccentClass={ACCENT.blue.border}
+      />
+      <KpiCard
+        label="לידים סגורים"
+        value={closed}
+        sub="נסגרו / הוסרו"
+        icon={UserX}
         iconContainerClass={ACCENT.slate.icon}
         borderAccentClass={ACCENT.slate.border}
+      />
+      <KpiCard
+        label="מחכים לאישור"
+        value={pendingForApproval}
+        sub="תורים לאישור מנהל"
+        icon={Clock}
+        iconContainerClass={ACCENT.amber.icon}
+        borderAccentClass={ACCENT.amber.border}
       />
       <KpiCard
         label="חדשים היום"
         value={newToday}
         sub="24 השעות האחרונות"
         icon={UserPlus}
-        iconContainerClass={ACCENT.blue.icon}
-        borderAccentClass={ACCENT.blue.border}
-      />
-      <KpiCard
-        label="עדיפות גבוהה"
-        value={highPriority}
-        sub="דורש טיפול"
-        icon={AlertCircle}
-        iconContainerClass={ACCENT.amber.icon}
-        borderAccentClass={ACCENT.amber.border}
+        iconContainerClass={ACCENT.indigo.icon}
+        borderAccentClass={ACCENT.indigo.border}
       />
       <KpiCard
         label="הכנסה פוטנציאלית"
@@ -127,14 +135,6 @@ export function LeadsKpiCards({ leads }: { leads: Lead[] }) {
         icon={DollarSign}
         iconContainerClass={ACCENT.emerald.icon}
         borderAccentClass={ACCENT.emerald.border}
-      />
-      <KpiCard
-        label="אחוז המרה"
-        value={conversionRate}
-        sub="נסגרו / סה״כ"
-        icon={TrendingUp}
-        iconContainerClass={ACCENT.indigo.icon}
-        borderAccentClass={ACCENT.indigo.border}
       />
     </div>
   );

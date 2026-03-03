@@ -31,13 +31,20 @@ export async function handleDiscordWebhook(
 
   const guildId = typeof body.guild_id === 'string' ? body.guild_id : undefined;
 
+  const timeoutMs = 25_000;
+
   try {
-    const { reply } = await processDiscordMessage({
-      content,
-      authorName,
-      conversationHistory,
-      guildId,
-    });
+    const { reply } = await Promise.race([
+      processDiscordMessage({
+        content,
+        authorName,
+        conversationHistory,
+        guildId,
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Request timed out')), timeoutMs)
+      ),
+    ]);
     const safeReply = (reply && String(reply).trim()) ? reply : 'שגיאה זמנית. נסה שוב או פנה למרפאה ישירות.';
     return Response.json({ reply: safeReply });
   } catch (err) {
