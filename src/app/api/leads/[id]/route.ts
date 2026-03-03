@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as leadRepository from '@/repositories/lead.repository';
 import * as appointmentRepository from '@/repositories/appointment.repository';
+import * as patientRepository from '@/repositories/patient.repository';
 import { createClient } from '@/lib/supabase-server';
+import { normalizePhone } from '@/lib/phone';
 
 async function getClinicIdFromSession(): Promise<string | null> {
   const supabase = await createClient();
@@ -62,7 +64,21 @@ export async function PUT(
     status: string;
     next_follow_up_date: string | null;
     estimated_deal_value: number | null;
+    forceUpdate?: boolean;
+    createNewAnyway?: boolean;
+    service_name?: string | null;
+    notes?: string | null;
   }>;
+
+  if (data.status === 'Closed') {
+    const value = data.estimated_deal_value ?? 0;
+    if (typeof value !== 'number' || value <= 0) {
+      return NextResponse.json(
+        { error: 'לא ניתן לסגור ליד ללא שווי כספי' },
+        { status: 400 },
+      );
+    }
+  }
 
   const hasFollowUpChange = 'next_follow_up_date' in data;
 
@@ -91,7 +107,117 @@ export async function PUT(
     }
   }
 
-  const { error } = await leadRepository.updateLead(leadId, clinicId, data);
+  // When closing lead: create/update patient and completed appointment (CRM)
+  if (data.status === 'Closed') {
+    const value = data.estimated_deal_value!;
+    const { data: lead, error: leadErr } = await leadRepository.getLeadById(leadId, clinicId);
+    if (leadErr || !lead) {
+      return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
+    }
+    const name = (data.full_name ?? lead.full_name ?? '').trim() || 'Unknown';
+    const rawPhone = data.phone ?? lead.phone ?? '';
+    const phoneNorm = normalizePhone(rawPhone);
+    const { data: existingPatient } = await patientRepository.findPatientByNormalizedPhone(clinicId, phoneNorm);
+
+    const forceUpdate = data.forceUpdate === true;
+    const createNewAnyway = data.createNewAnyway === true;
+
+    if (existingPatient && !forceUpdate && !createNewAnyway) {
+      return NextResponse.json({
+        ok: true,
+        existingPatient: true,
+        patient: { id: existingPatient.id, full_name: existingPatient.full_name, phone: existingPatient.phone },
+      });
+    }
+
+    const nowIso = new Date().toISOString();
+    let patientId: string;
+
+    if (existingPatient && forceUpdate) {
+      patientId = existingPatient.id;
+      const { error: incErr } = await patientRepository.incrementPatientVisit(
+        patientId,
+        clinicId,
+        value,
+        nowIso,
+      );
+      if (incErr) {
+        console.error('Error incrementing patient visit:', incErr);
+        return NextResponse.json({ error: 'Failed to update patient' }, { status: 500 });
+      }
+    } else if (existingPatient && createNewAnyway) {
+      const { data: newPatient, error: createErr } = await patientRepository.createPatient({
+        clinic_id: clinicId,
+        lead_id: leadId,
+        full_name: name,
+        phone: phoneNorm || rawPhone.trim() || `lead-${leadId}`,
+        total_revenue: value,
+        visits_count: 1,
+        last_visit_date: nowIso,
+      });
+      if (createErr || !newPatient) {
+        console.error('Error creating patient:', createErr);
+        const errObj = createErr as { message?: string; code?: string; details?: string };
+        const msg = errObj?.message ?? String(createErr);
+        const userMsg = msg.includes('does not exist') || msg.includes('relation')
+          ? 'טבלת הלקוחות לא קיימת. הרץ את המיגרציה 011_patients_customers ב-Supabase.'
+          : msg.includes('violates') || errObj?.code === '23503'
+            ? 'שגיאת קישור למסד הנתונים (קליניקה או טבלאות). וודא שהמיגרציה 011 הורצה במלואה.'
+            : msg;
+        return NextResponse.json({ error: userMsg }, { status: 500 });
+      }
+      patientId = newPatient.id;
+    } else {
+      const { data: newPatient, error: createErr } = await patientRepository.createPatient({
+        clinic_id: clinicId,
+        lead_id: leadId,
+        full_name: name,
+        phone: phoneNorm || rawPhone.trim() || `lead-${leadId}`,
+        total_revenue: value,
+        visits_count: 1,
+        last_visit_date: nowIso,
+      });
+      if (createErr || !newPatient) {
+        console.error('Error creating patient:', createErr);
+        const errObj = createErr as { message?: string; code?: string };
+        const msg = errObj?.message ?? String(createErr);
+        const userMsg = msg.includes('does not exist') || msg.includes('relation')
+          ? 'טבלת הלקוחות לא קיימת. הרץ את המיגרציה 011_patients_customers ב-Supabase.'
+          : msg.includes('violates') || errObj?.code === '23503'
+            ? 'שגיאת קישור למסד הנתונים (קליניקה או טבלאות). וודא שהמיגרציה 011 הורצה במלואה.'
+            : msg;
+        return NextResponse.json({ error: userMsg }, { status: 500 });
+      }
+      patientId = newPatient.id;
+    }
+
+    const { error: aptErr } = await appointmentRepository.createAppointment({
+      clinic_id: clinicId,
+      patient_name: name,
+      datetime: nowIso,
+      type: 'new',
+      lead_id: leadId,
+      patient_id: patientId,
+      status: 'completed',
+      revenue: value,
+      service_name: data.service_name ?? null,
+      notes: data.notes ?? null,
+    } as Parameters<typeof appointmentRepository.createAppointment>[0]);
+    if (aptErr) {
+      console.error('Error creating completed appointment:', aptErr);
+      return NextResponse.json({ error: 'Failed to record appointment' }, { status: 500 });
+    }
+  }
+
+  const leadUpdatePayload: Record<string, unknown> = {};
+  if (data.full_name !== undefined) leadUpdatePayload.full_name = data.full_name;
+  if (data.phone !== undefined) leadUpdatePayload.phone = data.phone;
+  if (data.email !== undefined) leadUpdatePayload.email = data.email;
+  if (data.interest !== undefined) leadUpdatePayload.interest = data.interest;
+  if (data.status !== undefined) leadUpdatePayload.status = data.status;
+  if (data.next_follow_up_date !== undefined) leadUpdatePayload.next_follow_up_date = data.next_follow_up_date;
+  if (data.estimated_deal_value !== undefined) leadUpdatePayload.estimated_deal_value = data.estimated_deal_value;
+  const { error } = await leadRepository.updateLead(leadId, clinicId, leadUpdatePayload as Parameters<typeof leadRepository.updateLead>[2]);
   if (error) {
     console.error('Error updating lead:', error);
     return NextResponse.json(

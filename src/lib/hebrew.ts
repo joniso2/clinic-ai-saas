@@ -34,3 +34,9 @@ export const SOURCE_LABELS: Record<string, string> = {
   Discord: 'דיסקורד',
   Other: 'אחר',
 };
+
+export const PATIENT_STATUS_LABELS: Record<string, string> = {
+  active: 'פעיל',
+  dormant: 'רדום',
+  inactive: 'לא פעיל',
+};

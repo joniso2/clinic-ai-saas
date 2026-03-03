@@ -1,10 +1,11 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { Users, BarChart3, Settings as SettingsIcon, Calendar as CalendarIcon } from 'lucide-react';
+import { Users, BarChart3, Settings as SettingsIcon, Calendar as CalendarIcon, UserCheck } from 'lucide-react';
 
 const NAV_ITEMS = [
   { id: 'leads',     label: 'לידים',     icon: Users,         href: '/dashboard' },
+  { id: 'customers', label: 'לקוחות',    icon: UserCheck,     href: '/dashboard/customers' },
   { id: 'calendar',  label: 'תורים',    icon: CalendarIcon,  href: '/dashboard/calendar' },
   { id: 'analytics', label: 'אנליטיקה', icon: BarChart3,      href: '/dashboard/analytics' },
   { id: 'settings',  label: 'הגדרות',   icon: SettingsIcon,  href: '/dashboard/settings' },

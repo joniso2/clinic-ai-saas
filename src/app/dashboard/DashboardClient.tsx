@@ -36,6 +36,7 @@ export default function DashboardClient() {
 
   const [appointmentLead, setAppointmentLead] = useState<Lead | null>(null);
   const [nextAppointmentsByLeadId, setNextAppointmentsByLeadId] = useState<Record<string, string>>({});
+  const [pricingServices, setPricingServices] = useState<{ service_name: string; price: number }[]>([]);
 
   const fetchLeads = async () => {
     const res = await fetch('/api/leads', { credentials: 'include' });
@@ -50,6 +51,23 @@ export default function DashboardClient() {
       } else {
         setError(null);
       }
+    }
+  };
+
+  const fetchPricingServices = async () => {
+    const res = await fetch('/api/clinic-services', { credentials: 'include' });
+    const json = await res.json().catch(() => ({})) as {
+      services?: { service_name: string; price?: number; is_active?: boolean }[];
+    };
+    if (res.ok && Array.isArray(json.services)) {
+      const list = json.services
+        .filter((s) => s.is_active !== false)
+        .map((s) => ({
+          service_name: (s.service_name ?? '').trim(),
+          price: typeof s.price === 'number' && !Number.isNaN(s.price) ? s.price : 0,
+        }))
+        .filter((s) => s.service_name);
+      setPricingServices(list);
     }
   };
 
@@ -75,6 +93,7 @@ export default function DashboardClient() {
       setClinicId(clinicIdFromMetadata);
 
       await fetchLeads();
+      void fetchPricingServices();
       setLoading(false);
     };
 
@@ -276,6 +295,77 @@ export default function DashboardClient() {
       prev?.id === leadId ? { ...prev, estimated_deal_value: value } : prev
     );
     return null;
+  };
+
+  const [existingPatientPending, setExistingPatientPending] = useState<{
+    leadId: string;
+    value: number;
+    notes?: string;
+    serviceType?: string;
+    patient: { id: string; full_name: string; phone: string };
+  } | null>(null);
+
+  const handleCompleteLead = async (
+    leadId: string,
+    value: number,
+    notes?: string,
+    serviceType?: string,
+    opts?: { forceUpdate?: boolean; createNewAnyway?: boolean },
+  ) => {
+    const body: Record<string, unknown> = {
+      status: 'Closed',
+      estimated_deal_value: value,
+      notes: notes ?? null,
+      service_name: serviceType ?? null,
+    };
+    if (opts?.forceUpdate) body.forceUpdate = true;
+    if (opts?.createNewAnyway) body.createNewAnyway = true;
+
+    const res = await fetch(`/api/leads/${leadId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(body),
+    });
+    const json = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      ok?: boolean;
+      existingPatient?: boolean;
+      patient?: { id: string; full_name: string; phone: string };
+    };
+    if (!res.ok) {
+      return json.error ?? 'עדכון נכשל';
+    }
+    if (json.existingPatient === true && json.patient && !opts?.forceUpdate && !opts?.createNewAnyway) {
+      setExistingPatientPending({
+        leadId,
+        value,
+        notes,
+        serviceType,
+        patient: json.patient,
+      });
+      return null;
+    }
+    setExistingPatientPending(null);
+    setLeads((prev) =>
+      prev.map((l) =>
+        l.id === leadId ? { ...l, status: 'Closed', estimated_deal_value: value } : l
+      )
+    );
+    setDrawerLead((prev) =>
+      prev?.id === leadId ? { ...prev, status: 'Closed', estimated_deal_value: value } : prev
+    );
+    return null;
+  };
+
+  const resolveExistingPatient = (forceUpdate: boolean) => {
+    if (!existingPatientPending) return;
+    const { leadId, value, notes, serviceType } = existingPatientPending;
+    setExistingPatientPending(null);
+    void handleCompleteLead(leadId, value, notes, serviceType, {
+      forceUpdate,
+      createNewAnyway: !forceUpdate,
+    });
   };
 
   const refreshNextAppointments = async () => {
@@ -495,6 +585,8 @@ export default function DashboardClient() {
           onScheduleFollowUp={handleScheduleFollowUp}
           onScheduleAppointment={(lead) => setAppointmentLead(lead)}
           onUpdateDealValue={handleUpdateDealValue}
+          onCompleteLead={handleCompleteLead}
+          pricingServices={pricingServices}
           nextAppointmentsByLeadId={nextAppointmentsByLeadId}
           onRejectLead={handleRejectLead}
         />
@@ -534,6 +626,40 @@ export default function DashboardClient() {
         onSave={handleEditSave}
         loading={savingEdit}
       />
+
+      {existingPatientPending && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="לקוח קיים">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setExistingPatientPending(null)} aria-hidden="true" />
+          <div className="relative w-full max-w-sm rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 shadow-xl text-right" dir="rtl">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">לקוח קיים נמצא</h2>
+            <p className="mt-2 text-sm text-slate-500 dark:text-zinc-400">לעדכן לקוח קיים או ליצור רשומה חדשה?</p>
+            <p className="mt-1 text-xs text-slate-400 dark:text-zinc-500">{existingPatientPending.patient.full_name} · {existingPatientPending.patient.phone}</p>
+            <div className="mt-4 flex gap-2 justify-start">
+              <button
+                type="button"
+                onClick={() => resolveExistingPatient(true)}
+                className="rounded-xl bg-slate-900 dark:bg-zinc-100 px-4 py-2 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-slate-800 dark:hover:bg-white"
+              >
+                עדכן לקוח קיים
+              </button>
+              <button
+                type="button"
+                onClick={() => resolveExistingPatient(false)}
+                className="rounded-xl border border-slate-200 dark:border-zinc-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800"
+              >
+                צור רשומה חדשה
+              </button>
+              <button
+                type="button"
+                onClick={() => setExistingPatientPending(null)}
+                className="rounded-xl border border-slate-200 dark:border-zinc-600 px-4 py-2 text-sm text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800"
+              >
+                ביטול
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {appointmentLead && (
         <ScheduleAppointmentModal

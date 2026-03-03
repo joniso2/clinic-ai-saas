@@ -68,9 +68,9 @@ export function EditLeadModal({
         className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-lg rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 shadow-2xl">
+      <div className="relative w-full max-w-lg rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 shadow-2xl text-right" dir="rtl">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-4">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-zinc-100 text-right">ערוך ליד</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-zinc-100">ערוך ליד</h2>
           <button
             type="button"
             onClick={onClose}
@@ -82,47 +82,48 @@ export function EditLeadModal({
         </div>
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 text-right">שם</label>
+            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300">שם</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/70 px-3 py-2 text-sm text-slate-900 dark:text-zinc-100 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
+              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/70 px-3 py-2 text-sm text-slate-900 dark:text-zinc-100 text-right focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 text-right">אימייל</label>
+            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300">אימייל</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/70 px-3 py-2 text-sm text-slate-900 dark:text-zinc-100 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
+              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/70 px-3 py-2 text-sm text-slate-900 dark:text-zinc-100 text-right focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 text-right">טלפון</label>
+            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300">טלפון</label>
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/70 px-3 py-2 text-sm text-slate-900 dark:text-zinc-100 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
+              dir="ltr"
+              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/70 px-3 py-2 text-sm text-slate-900 dark:text-zinc-100 text-right focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 text-right">עניין</label>
+            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300">עניין</label>
             <input
               type="text"
               value={interest}
               onChange={(e) => setInterest(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/70 px-3 py-2 text-sm text-slate-900 dark:text-zinc-100 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
+              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/70 px-3 py-2 text-sm text-slate-900 dark:text-zinc-100 text-right focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 text-right">סטטוס</label>
+            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300">סטטוס</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as LeadStatus)}
-              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/70 px-3 py-2 text-sm text-slate-900 dark:text-zinc-100 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500 text-right"
+              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/70 px-3 py-2 text-sm text-slate-900 dark:text-zinc-100 text-right focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
             >
               <option value="Pending">ממתין</option>
               <option value="Contacted">נוצר קשר</option>
@@ -131,20 +132,20 @@ export function EditLeadModal({
               <option value="Disqualified">הוסר</option>
             </select>
           </div>
-          <div className="flex justify-start gap-3 pt-4 flex-row-reverse">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2 text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700"
-            >
-              ביטול
-            </button>
+          <div className="flex justify-start gap-3 pt-4">
             <button
               type="submit"
               disabled={loading}
               className="rounded-xl bg-slate-900 dark:bg-zinc-100 px-4 py-2 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-slate-800 dark:hover:bg-white disabled:opacity-60"
             >
               {loading ? 'שומר…' : 'שמור שינויים'}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2 text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700"
+            >
+              ביטול
             </button>
           </div>
         </form>

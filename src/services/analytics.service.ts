@@ -114,7 +114,14 @@ function isContactedStage(status: string | null): boolean {
   return status === 'Contacted' || isAppointmentStage(status);
 }
 
-// ─── Discord Revenue ─────────────────────────────────────────────────────────
+// ─── Revenue (closed leads — all sources) ───────────────────────────────────
+
+/** Total revenue from all closed/converted leads in the period (for "הכנסה פוטנציאלית" KPI). */
+function computeClosedRevenue(leads: AnalyticsLeadRow[]): number {
+  return leads
+    .filter((l) => isConverted(l.status))
+    .reduce((sum, l) => sum + (l.estimated_deal_value ?? 0), 0);
+}
 
 function computeDiscordRevenue(leads: AnalyticsLeadRow[]): number {
   return leads
@@ -123,15 +130,16 @@ function computeDiscordRevenue(leads: AnalyticsLeadRow[]): number {
 }
 
 /**
- * Build a 7-point sparkline of Discord revenue per day (most recent 7 days of range).
+ * Build a 7-point sparkline of closed revenue per day (most recent 7 days of range).
+ * Uses created_at for day assignment; value from closed leads in that period.
  */
-function computeDiscordSparkline(leads: AnalyticsLeadRow[], toDate: Date): number[] {
+function computeClosedRevenueSparkline(leads: AnalyticsLeadRow[], toDate: Date): number[] {
   return Array.from({ length: 7 }, (_, i) => {
     const day = new Date(toDate);
     day.setDate(day.getDate() - (6 - i));
     const dayStr = day.toDateString();
     return leads
-      .filter((l) => l.source === 'discord' && new Date(l.created_at).toDateString() === dayStr)
+      .filter((l) => isConverted(l.status) && new Date(l.created_at).toDateString() === dayStr)
       .reduce((sum, l) => sum + (l.estimated_deal_value ?? 0), 0);
   });
 }
@@ -364,8 +372,8 @@ export async function getAnalytics(
     prevRange.to,
   );
 
-  const currentDiscordRevenue  = computeDiscordRevenue(currentLeads);
-  const previousDiscordRevenue = computeDiscordRevenue(prevLeads ?? []);
+  const currentDiscordRevenue  = computeClosedRevenue(currentLeads);
+  const previousDiscordRevenue = computeClosedRevenue(prevLeads ?? []);
   const revenueChangePct =
     previousDiscordRevenue > 0
       ? Math.round(((currentDiscordRevenue - previousDiscordRevenue) / previousDiscordRevenue) * 100)
@@ -395,7 +403,7 @@ export async function getAnalytics(
   const efficiency    = computeEfficiency(currentLeads, range.to);
   const funnel        = computeFunnel(currentLeads);
   const sourceTable   = computeSourceTable(currentLeads);
-  const sparkline     = computeDiscordSparkline(currentLeads, new Date(range.to));
+  const sparkline     = computeClosedRevenueSparkline(currentLeads, new Date(range.to));
   const leadsPerDay   = computeLeadsPerDay(currentLeads, range.from, range.to);
 
   const discordRevenue: KPIDiscordRevenue = {

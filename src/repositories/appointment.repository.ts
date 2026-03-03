@@ -18,6 +18,11 @@ export type CreateAppointmentPayload = {
   datetime: string; // ISO with timezone, e.g. "2026-02-27T10:00:00+02:00"
   type: AppointmentType;
   lead_id?: string | null;
+  patient_id?: string | null;
+  status?: 'scheduled' | 'completed' | 'cancelled';
+  revenue?: number | null;
+  service_name?: string | null;
+  notes?: string | null;
   // Intelligence fields
   appointment_summary?: string | null;
   urgency_level?: 'low' | 'medium' | 'high' | null;
@@ -89,14 +94,45 @@ export async function createAppointment(
   payload: CreateAppointmentPayload,
 ): Promise<{ data: Appointment | null; error: unknown }> {
   const supabase = getSupabaseAdminClient();
+  const insertPayload: Record<string, unknown> = { ...payload };
+  if (payload.patient_id !== undefined) insertPayload.patient_id = payload.patient_id;
+  if (payload.status !== undefined) insertPayload.status = payload.status;
+  if (payload.revenue !== undefined) insertPayload.revenue = payload.revenue;
+  if (payload.service_name !== undefined) insertPayload.service_name = payload.service_name;
+  if (payload.notes !== undefined) insertPayload.notes = payload.notes;
   const { data, error } = await supabase
     .from('appointments')
-    .insert(payload)
+    .insert(insertPayload)
     .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id, appointment_summary, urgency_level, priority_level')
     .single();
 
   if (error) return { data: null, error };
   return { data: data as Appointment, error: null };
+}
+
+export type CompletedAppointmentRow = {
+  id: string;
+  datetime: string;
+  service_name: string | null;
+  revenue: number | null;
+  notes: string | null;
+};
+
+/** Fetch completed appointments for a patient (for customer timeline). */
+export async function getCompletedAppointmentsByPatientId(
+  patientId: string,
+  clinicId: string,
+): Promise<{ data: CompletedAppointmentRow[]; error: unknown }> {
+  const supabase = getSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from('appointments')
+    .select('id, datetime, service_name, revenue, notes')
+    .eq('patient_id', patientId)
+    .eq('clinic_id', clinicId)
+    .eq('status', 'completed')
+    .order('datetime', { ascending: false });
+  if (error) return { data: [], error };
+  return { data: (data ?? []) as CompletedAppointmentRow[], error: null };
 }
 
 /** Delete an appointment by id + clinicId (ownership check). Returns the deleted row's lead_id if any. */

@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { Users, BarChart3, Settings as SettingsIcon, Calendar as CalendarIcon, Menu, DollarSign, LayoutDashboard, Building2, Link2, Activity, Brain } from 'lucide-react';
+import { Users, BarChart3, Settings as SettingsIcon, Calendar as CalendarIcon, Menu, DollarSign, LayoutDashboard, Building2, Link2, Activity, Brain, UserCheck } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { useEffect, useRef, useState } from 'react';
 import MobileDrawer from '@/components/dashboard/MobileDrawer';
@@ -10,6 +10,7 @@ import BottomNav from '@/components/dashboard/BottomNav';
 
 const NAV_ITEMS = [
   { id: 'leads',     label: 'לידים',     icon: Users,         href: '/dashboard' },
+  { id: 'customers', label: 'לקוחות',    icon: UserCheck,     href: '/dashboard/customers' },
   { id: 'calendar',  label: 'תורים',    icon: CalendarIcon,  href: '/dashboard/calendar' },
   { id: 'analytics', label: 'אנליטיקה', icon: BarChart3,      href: '/dashboard/analytics' },
   { id: 'pricing',   label: 'תמחור',    icon: DollarSign,    href: '/dashboard/pricing' },

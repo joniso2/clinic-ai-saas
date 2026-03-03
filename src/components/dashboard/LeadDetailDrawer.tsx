@@ -77,9 +77,9 @@ function PhoneContactModal({ phone, onClose }: { phone: string; onClose: () => v
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
-      <div className="relative w-full max-w-xs rounded-2xl border border-slate-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-900 shadow-xl dark:shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+      <div className="relative w-full max-w-xs rounded-2xl border border-slate-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-900 shadow-xl dark:shadow-2xl animate-in fade-in zoom-in-95 duration-150 text-right" dir="rtl">
         <div className="px-5 py-4 border-b border-slate-100 dark:border-zinc-800">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100 text-right">יצירת קשר</h2>
+          <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">יצירת קשר</h2>
         </div>
         <div className="px-5 py-4 space-y-2.5">
           <a
@@ -256,8 +256,8 @@ export function LeadDetailDrawer({
         aria-modal="true"
         aria-label="פרטי ליד"
       >
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 px-6 py-4 flex-row-reverse">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-zinc-100">פרטי ליד</h2>
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 px-6 py-4">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-zinc-100 text-right">פרטי ליד</h2>
           <button
             type="button"
             onClick={onClose}
@@ -268,9 +268,9 @@ export function LeadDetailDrawer({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className="flex-1 overflow-y-auto px-6 py-5 text-right">
           <div className="space-y-6">
-            <div className="text-right">
+            <div>
               <h3 className="text-xl font-semibold text-slate-900 dark:text-zinc-100">
                 {lead.full_name || 'ליד ללא שם'}
               </h3>
@@ -295,18 +295,18 @@ export function LeadDetailDrawer({
               <div className="space-y-5">
                 {lead.email && (
                   <div className="space-y-1.5 text-right">
-                    <div className="flex items-center gap-2 justify-end">
-                      <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">אימייל</span>
+                    <div className="flex items-center gap-2 justify-start">
                       <Mail className="h-4 w-4 shrink-0 text-slate-400 dark:text-zinc-500" />
+                      <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">אימייל</span>
                     </div>
                     <p className="text-sm font-semibold text-slate-900 dark:text-zinc-100 break-all">{lead.email}</p>
                   </div>
                 )}
                 {lead.phone && (
                   <div className="space-y-1.5 text-right">
-                    <div className="flex items-center gap-2 justify-end">
-                      <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">טלפון</span>
+                    <div className="flex items-center gap-2 justify-start">
                       <Phone className="h-4 w-4 shrink-0 text-slate-400 dark:text-zinc-500" />
+                      <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">טלפון</span>
                     </div>
                     <p className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
                       <button
@@ -321,18 +321,18 @@ export function LeadDetailDrawer({
                 )}
                 {lead.interest && (
                   <div className="space-y-1.5 text-right">
-                    <div className="flex items-center gap-2 justify-end">
-                      <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">עניין</span>
+                    <div className="flex items-center gap-2 justify-start">
                       <Tag className="h-4 w-4 shrink-0 text-slate-400 dark:text-zinc-500" />
+                      <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">עניין</span>
                     </div>
                     <p className="text-sm font-semibold text-slate-900 dark:text-zinc-100">{lead.interest}</p>
                   </div>
                 )}
                 {(lead.estimated_deal_value ?? 0) > 0 && (
                   <div className="space-y-1.5 text-right">
-                    <div className="flex items-center gap-2 justify-end">
-                      <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">שווי עסקה</span>
+                    <div className="flex items-center gap-2 justify-start">
                       <DollarSign className="h-4 w-4 shrink-0 text-slate-400 dark:text-zinc-500" />
+                      <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">שווי עסקה</span>
                     </div>
                     <p className="text-sm font-semibold text-slate-900 dark:text-zinc-100">{formatCurrencyILS(lead.estimated_deal_value!)}</p>
                   </div>
@@ -341,26 +341,26 @@ export function LeadDetailDrawer({
               {/* Left column (second in DOM for RTL): נוצר, קשר אחרון, מעקב הבא */}
               <div className="space-y-5">
                 <div className="space-y-1.5 text-right">
-                  <div className="flex items-center gap-2 justify-end">
-                    <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">נוצר בתאריך</span>
+                  <div className="flex items-center gap-2 justify-start">
                     <Calendar className="h-4 w-4 shrink-0 text-slate-400 dark:text-zinc-500" />
+                    <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">נוצר בתאריך</span>
                   </div>
                   <p className="text-sm font-semibold text-slate-900 dark:text-zinc-100">{formatDateDDMMYYYY(lead.created_at)}</p>
                 </div>
                 {lead.last_contact_date && (
                   <div className="space-y-1.5 text-right">
-                    <div className="flex items-center gap-2 justify-end">
-                      <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">קשר אחרון</span>
+                    <div className="flex items-center gap-2 justify-start">
                       <Calendar className="h-4 w-4 shrink-0 text-slate-400 dark:text-zinc-500" />
+                      <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">קשר אחרון</span>
                     </div>
                     <p className="text-sm font-semibold text-slate-900 dark:text-zinc-100">{formatDateDDMMYYYY(lead.last_contact_date)}</p>
                   </div>
                 )}
                 {lead.next_follow_up_date && (
                   <div className="space-y-1.5 text-right">
-                    <div className="flex items-center gap-2 justify-end">
-                      <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">מעקב הבא</span>
+                    <div className="flex items-center gap-2 justify-start">
                       <Calendar className="h-4 w-4 shrink-0 text-slate-400 dark:text-zinc-500" />
+                      <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">מעקב הבא</span>
                     </div>
                     <p className="text-sm font-semibold text-slate-900 dark:text-zinc-100">{formatDateDDMMYYYY(lead.next_follow_up_date)}</p>
                   </div>

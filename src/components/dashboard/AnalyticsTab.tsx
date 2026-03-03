@@ -48,7 +48,7 @@ async function fetchAnalytics(
   } else {
     url = `/api/analytics?preset=${preset}`;
   }
-  const res = await fetch(url, { credentials: 'include' });
+  const res = await fetch(url, { credentials: 'include', cache: 'no-store' });
   if (!res.ok) return null;
   const json = await res.json() as { analytics?: AnalyticsData };
   return json.analytics ?? null;

@@ -6,10 +6,11 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import Link from 'next/link';
 import {
   Search, Plus, LogIn, UserPlus, Key, Power, PowerOff,
   Trash2, Pencil, X, Copy, Building2, ChevronDown,
-  ShieldOff, Shield, Users, AlertTriangle,
+  ShieldOff, Shield, Users, AlertTriangle, UserCheck,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -577,6 +578,12 @@ export default function TenantManagementSection() {
                 {drawerTenant && <StatusBadge status={drawerTenant.status} />}
               </div>
               <div className="flex items-center gap-2">
+                <Link
+                  href={`/dashboard/super-admin/clinics/${drawerId}/customers`}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
+                >
+                  <UserCheck className="h-4 w-4" />לקוחות
+                </Link>
                 <button type="button" onClick={() => handleImpersonate(drawerId)} disabled={!!actingUser}
                   className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium bg-indigo-900/40 hover:bg-indigo-800/60 text-indigo-300 transition-colors">
                   <LogIn className="h-4 w-4" />כניסה כלקוח
