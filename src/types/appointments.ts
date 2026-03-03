@@ -8,6 +8,7 @@ export type Appointment = {
   type: AppointmentType;
   created_at: string;
   lead_id?: string | null;
+  duration_minutes: number;
   // Intelligence fields
   appointment_summary?: string | null;
   urgency_level?: 'low' | 'medium' | 'high' | null;

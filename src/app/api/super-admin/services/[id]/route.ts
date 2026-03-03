@@ -20,7 +20,7 @@ export async function PATCH(
   const { id } = await params;
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
 
-  let body: { service_name?: string; price?: number; aliases?: string[]; is_active?: boolean };
+  let body: { service_name?: string; price?: number; aliases?: string[]; is_active?: boolean; duration_minutes?: number };
   try {
     body = await req.json();
   } catch {
@@ -33,6 +33,7 @@ export async function PATCH(
   if (body.price !== undefined) updates.price = Number(body.price);
   if (body.aliases !== undefined) updates.aliases = Array.isArray(body.aliases) ? body.aliases : [];
   if (body.is_active !== undefined) updates.is_active = Boolean(body.is_active);
+  if (body.duration_minutes !== undefined) updates.duration_minutes = Number(body.duration_minutes);
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
   }
@@ -41,7 +42,7 @@ export async function PATCH(
     .from('clinic_services')
     .update(updates)
     .eq('id', id)
-    .select('id, service_name, price, aliases, is_active')
+    .select('id, service_name, price, aliases, is_active, duration_minutes')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

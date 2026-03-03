@@ -27,6 +27,7 @@ export default function TenantServicesOverrideSection({
   const [formName, setFormName] = useState('');
   const [formPrice, setFormPrice] = useState('');
   const [formAliases, setFormAliases] = useState('');
+  const [formDurationMinutes, setFormDurationMinutes] = useState('30');
   const [formActive, setFormActive] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -84,6 +85,7 @@ export default function TenantServicesOverrideSection({
     setFormName('');
     setFormPrice('');
     setFormAliases('');
+    setFormDurationMinutes('30');
     setFormActive(true);
     setModal('add');
   };
@@ -93,12 +95,15 @@ export default function TenantServicesOverrideSection({
     setFormName(s.service_name);
     setFormPrice(String(s.price));
     setFormAliases((s.aliases ?? []).join(', '));
+    setFormDurationMinutes(String(s.duration_minutes ?? 30));
     setFormActive(s.is_active);
     setModal('edit');
   };
 
   const saveService = async () => {
     if (!selectedTenantId || !formName.trim()) return;
+    const duration = formDurationMinutes.trim() === '' ? 30 : Number(formDurationMinutes);
+    if (duration < 15 || duration % 15 !== 0) return;
     const aliases = formAliases
       .split(',')
       .map((x) => x.trim())
@@ -115,6 +120,7 @@ export default function TenantServicesOverrideSection({
             price: Number(formPrice),
             aliases,
             is_active: formActive,
+            duration_minutes: duration,
           }),
         });
         if (!res.ok) {
@@ -131,6 +137,7 @@ export default function TenantServicesOverrideSection({
             price: Number(formPrice),
             aliases,
             is_active: formActive,
+            duration_minutes: duration,
           }),
         });
         if (!res.ok) {
@@ -214,10 +221,12 @@ export default function TenantServicesOverrideSection({
           name={formName}
           price={formPrice}
           aliases={formAliases}
+          durationMinutes={formDurationMinutes}
           active={formActive}
           onNameChange={setFormName}
           onPriceChange={setFormPrice}
           onAliasesChange={setFormAliases}
+          onDurationMinutesChange={setFormDurationMinutes}
           onActiveChange={setFormActive}
           onSave={saveService}
           onClose={() => { setModal(null); setEditingService(null); }}

@@ -106,6 +106,7 @@ client.on(Events.MessageCreate, async (message) => {
     }
 
     const payload = {
+      message_id: message.id,
       content,
       author_name: message.author.username,
       channel_id: message.channel.id,

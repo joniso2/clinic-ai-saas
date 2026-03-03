@@ -22,6 +22,7 @@ export type CreateAppointmentPayload = {
   status?: 'scheduled' | 'completed' | 'cancelled';
   revenue?: number | null;
   service_name?: string | null;
+  duration_minutes?: number;
   notes?: string | null;
   // Intelligence fields
   appointment_summary?: string | null;
@@ -41,7 +42,7 @@ export async function getAppointmentsByMonth(
 
   const { data, error } = await supabase
     .from('appointments')
-    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id')
+    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id, duration_minutes')
     .eq('clinic_id', clinicId)
     .gte('datetime', start)
     .lt('datetime', end)
@@ -60,7 +61,7 @@ export async function getAppointmentsInRange(
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
     .from('appointments')
-    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id')
+    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id, duration_minutes')
     .eq('clinic_id', clinicId)
     .gte('datetime', startIso)
     .lt('datetime', endIso)
@@ -78,7 +79,7 @@ export async function getLastAppointmentForPatient(
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
     .from('appointments')
-    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id')
+    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id, duration_minutes')
     .eq('clinic_id', clinicId)
     .ilike('patient_name', patientName.trim())
     .order('datetime', { ascending: false })
@@ -100,10 +101,11 @@ export async function createAppointment(
   if (payload.revenue !== undefined) insertPayload.revenue = payload.revenue;
   if (payload.service_name !== undefined) insertPayload.service_name = payload.service_name;
   if (payload.notes !== undefined) insertPayload.notes = payload.notes;
+  insertPayload.duration_minutes = payload.duration_minutes ?? 30;
   const { data, error } = await supabase
     .from('appointments')
     .insert(insertPayload)
-    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id, appointment_summary, urgency_level, priority_level')
+    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id, duration_minutes, appointment_summary, urgency_level, priority_level')
     .single();
 
   if (error) return { data: null, error };

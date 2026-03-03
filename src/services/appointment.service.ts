@@ -1,5 +1,6 @@
 import * as appointmentRepo from '@/repositories/appointment.repository';
 import type { Appointment, AppointmentType, ScheduleResult } from '@/types/appointments';
+import logger from '@/lib/logger';
 
 // ─── Clinic constants (used as fallback defaults) ───────────────────────────
 const CLINIC_OPEN_HOUR    = 8;   // 08:00 Israel time
@@ -257,7 +258,7 @@ export async function scheduleAppointment(params: ScheduleAppointmentParams): Pr
   );
 
   if (existing && existing.length > 0) {
-    console.log('[AppointmentService] blocked: slot taken —', existing.map(a => a.datetime));
+    logger.warn('slot_taken', { clinic_id: clinicId, datetimes: existing.map((a) => a.datetime), service: 'appointment.service' });
     const suggestions = await suggestClosestAvailable(
       clinicId,
       addMinutes(requestedDate, slotMins),
@@ -267,7 +268,7 @@ export async function scheduleAppointment(params: ScheduleAppointmentParams): Pr
     return { status: 'unavailable', suggestions };
   }
 
-  // 5. Create the appointment
+  // 5. Create the appointment (INSERT is source of truth; pre-check is for suggestions only)
   const { data, error } = await appointmentRepo.createAppointment({
     clinic_id:    clinicId,
     patient_name: patientName,
@@ -277,12 +278,32 @@ export async function scheduleAppointment(params: ScheduleAppointmentParams): Pr
   });
 
   if (error || !data) {
+    if (isSlotUniqueViolation(error)) {
+      const suggestions = await suggestClosestAvailable(clinicId, requestedDate, 3, config);
+      return { status: 'unavailable', suggestions };
+    }
     console.error('[AppointmentService] create failed:', error);
     const suggestions = await suggestClosestAvailable(clinicId, requestedDate, 3, config);
     return { status: 'unavailable', suggestions };
   }
 
+  logger.info('booking_created', {
+    clinic_id: clinicId,
+    appointment_id: data.id,
+    datetime: data.datetime,
+    duration_minutes: slotMins,
+    service: 'appointment.service',
+  });
   return { status: 'confirmed', appointment: data };
+}
+
+/** True if error is PostgreSQL unique_violation (23505) or our slot constraint. */
+function isSlotUniqueViolation(err: unknown): boolean {
+  if (err == null || typeof err !== 'object') return false;
+  const o = err as { code?: string; message?: string };
+  if (o.code === '23505') return true;
+  if (typeof o.message === 'string' && o.message.includes('appointments_unique_slot')) return true;
+  return false;
 }
 
 /** Format an ISO datetime string for display in Israel time. */

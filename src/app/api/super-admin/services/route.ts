@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from('clinic_services')
-    .select('id, clinic_id, service_name, price, aliases, is_active, created_at')
+    .select('id, clinic_id, service_name, price, aliases, is_active, duration_minutes, created_at')
     .eq('clinic_id', clinicId)
     .order('service_name');
 
@@ -33,16 +33,17 @@ export async function POST(req: NextRequest) {
   const user = await requireSuperAdmin();
   if (!user) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  let body: { clinic_id: string; service_name: string; price: number; aliases?: string[]; is_active?: boolean };
+  let body: { clinic_id: string; service_name: string; price: number; aliases?: string[]; is_active?: boolean; duration_minutes?: number };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
-  const { clinic_id, service_name, price, aliases, is_active } = body;
+  const { clinic_id, service_name, price, aliases, is_active, duration_minutes } = body;
   if (!clinic_id || !service_name || price == null) {
     return NextResponse.json({ error: 'clinic_id, service_name, price required' }, { status: 400 });
   }
+  const duration = duration_minutes != null ? Number(duration_minutes) : 30;
 
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
@@ -53,8 +54,9 @@ export async function POST(req: NextRequest) {
       price: Number(price),
       aliases: Array.isArray(aliases) ? aliases : [],
       is_active: is_active !== false,
+      duration_minutes: duration,
     })
-    .select('id, clinic_id, service_name, price, aliases, is_active')
+    .select('id, clinic_id, service_name, price, aliases, is_active, duration_minutes')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

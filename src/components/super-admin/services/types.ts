@@ -12,5 +12,6 @@ export interface ServiceRow {
   price: number;
   aliases: string[];
   is_active: boolean;
+  duration_minutes?: number;
   created_at?: string;
 }

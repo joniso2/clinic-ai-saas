@@ -9,10 +9,12 @@ interface ServiceFormModalProps {
   name: string;
   price: string;
   aliases: string;
+  durationMinutes: string;
   active: boolean;
   onNameChange: (v: string) => void;
   onPriceChange: (v: string) => void;
   onAliasesChange: (v: string) => void;
+  onDurationMinutesChange: (v: string) => void;
   onActiveChange: (v: boolean) => void;
   onSave: () => void;
   onClose: () => void;
@@ -24,15 +26,20 @@ export function ServiceFormModal({
   name,
   price,
   aliases,
+  durationMinutes,
   active,
   onNameChange,
   onPriceChange,
   onAliasesChange,
+  onDurationMinutesChange,
   onActiveChange,
   onSave,
   onClose,
   saving,
 }: ServiceFormModalProps) {
+  const d = durationMinutes.trim() === '' ? null : Number(durationMinutes);
+  const durationValid = d != null && d >= 15 && d % 15 === 0;
+  const canSave = name.trim() && durationValid;
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
@@ -74,6 +81,23 @@ export function ServiceFormModal({
             />
           </div>
           <div>
+            <label htmlFor="svc-duration" className="block text-xs font-medium text-zinc-400 mb-1">
+              משך זמן (בדקות)
+            </label>
+            <input
+              id="svc-duration"
+              type="number"
+              min={15}
+              step={15}
+              value={durationMinutes}
+              onChange={(e) => onDurationMinutesChange(e.target.value)}
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 focus:border-indigo-500 focus:outline-none"
+            />
+            {durationMinutes.trim() !== '' && !durationValid && (
+              <p className="mt-1 text-xs text-amber-400">מינימום 15, בקפיצות של 15</p>
+            )}
+          </div>
+          <div>
             <label htmlFor="svc-aliases" className="block text-xs font-medium text-zinc-400 mb-1">
               שגיאות כתיב / מילים נרדפות (מופרדות בפסיק)
             </label>
@@ -106,7 +130,7 @@ export function ServiceFormModal({
           <button
             type="button"
             onClick={onSave}
-            disabled={saving || !name.trim()}
+            disabled={saving || !canSave}
             className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold disabled:opacity-50 transition-colors"
           >
             {saving ? 'שומר…' : mode === 'add' ? 'הוסף' : 'שמור'}
