@@ -4,11 +4,11 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Search,
-  MoreHorizontal,
   Pencil,
   Trash2,
   Eye,
   Phone,
+  Plus,
   Calendar as CalendarIcon,
   ChevronDown,
   X,
@@ -90,6 +90,41 @@ function FilterDropdown<T extends string>({
         </ul>
       )}
     </div>
+  );
+}
+
+// Compact icon-only action button for table row (RTL-safe, no row height change)
+function ActionIconButton({
+  icon: Icon,
+  label,
+  variant,
+  onClick,
+  disabled,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  variant: 'view' | 'edit' | 'call' | 'more';
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  const base = 'inline-flex items-center justify-center rounded-lg px-2 py-1 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-slate-400/30 dark:focus:ring-zinc-500/50';
+  const variants = {
+    view: 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700',
+    edit: 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40',
+    call: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 hover:shadow-sm active:scale-95',
+    more: 'bg-transparent text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800',
+  };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={label}
+      aria-label={label}
+      className={`${base} ${variants[variant]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+    >
+      <Icon className="h-3.5 w-3.5 shrink-0" />
+    </button>
   );
 }
 
@@ -354,6 +389,7 @@ export function LeadsTable({
   onMarkContacted,
   onScheduleFollowUp,
   onScheduleAppointment,
+  onUpdateDealValue,
   nextAppointmentsByLeadId,
   onRejectLead,
 }: {
@@ -365,6 +401,7 @@ export function LeadsTable({
   onMarkContacted: (leadId: string) => void;
   onScheduleFollowUp: (leadId: string) => void;
   onScheduleAppointment: (lead: Lead) => void;
+  onUpdateDealValue?: (leadId: string, value: number) => Promise<string | null>;
   nextAppointmentsByLeadId?: Record<string, string | undefined>;
   onRejectLead?: (leadId: string, reason: string) => void;
 }) {
@@ -375,12 +412,13 @@ export function LeadsTable({
   const [openFilter, setOpenFilter] = useState<'priority' | 'status' | 'sort' | null>(null);
   const [sortDesc, setSortDesc] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [rowMenuId, setRowMenuId] = useState<string | null>(null);
-  const [rowMenuCoords, setRowMenuCoords] = useState<{ top: number; left: number } | null>(null);
   const [pendingReviewLead, setPendingReviewLead] = useState<Lead | null>(null);
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<string | null>(null);
   const [phoneModalPhone, setPhoneModalPhone] = useState<string | null>(null);
+  const [dealValueLeadId, setDealValueLeadId] = useState<string | null>(null);
+  const [dealValueInput, setDealValueInput] = useState('');
+  const [dealValueSaving, setDealValueSaving] = useState(false);
   const router = useRouter();
 
   const isDisqualifiedView = statusFilter === 'Disqualified';
@@ -660,7 +698,21 @@ export function LeadsTable({
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right text-sm tabular-nums text-slate-700 dark:text-zinc-300 align-middle">
-                      {(lead.estimated_deal_value ?? 0) > 0 ? formatCurrencyILS(lead.estimated_deal_value!) : <span className="text-xs italic text-slate-400 dark:text-zinc-500/80">אין שווי</span>}
+                      {(lead.estimated_deal_value ?? 0) > 0 ? (
+                        formatCurrencyILS(lead.estimated_deal_value!)
+                      ) : onUpdateDealValue ? (
+                        <button
+                          type="button"
+                          onClick={() => { setDealValueLeadId(lead.id); setDealValueInput(''); }}
+                          title="הוסף שווי"
+                          aria-label="הוסף שווי"
+                          className="inline-flex items-center justify-center rounded-lg border border-dashed border-emerald-400/70 dark:border-emerald-500/50 bg-emerald-50/80 dark:bg-emerald-950/40 px-2.5 py-1 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/30"
+                        >
+                          <Plus className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
+                        </button>
+                      ) : (
+                        <span className="text-xs italic text-slate-400 dark:text-zinc-500/80">אין שווי</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right align-middle">
                       {lead.status === 'Pending' ? (
@@ -687,14 +739,26 @@ export function LeadsTable({
                     <td className="whitespace-nowrap px-4 py-3 text-xs tabular-nums text-slate-600 dark:text-zinc-400 text-right align-middle">
                       {lead.next_follow_up_date ? formatDateDDMMYYYY(lead.next_follow_up_date) : <span className="italic text-slate-400 dark:text-zinc-500/80">אין מעקב</span>}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs tabular-nums text-slate-600 dark:text-zinc-400 text-right align-middle">
-                      {nextAppointmentsByLeadId?.[lead.id]
-                        ? new Intl.DateTimeFormat('he-IL', {
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-right align-middle">
+                      {nextAppointmentsByLeadId?.[lead.id] ? (
+                        <span className="tabular-nums text-slate-600 dark:text-zinc-400">
+                          {new Intl.DateTimeFormat('he-IL', {
                             timeZone: 'Asia/Jerusalem',
                             day: '2-digit', month: '2-digit', year: 'numeric',
                             hour: '2-digit', minute: '2-digit', hour12: false,
-                          }).format(new Date(nextAppointmentsByLeadId[lead.id]!))
-                        : <span className="italic text-slate-400 dark:text-zinc-500/80">לא נקבע</span>}
+                          }).format(new Date(nextAppointmentsByLeadId[lead.id]!))}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => onScheduleAppointment(lead)}
+                          title="קבע תור"
+                          aria-label="קבע תור"
+                          className="inline-flex items-center justify-center rounded-lg border border-dashed border-emerald-400/70 dark:border-emerald-500/50 bg-emerald-50/80 dark:bg-emerald-950/40 px-2.5 py-1 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/30"
+                        >
+                          <Plus className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
+                        </button>
+                      )}
                     </td>
                     {isDisqualifiedView && (
                       <>
@@ -707,120 +771,17 @@ export function LeadsTable({
                       </>
                     )}
                     <td className="relative px-4 py-3 align-middle">
-                      <div className="flex items-center justify-end gap-2 flex-row-reverse">
-                        <button
-                          type="button"
-                          onClick={() => onView(lead)}
-                          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-zinc-700 dark:hover:text-zinc-100 transition-colors duration-150"
-                          title="צפייה"
-                        >
-                          <Eye className="h-3.5 w-3.5 shrink-0" />
-                          <span className="hidden sm:inline">צפייה</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => onEdit(lead)}
-                          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-zinc-700 dark:hover:text-zinc-100 transition-colors duration-150"
-                          title="עריכה"
-                        >
-                          <Pencil className="h-3.5 w-3.5 shrink-0" />
-                          <span className="hidden sm:inline">עריכה</span>
-                        </button>
-                        {lead.phone && (
-                          <button
-                            type="button"
+                      <div className="flex items-center justify-end w-full opacity-70 transition-opacity duration-200 group-hover:opacity-100 min-h-0" dir="rtl">
+                        <div className="flex items-center gap-1 shrink-0" dir="ltr">
+                          <ActionIconButton icon={Eye} label="צפייה" variant="view" onClick={() => onView(lead)} />
+                          <ActionIconButton
+                            icon={Phone}
+                            label="חיוג"
+                            variant="call"
                             onClick={() => setPhoneModalPhone(lead.phone!)}
-                            className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-zinc-700 dark:hover:text-zinc-100 transition-colors duration-150"
-                            title="חיוג"
-                          >
-                            <Phone className="h-3.5 w-3.5 shrink-0" />
-                            <span className="hidden sm:inline">חיוג</span>
-                          </button>
-                        )}
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              if (rowMenuId === lead.id) {
-                                setRowMenuId(null);
-                                setRowMenuCoords(null);
-                                return;
-                              }
-                              const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                              const estimatedMenuHeight = 220;
-                              const viewportHeight = window.innerHeight;
-                              let top = rect.bottom + window.scrollY;
-                              if (top + estimatedMenuHeight > window.scrollY + viewportHeight - 8) {
-                                top = rect.top + window.scrollY - estimatedMenuHeight;
-                              }
-                              setRowMenuId(lead.id);
-                              setRowMenuCoords({ top, left: rect.right + window.scrollX });
-                            }}
-                            className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-zinc-700 dark:hover:text-zinc-100 transition-colors duration-150"
-                            title="עוד"
-                          >
-                            <MoreHorizontal className="h-3.5 w-3.5 shrink-0" />
-                          </button>
-                          {rowMenuId === lead.id && rowMenuCoords && (
-                            <>
-                              <div
-                                className="fixed inset-0 z-10"
-                                onClick={() => { setRowMenuId(null); setRowMenuCoords(null); }}
-                                aria-hidden="true"
-                              />
-                              <div
-                                className="fixed z-20 w-48 rounded-xl border border-slate-200 bg-white dark:border-zinc-700/60 dark:bg-zinc-900 py-1 shadow-lg shadow-slate-200/60 dark:shadow-2xl dark:shadow-black/40 ring-1 ring-slate-900/[0.06] dark:ring-black/20"
-                                style={{ top: rowMenuCoords.top, left: rowMenuCoords.left - 192 }}
-                              >
-                                <select
-                                  value={lead.status ?? 'Pending'}
-                                  onChange={(e) => {
-                                    onStatusChange(lead.id, e.target.value as LeadStatus);
-                                    setRowMenuId(null);
-                                  }}
-                                  className="w-full border-0 bg-transparent px-3 py-2 text-left text-sm text-slate-700 dark:text-zinc-300 focus:ring-0"
-                                >
-                                  {STATUS_OPTIONS.map((s) => (
-                                    <option key={s} value={s}>{STATUS_LABELS[s] ?? s}</option>
-                                  ))}
-                                </select>
-                                <div className="my-1 border-t border-slate-200 dark:border-zinc-800/60" />
-                                <button
-                                  type="button"
-                                  onClick={() => { onMarkContacted(lead.id); setRowMenuId(null); }}
-                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 transition-colors duration-100"
-                                >
-                                  <Phone className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
-                                  סמן נוצר קשר
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => { onScheduleFollowUp(lead.id); setRowMenuId(null); }}
-                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 transition-colors duration-100"
-                                >
-                                  <CalendarIcon className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
-                                  קבע מעקב
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => { onScheduleAppointment(lead); setRowMenuId(null); }}
-                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 transition-colors duration-100"
-                                >
-                                  <CalendarIcon className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
-                                  קבע תור
-                                </button>
-                                <div className="my-1 border-t border-slate-200 dark:border-zinc-800/60" />
-                                <button
-                                  type="button"
-                                  onClick={() => { onDelete(lead); setRowMenuId(null); }}
-                                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-950/40 dark:hover:text-red-300 transition-colors duration-100"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                  מחק
-                                </button>
-                              </div>
-                            </>
-                          )}
+                            disabled={!lead.phone}
+                          />
+                          <ActionIconButton icon={Pencil} label="עריכה" variant="edit" onClick={() => onEdit(lead)} />
                         </div>
                       </div>
                     </td>
@@ -866,6 +827,56 @@ export function LeadsTable({
           phone={phoneModalPhone}
           onClose={() => setPhoneModalPhone(null)}
         />
+      )}
+
+      {/* Deal Value Modal */}
+      {dealValueLeadId && onUpdateDealValue && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" dir="rtl" role="dialog" aria-modal="true" aria-labelledby="deal-value-title">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl p-5">
+            <h2 id="deal-value-title" className="text-base font-semibold text-slate-900 dark:text-zinc-100 text-right mb-3">הוסף שווי (₪)</h2>
+            <input
+              type="number"
+              min={0}
+              step={1}
+              value={dealValueInput}
+              onChange={(e) => setDealValueInput(e.target.value)}
+              placeholder="הזן סכום"
+              className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 px-4 py-2.5 text-right text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 dark:focus:border-indigo-500"
+              dir="ltr"
+              autoFocus
+            />
+            <div className="flex gap-2 mt-4 justify-end">
+              <button
+                type="button"
+                onClick={() => { setDealValueLeadId(null); setDealValueInput(''); }}
+                disabled={dealValueSaving}
+                className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 rounded-xl border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800 transition"
+              >
+                ביטול
+              </button>
+              <button
+                type="button"
+                disabled={dealValueSaving || !dealValueInput.trim() || Number(dealValueInput) <= 0}
+                onClick={async () => {
+                  const num = Number(dealValueInput);
+                  if (num <= 0) return;
+                  setDealValueSaving(true);
+                  const err = await onUpdateDealValue(dealValueLeadId, num);
+                  setDealValueSaving(false);
+                  if (err) {
+                    setToast(err);
+                    return;
+                  }
+                  setDealValueLeadId(null);
+                  setDealValueInput('');
+                }}
+                className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:pointer-events-none rounded-xl transition"
+              >
+                {dealValueSaving ? 'שומר...' : 'שמור'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Toast */}

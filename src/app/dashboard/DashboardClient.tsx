@@ -258,6 +258,26 @@ export default function DashboardClient() {
     );
   };
 
+  const handleUpdateDealValue = async (leadId: string, value: number) => {
+    const res = await fetch(`/api/leads/${leadId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ estimated_deal_value: value }),
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      return (json as { error?: string }).error ?? 'עדכון נכשל';
+    }
+    setLeads((prev) =>
+      prev.map((l) => (l.id === leadId ? { ...l, estimated_deal_value: value } : l))
+    );
+    setDrawerLead((prev) =>
+      prev?.id === leadId ? { ...prev, estimated_deal_value: value } : prev
+    );
+    return null;
+  };
+
   const refreshNextAppointments = async () => {
     if (!leads.length) return;
     const now = new Date();
@@ -474,6 +494,7 @@ export default function DashboardClient() {
           onMarkContacted={handleMarkContacted}
           onScheduleFollowUp={handleScheduleFollowUp}
           onScheduleAppointment={(lead) => setAppointmentLead(lead)}
+          onUpdateDealValue={handleUpdateDealValue}
           nextAppointmentsByLeadId={nextAppointmentsByLeadId}
           onRejectLead={handleRejectLead}
         />

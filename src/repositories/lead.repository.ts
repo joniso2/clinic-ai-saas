@@ -43,6 +43,7 @@ export type LeadRow = {
   next_follow_up_date?: string | null;
   last_contact_date?: string | null;
   next_appointment?: string | null;
+  estimated_deal_value?: number | null;
   // Intelligence fields
   conversation_summary?: string | null;
   urgency_level?: 'low' | 'medium' | 'high' | null;
@@ -97,7 +98,7 @@ export async function getLeadsByClinicId(clinicId: string): Promise<{
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
     .from('leads')
-    .select('id, clinic_id, full_name, email, phone, interest, status, source, created_at, next_follow_up_date, last_contact_date, next_appointment, conversation_summary, urgency_level, priority_level, sla_deadline, follow_up_recommended_at, callback_recommendation')
+    .select('id, clinic_id, full_name, email, phone, interest, status, source, created_at, next_follow_up_date, last_contact_date, next_appointment, estimated_deal_value, conversation_summary, urgency_level, priority_level, sla_deadline, follow_up_recommended_at, callback_recommendation')
     .eq('clinic_id', clinicId)
     .order('created_at', { ascending: false });
 
@@ -131,7 +132,7 @@ export async function getLeadById(
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
     .from('leads')
-    .select('id, clinic_id, full_name, email, phone, interest, status, source, created_at, next_follow_up_date, last_contact_date, next_appointment, conversation_summary, urgency_level, priority_level, sla_deadline, follow_up_recommended_at, callback_recommendation')
+    .select('id, clinic_id, full_name, email, phone, interest, status, source, created_at, next_follow_up_date, last_contact_date, next_appointment, estimated_deal_value, conversation_summary, urgency_level, priority_level, sla_deadline, follow_up_recommended_at, callback_recommendation')
     .eq('id', leadId)
     .eq('clinic_id', clinicId)
     .maybeSingle();
@@ -182,7 +183,7 @@ export async function getLeadByEmailOrPhone(
 export async function updateLead(
   id: string,
   clinicId: string,
-  data: Partial<Pick<LeadRow, 'full_name' | 'phone' | 'email' | 'interest' | 'status' | 'next_follow_up_date' | 'last_contact_date' | 'next_appointment' | 'conversation_summary' | 'urgency_level' | 'priority_level' | 'sla_deadline' | 'follow_up_recommended_at' | 'callback_recommendation'>> & { reject_reason?: string | null; rejected_at?: string | null }
+  data: Partial<Pick<LeadRow, 'full_name' | 'phone' | 'email' | 'interest' | 'status' | 'next_follow_up_date' | 'last_contact_date' | 'next_appointment' | 'estimated_deal_value' | 'conversation_summary' | 'urgency_level' | 'priority_level' | 'sla_deadline' | 'follow_up_recommended_at' | 'callback_recommendation'>> & { reject_reason?: string | null; rejected_at?: string | null }
 ): Promise<{ error: unknown }> {
   const supabase = getSupabaseAdminClient();
   const { error } = await supabase

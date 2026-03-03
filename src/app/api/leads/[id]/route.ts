@@ -61,6 +61,7 @@ export async function PUT(
     interest: string;
     status: string;
     next_follow_up_date: string | null;
+    estimated_deal_value: number | null;
   }>;
 
   const hasFollowUpChange = 'next_follow_up_date' in data;
