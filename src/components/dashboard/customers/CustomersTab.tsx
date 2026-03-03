@@ -51,15 +51,6 @@ function formatDate(value: string | null): string {
   return d.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
-function useDebouncedValue<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(t);
-  }, [value, delay]);
-  return debounced;
-}
-
 function getCloseDatePatient(p: Patient): string | null {
   return p.last_visit_date ?? p.updated_at ?? p.created_at ?? null;
 }
@@ -183,8 +174,6 @@ export function CustomersTab() {
   const [closedLeadsLoading, setClosedLeadsLoading] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
 
-  const debouncedSearch = useDebouncedValue(searchInput, 300);
-
   const fetchClosedLeads = useCallback(async () => {
     setClosedLeadsLoading(true);
     const res = await fetch('/api/leads', { credentials: 'include' });
@@ -199,7 +188,6 @@ export function CustomersTab() {
 
   const fetchCustomers = useCallback(async () => {
     const params = new URLSearchParams();
-    if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim());
     if (statusFilter) params.set('status', statusFilter);
     if (revenueMinInput.trim()) {
       const n = Number(revenueMinInput.trim());
@@ -210,10 +198,10 @@ export function CustomersTab() {
     const json = await res.json().catch(() => ({})) as { customers?: Patient[] };
     if (res.ok) setCustomers(json.customers ?? []);
     setLoading(false);
-  }, [debouncedSearch, statusFilter, revenueMinInput, lastVisitOver6]);
+  }, [statusFilter, revenueMinInput, lastVisitOver6]);
 
   const filteredClosedLeads = useMemo(() => {
-    const q = debouncedSearch.trim().toLowerCase();
+    const q = searchInput.trim().toLowerCase();
     let list = closedLeads.filter((l) => {
       if (q) {
         const name = (l.full_name ?? '').toLowerCase();
@@ -251,11 +239,11 @@ export function CustomersTab() {
       }
     });
     return list;
-  }, [closedLeads, debouncedSearch, dateFrom, dateTo, revenueMinFilter, revenueMaxFilter, withRevenueOnly, withoutValueOnly, sortBy]);
+  }, [closedLeads, searchInput, dateFrom, dateTo, revenueMinFilter, revenueMaxFilter, withRevenueOnly, withoutValueOnly, sortBy]);
 
   const filteredCustomers = useMemo(() => {
     let list = customers;
-    const q = debouncedSearch.trim().toLowerCase();
+    const q = searchInput.trim().toLowerCase();
     if (q) {
       list = list.filter((c) => {
         const name = (c.full_name ?? '').toLowerCase();
@@ -293,7 +281,7 @@ export function CustomersTab() {
       }
     });
     return list;
-  }, [customers, debouncedSearch, dateFrom, dateTo, revenueMinFilter, revenueMaxFilter, withRevenueOnly, withoutValueOnly, sortBy]);
+  }, [customers, searchInput, dateFrom, dateTo, revenueMinFilter, revenueMaxFilter, withRevenueOnly, withoutValueOnly, sortBy]);
 
   const hasActiveFilters =
     !!dateFrom || !!dateTo || revenueMinFilter !== '' || revenueMaxFilter !== '' || withRevenueOnly || withoutValueOnly || !!statusFilter || lastVisitOver6;
