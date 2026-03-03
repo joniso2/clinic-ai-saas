@@ -28,6 +28,7 @@ export const STATUS_LABELS: Record<string, string> = {
   Closed: 'נסגר',
   Converted: 'הומר',
   Disqualified: 'הוסר',
+  'AI Failed': 'כשל AI',
 };
 
 export const PRIORITY_LABELS: Record<string, string> = {

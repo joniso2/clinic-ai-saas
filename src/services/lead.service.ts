@@ -12,6 +12,7 @@ import {
   getClinicName,
 } from '@/services/discord-guild.service';
 import type { AppointmentType } from '@/types/appointments';
+import logger from '@/lib/logger';
 
 const DISCORD_GUILD_UNMAPPED_REPLY = 'אנא פנה לשרת הרשמי של המרפאה לצורך המשך טיפול.';
 
@@ -34,17 +35,32 @@ export type ProcessDiscordMessageResult = {
  *   2. First message cannot trigger an appointment — at least one prior exchange required.
  */
 export async function processDiscordMessage(params: {
+  message_id?: string;
   content: string;
   authorName?: string;
   channelName?: string;
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
   guildId?: string | null;
 }): Promise<ProcessDiscordMessageResult> {
-  const { content, authorName, channelName, conversationHistory, guildId } = params;
+  const serviceStartedAt = Date.now();
+  let openai_duration_ms = 0;
+  let dbStartedAt: number | null = null;
+
+  const { content, authorName, channelName, conversationHistory, guildId, message_id: messageId } = params;
   const history = conversationHistory ?? [];
 
   const clinicId = await getClinicIdByGuildId(guildId ?? null);
   if (!clinicId) {
+    const total_service_duration_ms = Date.now() - serviceStartedAt;
+    const db_duration_ms = 0;
+    logger.info('ai_pipeline_completed', {
+      clinic_id: clinicId ?? null,
+      message_id: messageId,
+      openai_duration_ms,
+      db_duration_ms,
+      total_service_duration_ms,
+      service: 'lead.service',
+    });
     return { reply: DISCORD_GUILD_UNMAPPED_REPLY };
   }
 
@@ -77,13 +93,50 @@ export async function processDiscordMessage(params: {
     maxSuggestionDays:     settings?.max_booking_window_days   ?? 14,
   };
 
-  const analysis = await runStructuredPrompt({
-    text: content,
-    authorName,
-    channelName,
-    conversationHistory: history,
-    systemPrompt,
-  });
+  const openaiStartedAt = Date.now();
+  let analysis: Awaited<ReturnType<typeof runStructuredPrompt>>;
+  try {
+    analysis = await runStructuredPrompt({
+      text: content,
+      authorName,
+      channelName,
+      conversationHistory: history,
+      systemPrompt,
+    });
+  } catch (err) {
+    openai_duration_ms = Date.now() - openaiStartedAt;
+    await leadRepository.createLead({
+      clinic_id:            clinicId,
+      full_name:            authorName ?? 'Unknown',
+      phone:                null,
+      email:                null,
+      source:               'discord_ai_failure',
+      status:               'AI Failed',
+      conversation_summary: content,
+    });
+    logger.error('ai_failed_lead_captured', {
+      clinic_id:  clinicId,
+      message_id: messageId,
+      error:      (err as Error)?.message,
+      service:    'lead.service',
+    });
+    return { reply: 'תודה על פנייתך, נציג יחזור אליך בהקדם.' };
+  }
+  openai_duration_ms = Date.now() - openaiStartedAt;
+
+  const logPipelineAndReturn = (reply: string | null): ProcessDiscordMessageResult => {
+    const total_service_duration_ms = Date.now() - serviceStartedAt;
+    const db_duration_ms = dbStartedAt !== null ? Date.now() - dbStartedAt : 0;
+    logger.info('ai_pipeline_completed', {
+      clinic_id: clinicId ?? null,
+      message_id: messageId,
+      openai_duration_ms,
+      db_duration_ms,
+      total_service_duration_ms,
+      service: 'lead.service',
+    });
+    return { reply };
+  };
 
   const priority_level = calculatePriorityLevel(analysis.urgency_level);
   const estimated_deal_value = estimateDealValueFromServices(analysis.interest, services);
@@ -126,16 +179,16 @@ export async function processDiscordMessage(params: {
       console.log('[Discord] Appointment blocked — phone:', hasPhone, '| firstMessage:', isFirstMessage, '| name:', patientName);
       // Always enforce the correct missing field — never let AI override this order
       if (requirePhoneForBooking && !hasPhone) {
-        return { reply: 'אשמח לעזור! כדי לקבוע את התור אצטרך את מספר הטלפון שלך.' };
+        return logPipelineAndReturn('אשמח לעזור! כדי לקבוע את התור אצטרך את מספר הטלפון שלך.');
       }
       if (!patientName) {
-        return { reply: 'מה שמך המלא?' };
+        return logPipelineAndReturn('מה שמך המלא?');
       }
       // isFirstMessage — let AI reply guide if available, otherwise ask for date
       if (analysis.reply && analysis.reply !== 'PENDING_SCHEDULE' && analysis.reply.trim().length > 0) {
-        return { reply: analysis.reply };
+        return logPipelineAndReturn(analysis.reply);
       }
-      return { reply: 'באיזה תאריך ושעה תרצה לקבוע?' };
+      return logPipelineAndReturn('באיזה תאריך ושעה תרצה לקבוע?');
     }
 
     // If no datetime — check if patient wants earliest slot or needs to choose
@@ -150,16 +203,16 @@ export async function processDiscordMessage(params: {
           resolvedDatetimeRaw = suggestions[0];
           console.log('[Discord] Auto-selected slot:', resolvedDatetimeRaw);
         } else {
-          return { reply: 'מצטערים, אין זמינות בשבועות הקרובים. פנה אלינו ישירות לתיאום.' };
+          return logPipelineAndReturn('מצטערים, אין זמינות בשבועות הקרובים. פנה אלינו ישירות לתיאום.');
         }
       } else {
         // Patient hasn't specified — let the AI reply guide them to choose a date
-        return { reply: analysis.reply ?? 'באיזה תאריך ושעה תרצה לקבוע?' };
+        return logPipelineAndReturn(analysis.reply ?? 'באיזה תאריך ושעה תרצה לקבוע?');
       }
     }
 
     if (!clinicId) {
-      return { reply: DISCORD_GUILD_UNMAPPED_REPLY };
+      return logPipelineAndReturn(DISCORD_GUILD_UNMAPPED_REPLY);
     }
 
     // ── Upsert lead by email/phone first, then fall back to name ────────────────
@@ -189,6 +242,7 @@ export async function processDiscordMessage(params: {
 
     // 3. Create new lead if none found
     if (!leadId) {
+      if (dbStartedAt === null) dbStartedAt = Date.now();
       const { data: newLead, error: createErr } = await leadRepository.createLead({
         clinic_id:                clinicId,
         full_name:                patientName.trim(),
@@ -213,6 +267,7 @@ export async function processDiscordMessage(params: {
       }
     }
 
+    if (dbStartedAt === null) dbStartedAt = Date.now();
     const result = await appointmentService.scheduleAppointment({
       clinicId,
       patientName,
@@ -223,6 +278,13 @@ export async function processDiscordMessage(params: {
     });
 
     if (result.status === 'confirmed') {
+      logger.info('booking_created', {
+        message_id: messageId,
+        clinic_id: clinicId,
+        lead_id: leadId ?? null,
+        appointment_datetime: result.appointment.datetime,
+        service: 'lead.service',
+      });
       // Update existing lead with appointment details
       if (existingLead) {
         const { error: updateErr } = await leadRepository.updateLead(existingLead.id, clinicId, {
@@ -231,7 +293,6 @@ export async function processDiscordMessage(params: {
           next_appointment:  result.appointment.datetime,
         });
         if (updateErr) console.error('[Discord] Failed to update existing lead:', updateErr);
-        else console.log('[Discord] Lead updated with appointment:', existingLead.id);
       } else if (leadId) {
         const { error: updateErr } = await leadRepository.updateLead(leadId, clinicId, {
           status:            'Pending',
@@ -239,35 +300,33 @@ export async function processDiscordMessage(params: {
           next_appointment:  result.appointment.datetime,
         });
         if (updateErr) console.error('[Discord] Failed to update new lead:', updateErr);
-        else console.log('[Discord] New lead linked to appointment:', leadId);
       }
-      console.log('[Discord] Appointment linked to lead_id:', leadId ?? 'none');
       const time = appointmentService.formatAppointmentTime(result.appointment.datetime);
-      return { reply: `מעולה! ${patientName}, קבענו לך תור ל${time}. נתראה בקליניקה!` };
+      return logPipelineAndReturn(`מעולה! ${patientName}, קבענו לך תור ל${time}. נתראה בקליניקה!`);
     }
 
     if (result.status === 'unavailable') {
       if (result.suggestions.length === 0) {
-        return { reply: `השעה המבוקשת תפוסה ולא מצאנו חלופות קרובות. פנה אלינו ישירות לתיאום.` };
+        return logPipelineAndReturn(`השעה המבוקשת תפוסה ולא מצאנו חלופות קרובות. פנה אלינו ישירות לתיאום.`);
       }
       const opts = result.suggestions
         .slice(0, 2)
         .map(appointmentService.formatAppointmentTime)
         .join(' או ');
-      return { reply: `השעה המבוקשת תפוסה. אני יכול להציע: ${opts}. מה מתאים לך?` };
+      return logPipelineAndReturn(`השעה המבוקשת תפוסה. אני יכול להציע: ${opts}. מה מתאים לך?`);
     }
 
     if (result.status === 'outside_hours') {
-      return {
-        reply: `שעות הקליניקה הן ${result.openHour}:00–${result.closeHour}:00. באיזו שעה תרצה לקבוע?`,
-      };
+      return logPipelineAndReturn(
+        `שעות הקליניקה הן ${result.openHour}:00–${result.closeHour}:00. באיזו שעה תרצה לקבוע?`,
+      );
     }
 
     if (result.status === 'follow_up_too_soon') {
       const earliest = appointmentService.formatAppointmentTime(result.earliestAllowed);
-      return {
-        reply: `ביקור המשך צריך להיות לפחות 7 ימים אחרי הביקור הקודם. המועד המוקדם ביותר הוא ${earliest}.`,
-      };
+      return logPipelineAndReturn(
+        `ביקור המשך צריך להיות לפחות 7 ימים אחרי הביקור הקודם. המועד המוקדם ביותר הוא ${earliest}.`,
+      );
     }
   }
 
@@ -280,6 +339,7 @@ export async function processDiscordMessage(params: {
 
   if (canCreateLead) {
     console.log('[Discord] Creating lead:', effectiveFullName, '| clinic_id:', clinicId);
+    if (dbStartedAt === null) dbStartedAt = Date.now();
     const { data, error } = await leadRepository.createLead({
       clinic_id:                clinicId,
       full_name:                effectiveFullName,
@@ -301,7 +361,5 @@ export async function processDiscordMessage(params: {
   }
 
   const reply = (analysis.reply && analysis.reply.trim()) ? analysis.reply.trim() : null;
-  return {
-    reply: reply ?? 'מצטערים, לא הצלחתי להבין. נסה לשאול שוב או להתקשר למרפאה.',
-  };
+  return logPipelineAndReturn(reply ?? 'מצטערים, לא הצלחתי להבין. נסה לשאול שוב או להתקשר למרפאה.');
 }

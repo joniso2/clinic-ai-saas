@@ -1,5 +1,5 @@
 export type Priority = 'Low' | 'Medium' | 'High' | 'Urgent';
-export type LeadStatus = 'Pending' | 'Contacted' | 'Appointment scheduled' | 'Closed' | 'Disqualified';
+export type LeadStatus = 'Pending' | 'Contacted' | 'Appointment scheduled' | 'Closed' | 'Disqualified' | 'AI Failed';
 export type LeadSource =
   | 'Google Ads'
   | 'Organic'
