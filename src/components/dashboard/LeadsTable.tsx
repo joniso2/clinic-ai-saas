@@ -57,10 +57,10 @@ function FilterDropdown<T extends string>({
         aria-label={getLabel(value)}
         id={id}
         dir="rtl"
-        className="flex flex-row-reverse items-center justify-between gap-2 w-full rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3 py-2 text-sm text-right text-slate-700 dark:text-zinc-300 focus:border-slate-400 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:focus:ring-zinc-500/50 transition-colors duration-150 hover:border-slate-300 dark:hover:border-zinc-600"
+        className="flex items-center justify-between gap-2 w-full rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 px-3 py-2 text-sm text-right text-slate-700 dark:text-zinc-300 focus:border-slate-400 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:focus:ring-zinc-500/50 transition-colors duration-150 hover:border-slate-300 dark:hover:border-zinc-600"
       >
         <span className="truncate">{getLabel(value)}</span>
-        <ChevronDown className="h-4 w-4 shrink-0 text-slate-500 dark:text-zinc-400" />
+        <ChevronDown className="h-4 w-4 shrink-0 text-slate-500 dark:text-zinc-400 ms-1" />
       </button>
       {open && (
         <ul

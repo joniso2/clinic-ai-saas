@@ -189,7 +189,6 @@ function DateRangeControl({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-3 flex-row-reverse justify-end">
-      <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">טווח נתונים:</span>
       <div className="flex rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50/80 dark:bg-zinc-800/80 p-1 gap-0.5">
         {PRESETS.map((p) => (
           <button
@@ -229,51 +228,64 @@ function DateRangeControl({
 // ─── Funnel (ליד → קשר → תור → סגור) ───────────────────────────────────────
 
 const FUNNEL_LABELS: Record<string, string> = { Leads: 'ליד', Contacted: 'קשר', Appointments: 'תור', Closed: 'סגור' };
-const FUNNEL_FILLS = [
-  'bg-slate-400 dark:bg-slate-500',
-  'bg-indigo-400 dark:bg-indigo-500',
-  'bg-indigo-600 dark:bg-indigo-400',
-  'bg-emerald-500 dark:bg-emerald-400',
+const FUNNEL_BAR_GRADIENTS = [
+  'bg-gradient-to-l from-slate-400 to-slate-300 dark:from-slate-500 dark:to-slate-400',
+  'bg-gradient-to-l from-indigo-400 to-indigo-300 dark:from-indigo-500 dark:to-indigo-400',
+  'bg-gradient-to-l from-indigo-500 to-indigo-400 dark:from-indigo-600 dark:to-indigo-500',
+  'bg-gradient-to-l from-emerald-500 to-emerald-400 dark:from-emerald-500 dark:to-emerald-400',
 ];
 
 function FunnelSection({ stages }: { stages: FunnelStage[] }) {
   const max = stages[0]?.count ?? 1;
   return (
-    <div className="space-y-5">
+    <div className="space-y-0">
       {stages.map((stage, i) => {
         const pct = max > 0 ? Math.round((stage.count / max) * 100) : 0;
         const isHighDrop = stage.dropOffPct >= 50;
+        const isLast = i === stages.length - 1;
+        const isZero = stage.count === 0;
         return (
-          <div key={stage.name} className="space-y-2">
+          <div
+            key={stage.name}
+            className={`space-y-2 ${i > 0 ? 'border-t border-slate-100/60 dark:border-zinc-800/60' : ''} ${!isLast ? 'pb-5' : ''}`}
+          >
             <div className="flex items-center justify-between flex-row-reverse text-right gap-2">
               <div className="flex items-center gap-2 flex-row-reverse">
-                <span className="text-sm font-semibold text-slate-900 dark:text-zinc-100">
+                <span className="text-sm font-medium text-slate-700 dark:text-zinc-200">
                   {FUNNEL_LABELS[stage.name] ?? stage.name}
                 </span>
                 {stage.isWorstDropOff && (
-                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                    isHighDrop ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' : 'bg-slate-100 dark:bg-zinc-700 text-slate-600 dark:text-zinc-400'
-                  }`}>
-                    <AlertTriangle className="h-2.5 w-2.5" />
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${
+                      isHighDrop
+                        ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-700/40'
+                        : 'bg-slate-50 dark:bg-zinc-800/60 border-slate-200/60 dark:border-zinc-700/50 text-slate-600 dark:text-zinc-400'
+                    }`}
+                  >
+                    <AlertTriangle className="h-2.5 w-2.5 opacity-60" aria-hidden />
                     נשירה {stage.dropOffPct}%
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-2 flex-row-reverse">
-                <span className="text-sm font-bold tabular-nums text-slate-900 dark:text-zinc-100">{stage.count}</span>
+                <span className="text-sm font-semibold tracking-tight tabular-nums text-slate-900 dark:text-white">
+                  {stage.count}
+                </span>
                 {i > 0 && (
-                  <span className="text-xs text-slate-500 dark:text-zinc-500">{stage.fromPreviousPct}% מהשלב הקודם</span>
+                  <span className={`text-xs text-slate-400 dark:text-zinc-500 ${isZero ? 'opacity-70' : ''}`}>
+                    {stage.fromPreviousPct}% מהשלב הקודם
+                  </span>
                 )}
               </div>
             </div>
-            <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800">
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-zinc-800">
               <div
-                className={`h-full rounded-full transition-all duration-500 ${FUNNEL_FILLS[i] ?? 'bg-slate-400'} ${isHighDrop && stage.isWorstDropOff ? 'ring-2 ring-amber-400/60' : ''}`}
+                className={`h-full rounded-full transition-all duration-700 ease-out shadow-[0_0_6px_rgba(99,102,241,0.18)] ${FUNNEL_BAR_GRADIENTS[i] ?? 'bg-slate-400 dark:bg-slate-500'} ${isHighDrop && stage.isWorstDropOff ? 'ring-2 ring-amber-400/50' : ''}`}
                 style={{ width: `${pct}%` }}
               />
             </div>
             {i < stages.length - 1 && (
-              <p className="text-[11px] text-slate-400 dark:text-zinc-500 text-right">
+              <p className={`text-xs text-slate-400 dark:text-zinc-500 text-right ${stages[i + 1].count === 0 ? 'opacity-70' : ''}`}>
                 {stages[i + 1].dropOffPct}% נשירה לשלב הבא
               </p>
             )}
@@ -299,12 +311,12 @@ function ResponseTimeCard({
   const p60 = efficiency.pctWithin1Hour;
   return (
     <div className="rounded-2xl border border-slate-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900/80 p-6 shadow-sm">
-      <div className="mb-5 flex items-center justify-between flex-row-reverse text-right">
-        <div>
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">זמן תגובה וביצועים</h3>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">ממוצע וחציון, אחוז מענה מהיר</p>
+      <div className="mb-5 flex items-center justify-end gap-3 flex-row-reverse text-right">
+        <div className="w-full min-w-0">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 text-right">זמן תגובה וביצועים</h3>
+          <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400 text-right">ממוצע וחציון, אחוז מענה מהיר</p>
         </div>
-        <div className="rounded-lg bg-slate-50 dark:bg-zinc-800 p-2.5">
+        <div className="rounded-lg bg-slate-50 dark:bg-zinc-800 p-2.5 shrink-0">
           <Clock className="h-4 w-4 text-slate-600 dark:text-zinc-400" />
         </div>
       </div>
@@ -356,9 +368,9 @@ function InsightRow({ insight }: { insight: Insight }) {
   const s = INSIGHT_STYLES[insight.type];
   const Icon = insight.type === 'warning' ? AlertTriangle : insight.type === 'success' ? CheckCircle2 : Info;
   return (
-    <div className={`flex items-start gap-3 rounded-xl border p-4 flex-row-reverse text-right ${s.wrap}`}>
-      <Icon className={`h-4 w-4 shrink-0 mt-0.5 ${s.icon}`} />
-      <p className="text-sm leading-relaxed text-slate-700 dark:text-zinc-300">{insight.message}</p>
+    <div dir="rtl" className={`flex items-start gap-3 rounded-xl border p-4 text-right ${s.wrap}`}>
+      <Icon className={`h-4 w-4 shrink-0 mt-0.5 ${s.icon}`} aria-hidden />
+      <p className="text-sm leading-relaxed text-slate-700 dark:text-zinc-300 flex-1 min-w-0 text-right">{insight.message}</p>
     </div>
   );
 }
@@ -448,7 +460,7 @@ export function AnalyticsTab() {
   return (
     <div className="space-y-8" dir="rtl">
       {/* Date Range */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-end gap-4">
         <DateRangeControl
           preset={preset}
           customFrom={customFrom}
@@ -456,11 +468,6 @@ export function AnalyticsTab() {
           onPreset={handlePreset}
           onCustomChange={handleCustomChange}
         />
-        {data && !loading && (
-          <span className="text-xs text-slate-400 dark:text-zinc-500">
-            {data.totalLeads} לידים בטווח
-          </span>
-        )}
       </div>
 
       {loading && <AnalyticsSkeleton />}
@@ -534,10 +541,9 @@ export function AnalyticsTab() {
           {/* 2️⃣ Funnel + 3️⃣ Response Time — two columns */}
           <div className="grid gap-6 lg:grid-cols-2">
             <section className="rounded-2xl border border-slate-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900/80 p-6 shadow-sm">
-              <div className="mb-5 flex items-center justify-between flex-row-reverse text-right">
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">משפך המרות</h3>
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">ליד → קשר → תור → סגור</p>
+              <div className="mb-5 flex items-center justify-end text-right">
+                <div className="w-full min-w-0">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 text-right">משפך המרות</h3>
                 </div>
               </div>
               <FunnelSection stages={data.funnel} />
@@ -547,13 +553,13 @@ export function AnalyticsTab() {
 
           {/* 4️⃣ תובנות מערכת */}
           <section className="rounded-2xl border border-slate-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900/80 p-6 shadow-sm">
-            <div className="mb-5 flex items-center gap-3 flex-row-reverse text-right">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800">
+            <div className="mb-5 flex items-center justify-end gap-3 flex-row-reverse text-right">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800 shrink-0">
                 <Target className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
               </div>
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">תובנות מערכת</h3>
-                <p className="text-xs text-slate-500 dark:text-zinc-400">נוצרו אוטומטית מנתוני הצינור</p>
+              <div className="w-full min-w-0">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 text-right">תובנות מערכת</h3>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 text-right">נוצרו אוטומטית מנתוני הצינור</p>
               </div>
             </div>
             <div className="space-y-3">
