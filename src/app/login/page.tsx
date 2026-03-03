@@ -28,15 +28,15 @@ export default async function LoginPage() {
         aria-hidden
       />
       {/* Glow accents */}
-      <div className="fixed -top-32 -left-32 h-96 w-96 rounded-full bg-indigo-600/20 blur-3xl" aria-hidden />
-      <div className="fixed -bottom-32 -right-32 h-96 w-96 rounded-full bg-slate-600/30 blur-3xl" aria-hidden />
+      <div className="fixed -top-32 -left-32 h-96 w-96 rounded-full bg-indigo-600/5 blur-xl" aria-hidden />
+      <div className="fixed -bottom-32 -right-32 h-96 w-96 rounded-full bg-slate-600/8 blur-xl" aria-hidden />
       {/* Video (optional, plays if available) */}
       <video
         autoPlay
         loop
         muted
         playsInline
-        className="fixed inset-0 h-full w-full object-cover opacity-10 blur-sm"
+        className="fixed inset-0 h-full w-full object-cover opacity-[0.04] blur-[1px]"
         src="/videos/clinic.mp4"
       />
       <div className="relative z-10 flex min-h-screen items-center justify-center">
