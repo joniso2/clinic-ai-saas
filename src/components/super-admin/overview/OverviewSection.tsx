@@ -39,16 +39,18 @@ export default function OverviewSection({ initialData }: OverviewSectionProps) {
   }, [timeRange]);
 
   return (
-    <section className="space-y-6" dir="rtl">
+    <section className="space-y-8">
       {/* Header */}
-      <div className="flex items-start justify-between flex-row-reverse flex-wrap gap-4">
-        <div className="text-right">
-          <h2 className="text-xl font-bold text-zinc-100">סקירה כללית</h2>
-          <p className="mt-0.5 text-sm text-zinc-400">
-            מצב הפלטפורמה בזמן אמת — KPIs, מגמות, ושימוש AI.
-          </p>
+      <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-8">
+        <div className="flex items-start justify-between flex-wrap gap-4 flex-row-reverse">
+          <div className="mb-0">
+            <h2 className="text-2xl font-semibold text-zinc-100 mb-2">סקירה כללית</h2>
+            <p className="text-sm text-zinc-400 mb-6">
+              מצב הפלטפורמה בזמן אמת — KPIs, מגמות, ושימוש AI.
+            </p>
+          </div>
+          <TimeRangeSelector value={timeRange} onChange={handleTimeRangeChange} />
         </div>
-        <TimeRangeSelector value={timeRange} onChange={handleTimeRangeChange} />
       </div>
 
       {/* KPI cards (real data, static) */}

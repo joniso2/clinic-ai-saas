@@ -27,11 +27,11 @@ function ChartCard({
   className?: string;
 }) {
   return (
-    <div className={`rounded-xl bg-zinc-900 border border-zinc-800 p-5 ${className}`} dir="rtl">
-      <div className="mb-4 text-right">
-        <h3 className="text-sm font-semibold text-zinc-200">{title}</h3>
+    <div className={`rounded-2xl bg-zinc-900 border border-zinc-800 p-8 ${className}`}>
+      <div className="mb-6">
+        <h3 className="text-2xl font-semibold text-zinc-100 mb-2">{title}</h3>
         {subtitle && (
-          <p className="text-[11px] text-zinc-500 mt-0.5">{subtitle}</p>
+          <p className="text-sm text-zinc-400">{subtitle}</p>
         )}
       </div>
       {children}
@@ -137,7 +137,7 @@ export default function OverviewChartsSection({
   const rangeLabel = timeRange === '7d' ? '7 ימים' : timeRange === '30d' ? '30 ימים' : '90 ימים';
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       {/* ── Row 1: Revenue trend (full-width) ── */}
       <ChartCard
         title="מגמת הכנסות"
@@ -158,7 +158,7 @@ export default function OverviewChartsSection({
       </ChartCard>
 
       {/* ── Row 2: Conversion rate + Leads per tenant ── */}
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-2 gap-6">
         <ChartCard
           title="שיעור המרה"
           subtitle={`לידים → תורים — ${rangeLabel} האחרונים`}
@@ -213,7 +213,7 @@ export default function OverviewChartsSection({
       </div>
 
       {/* ── Row 3: AI usage + Integration status ── */}
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-2 gap-6">
         <ChartCard
           title="שימוש AI לפי לקוח"
           subtitle="טוקנים מצטברים (מוק)"

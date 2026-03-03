@@ -105,17 +105,17 @@ export default function IntegrationsSection() {
   const discordStatus = discordConnected === discordTotal && discordTotal > 0 ? 'healthy' : discordConnected > 0 ? 'warning' : 'critical';
 
   return (
-    <div dir="rtl" className="space-y-8">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="text-right">
-        <h2 className="text-xl font-bold text-zinc-100">מרכז אינטגרציות</h2>
-        <p className="mt-0.5 text-sm text-zinc-400">סטטוס חיבורים פלטפורמה-רחבים — Discord, WhatsApp, ו-Webhooks.</p>
+      <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-8">
+        <h2 className="text-2xl font-semibold text-zinc-100 mb-2">מרכז אינטגרציות</h2>
+        <p className="text-sm text-zinc-400 mb-6">סטטוס חיבורים פלטפורמה-רחבים — Discord, WhatsApp, ו-Webhooks.</p>
       </div>
 
       {/* Platform status cards */}
       <div className="grid sm:grid-cols-3 gap-4">
         {/* Discord */}
-        <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-5">
+        <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-6 hover:border-zinc-600 transition-all duration-200">
           <div className="flex items-center justify-between flex-row-reverse mb-3">
             <div className="flex items-center gap-2.5 flex-row-reverse">
               <Bot className="h-6 w-6 text-indigo-400" />
@@ -123,18 +123,18 @@ export default function IntegrationsSection() {
             </div>
             <StatusIcon status={discordStatus} />
           </div>
-          <div className="text-right space-y-1">
-            <p className="text-2xl font-bold text-zinc-100 tabular-nums">{discordConnected}/{discordTotal}</p>
+          <div className="space-y-1">
+            <p className="text-2xl font-bold text-zinc-100 tabular-nums tracking-tight">{discordConnected}/{discordTotal}</p>
             <p className="text-xs text-zinc-500">לקוחות מחוברים</p>
           </div>
-          <div className="mt-3 bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+          <div className="mt-3 bg-zinc-800 rounded-full h-1.5 overflow-hidden border border-zinc-700">
             <div className="h-full rounded-full bg-indigo-500 transition-all duration-700"
               style={{ width: discordTotal > 0 ? `${(discordConnected / discordTotal) * 100}%` : '0%' }} />
           </div>
         </div>
 
         {/* WhatsApp */}
-        <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-5">
+        <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-6 hover:border-zinc-600 transition-all duration-200">
           <div className="flex items-center justify-between flex-row-reverse mb-3">
             <div className="flex items-center gap-2.5 flex-row-reverse">
               <div className="h-6 w-6 rounded-md bg-emerald-600 flex items-center justify-center shrink-0">
@@ -144,17 +144,17 @@ export default function IntegrationsSection() {
             </div>
             <StatusIcon status="coming_soon" />
           </div>
-          <div className="text-right space-y-1">
-            <p className="text-2xl font-bold text-zinc-500 tabular-nums">0/{discordTotal}</p>
-            <p className="text-xs text-zinc-600">לא מוגדר עדיין</p>
+          <div className="space-y-1">
+            <p className="text-2xl font-bold text-zinc-500 tabular-nums tracking-tight">0/{discordTotal}</p>
+            <p className="text-xs text-zinc-500">לא מוגדר עדיין</p>
           </div>
-          <div className="mt-3 rounded-lg bg-zinc-800/60 border border-zinc-700 px-3 py-2 text-[11px] text-zinc-500 text-right">
+          <div className="mt-3 rounded-lg bg-zinc-800 border border-zinc-700 px-3 py-2 text-[11px] text-zinc-500">
             יוגדר בגרסה הבאה
           </div>
         </div>
 
         {/* Webhooks */}
-        <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-5">
+        <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-6 hover:border-zinc-600 transition-all duration-200">
           <div className="flex items-center justify-between flex-row-reverse mb-3">
             <div className="flex items-center gap-2.5 flex-row-reverse">
               <Webhook className="h-6 w-6 text-violet-400" />
@@ -162,8 +162,8 @@ export default function IntegrationsSection() {
             </div>
             <StatusIcon status="warning" />
           </div>
-          <div className="text-right space-y-1">
-            <p className="text-2xl font-bold text-zinc-100 tabular-nums">{MOCK_WEBHOOK_LOGS.filter((l) => l.status === 'success').length}/{MOCK_WEBHOOK_LOGS.length}</p>
+          <div className="space-y-1">
+            <p className="text-2xl font-bold text-zinc-100 tabular-nums tracking-tight">{MOCK_WEBHOOK_LOGS.filter((l) => l.status === 'success').length}/{MOCK_WEBHOOK_LOGS.length}</p>
             <p className="text-xs text-zinc-500">הצלחות ב-24 שעות</p>
           </div>
           <p className="mt-2 text-[11px] text-amber-400">
@@ -187,13 +187,13 @@ export default function IntegrationsSection() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-zinc-800 overflow-hidden bg-zinc-900">
+        <div className="rounded-2xl border border-zinc-700 overflow-hidden bg-zinc-900">
           {loading ? (
             <div className="py-10 text-center text-zinc-500 text-sm">טוען…</div>
           ) : (
             <table className="w-full text-sm" dir="rtl">
               <thead>
-                <tr className="border-b border-zinc-800 bg-zinc-800/50">
+                <tr className="border-b border-zinc-700 bg-zinc-800">
                   {['מזהה שרת (Guild ID)','שם לקוח','סטטוס','פעולות'].map((h) => (
                     <th key={h} className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{h}</th>
                   ))}
@@ -203,13 +203,13 @@ export default function IntegrationsSection() {
                 {mappings.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="py-12 text-center">
-                      <Bot className="h-8 w-8 text-zinc-700 mx-auto mb-2" />
+                      <Bot className="h-8 w-8 text-zinc-500 ms-auto me-auto mb-2 block" />
                       <p className="text-sm text-zinc-400">אין מיפויי Discord עדיין</p>
                       <p className="text-xs text-zinc-600 mt-1">הוסף מיפוי שרת כדי להתחיל</p>
                     </td>
                   </tr>
                 ) : mappings.map((m) => (
-                  <tr key={m.id} className="border-b border-zinc-800/60 hover:bg-zinc-800/30 transition-colors">
+                  <tr key={m.id} className="border-b border-zinc-700 hover:bg-zinc-800/50 transition-colors">
                     <td className="py-3 px-4 font-mono text-xs text-zinc-300">{m.guild_id}</td>
                     <td className="py-3 px-4 font-medium text-zinc-100">{m.clinic_name}</td>
                     <td className="py-3 px-4">
@@ -219,7 +219,7 @@ export default function IntegrationsSection() {
                     </td>
                     <td className="py-3 px-4">
                       <button type="button" onClick={() => handleDelete(m.id)}
-                        className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium bg-red-900/20 hover:bg-red-900/40 text-red-400 transition-colors">
+                        className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium bg-red-600 hover:bg-red-500 text-white transition-colors">
                         <Trash2 className="h-3.5 w-3.5" />הסר
                       </button>
                     </td>
@@ -234,10 +234,10 @@ export default function IntegrationsSection() {
       {/* Webhook activity log */}
       <div>
         <h3 className="text-sm font-semibold text-zinc-300 mb-4">לוג פעילות Webhooks (מוק)</h3>
-        <div className="rounded-xl border border-zinc-800 overflow-hidden bg-zinc-900">
-          <table className="w-full text-sm" dir="rtl">
+        <div className="rounded-2xl border border-zinc-700 overflow-hidden bg-zinc-900">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-zinc-800 bg-zinc-800/50">
+              <tr className="border-b border-zinc-700 bg-zinc-800">
                 {['לקוח','אירוע','סטטוס','זמן תגובה','זמן'].map((h) => (
                   <th key={h} className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{h}</th>
                 ))}
@@ -245,7 +245,7 @@ export default function IntegrationsSection() {
             </thead>
             <tbody>
               {MOCK_WEBHOOK_LOGS.map((log) => (
-                <tr key={log.id} className="border-b border-zinc-800/60 hover:bg-zinc-800/20">
+                <tr key={log.id} className="border-b border-zinc-700 hover:bg-zinc-800/50">
                   <td className="py-3 px-4 font-medium text-zinc-200">{log.tenantName}</td>
                   <td className="py-3 px-4 font-mono text-xs text-zinc-400">{log.event}</td>
                   <td className="py-3 px-4">
@@ -290,7 +290,7 @@ export default function IntegrationsSection() {
               </div>
             </div>
             <div className="flex gap-2 mt-5 justify-end">
-              <button type="button" onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-xl border border-zinc-700 text-zinc-300 text-sm hover:bg-zinc-800">ביטול</button>
+              <button type="button" onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-sm">ביטול</button>
               <button type="button" onClick={handleAdd} disabled={saving || !fGuildId.trim()}
                 className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold disabled:opacity-50 transition-colors">
                 {saving ? 'שומר…' : 'הוסף'}
@@ -301,7 +301,7 @@ export default function IntegrationsSection() {
       )}
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-xl bg-zinc-100 text-zinc-900 px-4 py-2.5 text-sm font-medium shadow-xl">{toast}</div>
+        <div className="fixed bottom-6 start-1/2 -translate-x-1/2 z-50 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-100 px-4 py-2.5 text-sm font-medium shadow-xl">{toast}</div>
       )}
     </div>
   );

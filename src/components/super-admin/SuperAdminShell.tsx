@@ -75,10 +75,10 @@ export function SuperAdminShell({ overviewData }: SuperAdminShellProps) {
   };
 
   return (
-    <div className="flex flex-col min-h-0 flex-1">
+    <div dir="rtl" className="flex flex-col min-h-0 flex-1 text-right bg-zinc-950">
       {/* Mobile horizontal tab bar */}
       <nav
-        className="flex md:hidden gap-1 p-2 overflow-x-auto border-b border-zinc-800 bg-zinc-950"
+        className="flex md:hidden gap-1 p-2 overflow-x-auto border-b border-zinc-700 bg-zinc-950"
         aria-label="ניווט מקטעים"
       >
         {SECTIONS.map(({ id, label, icon: Icon }) => (
@@ -89,8 +89,8 @@ export function SuperAdminShell({ overviewData }: SuperAdminShellProps) {
             className={[
               'shrink-0 flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors',
               section === id
-                ? 'bg-indigo-600 text-white'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800',
+                ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700',
             ].join(' ')}
             aria-current={section === id ? 'page' : undefined}
           >

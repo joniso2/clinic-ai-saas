@@ -42,24 +42,24 @@ interface OverviewKPISectionProps {
 
 export default function OverviewKPISection({ kpis }: OverviewKPISectionProps) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3" dir="rtl">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {kpis.map((kpi) => (
         <div
           key={kpi.id}
           className={[
-            'rounded-xl border p-4 flex flex-col gap-2 transition-colors',
+            'rounded-2xl border p-6 flex flex-col gap-2 transition-all duration-200',
             kpi.highlight
-              ? 'bg-indigo-950/60 border-indigo-500/30 hover:border-indigo-400/50'
-              : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700',
+              ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 border-indigo-500/30'
+              : 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 hover:border-zinc-600',
           ].join(' ')}
         >
-          <p className="text-[11px] font-medium text-zinc-400 text-right leading-tight">
+          <p className="text-xs font-medium text-zinc-500 leading-tight">
             {kpi.label}
           </p>
 
           <p
             className={[
-              'text-2xl font-bold tabular-nums text-right leading-none tracking-tight',
+              'text-2xl font-bold tabular-nums leading-none tracking-tight',
               kpi.highlight ? 'text-indigo-200' : 'text-zinc-100',
             ].join(' ')}
           >

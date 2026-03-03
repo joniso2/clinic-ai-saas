@@ -343,27 +343,29 @@ export default function TenantManagementSection() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div dir="rtl" className="space-y-5">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-row-reverse justify-between items-start gap-4 flex-wrap">
-        <div className="text-right">
-          <h2 className="text-xl font-bold text-zinc-100">מרכז ניהול לקוחות</h2>
-          <p className="mt-0.5 text-sm text-zinc-400">ניהול מלא של כל הלקוחות — סטטוס, תכנית, משתמשים ופעולות.</p>
+      <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-8">
+        <div className="flex flex-row-reverse justify-between items-start gap-4 flex-wrap">
+          <div>
+            <h2 className="text-2xl font-semibold text-zinc-100 mb-2">מרכז ניהול לקוחות</h2>
+            <p className="text-sm text-zinc-400 mb-6">ניהול מלא של כל הלקוחות — סטטוס, תכנית, משתמשים ופעולות.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => { setCreateOpen(true); setCreateSuccess(null); }}
+            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 text-sm font-semibold transition-colors flex-row-reverse"
+          >
+            <Plus className="h-4 w-4" />
+            לקוח חדש
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => { setCreateOpen(true); setCreateSuccess(null); }}
-          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 text-sm font-semibold transition-colors flex-row-reverse"
-        >
-          <Plus className="h-4 w-4" />
-          לקוח חדש
-        </button>
       </div>
 
       {/* Filters */}
       <div className="flex flex-row-reverse gap-3 flex-wrap">
         <div className="relative min-w-[220px]">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+          <Search className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
           <input
             type="text"
             placeholder="חיפוש לפי שם..."
@@ -373,8 +375,7 @@ export default function TenantManagementSection() {
           />
         </div>
         <select
-          dir="rtl"
-          className="rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 px-4 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500"
+          className="rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 ps-4 pe-4 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
         >
@@ -388,11 +389,11 @@ export default function TenantManagementSection() {
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-zinc-800 overflow-hidden bg-zinc-900">
+      <div className="rounded-2xl border border-zinc-700 overflow-hidden bg-zinc-900">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm" dir="rtl">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-zinc-800 bg-zinc-800/60">
+              <tr className="border-b border-zinc-700 bg-zinc-800">
                 {['שם לקוח','סטטוס','תכנית','לידים','תורים','Discord','פעולות'].map((h) => (
                   <th key={h} className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{h}</th>
                 ))}
@@ -412,13 +413,13 @@ export default function TenantManagementSection() {
               ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-14 text-center">
-                    <Building2 className="h-8 w-8 text-zinc-700 mx-auto mb-2" />
+                    <Building2 className="h-8 w-8 text-zinc-500 ms-auto me-auto mb-2 block" />
                     <p className="text-sm text-zinc-400 font-medium">אין לקוחות</p>
                     <p className="text-xs text-zinc-600 mt-1">צור לקוח חדש כדי להתחיל</p>
                   </td>
                 </tr>
               ) : filtered.map((t) => (
-                <tr key={t.id} className="border-b border-zinc-800/60 hover:bg-zinc-800/40 transition-colors">
+                <tr key={t.id} className="border-b border-zinc-700 hover:bg-zinc-800/50 transition-colors">
                   <td className="py-3 px-4 font-medium text-zinc-100">{t.name ?? t.id}</td>
                   <td className="py-3 px-4"><StatusBadge status={t.status} /></td>
                   <td className="py-3 px-4">
@@ -437,7 +438,7 @@ export default function TenantManagementSection() {
                       <button
                         type="button"
                         onClick={() => { setDrawerId(t.id); setDrawerTab('users'); }}
-                        className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
+                        className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition-colors"
                       >
                         <Users className="h-3.5 w-3.5" />ניהול
                       </button>
@@ -500,7 +501,7 @@ export default function TenantManagementSection() {
               </div>
             </div>
             <div className="flex gap-2 mt-6 justify-end">
-              <button type="button" onClick={() => setCreateOpen(false)} className="px-4 py-2 rounded-xl border border-zinc-700 text-zinc-300 text-sm font-medium hover:bg-zinc-800">ביטול</button>
+              <button type="button" onClick={() => setCreateOpen(false)} className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-sm font-medium">ביטול</button>
               <button type="button" onClick={handleCreateTenant} disabled={creating || !fName.trim() || !fEmail.trim()}
                 className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold disabled:opacity-50 transition-colors">
                 {creating ? 'יוצר…' : 'צור לקוח'}
@@ -554,7 +555,7 @@ export default function TenantManagementSection() {
               שינוי תכנית ידרוש endpoint ייעודי
             </div>
             <div className="flex gap-2 mt-5 justify-end">
-              <button type="button" onClick={() => setEditPlanOpen(false)} className="px-4 py-2 rounded-xl border border-zinc-700 text-zinc-300 text-sm hover:bg-zinc-800">ביטול</button>
+              <button type="button" onClick={() => setEditPlanOpen(false)} className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-sm">ביטול</button>
               <button type="button" onClick={handleSavePlan} disabled={savingPlan}
                 className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold disabled:opacity-50">
                 {savingPlan ? 'שומר…' : 'שמור'}
@@ -568,9 +569,9 @@ export default function TenantManagementSection() {
       {drawerId && (
         <div className="fixed inset-0 z-50 flex justify-start" dir="rtl">
           <div className="absolute inset-0 bg-black/50" onClick={() => setDrawerId(null)} />
-          <div className="relative w-full max-w-2xl bg-zinc-950 border-l border-zinc-800 shadow-2xl flex flex-col overflow-y-auto">
+          <div className="relative w-full max-w-2xl bg-zinc-950 border-s border-zinc-700 shadow-2xl flex flex-col overflow-y-auto">
             {/* Drawer header */}
-            <div className="sticky top-0 z-10 border-b border-zinc-800 bg-zinc-950 px-6 py-4 flex items-center justify-between flex-row-reverse">
+            <div className="sticky top-0 z-10 border-b border-zinc-700 bg-zinc-950 px-6 py-4 flex items-center justify-between flex-row-reverse">
               <div className="text-right">
                 <h3 className="text-base font-bold text-zinc-100">{drawerTenant?.name ?? 'לקוח'}</h3>
                 {drawerTenant && <StatusBadge status={drawerTenant.status} />}
@@ -585,7 +586,7 @@ export default function TenantManagementSection() {
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-zinc-800 px-6">
+            <div className="flex border-b border-zinc-700 px-6">
               {(['users', 'pricing'] as const).map((tab) => (
                 <button key={tab} type="button" onClick={() => setDrawerTab(tab)}
                   className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
@@ -733,7 +734,7 @@ export default function TenantManagementSection() {
               </div>
             </div>
             <div className="flex gap-2 mt-5 justify-end">
-              <button type="button" onClick={() => setCreateUserOpen(false)} className="px-4 py-2 rounded-xl border border-zinc-700 text-zinc-300 text-sm hover:bg-zinc-800">ביטול</button>
+              <button type="button" onClick={() => setCreateUserOpen(false)} className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-sm">ביטול</button>
               <button type="button" onClick={handleCreateUser} disabled={creatingUser || !fuEmail.trim()}
                 className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold disabled:opacity-50">
                 {creatingUser ? 'יוצר…' : 'צור משתמש'}
@@ -767,7 +768,7 @@ export default function TenantManagementSection() {
               </label>
             </div>
             <div className="flex gap-2 mt-5 justify-end">
-              <button type="button" onClick={() => setSvcModal(null)} className="px-4 py-2 rounded-xl border border-zinc-700 text-zinc-300 text-sm hover:bg-zinc-800">ביטול</button>
+              <button type="button" onClick={() => setSvcModal(null)} className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-sm">ביטול</button>
               <button type="button" onClick={svcModal === 'add' ? handleAddService : handleUpdateService} disabled={savingSvc || !svName.trim()}
                 className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold disabled:opacity-50">
                 {savingSvc ? 'שומר…' : svcModal === 'add' ? 'הוסף' : 'שמור'}
@@ -779,7 +780,7 @@ export default function TenantManagementSection() {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] rounded-xl bg-zinc-100 text-zinc-900 px-4 py-2.5 text-sm font-medium shadow-xl">
+        <div className="fixed bottom-6 start-1/2 -translate-x-1/2 z-[70] rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-100 px-4 py-2.5 text-sm font-medium shadow-xl">
           {toast}
         </div>
       )}

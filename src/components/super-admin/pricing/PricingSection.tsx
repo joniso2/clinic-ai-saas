@@ -63,10 +63,10 @@ const PLAN_TIERS: PlanTier[] = [
 ];
 
 const COLOR_MAP: Record<string, { card: string; badge: string; button: string }> = {
-  zinc:    { card: 'border-zinc-700 bg-zinc-900',           badge: 'bg-zinc-700 text-zinc-200',          button: 'bg-zinc-700 hover:bg-zinc-600 text-zinc-100' },
-  indigo:  { card: 'border-indigo-500/40 bg-indigo-950/40', badge: 'bg-indigo-500/20 text-indigo-300',   button: 'bg-indigo-600 hover:bg-indigo-500 text-white' },
-  violet:  { card: 'border-violet-500/40 bg-violet-950/40', badge: 'bg-violet-500/20 text-violet-300',   button: 'bg-violet-600 hover:bg-violet-500 text-white' },
-  amber:   { card: 'border-amber-500/40 bg-amber-950/30',   badge: 'bg-amber-500/20 text-amber-300',     button: 'bg-amber-600 hover:bg-amber-500 text-white' },
+  zinc:    { card: 'border-zinc-700 bg-zinc-800 hover:bg-zinc-700',           badge: 'bg-zinc-700 text-zinc-200',          button: 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700' },
+  indigo:  { card: 'border-zinc-700 bg-zinc-800 hover:bg-zinc-700 border-indigo-500/30', badge: 'bg-indigo-500/20 text-indigo-300',   button: 'bg-indigo-600 hover:bg-indigo-500 text-white' },
+  violet:  { card: 'border-zinc-700 bg-zinc-800 hover:bg-zinc-700',           badge: 'bg-zinc-700 text-zinc-300',          button: 'bg-indigo-600 hover:bg-indigo-500 text-white' },
+  amber:   { card: 'border-zinc-700 bg-zinc-800 hover:bg-zinc-700',           badge: 'bg-amber-500/20 text-amber-400',     button: 'bg-indigo-600 hover:bg-indigo-500 text-white' },
 };
 
 function useToast() {
@@ -152,22 +152,22 @@ export default function PricingSection() {
   };
 
   return (
-    <div dir="rtl" className="space-y-8">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="text-right">
-        <h2 className="text-xl font-bold text-zinc-100">תמחור גלובלי</h2>
-        <p className="mt-0.5 text-sm text-zinc-400">ניהול תכניות מנוי, בניית Tiers ושיוך שירותים לפי לקוח.</p>
+      <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-8">
+        <h2 className="text-2xl font-semibold text-zinc-100 mb-2">תמחור גלובלי</h2>
+        <p className="text-sm text-zinc-400 mb-6">ניהול תכניות מנוי, בניית Tiers ושיוך שירותים לפי לקוח.</p>
       </div>
 
       {/* Tier cards */}
-      <div>
-        <h3 className="text-sm font-semibold text-zinc-300 mb-4">תכניות מנוי</h3>
+      <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-8">
+        <h3 className="text-sm font-semibold text-zinc-400 mb-6">תכניות מנוי</h3>
         <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {PLAN_TIERS.map((tier) => {
             const colors = COLOR_MAP[tier.color];
             const Icon = tier.icon;
             return (
-              <div key={tier.id} className={`rounded-xl border p-5 flex flex-col gap-4 ${colors.card}`}>
+              <div key={tier.id} className={`rounded-2xl border p-6 flex flex-col gap-4 transition-all duration-200 ${colors.card}`}>
                 <div className="flex items-center justify-between flex-row-reverse">
                   <span className={`rounded-lg px-2.5 py-1 text-xs font-semibold ${colors.badge}`}>{tier.name}</span>
                   <Icon className="h-5 w-5 text-zinc-400" />
@@ -182,15 +182,15 @@ export default function PricingSection() {
                     </p>
                   )}
                 </div>
-                <ul className="space-y-1.5 text-right text-xs text-zinc-400 flex-1">
+                <ul className="space-y-1.5 text-xs text-zinc-400 flex-1">
                   {tier.features.map((f) => (
-                    <li key={f.label} className={`flex items-center gap-2 flex-row-reverse ${f.included ? 'text-zinc-300' : 'text-zinc-600 line-through'}`}>
+                    <li key={f.label} className={`flex items-center gap-2 flex-row-reverse ${f.included ? 'text-zinc-300' : 'text-zinc-500 line-through'}`}>
                       <Check className={`h-3 w-3 shrink-0 ${f.included ? 'text-emerald-400' : 'text-zinc-700'}`} />
                       {f.label}
                     </li>
                   ))}
                 </ul>
-                <div className="text-right text-[11px] text-zinc-500 border-t border-zinc-800 pt-3 space-y-0.5">
+                <div className="text-[11px] text-zinc-500 border-t border-zinc-700 pt-3 space-y-0.5">
                   <p>לידים: {tier.limits.leads === 'unlimited' ? '∞' : tier.limits.leads.toLocaleString()}</p>
                   <p>משתמשים: {typeof tier.limits.users === 'number' ? tier.limits.users : '∞'}</p>
                   <p>טוקני AI: {tier.limits.ai_tokens === 'unlimited' ? '∞' : (tier.limits.ai_tokens as number).toLocaleString()}</p>
@@ -227,13 +227,13 @@ export default function PricingSection() {
         </div>
 
         {selectedTenantId && (
-          <div className="rounded-xl border border-zinc-800 overflow-hidden bg-zinc-900">
+          <div className="rounded-2xl border border-zinc-700 overflow-hidden bg-zinc-900">
             {loadingSvc ? (
               <div className="py-10 text-center text-zinc-500 text-sm">טוען…</div>
             ) : (
               <table className="w-full text-sm" dir="rtl">
                 <thead>
-                  <tr className="border-b border-zinc-800 bg-zinc-800/50">
+                  <tr className="border-b border-zinc-700 bg-zinc-800">
                     {['שם שירות','מחיר','כינויים','סטטוס','פעולות'].map((h) => (
                       <th key={h} className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{h}</th>
                     ))}
@@ -243,7 +243,7 @@ export default function PricingSection() {
                   {services.length === 0 ? (
                     <tr><td colSpan={5} className="py-10 text-center text-zinc-500">אין שירותים — הוסף שירות ראשון</td></tr>
                   ) : services.map((s) => (
-                    <tr key={s.id} className="border-b border-zinc-800/60 hover:bg-zinc-800/30 transition-colors">
+                    <tr key={s.id} className="border-b border-zinc-700 hover:bg-zinc-800/50 transition-colors">
                       <td className="py-3 px-4 font-medium text-zinc-100">{s.service_name}</td>
                       <td className="py-3 px-4 text-zinc-300 tabular-nums">{s.price} ₪</td>
                       <td className="py-3 px-4 text-zinc-500 text-xs">{(s.aliases ?? []).join(', ') || '—'}</td>
@@ -294,7 +294,7 @@ export default function PricingSection() {
               </label>
             </div>
             <div className="flex gap-2 mt-5 justify-end">
-              <button type="button" onClick={() => setSvcModal(null)} className="px-4 py-2 rounded-xl border border-zinc-700 text-zinc-300 text-sm hover:bg-zinc-800">ביטול</button>
+              <button type="button" onClick={() => setSvcModal(null)} className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-sm">ביטול</button>
               <button type="button" onClick={svcModal === 'add' ? handleAdd : handleUpdate} disabled={saving || !svName.trim()}
                 className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold disabled:opacity-50 transition-colors">
                 {saving ? 'שומר…' : svcModal === 'add' ? 'הוסף' : 'שמור'}
@@ -305,7 +305,7 @@ export default function PricingSection() {
       )}
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-xl bg-zinc-100 text-zinc-900 px-4 py-2.5 text-sm font-medium shadow-xl">{toast}</div>
+        <div className="fixed bottom-6 start-1/2 -translate-x-1/2 z-50 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-100 px-4 py-2.5 text-sm font-medium shadow-xl">{toast}</div>
       )}
     </div>
   );

@@ -16,7 +16,7 @@ interface TimeRangeSelectorProps {
 export default function TimeRangeSelector({ value, onChange }: TimeRangeSelectorProps) {
   return (
     <div
-      className="inline-flex rounded-xl bg-zinc-900 border border-zinc-800 p-1 gap-0.5"
+      className="inline-flex rounded-xl bg-zinc-900 border border-zinc-700 p-1 gap-0.5"
       role="group"
       aria-label="טווח זמן"
     >
@@ -28,8 +28,8 @@ export default function TimeRangeSelector({ value, onChange }: TimeRangeSelector
           className={[
             'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
             value === r.value
-              ? 'bg-indigo-600 text-white shadow-sm'
-              : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800',
+              ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
+              : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700',
           ].join(' ')}
           aria-pressed={value === r.value}
         >
