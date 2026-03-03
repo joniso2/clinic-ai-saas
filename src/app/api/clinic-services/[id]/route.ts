@@ -14,7 +14,7 @@ export async function PATCH(
   const { id } = await params;
   if (!id) return NextResponse.json({ error: 'חסר מזהה שירות' }, { status: 400 });
 
-  let body: { service_name?: string; price?: number; aliases?: string[]; is_active?: boolean };
+  let body: { service_name?: string; price?: number; aliases?: string[]; is_active?: boolean; description?: string | null };
   try {
     body = await req.json();
   } catch {

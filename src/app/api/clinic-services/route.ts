@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   if (!row?.clinic_id) return NextResponse.json({ error: 'לא מאומת או ללא קליניקה' }, { status: 401 });
   if (row.role !== 'CLINIC_ADMIN') return NextResponse.json({ error: 'אין הרשאה לערוך תמחור' }, { status: 403 });
 
-  let body: { service_name?: string; price?: number; aliases?: string[]; is_active?: boolean };
+  let body: { service_name?: string; price?: number; aliases?: string[]; is_active?: boolean; description?: string | null };
   try {
     body = await req.json();
   } catch {
