@@ -16,7 +16,7 @@
 import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Building2, DollarSign, Link2,
-  Activity, Brain, Users, Settings,
+  Activity, Brain, Users, Settings, PackageOpen,
 } from 'lucide-react';
 import type { OverviewPageData } from '@/types/analytics';
 
@@ -29,6 +29,7 @@ import TrafficSection               from '@/components/super-admin/traffic/Traff
 import AIControlSection             from '@/components/super-admin/ai/AIControlSection';
 import SystemUsersSection           from '@/components/super-admin/users/SystemUsersSection';
 import SystemSettingsSection        from '@/components/super-admin/settings/SystemSettingsSection';
+import TenantServicesOverrideSection from '@/components/super-admin/services/TenantServicesOverrideSection';
 
 // ─── Navigation config ────────────────────────────────────────────────────────
 const SECTIONS = [
@@ -40,6 +41,7 @@ const SECTIONS = [
   { id: 'ai',           label: 'AI & מודלים',       icon: Brain },
   { id: 'users',        label: 'משתמשי מערכת',      icon: Users },
   { id: 'settings',     label: 'הגדרות מערכת',      icon: Settings },
+  { id: 'services',     label: 'ניהול שירותים לקליניקות', icon: PackageOpen },
 ] as const;
 
 type SectionId = (typeof SECTIONS)[number]['id'];
@@ -109,6 +111,7 @@ export function SuperAdminShell({ overviewData }: SuperAdminShellProps) {
           {section === 'ai'           && <AIControlSection />}
           {section === 'users'        && <SystemUsersSection />}
           {section === 'settings'     && <SystemSettingsSection />}
+          {section === 'services'     && <TenantServicesOverrideSection />}
         </div>
       </main>
     </div>
