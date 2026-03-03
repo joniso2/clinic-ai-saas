@@ -18,8 +18,9 @@ export async function getSessionUser() {
 }
 
 /**
- * Get the current user's clinic_users row (first match).
- * Super Admin has clinic_id null; others have a clinic_id.
+ * Get the current user's clinic_users row.
+ * If the user has multiple rows (e.g. SUPER_ADMIN + clinic link), returns the SUPER_ADMIN row when present; otherwise the first row.
+ * Ordering guarantee: we fetch all rows for the user and in code pick (SUPER_ADMIN row if any) else first — so SUPER_ADMIN is always preferred.
  */
 export async function getClinicUser() {
   const user = await getSessionUser();
@@ -29,11 +30,11 @@ export async function getClinicUser() {
   const { data } = await supabase
     .from('clinic_users')
     .select('user_id, clinic_id, role')
-    .eq('user_id', user.id)
-    .limit(1)
-    .maybeSingle();
+    .eq('user_id', user.id);
 
-  return data;
+  const rows = (data ?? []) as ClinicUserRow[];
+  const preferred = rows.find((r) => r.role === 'SUPER_ADMIN') ?? rows[0] ?? null;
+  return preferred;
 }
 
 /**
