@@ -78,6 +78,23 @@ function buildPromptForStructured(
 }
 
 /**
+ * Build only the user-facing part (for Gemini: system is sent via systemInstruction).
+ */
+function buildUserPromptForStructured(
+  todayIso: string,
+  authorName: string | undefined,
+  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>,
+  text: string
+): string {
+  let out = `Today's date (Israel time): ${todayIso}${authorName ? `. Patient name hint: ${authorName}` : ''}\n\n`;
+  for (const m of conversationHistory) {
+    out += `[${m.role}]\n${m.content}\n\n`;
+  }
+  out += `[user]\n${text}`;
+  return out + JSON_INSTRUCTION;
+}
+
+/**
  * Runs the Discord lead-extraction prompt (structured JSON).
  * When clinicId is provided, uses that clinic's ai_models config (provider + model). Changes in Super Admin take effect immediately.
  */
@@ -131,8 +148,13 @@ export async function runStructuredPrompt(params: {
           });
           raw = response.choices[0]?.message?.content ?? '{}';
         } else if (provider === 'google') {
-          const prompt = buildPromptForStructured(sysPrompt, todayIso, authorName, conversationHistory, text);
-          raw = await generateWithGemini(prompt, { model, temperature, maxTokens: max_tokens });
+          const userPrompt = buildUserPromptForStructured(todayIso, authorName, conversationHistory, text);
+          raw = await generateWithGemini(userPrompt, {
+            model,
+            temperature,
+            maxTokens: max_tokens,
+            systemInstruction: sysPrompt,
+          });
         } else if (provider === 'anthropic') {
           const prompt = buildPromptForStructured(sysPrompt, todayIso, authorName, conversationHistory, text);
           raw = await generateWithAnthropic(prompt, { model, temperature, maxTokens: max_tokens });

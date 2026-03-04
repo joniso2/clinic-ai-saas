@@ -64,6 +64,7 @@ export async function getAppointmentsInRange(
     .from('appointments')
     .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id')
     .eq('clinic_id', clinicId)
+    .eq('status', 'scheduled')
     .gte('datetime', startIso)
     .lt('datetime', endIso)
     .order('datetime', { ascending: true });
