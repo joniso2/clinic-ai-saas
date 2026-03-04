@@ -267,7 +267,9 @@ export async function processDiscordMessage(params: {
         estimated_deal_value:     estimated_deal_value,
       });
       if (createErr) {
-        console.error('[Discord] Lead creation for appointment failed:', createErr);
+        const errObj = createErr as { code?: string; message?: string; details?: string };
+        console.error('[Discord] Lead creation for appointment failed:', errObj?.message ?? createErr, '| code:', errObj?.code, '| details:', errObj?.details);
+        logger.error('lead_creation_failed', { clinic_id: clinicId, error: errObj?.message ?? String(createErr), code: errObj?.code, service: 'lead.service' });
       } else if (newLead) {
         leadId = newLead.id;
         console.log('[Discord] New lead created:', leadId);

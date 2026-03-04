@@ -59,11 +59,13 @@ export async function createLead(payload: CreateLeadPayload): Promise<{
 }> {
   const supabase = getSupabaseAdminClient();
 
+  const phoneVal = payload.phone != null ? (normalizePhone(payload.phone) ?? payload.phone.trim() || null) : null;
+  const fullName = (payload.full_name && payload.full_name.trim()) || 'Unknown';
   const insertPayload: Record<string, unknown> = {
     clinic_id: payload.clinic_id,
-    full_name: payload.full_name,
-    phone:     payload.phone ?? null,
-    email:     payload.email ?? null,
+    full_name: fullName,
+    phone:     phoneVal,
+    email:     payload.email?.trim() || null,
     status:    payload.status ?? 'Pending',
   };
   if (payload.source !== undefined)                   insertPayload.source                   = payload.source;
@@ -81,7 +83,7 @@ export async function createLead(payload: CreateLeadPayload): Promise<{
   const { data, error } = await supabase
     .from('leads')
     .insert(insertPayload)
-    .select('id, clinic_id, full_name, phone, email, interest, status, source, created_at, last_contact_date, next_appointment, next_follow_up_date, conversation_summary, urgency_level, priority_level, sla_deadline, follow_up_recommended_at, callback_recommendation')
+    .select('id')
     .single();
 
   if (error) {
@@ -140,6 +142,13 @@ export async function getLeadById(
   return { data: data as LeadRow | null, error: null };
 }
 
+/** Normalize phone to digits-only for consistent lookup/insert. */
+function normalizePhone(phone: string | null | undefined): string | null {
+  if (phone == null || typeof phone !== 'string') return null;
+  const digits = phone.replace(/\D/g, '');
+  return digits.length > 0 ? digits : null;
+}
+
 /** Find first lead for clinic by email or phone. */
 export async function getLeadByEmailOrPhone(
   clinicId: string,
@@ -165,16 +174,27 @@ export async function getLeadByEmailOrPhone(
     if (data) return { data: data as LeadRow, error: null };
   }
 
-  if (phone) {
-    const { data, error } = await supabase
+  const phoneNorm = normalizePhone(phone);
+  if (phoneNorm) {
+    const { data: byNorm, error: errNorm } = await supabase
       .from('leads')
       .select(selectFields)
       .eq('clinic_id', clinicId)
-      .eq('phone', phone.trim())
+      .eq('phone', phoneNorm)
       .limit(1)
       .maybeSingle();
-    if (error) return { data: null, error };
-    if (data) return { data: data as LeadRow, error: null };
+    if (!errNorm && byNorm) return { data: byNorm as LeadRow, error: null };
+    const original = phone?.trim();
+    if (original && original !== phoneNorm) {
+      const { data: byOrig, error: errOrig } = await supabase
+        .from('leads')
+        .select(selectFields)
+        .eq('clinic_id', clinicId)
+        .eq('phone', original)
+        .limit(1)
+        .maybeSingle();
+      if (!errOrig && byOrig) return { data: byOrig as LeadRow, error: null };
+    }
   }
 
   return { data: null, error: null };
