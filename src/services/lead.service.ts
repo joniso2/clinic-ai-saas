@@ -183,16 +183,17 @@ export async function processDiscordMessage(params: {
     // Block appointment if phone missing (per setting), first message, or name missing
     if ((requirePhoneForBooking && !hasPhone) || isFirstMessage || !patientName) {
       console.log('[Discord] Appointment blocked — phone:', hasPhone, '| firstMessage:', isFirstMessage, '| name:', patientName);
-      // Always enforce the correct missing field — never let AI override this order
+      // Always prefer the AI's reply — it already knows what step to ask for.
+      // Only fall back to hardcoded strings if AI reply is empty or PENDING_SCHEDULE.
+      if (analysis.reply && analysis.reply !== 'PENDING_SCHEDULE' && analysis.reply.trim().length > 0) {
+        return logPipelineAndReturn(analysis.reply);
+      }
+      // Fallback: enforce the correct missing field
       if (requirePhoneForBooking && !hasPhone) {
         return logPipelineAndReturn('אשמח לעזור! כדי לקבוע את התור אצטרך את מספר הטלפון שלך.');
       }
       if (!patientName) {
         return logPipelineAndReturn('מה שמך המלא?');
-      }
-      // isFirstMessage — let AI reply guide if available, otherwise ask for date
-      if (analysis.reply && analysis.reply !== 'PENDING_SCHEDULE' && analysis.reply.trim().length > 0) {
-        return logPipelineAndReturn(analysis.reply);
       }
       return logPipelineAndReturn('באיזה תאריך ושעה תרצה לקבוע?');
     }
