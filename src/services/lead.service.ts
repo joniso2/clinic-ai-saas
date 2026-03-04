@@ -322,6 +322,17 @@ export async function processDiscordMessage(params: {
       return logPipelineAndReturn(`השעה המבוקשת תפוסה. אני יכול להציע: ${opts}. מה מתאים לך?`);
     }
 
+    if (result.status === 'create_failed') {
+      if (result.suggestions.length > 0) {
+        const opts = result.suggestions
+          .slice(0, 2)
+          .map(appointmentService.formatAppointmentTime)
+          .join(' או ');
+        return logPipelineAndReturn(`אירעה שגיאה בזמן הקביעה. נסה את הזמנים האלה: ${opts}. מה מתאים לך?`);
+      }
+      return logPipelineAndReturn(`אירעה שגיאה בזמן הקביעה. נסה שוב או פנה אלינו ישירות לתיאום.`);
+    }
+
     if (result.status === 'outside_hours') {
       return logPipelineAndReturn(
         `שעות הקליניקה הן ${result.openHour}:00–${result.closeHour}:00. באיזו שעה תרצה לקבוע?`,

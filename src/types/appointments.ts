@@ -32,5 +32,6 @@ export type ScheduleStatus =
 export type ScheduleResult =
   | { status: 'confirmed'; appointment: Appointment }
   | { status: 'unavailable'; suggestions: string[] }
+  | { status: 'create_failed'; suggestions: string[] }
   | { status: 'outside_hours'; openHour: number; closeHour: number }
   | { status: 'follow_up_too_soon'; earliestAllowed: string };

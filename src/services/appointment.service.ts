@@ -250,15 +250,18 @@ export async function scheduleAppointment(params: ScheduleAppointmentParams): Pr
   }
 
   // 4. Check slot availability (no overlap within the slot + buffer window)
+  const startIso = requestedDate.toISOString();
   const slotEnd = addMinutes(requestedDate, slotMins + bufferMins);
+  const endIso = slotEnd.toISOString();
   const { data: existing } = await appointmentRepo.getAppointmentsInRange(
     clinicId,
-    requestedDate.toISOString(),
-    slotEnd.toISOString(),
+    startIso,
+    endIso,
   );
 
-  if (existing && existing.length > 0) {
-    logger.warn('slot_taken', { clinic_id: clinicId, datetimes: existing.map((a) => a.datetime), service: 'appointment.service' });
+  const existingCount = existing?.length ?? 0;
+  if (existingCount > 0) {
+    logger.warn('slot_taken', { clinic_id: clinicId, range: [startIso, endIso], count: existingCount, datetimes: existing!.map((a) => a.datetime), service: 'appointment.service' });
     const suggestions = await suggestClosestAvailable(
       clinicId,
       addMinutes(requestedDate, slotMins),
@@ -267,6 +270,8 @@ export async function scheduleAppointment(params: ScheduleAppointmentParams): Pr
     );
     return { status: 'unavailable', suggestions };
   }
+
+  logger.info('slot_free_attempting_insert', { clinic_id: clinicId, range: [startIso, endIso], service: 'appointment.service' });
 
   // 5. Create the appointment (INSERT is source of truth; pre-check is for suggestions only)
   const { data, error } = await appointmentRepo.createAppointment({
@@ -282,9 +287,10 @@ export async function scheduleAppointment(params: ScheduleAppointmentParams): Pr
       const suggestions = await suggestClosestAvailable(clinicId, requestedDate, 3, config);
       return { status: 'unavailable', suggestions };
     }
-    console.error('[AppointmentService] create failed:', error);
+    console.error('[AppointmentService] create failed (not slot conflict):', error, '| clinic_id:', clinicId, '| datetime:', requestedDate.toISOString());
+    logger.error('booking_create_failed', { clinic_id: clinicId, error: (error as { message?: string })?.message ?? String(error), service: 'appointment.service' });
     const suggestions = await suggestClosestAvailable(clinicId, requestedDate, 3, config);
-    return { status: 'unavailable', suggestions };
+    return { status: 'create_failed', suggestions };
   }
 
   logger.info('booking_created', {

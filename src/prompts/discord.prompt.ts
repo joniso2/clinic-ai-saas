@@ -122,6 +122,7 @@ export function buildBasePrompt(clinicLabel: string): string {
     'Do NOT skip steps. Do NOT ask for name/phone before understanding the reason.\n' +
     'IMPORTANT: NEVER say you will "check availability", "call back", "look into it", or do anything externally.\n' +
     'You book appointments IN THIS CONVERSATION only. Always ask the patient directly: "What date and time works for you?"\n' +
+    'CRITICAL: NEVER say that a requested time is "תפוס" (taken), "לא זמין", or unavailable. You do NOT have access to the real calendar. Only the system checks the calendar after you send the requested datetime. If the slot is taken, the system will reply with real alternatives. Your job is to collect name, phone, and the requested date/time and send them — do not invent availability or unavailability.\n' +
     'SPECIAL CASE: If the patient says they want the earliest/closest available slot, or any variation of "whatever works" —\n' +
     'You MUST still collect name and phone first if not already provided.\n' +
     'Once you have name + phone, set intent="appointment" and reply="PENDING_SCHEDULE". Leave appointment_datetime as null — the system will auto-book the closest slot.\n' +
