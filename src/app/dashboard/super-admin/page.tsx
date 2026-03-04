@@ -205,9 +205,9 @@ function buildKPIs(
           id: 'messages-today',
           label: 'הודעות היום',
           value: platform.messagesToday,
-          trend: 'neutral' as const,
+          trend: 'neutral' as 'up' | 'down' | 'neutral',
           change: 0,
-        }]
+        } as KPIMetric]
       : []),
     ...(platform.integrationHealthPercent !== undefined
       ? [{
@@ -217,7 +217,7 @@ function buildKPIs(
           suffix: '%' as const,
           trend: ((platform.integrationHealthPercent ?? 0) >= 80 ? 'up' : (platform.integrationHealthPercent ?? 0) >= 50 ? 'neutral' : 'down') as 'up' | 'down' | 'neutral',
           change: 0,
-        }]
+        } as KPIMetric]
       : []),
   ];
 }
