@@ -176,7 +176,7 @@ const WeekBoardCard = memo(function WeekBoardCard({ event, onClick, leadStatusBy
   );
 });
 
-export function CalendarView({ initialDate }: { initialDate?: string } = {}) {
+export function CalendarView({ initialDate, clinicId }: { initialDate?: string; clinicId?: string | null } = {}) {
   const today = useMemo(() => new Date(), []);
 
   const [currentDate, setCurrentDate] = useState<Date>(() => {
@@ -199,6 +199,23 @@ export function CalendarView({ initialDate }: { initialDate?: string } = {}) {
   const [leadStatusFetched, setLeadStatusFetched] = useState(false);
 
   useEffect(() => {
+    setFetchedMonths((prev) => (prev.size === 0 ? prev : new Set()));
+  }, [clinicId]);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        const y = currentDate.getFullYear();
+        const m = currentDate.getMonth() + 1;
+        const key = `${y}-${m}`;
+        setFetchedMonths((prev) => (prev.has(key) ? new Set([...prev].filter((k) => k !== key)) : prev));
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [currentDate]);
+
+  useEffect(() => {
     const leadIds = new Set(appointments.map((a) => a.lead_id).filter(Boolean) as string[]);
     if (leadIds.size === 0) {
       setLeadStatusFetched(true);
@@ -211,7 +228,8 @@ export function CalendarView({ initialDate }: { initialDate?: string } = {}) {
     }
     setLeadStatusFetched(false);
     let cancelled = false;
-    fetch('/api/leads', { credentials: 'include' })
+    const leadsUrl = clinicId ? `/api/leads?clinic_id=${encodeURIComponent(clinicId)}` : '/api/leads';
+    fetch(leadsUrl, { credentials: 'include' })
       .then((res) => res.json())
       .then((data: { leads?: Lead[] }) => {
         if (cancelled) return;
@@ -227,13 +245,15 @@ export function CalendarView({ initialDate }: { initialDate?: string } = {}) {
       })
       .catch(() => setLeadStatusFetched(true));
     return () => { cancelled = true; };
-  }, [appointments, leadStatusByLeadId]);
+  }, [appointments, leadStatusByLeadId, clinicId]);
 
   const fetchAppointments = useCallback(async (y: number, m: number) => {
     const key = `${y}-${m}`;
     setLoading(true);
     setError(null);
-    const res = await fetch(`/api/appointments?month=${m}&year=${y}`, { credentials: 'include' });
+    const base = `/api/appointments?month=${m}&year=${y}`;
+    const url = clinicId ? `${base}&clinic_id=${encodeURIComponent(clinicId)}` : base;
+    const res = await fetch(url, { credentials: 'include' });
     const json = await res.json();
     if (!res.ok) {
       setError(json.error ?? 'טעינת תורים נכשלה');
@@ -247,7 +267,7 @@ export function CalendarView({ initialDate }: { initialDate?: string } = {}) {
       setFetchedMonths((prev) => new Set([...prev, key]));
     }
     setLoading(false);
-  }, []);
+  }, [clinicId]);
 
   useEffect(() => {
     const m = currentDate.getMonth() + 1;

@@ -38,8 +38,9 @@ export default function DashboardClient() {
   const [nextAppointmentsByLeadId, setNextAppointmentsByLeadId] = useState<Record<string, string>>({});
   const [pricingServices, setPricingServices] = useState<{ service_name: string; price: number }[]>([]);
 
-  const fetchLeads = async () => {
-    const res = await fetch('/api/leads', { credentials: 'include' });
+  const fetchLeads = async (effectiveClinicId?: string | null) => {
+    const url = effectiveClinicId ? `/api/leads?clinic_id=${encodeURIComponent(effectiveClinicId)}` : '/api/leads';
+    const res = await fetch(url, { credentials: 'include' });
     const json = await res.json().catch(() => ({})) as { leads?: Lead[]; error?: string };
     if (!res.ok) {
       setError(json.error ?? 'טעינת לידים נכשלה');
@@ -83,16 +84,17 @@ export default function DashboardClient() {
         return;
       }
 
-      const { data: clinicLink } = await supabase
+      const { data: clinicRows } = await supabase
         .from('clinic_users')
-        .select('clinic_id')
-        .eq('user_id', session.user.id)
-        .single();
-      const clinicIdFromMetadata = clinicLink?.clinic_id ?? null;
+        .select('clinic_id, role')
+        .eq('user_id', session.user.id);
+      const rows = (Array.isArray(clinicRows) ? clinicRows : []) as { clinic_id: string | null; role?: string }[];
+      const clinicRow = rows.find((r) => r?.clinic_id && r.role !== 'SUPER_ADMIN') ?? rows.find((r) => r?.clinic_id);
+      const clinicIdFromMetadata = clinicRow?.clinic_id ?? null;
 
       setClinicId(clinicIdFromMetadata);
 
-      await fetchLeads();
+      await fetchLeads(clinicIdFromMetadata);
       void fetchPricingServices();
       setLoading(false);
     };
@@ -164,6 +166,16 @@ export default function DashboardClient() {
     return () => {
       void supabase.removeChannel(channel);
     };
+  }, [clinicId]);
+
+  // Refetch leads when tab becomes visible (e.g. after Discord bot created a lead)
+  useEffect(() => {
+    if (!clinicId) return;
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') fetchLeads(clinicId);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
   }, [clinicId]);
 
   const handleCreateLead = async () => {
@@ -443,7 +455,7 @@ export default function DashboardClient() {
     setDeleteLead(null);
     setDrawerLead((prev) => (prev?.id === deletedId ? null : prev));
     setLeads((prev) => prev.filter((l) => l.id !== deletedId));
-    await fetchLeads();
+    await fetchLeads(clinicId);
     setDeleting(false);
   };
 

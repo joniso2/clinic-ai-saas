@@ -1,29 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase-server';
+import { getEffectiveClinicId } from '@/lib/auth-server';
 import * as appointmentRepo from '@/repositories/appointment.repository';
 import * as appointmentService from '@/services/appointment.service';
 import * as leadRepository from '@/repositories/lead.repository';
 import type { AppointmentType } from '@/types/appointments';
 import type { ScheduleAppointmentParams } from '@/services/appointment.service';
 
-async function getClinicIdFromSession(): Promise<string | null> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data } = await supabase
-    .from('clinic_users')
-    .select('clinic_id')
-    .eq('user_id', user.id)
-    .single();
-
-  return data?.clinic_id ?? null;
-}
-
-/** GET /api/appointments?month=MM&year=YYYY */
+/** GET /api/appointments?month=MM&year=YYYY&clinic_id=UUID (optional, for SUPER_ADMIN) */
 export async function GET(req: NextRequest) {
   try {
-    const clinicId = await getClinicIdFromSession();
+    const clinicId = await getEffectiveClinicId(req);
     if (!clinicId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -76,7 +62,7 @@ export async function GET(req: NextRequest) {
 /** POST /api/appointments – schedule a new appointment. */
 export async function POST(req: NextRequest) {
   try {
-    const clinicId = await getClinicIdFromSession();
+    const clinicId = await getEffectiveClinicId(req);
     if (!clinicId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

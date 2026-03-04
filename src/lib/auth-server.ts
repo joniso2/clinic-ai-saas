@@ -90,9 +90,8 @@ const IMPERSONATE_COOKIE = 'impersonate_clinic_id';
 
 /**
  * Get effective clinic_id for the current request.
- * For SUPER_ADMIN: returns impersonation cookie value if set; otherwise null.
- * For others: returns clinic_id from clinic_users.
- * Pass Request so impersonation cookie can be read (e.g. in API route handlers).
+ * For SUPER_ADMIN: impersonation cookie, else query param clinic_id, else null.
+ * For others: clinic_id from clinic_users.
  */
 export async function getEffectiveClinicId(request: Request): Promise<string | null> {
   const row = await getClinicUser();
@@ -100,7 +99,16 @@ export async function getEffectiveClinicId(request: Request): Promise<string | n
   if (row.role !== 'SUPER_ADMIN') return row.clinic_id ?? null;
   const cookie = request.headers.get('cookie');
   const match = cookie?.match(new RegExp(`${IMPERSONATE_COOKIE}=([^;]+)`));
-  return match?.[1]?.trim() ?? null;
+  const fromCookie = match?.[1]?.trim();
+  if (fromCookie) return fromCookie;
+  try {
+    const url = request.url ? new URL(request.url) : null;
+    const fromQuery = url?.searchParams?.get('clinic_id')?.trim();
+    if (fromQuery) return fromQuery;
+  } catch {
+    /* ignore */
+  }
+  return null;
 }
 
 export function getImpersonateCookieName() {
