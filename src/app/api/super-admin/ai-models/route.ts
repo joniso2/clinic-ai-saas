@@ -1,6 +1,9 @@
 /**
  * GET  /api/super-admin/ai-models?clinic_id=...
  * PATCH /api/super-admin/ai-models (body: clinic_id, provider?, model?, temperature?, max_tokens?)
+ *
+ * Saved settings apply immediately: the Discord bot reads ai_models on every message (no cache),
+ * so the chosen clinic's LLM (provider + model) is used for the next bot reply.
  */
 
 import { NextResponse } from 'next/server';

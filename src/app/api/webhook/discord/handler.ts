@@ -125,6 +125,7 @@ async function runDiscordWebhookBackground(params: {
           return;
         }
         if (insertError || !claimed) {
+          logger.error('webhook_idempotency_insert_failed', { message_id: messageId, clinic_id: clinicId, insert_error: insertError?.message ?? (claimed ? null : 'no row returned'), code: insertError?.code, service: 'handler' });
           await postMessageToChannel(channelId, FALLBACK_REPLY);
           return;
         }
@@ -144,8 +145,10 @@ async function runDiscordWebhookBackground(params: {
     await postMessageToChannel(channelId, safeReply);
     logger.info('webhook_completed', { message_id: messageId, duration_ms: Date.now() - startedAt, service: 'handler', async: true });
   } catch (err) {
-    logger.error('webhook_failed', { message_id: messageId, error: (err as Error)?.message, service: 'handler' });
-    console.error('Discord webhook background error:', err);
+    const errMsg = (err as Error)?.message ?? String(err);
+    const errStack = (err as Error)?.stack;
+    logger.error('webhook_failed', { message_id: messageId, error: errMsg, service: 'handler' });
+    console.error('Discord webhook background error:', errMsg, errStack);
     await postMessageToChannel(channelId, FALLBACK_REPLY);
   }
 }

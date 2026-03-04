@@ -6,7 +6,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Brain, ChevronDown, Send, Cpu, DollarSign, Clock, Zap } from 'lucide-react';
+import { Brain, ChevronDown, Send, Cpu, DollarSign, Clock, Zap, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import { AI_MODELS, DEFAULT_AI_CONFIG, getMockPromptHistory } from '@/services/mock-ai.service';
 import type { GlobalAIConfig } from '@/services/mock-ai.service';
 
@@ -65,6 +65,8 @@ export default function AIControlSection() {
   const [selectedClinicId, setSelectedClinicId] = useState('');
   const [aiPerClinic, setAiPerClinic] = useState<{ provider: string; model: string; temperature: number; max_tokens: number }>({ provider: 'google', model: 'gemini-1.5-flash', temperature: 0.7, max_tokens: 1024 });
   const [aiSaveStatus, setAiSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [clinicStatuses, setClinicStatuses] = useState<{ clinic_id: string; clinic_name: string | null; provider: string; model: string; status: 'up' | 'down' }[]>([]);
+  const [statusLoading, setStatusLoading] = useState(false);
 
   const fetchClinics = useCallback(async () => {
     const res = await fetch('/api/super-admin/clinics');
@@ -81,8 +83,17 @@ export default function AIControlSection() {
     setAiPerClinic({ provider: d.provider ?? 'google', model: d.model ?? 'gemini-1.5-flash', temperature: Number(d.temperature) ?? 0.7, max_tokens: Number(d.max_tokens) ?? 1024 });
   }, [selectedClinicId]);
 
+  const fetchClinicStatuses = useCallback(async () => {
+    setStatusLoading(true);
+    const res = await fetch('/api/super-admin/ai-models/status');
+    const d = await res.json().catch(() => ({}));
+    setClinicStatuses(d.clinics ?? []);
+    setStatusLoading(false);
+  }, []);
+
   useEffect(() => { fetchClinics(); }, []);
   useEffect(() => { fetchAiModels(); }, [fetchAiModels]);
+  useEffect(() => { fetchClinicStatuses(); }, [fetchClinicStatuses]);
 
   const saveAiPerClinic = async () => {
     if (!selectedClinicId) return;
@@ -90,6 +101,8 @@ export default function AIControlSection() {
     const res = await fetch('/api/super-admin/ai-models', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clinic_id: selectedClinicId, ...aiPerClinic }) });
     if (!res.ok) { setAiSaveStatus('idle'); return; }
     setAiSaveStatus('saved');
+    fetchClinicStatuses();
+    fetchAiModels();
     setTimeout(() => setAiSaveStatus('idle'), 2000);
   };
 
@@ -122,6 +135,55 @@ export default function AIControlSection() {
       <div className="text-right">
         <h2 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100 text-right">מרכז שליטה AI</h2>
         <p className="mt-0.5 text-sm text-slate-500 dark:text-zinc-400 text-right">מודל לפי קליניקה (OpenAI, Google, Anthropic), פרמטרים, test console.</p>
+      </div>
+
+      {/* Clinic → LLM status (which clinic uses which model, and if API key is set) */}
+      <div className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5">
+        <div className="flex items-center justify-between flex-row-reverse mb-4">
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-zinc-200 text-right">סטטוס LLM לפי קליניקה (בוט דיסקורד)</h3>
+          <button type="button" onClick={fetchClinicStatuses} disabled={statusLoading} className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 disabled:opacity-50" title="רענן">
+            <RefreshCw className={`h-4 w-4 ${statusLoading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+        <p className="text-xs text-slate-500 dark:text-zinc-400 mb-4 text-right">איזה קליניקה על איזה מודל כרגע, והאם המפתח של הספק מוגדר (ירוק = הבוט יעבוד, אדום = חסר API key ב-Railway / .env).</p>
+        {statusLoading ? (
+          <p className="text-sm text-zinc-500 text-right py-4">טוען…</p>
+        ) : clinicStatuses.length === 0 ? (
+          <p className="text-sm text-zinc-500 text-right py-4">אין קליניקות.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-right text-sm">
+              <thead>
+                <tr className="border-b border-zinc-700">
+                  <th className="py-2 px-3 font-medium text-zinc-400">קליניקה</th>
+                  <th className="py-2 px-3 font-medium text-zinc-400">ספק</th>
+                  <th className="py-2 px-3 font-medium text-zinc-400">מודל</th>
+                  <th className="py-2 px-3 font-medium text-zinc-400">סטטוס</th>
+                </tr>
+              </thead>
+              <tbody>
+                {clinicStatuses.map((row) => (
+                  <tr key={row.clinic_id} className="border-b border-zinc-800">
+                    <td className="py-2.5 px-3 text-zinc-200">{row.clinic_name ?? row.clinic_id}</td>
+                    <td className="py-2.5 px-3 text-zinc-300">{row.provider}</td>
+                    <td className="py-2.5 px-3 font-mono text-zinc-300">{row.model}</td>
+                    <td className="py-2.5 px-3">
+                      {row.status === 'up' ? (
+                        <span className="inline-flex items-center gap-1 text-emerald-400">
+                          <CheckCircle className="h-4 w-4" /> Up
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-red-400">
+                          <XCircle className="h-4 w-4" /> Down (add API key)
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Per-clinic AI (ai_models) */}
