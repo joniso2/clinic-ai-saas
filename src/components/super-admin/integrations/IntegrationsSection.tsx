@@ -1,12 +1,13 @@
 'use client';
 
 /**
- * Section 4 — Integrations
- * Discord guild mappings, WhatsApp status, Webhook overview.
+ * Section — Integrations (per-clinic)
+ * Clinic selector + per-clinic integration cards (WhatsApp, SMS, Discord, Webhook).
+ * Connect / Reconnect / Disconnect / Send Test; metrics per clinic.
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Trash2, CheckCircle2, XCircle, AlertCircle, Bot, Webhook, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, XCircle, AlertCircle, Bot, Webhook, RefreshCw, Send } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface DiscordMapping {
@@ -19,6 +20,23 @@ interface DiscordMapping {
 interface TenantOption {
   id: string;
   name: string | null;
+}
+
+interface ClinicIntegration {
+  id: string;
+  clinic_id: string;
+  type: string;
+  provider: string;
+  status: 'connected' | 'disconnected' | 'error';
+  config: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ClinicMetrics {
+  messages_today: number;
+  messages_this_month: number;
+  last_message_at: string | null;
 }
 
 // ─── Mock webhook log (replace with real API) ─────────────────────────────────
@@ -52,17 +70,87 @@ function StatusIcon({ status }: { status: 'healthy' | 'warning' | 'critical' | '
   return <XCircle className="h-5 w-5 text-red-400" />;
 }
 
+const CHANNEL_LABELS: Record<string, string> = { whatsapp: 'WhatsApp', sms: 'SMS', discord: 'Discord', webhook: 'Webhook' };
+const PROVIDERS: Record<string, string[]> = { whatsapp: ['twilio', '360dialog', 'vonage'], sms: ['twilio', 'vonage'], discord: ['discord'], webhook: ['generic'] };
+
+function ConnectModal({
+  type,
+  providerOptions,
+  config,
+  setConfig,
+  saving,
+  onSave,
+  onClose,
+}: {
+  type: string;
+  providerOptions: string[];
+  config: Record<string, string>;
+  setConfig: (c: Record<string, string>) => void;
+  saving: boolean;
+  onSave: (provider: string, config: Record<string, unknown>) => void;
+  onClose: () => void;
+}) {
+  const [provider, setProvider] = useState(providerOptions[0] ?? '');
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
+      <div className="rounded-2xl bg-zinc-900 border border-zinc-700 shadow-2xl max-w-sm w-full p-6 text-right" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-base font-bold text-zinc-100 mb-4">חבר {CHANNEL_LABELS[type] ?? type}</h3>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1">ספק</label>
+            <select value={provider} onChange={(e) => setProvider(e.target.value)} className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100">
+              {providerOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+          {(type === 'whatsapp' || type === 'sms') && (
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1">מס׳ טלפון</label>
+              <input type="text" value={config.phone_number ?? ''} onChange={(e) => setConfig({ ...config, phone_number: e.target.value })} placeholder="+972..."
+                className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100" />
+            </div>
+          )}
+          {type === 'webhook' && (
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1">כתובת Webhook</label>
+              <input type="text" value={config.webhook_url ?? ''} onChange={(e) => setConfig({ ...config, webhook_url: e.target.value })} placeholder="https://..."
+                className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100" />
+            </div>
+          )}
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1">API Key (אופציונלי)</label>
+            <input type="password" value={config.api_key ?? ''} onChange={(e) => setConfig({ ...config, api_key: e.target.value })} placeholder="••••••••"
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100" />
+          </div>
+        </div>
+        <div className="flex gap-2 mt-5 justify-end">
+          <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl bg-zinc-800 text-zinc-200 text-sm">ביטול</button>
+          <button type="button" onClick={() => onSave(provider, config)} disabled={saving} className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold disabled:opacity-50">{saving ? 'שומר…' : 'חבר'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function IntegrationsSection() {
   const { toast, show } = useToast();
 
   const [mappings, setMappings] = useState<DiscordMapping[]>([]);
   const [tenants, setTenants] = useState<TenantOption[]>([]);
+  const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null);
+  const [integrations, setIntegrations] = useState<ClinicIntegration[]>([]);
+  const [metrics, setMetrics] = useState<ClinicMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [connectModal, setConnectModal] = useState<'whatsapp' | 'sms' | 'discord' | 'webhook' | null>(null);
   const [fGuildId, setFGuildId] = useState('');
   const [fClinicId, setFClinicId] = useState('');
   const [saving, setSaving] = useState(false);
+  const [testPhone, setTestPhone] = useState('');
+  const [testMessage, setTestMessage] = useState('');
+  const [testChannel, setTestChannel] = useState<string | null>(null);
+  const [sendingTest, setSendingTest] = useState(false);
+  const [connectConfig, setConnectConfig] = useState<Record<string, string>>({});
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -73,11 +161,25 @@ export default function IntegrationsSection() {
       ]);
       const [mData, cData] = await Promise.all([mRes.json().catch(() => ({})), cRes.json().catch(() => ({}))]);
       setMappings(mData.mappings ?? []);
-      setTenants(cData.clinics ?? []);
+      const clinics = cData.clinics ?? [];
+      setTenants(clinics);
+      if (!selectedClinicId && clinics.length) setSelectedClinicId(clinics[0].id);
     } finally { setLoading(false); }
-  }, []);
+  }, [selectedClinicId]);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  const fetchPerClinic = useCallback(async () => {
+    if (!selectedClinicId) return;
+    const [intRes, metRes] = await Promise.all([
+      fetch(`/api/super-admin/clinic-integrations?clinic_id=${encodeURIComponent(selectedClinicId)}`),
+      fetch(`/api/super-admin/clinic-integrations/metrics?clinic_id=${encodeURIComponent(selectedClinicId)}`),
+    ]);
+    const [intData, metData] = await Promise.all([intRes.json().catch(() => ({})), metRes.json().catch(() => ({}))]);
+    setIntegrations(intData.integrations ?? []);
+    setMetrics(metData.messages_today !== undefined ? metData : null);
+  }, [selectedClinicId]);
+
+  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => { fetchPerClinic(); }, [fetchPerClinic]);
 
   const handleAdd = async () => {
     if (!fGuildId.trim() || !fClinicId) return;
@@ -100,19 +202,130 @@ export default function IntegrationsSection() {
     show('המיפוי הוסר'); fetchAll();
   };
 
+  const handleConnect = async (type: 'whatsapp' | 'sms' | 'discord' | 'webhook', provider: string, config: Record<string, unknown>) => {
+    if (!selectedClinicId) return;
+    setSaving(true);
+    try {
+      const res = await fetch('/api/super-admin/clinic-integrations', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clinic_id: selectedClinicId, type, provider, config }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error ?? 'שגיאה');
+      show('חובר'); setConnectModal(null); fetchPerClinic();
+    } catch (e) { show((e as Error).message); }
+    finally { setSaving(false); }
+  };
+
+  const handleDisconnect = async (id: string) => {
+    if (!confirm('לנתק אינטגרציה?')) return;
+    const res = await fetch('/api/super-admin/clinic-integrations', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status: 'disconnected' }),
+    });
+    if (!res.ok) { show((await res.json()).error ?? 'שגיאה'); return; }
+    show('נותק'); fetchPerClinic();
+  };
+
+  const handleSendTest = async (channel: string, phone: string, message: string) => {
+    if (!selectedClinicId || !message.trim()) return;
+    setSendingTest(true);
+    try {
+      const res = await fetch('/api/messages/send', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clinic_id: selectedClinicId, channel, phone: phone || undefined, message }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'שגיאה');
+      show('נשלח');
+    } catch (e) { show((e as Error).message); }
+    finally { setSendingTest(false); }
+  };
+
   const discordConnected = mappings.length;
   const discordTotal = tenants.length;
   const discordStatus = discordConnected === discordTotal && discordTotal > 0 ? 'healthy' : discordConnected > 0 ? 'warning' : 'critical';
 
+  const selectedClinic = tenants.find((t) => t.id === selectedClinicId);
+  const getIntegration = (type: string) => integrations.find((i) => i.type === type);
+
   return (
     <div className="space-y-8">
-      {/* Header */}
+      {/* Header + Clinic selector */}
       <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-8">
         <h2 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100 text-right mb-2">מרכז אינטגרציות</h2>
-        <p className="text-sm text-slate-500 dark:text-zinc-400 text-right mb-6">סטטוס חיבורים פלטפורמה-רחבים — Discord, WhatsApp, ו-Webhooks.</p>
+        <p className="text-sm text-slate-500 dark:text-zinc-400 text-right mb-4">אינטגרציות לפי קליניקה — בחר קליניקה להצגת חיבורים ומדדים.</p>
+        <div className="flex items-center gap-2 flex-row-reverse justify-end">
+          <label className="text-sm font-medium text-slate-600 dark:text-zinc-400">בחר קליניקה:</label>
+          <select
+            value={selectedClinicId ?? ''}
+            onChange={(e) => setSelectedClinicId(e.target.value || null)}
+            className="rounded-xl border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-4 py-2 text-sm text-slate-900 dark:text-zinc-100 min-w-[200px]"
+          >
+            {tenants.map((t) => (
+              <option key={t.id} value={t.id}>{t.name ?? t.id}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {/* Platform status cards */}
+      {/* Per-clinic metrics + integration cards */}
+      {selectedClinicId && (
+        <div className="space-y-4">
+          {metrics && (
+            <div className="grid grid-cols-3 gap-4">
+              <div className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-4">
+                <p className="text-xs text-zinc-500 mb-1">הודעות היום</p>
+                <p className="text-xl font-bold text-zinc-100">{metrics.messages_today}</p>
+              </div>
+              <div className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-4">
+                <p className="text-xs text-zinc-500 mb-1">הודעות החודש</p>
+                <p className="text-xl font-bold text-zinc-100">{metrics.messages_this_month}</p>
+              </div>
+              <div className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-4">
+                <p className="text-xs text-zinc-500 mb-1">הודעה אחרונה</p>
+                <p className="text-sm font-medium text-zinc-300">
+                  {metrics.last_message_at ? new Date(metrics.last_message_at).toLocaleString('he-IL') : '—'}
+                </p>
+              </div>
+            </div>
+          )}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {(['whatsapp', 'sms', 'discord', 'webhook'] as const).map((type) => {
+              const int = getIntegration(type);
+              const isConnected = int?.status === 'connected';
+              return (
+                <div key={type} className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-6">
+                  <div className="flex items-center justify-between flex-row-reverse mb-3">
+                    <span className="font-semibold text-slate-900 dark:text-zinc-100">{CHANNEL_LABELS[type] ?? type}</span>
+                    {isConnected ? <CheckCircle2 className="h-5 w-5 text-emerald-400" /> : <XCircle className="h-5 w-5 text-zinc-500" />}
+                  </div>
+                  <p className="text-xs text-zinc-500 mb-3">{isConnected ? `${int?.provider}` : 'לא מחובר'}</p>
+                  <div className="flex flex-col gap-2">
+                    {!isConnected ? (
+                      <button type="button" onClick={() => setConnectModal(type)} className="w-full rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white py-2 text-sm font-medium">
+                        התחבר
+                      </button>
+                    ) : (
+                      <>
+                        <button type="button" onClick={() => handleDisconnect(int!.id)} className="w-full rounded-lg bg-zinc-700 hover:bg-zinc-600 text-zinc-200 py-2 text-sm">
+                          נתק
+                        </button>
+                        {(type === 'whatsapp' || type === 'sms') && (
+                          <button type="button" onClick={() => { setTestPhone(''); setTestMessage('בדיקה'); setTestChannel(type); }} className="w-full rounded-lg border border-zinc-600 text-zinc-300 py-2 text-sm flex items-center justify-center gap-1">
+                            <Send className="h-3.5 w-3.5" /> שלח הודעת בדיקה
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Platform status cards (global summary) */}
       <div className="grid sm:grid-cols-3 gap-4">
         {/* Discord */}
         <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-6 hover:border-slate-300 dark:hover:border-zinc-600 transition-all duration-200">
@@ -269,6 +482,47 @@ export default function IntegrationsSection() {
           </table>
         </div>
       </div>
+
+      {/* Connect integration modal */}
+      {connectModal && (
+        <ConnectModal
+          type={connectModal}
+          providerOptions={PROVIDERS[connectModal] ?? []}
+          config={connectConfig}
+          setConfig={setConnectConfig}
+          saving={saving}
+          onSave={(provider, config) => handleConnect(connectModal, provider, config)}
+          onClose={() => { setConnectModal(null); setConnectConfig({}); }}
+        />
+      )}
+
+      {/* Send test message modal */}
+      {testChannel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setTestChannel(null)}>
+          <div className="rounded-2xl bg-zinc-900 border border-zinc-700 shadow-2xl max-w-sm w-full p-6 text-right" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-bold text-zinc-100 mb-4">שלח הודעת בדיקה</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1">מס׳ טלפון</label>
+                <input type="text" value={testPhone} onChange={(e) => setTestPhone(e.target.value)} placeholder="+972..."
+                  className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1">הודעה</label>
+                <input type="text" value={testMessage} onChange={(e) => setTestMessage(e.target.value)}
+                  className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100" />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-5 justify-end">
+              <button type="button" onClick={() => setTestChannel(null)} className="px-4 py-2 rounded-xl bg-zinc-800 text-zinc-200 text-sm">ביטול</button>
+              <button type="button" onClick={() => handleSendTest(testChannel, testPhone, testMessage)} disabled={sendingTest || !testMessage.trim()}
+                className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold disabled:opacity-50">
+                {sendingTest ? 'שולח…' : 'שלח'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Discord modal */}
       {modalOpen && (

@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { Users, BarChart3, Settings as SettingsIcon, Calendar as CalendarIcon, Menu, DollarSign, LayoutDashboard, Building2, Link2, Activity, Brain, UserCheck } from 'lucide-react';
+import { Users, BarChart3, Settings as SettingsIcon, Calendar as CalendarIcon, Menu, DollarSign, LayoutDashboard, Building2, Link2, Activity, Brain, UserCheck, MessageSquare, Radio, PackageOpen } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { useEffect, useRef, useState } from 'react';
 import MobileDrawer from '@/components/dashboard/MobileDrawer';
@@ -21,14 +21,17 @@ const NAV_ITEMS = [
 const SUPER_ADMIN_HREF = '/dashboard/super-admin';
 
 const SUPER_ADMIN_SECTIONS = [
-  { id: 'overview',     label: 'סקירה',           icon: LayoutDashboard, hash: '#overview' },
+  { id: 'overview',     label: 'סקירת מערכת',     icon: LayoutDashboard, hash: '#overview' },
   { id: 'clinics',      label: 'קליניקות',        icon: Building2,       hash: '#clinics' },
-  { id: 'pricing',      label: 'תמחור גלובלי',    icon: DollarSign,      hash: '#pricing' },
   { id: 'integrations', label: 'אינטגרציות',      icon: Link2,           hash: '#integrations' },
+  { id: 'messaging',    label: 'מסרים',           icon: MessageSquare,   hash: '#messaging' },
+  { id: 'live',         label: 'שיחות חיות',      icon: Radio,           hash: '#live' },
+  { id: 'ai',           label: 'מודלי AI',        icon: Brain,           hash: '#ai' },
   { id: 'traffic',      label: 'תעבורה וביצועים', icon: Activity,        hash: '#traffic' },
-  { id: 'ai',           label: 'מודלים & AI',     icon: Brain,           hash: '#ai' },
-  { id: 'users',        label: 'משתמשים והרשאות', icon: Users,            hash: '#users' },
-  { id: 'settings',     label: 'הגדרות מערכת',   icon: SettingsIcon,    hash: '#settings' },
+  { id: 'pricing',      label: 'תמחור גלובלי',   icon: DollarSign,      hash: '#pricing' },
+  { id: 'services',     label: 'שירותים',         icon: PackageOpen,     hash: '#services' },
+  { id: 'users',        label: 'משתמשים',         icon: Users,           hash: '#users' },
+  { id: 'settings',     label: 'הגדרות מערכת',    icon: SettingsIcon,    hash: '#settings' },
 ] as const;
 
 type DashboardLayoutClientProps = {

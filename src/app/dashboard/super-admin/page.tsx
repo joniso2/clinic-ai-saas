@@ -48,6 +48,8 @@ interface PlatformSnapshot {
   totalUsers: number;
   tenants: EnrichedTenant[];
   discordConnectedCount: number;
+  messagesToday?: number;
+  integrationHealthPercent?: number;
 }
 
 // ─── Data layer ───────────────────────────────────────────────────────────────
@@ -101,6 +103,19 @@ async function fetchPlatformSnapshot(): Promise<PlatformSnapshot> {
 
   const activeTenants = tenants.filter((t) => t.status !== 'inactive').length;
 
+  let messagesToday = 0;
+  let integrationHealthPercent = 0;
+  try {
+    const todayStart = new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z';
+    const { count: msgCount } = await supabase.from('messages').select('id', { count: 'exact', head: true }).gte('created_at', todayStart);
+    messagesToday = msgCount ?? 0;
+    const { count: totalInt } = await supabase.from('clinic_integrations').select('id', { count: 'exact', head: true });
+    const { count: connectedInt } = await supabase.from('clinic_integrations').select('id', { count: 'exact', head: true }).eq('status', 'connected');
+    integrationHealthPercent = (totalInt ?? 0) > 0 ? ((connectedInt ?? 0) / (totalInt ?? 1)) * 100 : 0;
+  } catch {
+    // messages / clinic_integrations may not exist before migration
+  }
+
   return {
     totalTenants: rawTotalTenants ?? 0,
     activeTenants,
@@ -109,6 +124,8 @@ async function fetchPlatformSnapshot(): Promise<PlatformSnapshot> {
     totalUsers: rawUsers ?? 0,
     tenants,
     discordConnectedCount: discordSet.size,
+    messagesToday,
+    integrationHealthPercent,
   };
 }
 
@@ -183,6 +200,25 @@ function buildKPIs(
       trend: platform.discordConnectedCount === platform.totalTenants ? 'up' : 'down',
       change: 0,
     },
+    ...(platform.messagesToday !== undefined
+      ? [{
+          id: 'messages-today',
+          label: 'הודעות היום',
+          value: platform.messagesToday,
+          trend: 'neutral' as const,
+          change: 0,
+        }]
+      : []),
+    ...(platform.integrationHealthPercent !== undefined
+      ? [{
+          id: 'integration-health',
+          label: 'בריאות אינטגרציות',
+          value: Math.round(platform.integrationHealthPercent),
+          suffix: '%' as const,
+          trend: (platform.integrationHealthPercent ?? 0) >= 80 ? 'up' : (platform.integrationHealthPercent ?? 0) >= 50 ? 'neutral' : 'down',
+          change: 0,
+        }]
+      : []),
   ];
 }
 

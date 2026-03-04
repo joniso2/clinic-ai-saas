@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import moment from 'moment';
 import 'moment/locale/he';
 import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -84,65 +84,6 @@ function getAppointmentCardLabel(apt: Appointment, leadStatusByLeadId: Record<st
   }
   return getServiceLabel(apt);
 }
-
-type TooltipState = {
-  apt: Appointment;
-  x: number;
-  y: number;
-};
-
-/** Lightweight hover tooltip: Client name, Service name, Time range */
-function AppointmentTooltip({ apt, x, y }: TooltipState) {
-  const serviceLabel = getServiceLabel(apt);
-  const startStr = moment(apt.datetime).format('HH:mm');
-  const endStr = moment(new Date(new Date(apt.datetime).getTime() + apt.duration_minutes * 60000)).format('HH:mm');
-
-  return (
-    <div
-      className="fixed z-[200] w-52 rounded-xl border border-neutral-200 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-3 py-2.5 shadow-lg pointer-events-none"
-      style={{ top: y + 10, left: x + 8 }}
-      dir="rtl"
-    >
-      <p className="text-xs font-semibold text-slate-900 dark:text-zinc-100 truncate">{apt.patient_name}</p>
-      <p className="text-[11px] text-slate-500 dark:text-zinc-400 truncate mt-0.5">{serviceLabel}</p>
-      <p className="text-[11px] text-slate-600 dark:text-zinc-300 tabular-nums mt-0.5">{startStr} – {endStr}</p>
-    </div>
-  );
-}
-
-type EventCardProps = {
-  event: CalendarEvent;
-  onTooltipShow: (apt: Appointment, x: number, y: number) => void;
-  onTooltipHide: () => void;
-};
-
-/** Minimal card: Line 1 = Service, Line 2 = Client, Line 3 = Time range; service icon in lower corner. Click opens LeadDetailDrawer (phone/WhatsApp/AI there). */
-const CustomAppointmentCard = memo(function CustomAppointmentCard({ event, onTooltipShow, onTooltipHide }: EventCardProps) {
-  const apt = event.resource;
-  const category = getServiceCategory(apt);
-  const serviceLabel = getServiceLabel(apt);
-  const startStr = moment(event.start).format('HH:mm');
-  const endStr = moment(event.end).format('HH:mm');
-  const icon = SERVICE_ICON[category];
-  const cardClass = SERVICE_CARD_CLASS[category];
-
-  return (
-    <div
-      className={`rbc-event-card h-full w-full flex flex-col rounded-lg shadow-sm px-2 py-1 text-xs overflow-hidden cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] min-w-0 border-r-4 ${cardClass}`}
-      dir="rtl"
-      onMouseEnter={(e) => onTooltipShow(apt, e.clientX, e.clientY)}
-      onMouseMove={(e) => onTooltipShow(apt, e.clientX, e.clientY)}
-      onMouseLeave={onTooltipHide}
-    >
-      <p className="text-[10px] font-semibold truncate leading-tight opacity-90">{serviceLabel}</p>
-      <p className="text-xs font-bold truncate leading-tight mt-0.5">{apt.patient_name}</p>
-      <p className="text-[10px] tabular-nums truncate mt-0.5 opacity-90">{startStr}–{endStr}</p>
-      <div className="mt-auto pt-1 flex justify-end">
-        <span className="text-base leading-none select-none" aria-hidden>{icon}</span>
-      </div>
-    </div>
-  );
-});
 
 /** Get YYYY-MM-DD for an event start in Israel timezone */
 function getEventDateStr(start: Date): string {
@@ -235,20 +176,6 @@ const WeekBoardCard = memo(function WeekBoardCard({ event, onClick, leadStatusBy
   );
 });
 
-const MESSAGES = {
-  week: 'שבוע',
-  day: 'יום',
-  today: 'היום',
-  previous: 'הקודם',
-  next: 'הבא',
-  showMore: (total: number) => `+${total} נוספים`,
-  noEventsInRange: 'אין תורים בטווח זה',
-  date: 'תאריך',
-  time: 'שעה',
-  event: 'תור',
-  allDay: 'כל היום',
-};
-
 export function CalendarView({ initialDate }: { initialDate?: string } = {}) {
   const today = useMemo(() => new Date(), []);
 
@@ -267,8 +194,6 @@ export function CalendarView({ initialDate }: { initialDate?: string } = {}) {
   const [showNewForm, setShowNewForm] = useState(false);
   const [prefillDate, setPrefillDate] = useState<string | undefined>(undefined);
   const [prefillTime, setPrefillTime] = useState<string | undefined>(undefined);
-  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
-  const tooltipTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [fetchedMonths, setFetchedMonths] = useState<Set<string>>(new Set());
   const [leadStatusByLeadId, setLeadStatusByLeadId] = useState<Record<string, string>>({});
   const [leadStatusFetched, setLeadStatusFetched] = useState(false);
@@ -371,15 +296,6 @@ export function CalendarView({ initialDate }: { initialDate?: string } = {}) {
       setDrawerLead({ id: apt.lead_id, full_name: apt.patient_name } as Lead);
     }
     setDrawerOpen(true);
-  }, []);
-
-  const handleTooltipShow = useCallback((apt: Appointment, x: number, y: number) => {
-    if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current);
-    setTooltip({ apt, x, y });
-  }, []);
-
-  const handleTooltipHide = useCallback(() => {
-    tooltipTimeout.current = setTimeout(() => setTooltip(null), 120);
   }, []);
 
   const todayStr = useMemo(() => {
@@ -565,9 +481,6 @@ export function CalendarView({ initialDate }: { initialDate?: string } = {}) {
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-slate-900 dark:border-t-zinc-300" />
         </div>
       )}
-
-      {/* Tooltip */}
-      {tooltip && <AppointmentTooltip {...tooltip} />}
 
       {/* LeadDetailDrawer */}
       <LeadDetailDrawer

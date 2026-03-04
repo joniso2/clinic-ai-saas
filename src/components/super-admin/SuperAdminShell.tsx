@@ -16,7 +16,7 @@
 import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Building2, DollarSign, Link2,
-  Activity, Brain, Users, Settings, PackageOpen,
+  Activity, Brain, Users, Settings, PackageOpen, MessageSquare, Radio,
 } from 'lucide-react';
 import type { OverviewPageData } from '@/types/analytics';
 
@@ -25,23 +25,27 @@ import OverviewSection              from '@/components/super-admin/overview/Over
 import TenantManagementSection      from '@/components/super-admin/tenants/TenantManagementSection';
 import PricingSection               from '@/components/super-admin/pricing/PricingSection';
 import IntegrationsSection          from '@/components/super-admin/integrations/IntegrationsSection';
+import MessagingSection             from '@/components/super-admin/messaging/MessagingSection';
+import LiveConversationsSection     from '@/components/super-admin/messaging/LiveConversationsSection';
 import TrafficSection               from '@/components/super-admin/traffic/TrafficSection';
 import AIControlSection             from '@/components/super-admin/ai/AIControlSection';
 import SystemUsersSection           from '@/components/super-admin/users/SystemUsersSection';
 import SystemSettingsSection        from '@/components/super-admin/settings/SystemSettingsSection';
 import TenantServicesOverrideSection from '@/components/super-admin/services/TenantServicesOverrideSection';
 
-// ─── Navigation config ────────────────────────────────────────────────────────
+// ─── Navigation config (SaaS infrastructure console) ─────────────────────────────
 const SECTIONS = [
-  { id: 'overview',     label: 'סקירה',            icon: LayoutDashboard },
-  { id: 'clinics',      label: 'קליניקות',          icon: Building2 },
-  { id: 'pricing',      label: 'תמחור גלובלי',     icon: DollarSign },
-  { id: 'integrations', label: 'אינטגרציות',        icon: Link2 },
-  { id: 'traffic',      label: 'תעבורה וביצועים',   icon: Activity },
-  { id: 'ai',           label: 'AI & מודלים',       icon: Brain },
-  { id: 'users',        label: 'משתמשי מערכת',      icon: Users },
-  { id: 'settings',     label: 'הגדרות מערכת',      icon: Settings },
-  { id: 'services',     label: 'ניהול שירותים לקליניקות', icon: PackageOpen },
+  { id: 'overview',       label: 'סקירת מערכת',     icon: LayoutDashboard },
+  { id: 'clinics',        label: 'קליניקות',        icon: Building2 },
+  { id: 'integrations',   label: 'אינטגרציות',      icon: Link2 },
+  { id: 'messaging',      label: 'מסרים',           icon: MessageSquare },
+  { id: 'live',           label: 'שיחות חיות',      icon: Radio },
+  { id: 'ai',             label: 'מודלי AI',        icon: Brain },
+  { id: 'traffic',        label: 'תעבורה וביצועים', icon: Activity },
+  { id: 'pricing',       label: 'תמחור גלובלי',    icon: DollarSign },
+  { id: 'services',       label: 'שירותים',          icon: PackageOpen },
+  { id: 'users',          label: 'משתמשים',         icon: Users },
+  { id: 'settings',       label: 'הגדרות מערכת',    icon: Settings },
 ] as const;
 
 type SectionId = (typeof SECTIONS)[number]['id'];
@@ -105,13 +109,15 @@ export function SuperAdminShell({ overviewData }: SuperAdminShellProps) {
         <div className="px-4 py-6 md:px-8 max-w-screen-2xl mx-auto">
           {section === 'overview'     && <OverviewSection initialData={overviewData} />}
           {section === 'clinics'      && <TenantManagementSection />}
-          {section === 'pricing'      && <PricingSection />}
           {section === 'integrations' && <IntegrationsSection />}
-          {section === 'traffic'      && <TrafficSection />}
+          {section === 'messaging'    && <MessagingSection />}
+          {section === 'live'         && <LiveConversationsSection />}
           {section === 'ai'           && <AIControlSection />}
+          {section === 'traffic'      && <TrafficSection />}
+          {section === 'pricing'      && <PricingSection />}
+          {section === 'services'     && <TenantServicesOverrideSection />}
           {section === 'users'        && <SystemUsersSection />}
           {section === 'settings'     && <SystemSettingsSection />}
-          {section === 'services'     && <TenantServicesOverrideSection />}
         </div>
       </main>
     </div>

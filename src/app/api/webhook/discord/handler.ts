@@ -64,14 +64,17 @@ export async function handleDiscordWebhook(
   }
 
   try {
-    const { reply } = await processDiscordMessage({
+    const { reply, modelUsed } = await processDiscordMessage({
       message_id: messageId,
       content,
       authorName,
       conversationHistory,
       guildId,
     });
-    const safeReply = (reply && String(reply).trim()) ? reply : 'שגיאה זמנית. נסה שוב או פנה למרפאה ישירות.';
+    let safeReply = (reply && String(reply).trim()) ? reply : 'שגיאה זמנית. נסה שוב או פנה למרפאה ישירות.';
+    if (modelUsed?.trim()) {
+      safeReply = `${safeReply}\n\n_(נעניתי עם המודל: ${modelUsed})_`;
+    }
     const duration_ms = Date.now() - startedAt;
     const clinic_id = guildId ? await getClinicIdByGuildId(guildId) : undefined;
     logger.info('webhook_completed', {

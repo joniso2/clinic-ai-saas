@@ -1,14 +1,21 @@
 'use client';
 
 /**
- * Section 6 — AI Control Center
- * Global model config, temperature/tokens, prompt history, test console, cost monitor.
+ * Section — AI Control Center
+ * Per-clinic AI provider/model (ai_models table) + global mock config, test console, cost monitor.
  */
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Brain, ChevronDown, Send, Cpu, DollarSign, Clock, Zap } from 'lucide-react';
 import { AI_MODELS, DEFAULT_AI_CONFIG, getMockPromptHistory } from '@/services/mock-ai.service';
 import type { GlobalAIConfig } from '@/services/mock-ai.service';
+
+const AI_PROVIDERS = [{ id: 'google', label: 'Google Gemini (מומלץ)', defaultModel: 'gemini-1.5-flash' }, { id: 'openai', label: 'OpenAI', defaultModel: 'gpt-4o-mini' }, { id: 'anthropic', label: 'Anthropic', defaultModel: 'claude-3-haiku' }] as const;
+const PROVIDER_MODELS: Record<string, string[]> = {
+  google: ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash'],
+  openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo'],
+  anthropic: ['claude-3-haiku', 'claude-3-sonnet', 'claude-3-opus'],
+};
 
 // ─── Slider ───────────────────────────────────────────────────────────────────
 function Slider({
@@ -54,6 +61,38 @@ export default function AIControlSection() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const [clinics, setClinics] = useState<{ id: string; name: string | null }[]>([]);
+  const [selectedClinicId, setSelectedClinicId] = useState('');
+  const [aiPerClinic, setAiPerClinic] = useState<{ provider: string; model: string; temperature: number; max_tokens: number }>({ provider: 'google', model: 'gemini-1.5-flash', temperature: 0.7, max_tokens: 1024 });
+  const [aiSaveStatus, setAiSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+
+  const fetchClinics = useCallback(async () => {
+    const res = await fetch('/api/super-admin/clinics');
+    const d = await res.json().catch(() => ({}));
+    const list = d.clinics ?? [];
+    setClinics(list);
+    if (list.length && !selectedClinicId) setSelectedClinicId(list[0].id);
+  }, [selectedClinicId]);
+
+  const fetchAiModels = useCallback(async () => {
+    if (!selectedClinicId) return;
+    const res = await fetch(`/api/super-admin/ai-models?clinic_id=${encodeURIComponent(selectedClinicId)}`);
+    const d = await res.json().catch(() => ({}));
+    setAiPerClinic({ provider: d.provider ?? 'google', model: d.model ?? 'gemini-1.5-flash', temperature: Number(d.temperature) ?? 0.7, max_tokens: Number(d.max_tokens) ?? 1024 });
+  }, [selectedClinicId]);
+
+  useEffect(() => { fetchClinics(); }, []);
+  useEffect(() => { fetchAiModels(); }, [fetchAiModels]);
+
+  const saveAiPerClinic = async () => {
+    if (!selectedClinicId) return;
+    setAiSaveStatus('saving');
+    const res = await fetch('/api/super-admin/ai-models', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clinic_id: selectedClinicId, ...aiPerClinic }) });
+    if (!res.ok) { setAiSaveStatus('idle'); return; }
+    setAiSaveStatus('saved');
+    setTimeout(() => setAiSaveStatus('idle'), 2000);
+  };
+
   const history = getMockPromptHistory();
   const selectedModel = AI_MODELS.find((m) => m.id === config.globalModel) ?? AI_MODELS[0];
 
@@ -82,8 +121,48 @@ export default function AIControlSection() {
       {/* Header */}
       <div className="text-right">
         <h2 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100 text-right">מרכז שליטה AI</h2>
-        <p className="mt-0.5 text-sm text-slate-500 dark:text-zinc-400 text-right">בחירת מודל גלובלי, פרמטרים, היסטוריית פרומפטים ו-test console.</p>
+        <p className="mt-0.5 text-sm text-slate-500 dark:text-zinc-400 text-right">מודל לפי קליניקה (OpenAI, Google, Anthropic), פרמטרים, test console.</p>
       </div>
+
+      {/* Per-clinic AI (ai_models) */}
+      {clinics.length > 0 && (
+        <div className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5">
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-zinc-200 mb-4 text-right">מודל AI לפי קליניקה</h3>
+          <div className="grid sm:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1 text-right">קליניקה</label>
+              <select value={selectedClinicId} onChange={(e) => setSelectedClinicId(e.target.value)} className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 text-right">
+                {clinics.map((c) => <option key={c.id} value={c.id}>{c.name ?? c.id}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1 text-right">ספק</label>
+              <select value={aiPerClinic.provider} onChange={(e) => setAiPerClinic((a) => ({ ...a, provider: e.target.value, model: PROVIDER_MODELS[e.target.value]?.[0] ?? a.model }))} className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 text-right">
+                {AI_PROVIDERS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1 text-right">מודל</label>
+              <select value={aiPerClinic.model} onChange={(e) => setAiPerClinic((a) => ({ ...a, model: e.target.value }))} className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 text-right">
+                {(PROVIDER_MODELS[aiPerClinic.provider] ?? []).map((m) => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+            <div className="flex gap-4 items-end">
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-zinc-400 mb-1 text-right">טמפרטורה</label>
+                <input type="number" min={0} max={2} step={0.1} value={aiPerClinic.temperature} onChange={(e) => setAiPerClinic((a) => ({ ...a, temperature: Number(e.target.value) }))} className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 text-right" />
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-zinc-400 mb-1 text-right">מקס טוקנים</label>
+                <input type="number" min={100} max={128000} value={aiPerClinic.max_tokens} onChange={(e) => setAiPerClinic((a) => ({ ...a, max_tokens: Number(e.target.value) }))} className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 text-right" />
+              </div>
+            </div>
+          </div>
+          <button type="button" onClick={saveAiPerClinic} disabled={aiSaveStatus === 'saving'} className="rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 text-sm font-semibold disabled:opacity-50">
+            {aiSaveStatus === 'saving' ? 'שומר…' : aiSaveStatus === 'saved' ? '✓ נשמר' : 'שמור הגדרות קליניקה'}
+          </button>
+        </div>
+      )}
 
       {/* Cost monitor strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

@@ -24,6 +24,8 @@ function calculatePriorityLevel(urgency_level: string | null | undefined): 'low'
 
 export type ProcessDiscordMessageResult = {
   reply: string | null;
+  /** Model used for this reply (from ai_models); can be shown in Discord. */
+  modelUsed?: string;
 };
 
 /**
@@ -102,6 +104,7 @@ export async function processDiscordMessage(params: {
       channelName,
       conversationHistory: history,
       systemPrompt,
+      clinicId,
     });
   } catch (err) {
     openai_duration_ms = Date.now() - openaiStartedAt;
@@ -124,7 +127,7 @@ export async function processDiscordMessage(params: {
   }
   openai_duration_ms = Date.now() - openaiStartedAt;
 
-  const logPipelineAndReturn = (reply: string | null): ProcessDiscordMessageResult => {
+  const logPipelineAndReturn = (reply: string | null, modelUsed?: string): ProcessDiscordMessageResult => {
     const total_service_duration_ms = Date.now() - serviceStartedAt;
     const db_duration_ms = dbStartedAt !== null ? Date.now() - dbStartedAt : 0;
     logger.info('ai_pipeline_completed', {
@@ -135,7 +138,7 @@ export async function processDiscordMessage(params: {
       total_service_duration_ms,
       service: 'lead.service',
     });
-    return { reply };
+    return { reply, modelUsed: modelUsed ?? analysis.modelUsed };
   };
 
   const priority_level = calculatePriorityLevel(analysis.urgency_level);
