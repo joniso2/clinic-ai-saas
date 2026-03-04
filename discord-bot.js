@@ -120,7 +120,7 @@ client.on(Events.MessageCreate, async (message) => {
       return;
     }
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
     let response;
     try {
       response = await doFetch(webhookUrl, {
