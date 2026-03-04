@@ -2,6 +2,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import logger from '@/lib/logger';
 import { processDiscordMessage } from '@/services/lead.service';
 import { getClinicIdByGuildId } from '@/services/discord-guild.service';
+import { postMessageToChannel } from '@/lib/discord-post';
 
 export type DiscordWebhookBody = {
   message_id?: string;
@@ -44,6 +45,8 @@ export async function handleDiscordWebhook(
       : [];
 
     const guildId = typeof body.guild_id === 'string' ? body.guild_id : undefined;
+    const channelId = typeof body.channel_id === 'string' ? body.channel_id : undefined;
+    const useAsync = Boolean(channelId && process.env.DISCORD_BOT_TOKEN);
 
     // Idempotency: claim message_id before processing so only one concurrent request processes.
     if (messageId && guildId) {
@@ -70,6 +73,32 @@ export async function handleDiscordWebhook(
         logger.error('webhook_failed', { message_id: messageId, error: (idemErr as Error)?.message, service: 'handler' });
         return Response.json({ reply: fallbackReply });
       }
+    }
+
+    if (useAsync) {
+      (async () => {
+        try {
+          const { reply, modelUsed } = await processDiscordMessage({
+            message_id: messageId,
+            content,
+            authorName,
+            conversationHistory,
+            guildId,
+          });
+          let safeReply = (reply && String(reply).trim()) ? reply : fallbackReply;
+          if (modelUsed?.trim()) {
+            safeReply = `${safeReply}\n\n_(נעניתי עם המודל: ${modelUsed})_`;
+          }
+          await postMessageToChannel(channelId!, safeReply);
+          const duration_ms = Date.now() - startedAt;
+          logger.info('webhook_completed', { message_id: messageId, duration_ms, service: 'handler', async: true });
+        } catch (err) {
+          logger.error('webhook_failed', { message_id: messageId, error: (err as Error)?.message, service: 'handler' });
+          console.error('Discord webhook async error:', err);
+          await postMessageToChannel(channelId!, fallbackReply);
+        }
+      })();
+      return Response.json({ reply: null });
     }
 
     const { reply, modelUsed } = await processDiscordMessage({
