@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { Users, BarChart3, Settings as SettingsIcon, Calendar as CalendarIcon, Menu, DollarSign, LayoutDashboard, Building2, Link2, Activity, Brain, UserCheck, MessageSquare, Radio, PackageOpen } from 'lucide-react';
+import { Users, BarChart3, Settings as SettingsIcon, Calendar as CalendarIcon, Menu, DollarSign, LayoutDashboard, Building2, Link2, Activity, Brain, UserCheck, MessageSquare, Radio, PackageOpen, Wand2 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { useEffect, useRef, useState } from 'react';
 import MobileDrawer from '@/components/dashboard/MobileDrawer';
@@ -27,6 +27,7 @@ const SUPER_ADMIN_SECTIONS = [
   { id: 'messaging',    label: 'מסרים',           icon: MessageSquare,   hash: '#messaging' },
   { id: 'live',         label: 'שיחות חיות',      icon: Radio,           hash: '#live' },
   { id: 'ai',           label: 'מודלי AI',        icon: Brain,           hash: '#ai' },
+  { id: 'ai-persona',  label: 'AI Persona',      icon: Wand2,           hash: '#ai-persona' },
   { id: 'traffic',      label: 'תעבורה וביצועים', icon: Activity,        hash: '#traffic' },
   { id: 'pricing',      label: 'תמחור גלובלי',   icon: DollarSign,      hash: '#pricing' },
   { id: 'services',     label: 'שירותים',         icon: PackageOpen,     hash: '#services' },
