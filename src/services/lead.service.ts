@@ -78,10 +78,13 @@ export async function processDiscordMessage(params: {
   const autoMarkContacted           = settings?.auto_mark_contacted               ?? false;
 
   const systemPrompt = buildDiscordSystemPrompt({
-    ai_tone:                 settings?.ai_tone                 ?? 'professional',
-    ai_response_length:      settings?.ai_response_length      ?? 'standard',
+    ai_tone:                  settings?.ai_tone                  ?? 'professional',
+    ai_response_length:       settings?.ai_response_length       ?? 'standard',
     strict_hours_enforcement: settings?.strict_hours_enforcement ?? true,
-    business_description:    settings?.business_description    ?? null,
+    business_description:     settings?.business_description     ?? null,
+    industry_type:            settings?.industry_type            ?? 'general_business',
+    conversation_strategy:    settings?.conversation_strategy    ?? 'consultative',
+    custom_prompt_override:   settings?.custom_prompt_override   ?? null,
     pricesText,
     clinicName,
   });

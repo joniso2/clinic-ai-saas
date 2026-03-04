@@ -1,13 +1,39 @@
+/**
+ * Discord bot system prompt — Pipeline Architecture
+ *
+ * The final prompt is assembled from discrete, independently-testable segments:
+ *   1. Base prompt         — immutable core rules (Hebrew-first, JSON output)
+ *   2. Industry rules      — vertical-specific behaviour (medical / legal / general)
+ *   3. Strategy rules      — conversation approach (consultative / direct / educational)
+ *   4. Tone & length       — from clinic ai_tone + ai_response_length settings
+ *   5. Clinic context      — business_description + strict hours flag
+ *   6. Pricing block       — injected server-side from clinic_services (DO NOT MOVE)
+ *   7. Custom override     — freeform admin instructions appended last
+ *
+ * The public `buildDiscordSystemPrompt()` is fully backward-compatible.
+ * All segment helpers are exported so the client-side Live Preview can use them.
+ */
+
+// ─── Settings type ────────────────────────────────────────────────────────────
+
+export type IndustryType         = 'medical' | 'legal' | 'general_business';
+export type ConversationStrategy = 'consultative' | 'direct' | 'educational';
+
 export type AISettings = {
   ai_tone?: 'formal' | 'friendly' | 'professional';
   ai_response_length?: 'brief' | 'standard' | 'detailed';
   strict_hours_enforcement?: boolean;
   business_description?: string | null;
-  /** Injected dynamically from clinic_services (per clinic). Empty = no price list. */
+  industry_type?: IndustryType;
+  conversation_strategy?: ConversationStrategy;
+  custom_prompt_override?: string | null;
+  /** Injected dynamically server-side from clinic_services. Empty = no price list. */
   pricesText?: string;
   /** Optional clinic name for prompt personalization. */
   clinicName?: string | null;
 };
+
+// ─── Lookup tables ────────────────────────────────────────────────────────────
 
 const TONE_INSTRUCTIONS: Record<string, string> = {
   formal:       'Use formal, polished language. Address patients respectfully and avoid casual phrasing.',
@@ -21,34 +47,14 @@ const LENGTH_INSTRUCTIONS: Record<string, string> = {
   detailed: 'Provide thorough, informative replies. Explain context and options where helpful.',
 };
 
+// ─── Pipeline segment helpers (exported for client-side Live Preview) ─────────
+
 /**
- * Discord bot system prompt.
- * Prices are injected via settings.pricesText (from clinic_services, built server-side).
+ * Segment 1 — Base: immutable identity, mission, core behaviour, output format.
  */
-export function buildDiscordSystemPrompt(settings?: AISettings): string {
-  const pricesText = settings?.pricesText ?? '';
-
-  const tone = settings?.ai_tone ?? 'professional';
-  const length = settings?.ai_response_length ?? 'standard';
-  const strictHours = settings?.strict_hours_enforcement ?? true;
-
-  const toneInstruction = TONE_INSTRUCTIONS[tone] ?? TONE_INSTRUCTIONS.professional;
-  const lengthInstruction = LENGTH_INSTRUCTIONS[length] ?? LENGTH_INSTRUCTIONS.standard;
-  const descriptionNote = settings?.business_description
-    ? `\nClinic context: ${settings.business_description}\n\n`
-    : '';
-
-  const hoursNote = strictHours
-    ? ''
-    : '\nNOTE: Clinic hours are guidelines only. If a patient requests outside these hours, acknowledge and check with staff — do not automatically refuse.\n';
-
-  const clinicLabel = settings?.clinicName ? `"${settings.clinicName}"` : '"המרפאה"';
+export function buildBasePrompt(clinicLabel: string): string {
   return (
     `You are a professional, calm, human dental clinic receptionist for ${clinicLabel}.\n\n` +
-    `TONE: ${toneInstruction}\n` +
-    `RESPONSE LENGTH: ${lengthInstruction}\n` +
-    descriptionNote +
-    hoursNote +
 
     'Your mission:\n' +
     'Move every conversation toward a clear next step:\n' +
@@ -178,11 +184,155 @@ export function buildDiscordSystemPrompt(settings?: AISettings): string {
     '- is_new_lead = true only if phone exists.\n' +
     '- When the user sends ONLY a phone number (e.g. digits), set full_name from the "Patient name hint" from the system message if available (e.g. Discord display name), so the lead can be saved.\n' +
     '- appointment_datetime must be null if name/phone/time are incomplete.\n' +
-    '- Never output anything outside the JSON.\n\n' +
+    '- Never output anything outside the JSON.\n\n'
+  );
+}
 
-    (pricesText
-      ? `${pricesText}\n\n(מחירים להנחיה בלבד — המחיר הסופי נקבע על ידי הרופא במרפאה.)\n\n`
-      : '')
+/**
+ * Segment 2 — Industry rules: vertical-specific conversation guidance.
+ */
+export function getIndustryRules(industryType?: IndustryType | string): string {
+  switch (industryType) {
+    case 'medical':
+      return (
+        '────────────────────────\n' +
+        'INDUSTRY: Medical / Dental Clinic\n' +
+        '────────────────────────\n\n' +
+        'Handle patient inquiries with empathy and clinical sensitivity.\n' +
+        'Never provide diagnoses or medical advice — guide toward professional consultation.\n' +
+        'Pain, swelling, bleeding, or emergency symptoms require triage before any booking steps.\n' +
+        'Respect patient privacy; never ask for unnecessary personal information.\n\n'
+      );
+    case 'legal':
+      return (
+        '────────────────────────\n' +
+        'INDUSTRY: Legal Services\n' +
+        '────────────────────────\n\n' +
+        'Handle all inquiries with strict confidentiality and professionalism.\n' +
+        'Never provide legal advice — always guide the client toward a consultation booking.\n' +
+        'Clarify the general area of the legal matter before collecting contact details.\n' +
+        'Treat urgency (court dates, imminent deadlines) with high priority.\n\n'
+      );
+    default:
+      return (
+        '────────────────────────\n' +
+        'INDUSTRY: General Business\n' +
+        '────────────────────────\n\n' +
+        'Assist with general inquiries, bookings, and lead capture.\n' +
+        'Adapt tone and content to the business context described above.\n' +
+        'Prioritise getting the customer to the most appropriate next action.\n\n'
+      );
+  }
+}
+
+/**
+ * Segment 3 — Strategy rules: how the AI drives the conversation flow.
+ */
+export function getStrategyRules(strategy?: ConversationStrategy | string): string {
+  switch (strategy) {
+    case 'direct':
+      return (
+        '────────────────────────\n' +
+        'STRATEGY: Direct\n' +
+        '────────────────────────\n\n' +
+        'Be concise and action-oriented. Minimise back-and-forth exchanges.\n' +
+        'If intent is clear by the second message, move straight to collecting name and phone.\n' +
+        'Skip exploratory questions unless the situation is genuinely unclear.\n' +
+        'Short, decisive responses are preferred over lengthy explanations.\n\n'
+      );
+    case 'educational':
+      return (
+        '────────────────────────\n' +
+        'STRATEGY: Educational\n' +
+        '────────────────────────\n\n' +
+        'Build trust by sharing helpful, relevant information before asking for contact details.\n' +
+        'Explain procedures, services, and benefits in plain language.\n' +
+        'Use each reply as an opportunity to educate and reassure the patient.\n' +
+        'Move toward booking only after the patient feels informed and comfortable.\n\n'
+      );
+    default: // consultative
+      return (
+        '────────────────────────\n' +
+        'STRATEGY: Consultative\n' +
+        '────────────────────────\n\n' +
+        'Understand the full situation before recommending a next step.\n' +
+        'Ask clarifying questions to personalise the experience for each patient.\n' +
+        'Guide the patient naturally toward the action that best fits their needs.\n' +
+        'Never rush — building rapport improves conversion and patient satisfaction.\n\n'
+      );
+  }
+}
+
+/**
+ * Segment 4 — Tone & response length from clinic ai_tone / ai_response_length.
+ */
+export function getToneAndLengthSection(
+  tone?: string,
+  responseLength?: string,
+): string {
+  const toneInstruction   = TONE_INSTRUCTIONS[tone ?? 'professional'] ?? TONE_INSTRUCTIONS.professional;
+  const lengthInstruction = LENGTH_INSTRUCTIONS[responseLength ?? 'standard'] ?? LENGTH_INSTRUCTIONS.standard;
+  return `TONE: ${toneInstruction}\nRESPONSE LENGTH: ${lengthInstruction}\n\n`;
+}
+
+/**
+ * Segment 5 — Clinic context: business description + strict-hours note.
+ */
+export function getClinicContextSection(
+  businessDescription?: string | null,
+  strictHours?: boolean,
+): string {
+  const descriptionNote = businessDescription
+    ? `Clinic context: ${businessDescription}\n\n`
+    : '';
+
+  const hoursNote =
+    strictHours === false
+      ? 'NOTE: Clinic hours are guidelines only. If a patient requests outside these hours, acknowledge and check with staff — do not automatically refuse.\n\n'
+      : '';
+
+  return descriptionNote + hoursNote;
+}
+
+/**
+ * Segment 6 — Pricing block (injected server-side from clinic_services).
+ * Pure pass-through; the actual text is built by discord-guild.service.ts.
+ */
+export function getPricingSection(pricesText?: string): string {
+  if (!pricesText) return '';
+  return `${pricesText}\n\n(מחירים להנחיה בלבד — המחיר הסופי נקבע על ידי הרופא במרפאה.)\n\n`;
+}
+
+/**
+ * Segment 7 — Custom override: freeform admin instructions appended last.
+ */
+export function getCustomOverrideSection(customOverride?: string | null): string {
+  if (!customOverride?.trim()) return '';
+  return (
+    '────────────────────────\n' +
+    'CUSTOM INSTRUCTIONS\n' +
+    '────────────────────────\n\n' +
+    `${customOverride.trim()}\n\n`
+  );
+}
+
+// ─── Public API ───────────────────────────────────────────────────────────────
+
+/**
+ * Assembles the full Discord bot system prompt via the segment pipeline.
+ * Backward-compatible: all parameters from the old signature still work.
+ */
+export function buildDiscordSystemPrompt(settings?: AISettings): string {
+  const clinicLabel = settings?.clinicName ? `"${settings.clinicName}"` : '"המרפאה"';
+
+  return (
+    buildBasePrompt(clinicLabel) +
+    getIndustryRules(settings?.industry_type) +
+    getStrategyRules(settings?.conversation_strategy) +
+    getToneAndLengthSection(settings?.ai_tone, settings?.ai_response_length) +
+    getClinicContextSection(settings?.business_description, settings?.strict_hours_enforcement) +
+    getPricingSection(settings?.pricesText) +
+    getCustomOverrideSection(settings?.custom_prompt_override)
   );
 }
 

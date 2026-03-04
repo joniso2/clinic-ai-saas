@@ -46,6 +46,10 @@ export type ClinicSettings = {
   ai_tone: 'formal' | 'friendly' | 'professional';
   ai_response_length: 'brief' | 'standard' | 'detailed';
   strict_hours_enforcement: boolean;
+  // AI Persona
+  industry_type: 'medical' | 'legal' | 'general_business';
+  conversation_strategy: 'consultative' | 'direct' | 'educational';
+  custom_prompt_override: string | null;
   // Timestamps
   created_at?: string;
   updated_at?: string;
@@ -80,6 +84,9 @@ export const DEFAULT_SETTINGS: Omit<ClinicSettings, 'clinic_id' | 'created_at' |
   ai_tone: 'professional',
   ai_response_length: 'standard',
   strict_hours_enforcement: true,
+  industry_type: 'general_business',
+  conversation_strategy: 'consultative',
+  custom_prompt_override: null,
 };
 
 export async function getClinicSettings(clinicId: string) {

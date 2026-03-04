@@ -16,7 +16,7 @@
 import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Building2, DollarSign, Link2,
-  Activity, Brain, Users, Settings, PackageOpen, MessageSquare, Radio,
+  Activity, Brain, Users, Settings, PackageOpen, MessageSquare, Radio, Wand2,
 } from 'lucide-react';
 import type { OverviewPageData } from '@/types/analytics';
 
@@ -32,6 +32,7 @@ import AIControlSection             from '@/components/super-admin/ai/AIControlS
 import SystemUsersSection           from '@/components/super-admin/users/SystemUsersSection';
 import SystemSettingsSection        from '@/components/super-admin/settings/SystemSettingsSection';
 import TenantServicesOverrideSection from '@/components/super-admin/services/TenantServicesOverrideSection';
+import AIPersonaSection              from '@/components/super-admin/ai/AIPersonaSection';
 
 // ─── Navigation config (SaaS infrastructure console) ─────────────────────────────
 const SECTIONS = [
@@ -41,6 +42,7 @@ const SECTIONS = [
   { id: 'messaging',      label: 'מסרים',           icon: MessageSquare },
   { id: 'live',           label: 'שיחות חיות',      icon: Radio },
   { id: 'ai',             label: 'מודלי AI',        icon: Brain },
+  { id: 'ai-persona',    label: 'AI Persona',      icon: Wand2 },
   { id: 'traffic',        label: 'תעבורה וביצועים', icon: Activity },
   { id: 'pricing',       label: 'תמחור גלובלי',    icon: DollarSign },
   { id: 'services',       label: 'שירותים',          icon: PackageOpen },
@@ -113,6 +115,7 @@ export function SuperAdminShell({ overviewData }: SuperAdminShellProps) {
           {section === 'messaging'    && <MessagingSection />}
           {section === 'live'         && <LiveConversationsSection />}
           {section === 'ai'           && <AIControlSection />}
+          {section === 'ai-persona'  && <AIPersonaSection />}
           {section === 'traffic'      && <TrafficSection />}
           {section === 'pricing'      && <PricingSection />}
           {section === 'services'     && <TenantServicesOverrideSection />}
