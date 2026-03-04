@@ -10,9 +10,9 @@ import { Brain, ChevronDown, Send, Cpu, DollarSign, Clock, Zap, CheckCircle, XCi
 import { AI_MODELS, DEFAULT_AI_CONFIG, getMockPromptHistory } from '@/services/mock-ai.service';
 import type { GlobalAIConfig } from '@/services/mock-ai.service';
 
-const AI_PROVIDERS = [{ id: 'google', label: 'Google Gemini (מומלץ)', defaultModel: 'gemini-1.5-flash' }, { id: 'openai', label: 'OpenAI', defaultModel: 'gpt-4o-mini' }, { id: 'anthropic', label: 'Anthropic', defaultModel: 'claude-3-haiku' }] as const;
+const AI_PROVIDERS = [{ id: 'google', label: 'Google Gemini (מומלץ)', defaultModel: 'gemini-2.5-flash' }, { id: 'openai', label: 'OpenAI', defaultModel: 'gpt-4o-mini' }, { id: 'anthropic', label: 'Anthropic', defaultModel: 'claude-3-haiku' }] as const;
 const PROVIDER_MODELS: Record<string, string[]> = {
-  google: ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash'],
+  google: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'],
   openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo'],
   anthropic: ['claude-3-haiku', 'claude-3-sonnet', 'claude-3-opus'],
 };
@@ -63,7 +63,7 @@ export default function AIControlSection() {
 
   const [clinics, setClinics] = useState<{ id: string; name: string | null }[]>([]);
   const [selectedClinicId, setSelectedClinicId] = useState('');
-  const [aiPerClinic, setAiPerClinic] = useState<{ provider: string; model: string; temperature: number; max_tokens: number }>({ provider: 'google', model: 'gemini-1.5-flash', temperature: 0.7, max_tokens: 1024 });
+  const [aiPerClinic, setAiPerClinic] = useState<{ provider: string; model: string; temperature: number; max_tokens: number }>({ provider: 'google', model: 'gemini-2.5-flash', temperature: 0.7, max_tokens: 2048 });
   const [aiSaveStatus, setAiSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [clinicStatuses, setClinicStatuses] = useState<{ clinic_id: string; clinic_name: string | null; provider: string; model: string; status: 'up' | 'down' }[]>([]);
   const [statusLoading, setStatusLoading] = useState(false);
@@ -80,7 +80,7 @@ export default function AIControlSection() {
     if (!selectedClinicId) return;
     const res = await fetch(`/api/super-admin/ai-models?clinic_id=${encodeURIComponent(selectedClinicId)}`);
     const d = await res.json().catch(() => ({}));
-    setAiPerClinic({ provider: d.provider ?? 'google', model: d.model ?? 'gemini-1.5-flash', temperature: Number(d.temperature) ?? 0.7, max_tokens: Number(d.max_tokens) ?? 1024 });
+    setAiPerClinic({ provider: d.provider ?? 'google', model: d.model ?? 'gemini-2.5-flash', temperature: Number(d.temperature) ?? 0.7, max_tokens: Number(d.max_tokens) ?? 2048 });
   }, [selectedClinicId]);
 
   const fetchClinicStatuses = useCallback(async () => {
