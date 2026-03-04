@@ -11,6 +11,15 @@ const openai = new OpenAI({
 
 const JSON_INSTRUCTION = '\n\nRespond with valid JSON only. No markdown, no explanation.';
 
+/** Extract JSON string from raw model output (handles ```json ... ``` or ``` ... ``` wrapping). */
+function extractJsonFromRaw(raw: string): string {
+  const s = raw.trim();
+  const codeBlock = /^```(?:json)?\s*([\s\S]*?)```$/i;
+  const m = s.match(codeBlock);
+  if (m) return m[1].trim();
+  return s;
+}
+
 export type DiscordAnalysisResult = {
   intent?: 'lead' | 'appointment' | 'question' | 'other';
   // Lead fields
@@ -150,11 +159,12 @@ export async function runStructuredPrompt(params: {
     if (!modelUsed) modelUsed = 'gpt-4o-mini';
   }
 
+  const toParse = extractJsonFromRaw(raw);
   try {
-    const parsed = JSON.parse(raw) as DiscordAnalysisResult;
+    const parsed = JSON.parse(toParse) as DiscordAnalysisResult;
     return { ...parsed, modelUsed };
   } catch (err) {
-    console.error('AI JSON parse failed:', err, raw);
+    console.error('AI JSON parse failed:', err, 'raw length:', raw?.length, 'preview:', raw?.slice(0, 200));
     return { is_new_lead: false, reply: DEFAULT_REPLY, modelUsed };
   }
 }
