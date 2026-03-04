@@ -13,42 +13,51 @@ export type DiscordWebhookBody = {
   conversation_history?: Array<{ role: 'user' | 'assistant'; content: string }>;
 };
 
+const FALLBACK_REPLY = 'שגיאה זמנית. נסה שוב או פנה למרפאה ישירות.';
+
 /**
  * Transport layer: parse Discord webhook payload and delegate to LeadService.
- * Idempotency: when message_id is present, only one request per message_id is processed;
- * concurrent duplicates are claimed via INSERT and exit without processing.
- * Always returns 200 + JSON so the platform never times out with 502.
+ * When DISCORD_BOT_TOKEN + channel_id exist: return 200 immediately, process fully in background (avoids proxy 502).
+ * Idempotency is done in background so duplicates still get only one reply.
  */
 export async function handleDiscordWebhook(
   body: DiscordWebhookBody,
 ): Promise<Response> {
+  const content = typeof body.content === 'string' ? body.content.trim() : '';
+  if (!content) {
+    return Response.json({ reply: null });
+  }
+
+  const messageId = typeof body.message_id === 'string' && body.message_id.trim()
+    ? body.message_id.trim()
+    : undefined;
+  const authorName = typeof body.author_name === 'string' ? body.author_name : undefined;
+  const conversationHistory = Array.isArray(body.conversation_history)
+    ? body.conversation_history.filter(
+        (m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string',
+      )
+    : [];
+  const guildId = typeof body.guild_id === 'string' ? body.guild_id : undefined;
+  const channelId = typeof body.channel_id === 'string' ? body.channel_id : undefined;
+  const useAsync = Boolean(channelId && process.env.DISCORD_BOT_TOKEN);
+
+  if (useAsync) {
+    runDiscordWebhookBackground({
+      messageId,
+      content,
+      authorName,
+      conversationHistory,
+      guildId,
+      channelId: channelId!,
+    }).catch((err) => {
+      logger.error('webhook_background_error', { message_id: messageId, error: (err as Error)?.message, service: 'handler' });
+      console.error('Discord webhook background error:', err);
+    });
+    return Response.json({ reply: null });
+  }
+
   const startedAt = Date.now();
-  const fallbackReply = 'שגיאה זמנית. נסה שוב או פנה למרפאה ישירות.';
-
   try {
-    const content =
-      typeof body.content === 'string' ? body.content.trim() : '';
-
-    if (!content) {
-      return Response.json({ reply: null });
-    }
-
-    const messageId = typeof body.message_id === 'string' && body.message_id.trim()
-      ? body.message_id.trim()
-      : undefined;
-    const authorName =
-      typeof body.author_name === 'string' ? body.author_name : undefined;
-    const conversationHistory = Array.isArray(body.conversation_history)
-      ? body.conversation_history.filter(
-          (m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string',
-        )
-      : [];
-
-    const guildId = typeof body.guild_id === 'string' ? body.guild_id : undefined;
-    const channelId = typeof body.channel_id === 'string' ? body.channel_id : undefined;
-    const useAsync = Boolean(channelId && process.env.DISCORD_BOT_TOKEN);
-
-    // Idempotency: claim message_id before processing so only one concurrent request processes.
     if (messageId && guildId) {
       try {
         const clinicId = await getClinicIdByGuildId(guildId);
@@ -59,46 +68,17 @@ export async function handleDiscordWebhook(
             .insert({ id: messageId, clinic_id: clinicId })
             .select('id')
             .maybeSingle();
-          if (insertError) {
-            if (insertError.code === '23505') {
-              logger.info('idempotency_duplicate', { message_id: messageId, clinic_id: clinicId, service: 'handler' });
-              return Response.json({ reply: null });
-            }
-            throw insertError;
+          if (insertError?.code === '23505') {
+            logger.info('idempotency_duplicate', { message_id: messageId, clinic_id: clinicId, service: 'handler' });
+            return Response.json({ reply: null });
           }
-          if (!claimed) return Response.json({ reply: null });
+          if (insertError || !claimed) return Response.json({ reply: FALLBACK_REPLY });
           logger.info('idempotency_claim', { message_id: messageId, clinic_id: clinicId, service: 'handler' });
         }
       } catch (idemErr) {
         logger.error('webhook_failed', { message_id: messageId, error: (idemErr as Error)?.message, service: 'handler' });
-        return Response.json({ reply: fallbackReply });
+        return Response.json({ reply: FALLBACK_REPLY });
       }
-    }
-
-    if (useAsync) {
-      (async () => {
-        try {
-          const { reply, modelUsed } = await processDiscordMessage({
-            message_id: messageId,
-            content,
-            authorName,
-            conversationHistory,
-            guildId,
-          });
-          let safeReply = (reply && String(reply).trim()) ? reply : fallbackReply;
-          if (modelUsed?.trim()) {
-            safeReply = `${safeReply}\n\n_(נעניתי עם המודל: ${modelUsed})_`;
-          }
-          await postMessageToChannel(channelId!, safeReply);
-          const duration_ms = Date.now() - startedAt;
-          logger.info('webhook_completed', { message_id: messageId, duration_ms, service: 'handler', async: true });
-        } catch (err) {
-          logger.error('webhook_failed', { message_id: messageId, error: (err as Error)?.message, service: 'handler' });
-          console.error('Discord webhook async error:', err);
-          await postMessageToChannel(channelId!, fallbackReply);
-        }
-      })();
-      return Response.json({ reply: null });
     }
 
     const { reply, modelUsed } = await processDiscordMessage({
@@ -108,28 +88,64 @@ export async function handleDiscordWebhook(
       conversationHistory,
       guildId,
     });
-    let safeReply = (reply && String(reply).trim()) ? reply : fallbackReply;
-    if (modelUsed?.trim()) {
-      safeReply = `${safeReply}\n\n_(נעניתי עם המודל: ${modelUsed})_`;
-    }
-    const duration_ms = Date.now() - startedAt;
-    const clinic_id = guildId ? await getClinicIdByGuildId(guildId) : undefined;
-    logger.info('webhook_completed', {
-      clinic_id,
-      message_id: messageId,
-      duration_ms,
-      service: 'handler',
-    });
+    let safeReply = (reply && String(reply).trim()) ? reply : FALLBACK_REPLY;
+    if (modelUsed?.trim()) safeReply = `${safeReply}\n\n_(נעניתי עם המודל: ${modelUsed})_`;
+    logger.info('webhook_completed', { message_id: messageId, duration_ms: Date.now() - startedAt, service: 'handler' });
     return Response.json({ reply: safeReply });
   } catch (err) {
-    const duration_ms = Date.now() - startedAt;
-    logger.error('webhook_failed', {
-      message_id: undefined,
-      duration_ms,
-      error: (err as Error)?.message ?? 'unknown',
-      service: 'handler',
-    });
+    logger.error('webhook_failed', { message_id: messageId, error: (err as Error)?.message, service: 'handler' });
     console.error('Discord webhook error:', err);
-    return Response.json({ reply: fallbackReply });
+    return Response.json({ reply: FALLBACK_REPLY });
+  }
+}
+
+async function runDiscordWebhookBackground(params: {
+  messageId: string | undefined;
+  content: string;
+  authorName: string | undefined;
+  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>;
+  guildId: string | undefined;
+  channelId: string;
+}): Promise<void> {
+  const startedAt = Date.now();
+  const { messageId, content, authorName, conversationHistory, guildId, channelId } = params;
+
+  try {
+    if (messageId && guildId) {
+      const clinicId = await getClinicIdByGuildId(guildId);
+      if (clinicId) {
+        const supabase = getSupabaseAdmin();
+        const { data: claimed, error: insertError } = await supabase
+          .from('processed_messages')
+          .insert({ id: messageId, clinic_id: clinicId })
+          .select('id')
+          .maybeSingle();
+        if (insertError?.code === '23505') {
+          logger.info('idempotency_duplicate', { message_id: messageId, clinic_id: clinicId, service: 'handler' });
+          return;
+        }
+        if (insertError || !claimed) {
+          await postMessageToChannel(channelId, FALLBACK_REPLY);
+          return;
+        }
+        logger.info('idempotency_claim', { message_id: messageId, clinic_id: clinicId, service: 'handler' });
+      }
+    }
+
+    const { reply, modelUsed } = await processDiscordMessage({
+      message_id: messageId,
+      content,
+      authorName,
+      conversationHistory,
+      guildId,
+    });
+    let safeReply = (reply && String(reply).trim()) ? reply : FALLBACK_REPLY;
+    if (modelUsed?.trim()) safeReply = `${safeReply}\n\n_(נעניתי עם המודל: ${modelUsed})_`;
+    await postMessageToChannel(channelId, safeReply);
+    logger.info('webhook_completed', { message_id: messageId, duration_ms: Date.now() - startedAt, service: 'handler', async: true });
+  } catch (err) {
+    logger.error('webhook_failed', { message_id: messageId, error: (err as Error)?.message, service: 'handler' });
+    console.error('Discord webhook background error:', err);
+    await postMessageToChannel(channelId, FALLBACK_REPLY);
   }
 }
