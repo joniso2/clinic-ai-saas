@@ -157,6 +157,24 @@ export async function deleteAppointment(
   return { data: data as { lead_id: string | null } | null, error: null };
 }
 
+/** Update appointment datetime and/or duration_minutes (used for drag-and-drop / resize). */
+export async function updateAppointment(
+  id: string,
+  clinicId: string,
+  updates: { datetime?: string; duration_minutes?: number },
+): Promise<{ data: Appointment | null; error: unknown }> {
+  const supabase = getSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from('appointments')
+    .update(updates)
+    .eq('id', id)
+    .eq('clinic_id', clinicId)
+    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id, duration_minutes, appointment_summary, urgency_level, priority_level')
+    .single();
+  if (error) return { data: null, error };
+  return { data: data as Appointment, error: null };
+}
+
 /** Delete all appointments linked to a lead (used when updating/clearing lead follow-up). */
 export async function deleteAppointmentsByLeadId(
   leadId: string,

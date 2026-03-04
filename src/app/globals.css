@@ -91,3 +91,282 @@ button, a {
 .login-error-in {
   animation: loginErrorIn 0.3s ease-out both;
 }
+
+/* ─── React Big Calendar: RTL toolbar + LTR grid ────────────────────────── */
+
+/* The calendar grid itself is LTR — time gutter on left, days Sun→Sat */
+.rbc-container .rbc-calendar {
+  direction: ltr;
+  font-family: inherit;
+}
+
+/* But event card text stays RTL */
+.rbc-container .rbc-event-content {
+  direction: rtl;
+}
+
+/* Toolbar hidden (we use our own) */
+.rbc-container .rbc-toolbar { display: none; }
+
+/* Header row */
+.rbc-container .rbc-time-header {
+  border-bottom: 1px solid #e5e7eb;
+}
+.dark .rbc-container .rbc-time-header {
+  border-bottom: 1px solid #1e293b;
+}
+
+.rbc-container .rbc-header {
+  padding: 10px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: none;
+  border-left: 1px solid #e2e8f0;
+  background: #f8fafc;
+  text-align: center;
+  white-space: nowrap;
+}
+.dark .rbc-container .rbc-header {
+  color: #64748b;
+  border-left-color: #1e293b;
+  background: #0f172a;
+}
+.rbc-container .rbc-header:first-child {
+  border-left: none;
+}
+.rbc-container .rbc-header a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Today column — subtle highlight */
+.rbc-container .rbc-today {
+  background: rgba(99, 102, 241, 0.05) !important;
+}
+.dark .rbc-container .rbc-today {
+  background: rgba(99, 102, 241, 0.08) !important;
+}
+
+/* Time gutter */
+.rbc-container .rbc-time-gutter .rbc-timeslot-group {
+  border-bottom: 1px solid #f1f5f9;
+}
+.dark .rbc-container .rbc-time-gutter .rbc-timeslot-group {
+  border-bottom: 1px solid #1e293b;
+}
+.rbc-container .rbc-time-gutter .rbc-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #94a3b8;
+  padding: 0 8px 0 4px;
+  white-space: nowrap;
+  letter-spacing: 0.03em;
+}
+.dark .rbc-container .rbc-time-gutter .rbc-label {
+  color: #334155;
+}
+
+/* Time slots — taller rows so appointment blocks are more readable */
+.rbc-container .rbc-timeslot-group {
+  border-bottom: 1px solid #f1f5f9;
+  min-height: 72px;
+}
+.dark .rbc-container .rbc-timeslot-group {
+  border-bottom: 1px solid #1e293b;
+}
+.rbc-container .rbc-time-slot {
+  border-top: none;
+}
+
+/* Day columns */
+.rbc-container .rbc-day-slot .rbc-time-slot {
+  border-top: 1px dashed rgba(148,163,184,0.15);
+}
+.dark .rbc-container .rbc-day-slot .rbc-time-slot {
+  border-top: 1px dashed rgba(71,85,105,0.2);
+}
+
+/* Column borders — soft neutral */
+.rbc-container .rbc-time-content > * + * > * {
+  border-left: 1px solid #e5e7eb;
+}
+.dark .rbc-container .rbc-time-content > * + * > * {
+  border-left-color: #1e293b;
+}
+
+/* Events — card hover and overflow */
+.rbc-container .rbc-event {
+  padding: 0 !important;
+  border-radius: 8px !important;
+  border: none !important;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.rbc-container .rbc-event:hover {
+  box-shadow: 0 4px 14px rgba(0,0,0,0.1) !important;
+  transform: scale(1.02);
+  z-index: 5;
+}
+.rbc-container .rbc-event:focus {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+.rbc-container .rbc-event.rbc-selected {
+  box-shadow: 0 0 0 2px #6366f1 !important;
+}
+.rbc-container .rbc-event-content {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* DnD drag preview */
+.rbc-container .rbc-addons-dnd-drag-preview {
+  opacity: 0.7;
+  border: 2px dashed #6366f1 !important;
+  border-radius: 6px;
+}
+
+/* Resize handle */
+.rbc-container .rbc-addons-dnd-resize-ns-anchor {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  cursor: ns-resize;
+}
+.rbc-container .rbc-addons-dnd-resize-ns-anchor .rbc-addons-dnd-resize-ns-icon {
+  border-top: 3px double #6366f1;
+  width: 16px;
+  margin: 0 auto;
+}
+
+/* Current time indicator — thin red line, small glowing dot, shadow-red-400 */
+.rbc-container .rbc-current-time-indicator {
+  height: 1px;
+  background: #ef4444;
+  box-shadow: 0 0 8px 2px rgba(248, 113, 113, 0.5);
+  z-index: 3;
+}
+.rbc-container .rbc-current-time-indicator::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background: #ef4444;
+  border-radius: 50%;
+  box-shadow: 0 0 8px 3px rgba(248, 113, 113, 0.6);
+}
+
+/* Calendar container — rounded-xl shadow-sm bg-white */
+.rbc-container .rbc-time-view {
+  background: #ffffff;
+  border: none;
+  border-radius: 0 0 12px 12px;
+}
+.rbc-container .rbc-time-content {
+  background: #ffffff;
+  border: none;
+}
+.dark .rbc-container .rbc-time-view,
+.dark .rbc-container .rbc-time-content {
+  background: #0f172a;
+}
+
+/* Empty slot hover — neutral-50 */
+.rbc-container .rbc-day-slot .rbc-time-slot:hover {
+  background: #fafafa;
+}
+.dark .rbc-container .rbc-day-slot .rbc-time-slot:hover {
+  background: rgba(255,255,255,0.02);
+}
+
+/* Slot selection highlight */
+.rbc-container .rbc-slot-selection {
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 4px;
+  z-index: 10;
+}
+
+/* All-day row — hidden */
+.rbc-container .rbc-allday-cell {
+  display: none;
+}
+.rbc-container .rbc-time-header-gutter {
+  background: #f8fafc;
+  border-right: 1px solid #e2e8f0;
+  min-width: 56px;
+}
+.dark .rbc-container .rbc-time-header-gutter {
+  background: #0f172a;
+  border-right-color: #1e293b;
+}
+
+/* Scroll area */
+.rbc-container {
+  overflow: hidden;
+}
+.rbc-container .rbc-time-content {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.dark .rbc-container .rbc-time-content {
+  scrollbar-color: #334155 transparent;
+}
+
+/* Event card inner styles */
+.rbc-event-card {
+  height: 100%;
+  width: 100%;
+}
+
+/* Time header right border matching time gutter */
+.rbc-container .rbc-time-header.rbc-overflowing {
+  border-right: none;
+}
+
+/* ── Move time gutter to the RIGHT side ── */
+.rbc-container .rbc-time-view {
+  display: flex;
+  flex-direction: column;
+}
+.rbc-container .rbc-time-content {
+  display: flex;
+  flex-direction: row-reverse;
+}
+.rbc-container .rbc-time-header-content {
+  flex: 1;
+}
+.rbc-container .rbc-time-header {
+  display: flex;
+  flex-direction: row-reverse;
+}
+.rbc-container .rbc-time-header-gutter {
+  border-right: none;
+  border-left: 1px solid #e2e8f0;
+}
+.dark .rbc-container .rbc-time-header-gutter {
+  border-left-color: #1e293b;
+}
+.rbc-container .rbc-time-gutter {
+  border-left: 1px solid #e2e8f0;
+  border-right: none;
+}
+.dark .rbc-container .rbc-time-gutter {
+  border-left-color: #1e293b;
+}
+.rbc-container .rbc-time-gutter .rbc-label {
+  text-align: right;
+  padding: 0 4px 0 8px;
+}

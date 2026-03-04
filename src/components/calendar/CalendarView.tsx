@@ -1,340 +1,575 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Calendar } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
+import moment from 'moment';
+import 'moment/locale/he';
+import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Appointment } from '@/types/appointments';
 import type { Lead } from '@/types/leads';
+import { STATUS_LABELS } from '@/lib/hebrew';
 import { LeadDetailDrawer } from '@/components/dashboard/LeadDetailDrawer';
-import { toIsraelDateString, formatDayLong } from '@/lib/calendar/time.utils';
-import {
-  addDays,
-  buildCalendarGrid,
-  getWeekStart,
-  DAY_NAMES,
-  WEEK_END_HOUR,
-  WEEK_START_HOUR,
-  SLOT_MINUTES,
-} from '@/lib/calendar/calendar.utils';
-import { WeekView } from './WeekView';
-import { MonthView } from './MonthView';
-import { DaySummaryHeader } from './DaySummaryHeader';
-import { HoverPopover } from './HoverPopover';
-import { DayModal } from './DayModal';
-import { TodaySidebar } from './TodaySidebar';
 import { NewAppointmentForm } from './NewAppointmentForm';
 
+moment.locale('he');
 const ISRAEL_TZ = 'Asia/Jerusalem';
 
+type CalendarEvent = {
+  id: string;
+  title: string;
+  start: Date;
+  end: Date;
+  resource: Appointment;
+};
+
+
+/** Service category for color + icon. Consultation → yellow, Treatment → blue, Beauty → pink, Follow-up → green, Default → gray */
+type ServiceCategory = 'consultation' | 'treatment' | 'beauty' | 'follow_up' | 'default';
+
+function getServiceCategory(apt: Appointment): ServiceCategory {
+  if (apt.status === 'cancelled') return 'default';
+  if (apt.type === 'follow_up') return 'follow_up';
+  const sn = (apt.service_name ?? '').toLowerCase();
+  const he = (apt.service_name ?? '').replace(/\s/g, '');
+  if (/\b(beauty|meeting|יופי|עיצוב|טיפוח|פגישה)\b/.test(sn) || /יופי|עיצוב|טיפוח|פגישה/.test(he)) return 'beauty';
+  if (/\b(treatment|טיפול|טיפולים)\b/.test(sn) || /טיפול/.test(he)) return 'treatment';
+  if (/\b(consultation|ייעוץ|התייעצות)\b/.test(sn) || /ייעוץ|התייעצות/.test(he)) return 'consultation';
+  return apt.type === 'new' ? 'consultation' : 'default';
+}
+
+const SERVICE_DISPLAY: Record<ServiceCategory, string> = {
+  consultation: 'ייעוץ',
+  treatment: 'טיפול',
+  beauty: 'יופי',
+  follow_up: 'מעקב',
+  default: 'תור',
+};
+
+const SERVICE_ICON: Record<ServiceCategory, string> = {
+  consultation: '💬',
+  treatment: '🦷',
+  beauty: '💅',
+  follow_up: '🔁',
+  default: '📋',
+};
+
+/** Solid block colors by type. Consultation=amber, Treatment=sky, Meeting/Beauty=pink, Follow-up=emerald, Default=slate */
+const SERVICE_CARD_CLASS: Record<ServiceCategory, string> = {
+  consultation: 'bg-amber-200/90 dark:bg-amber-600/35 text-amber-900 dark:text-amber-100 border-0 shadow-sm',
+  treatment: 'bg-sky-200/90 dark:bg-sky-600/35 text-sky-900 dark:text-sky-100 border-0 shadow-sm',
+  beauty: 'bg-pink-200/90 dark:bg-pink-600/35 text-pink-900 dark:text-pink-100 border-0 shadow-sm',
+  follow_up: 'bg-emerald-200/90 dark:bg-emerald-600/35 text-emerald-900 dark:text-emerald-100 border-0 shadow-sm',
+  default: 'bg-slate-200/90 dark:bg-slate-600/35 text-slate-800 dark:text-slate-200 border-0 shadow-sm',
+};
+
+/** Calendar card colors by lead status – match STATUS_BADGE in LeadsTable (Pending=amber, Contacted=sky, תור נקבע=blue, Closed=emerald, Disqualified=slate) */
+const LEAD_STATUS_CARD_CLASS: Record<string, string> = {
+  Pending: 'bg-amber-200/90 dark:bg-amber-600/35 text-amber-900 dark:text-amber-100 border-0 shadow-sm',
+  Contacted: 'bg-sky-200/90 dark:bg-sky-600/35 text-sky-900 dark:text-sky-100 border-0 shadow-sm',
+  'Appointment scheduled': 'bg-blue-200/90 dark:bg-blue-600/35 text-blue-900 dark:text-blue-100 border-0 shadow-sm',
+  Closed: 'bg-emerald-200/90 dark:bg-emerald-600/35 text-emerald-900 dark:text-emerald-100 border-0 shadow-sm',
+  Converted: 'bg-emerald-200/90 dark:bg-emerald-600/35 text-emerald-900 dark:text-emerald-100 border-0 shadow-sm',
+  Disqualified: 'bg-slate-200/90 dark:bg-slate-600/35 text-slate-800 dark:text-slate-200 border-0 shadow-sm',
+  'AI Failed': 'bg-red-200/90 dark:bg-red-600/35 text-red-900 dark:text-red-100 border-0 shadow-sm',
+};
+
+function getServiceLabel(apt: Appointment): string {
+  return apt.service_name ?? SERVICE_DISPLAY[getServiceCategory(apt)] ?? 'תור';
+}
+
+/** Label for appointment card: lead status (Hebrew) if available, else service/category label. */
+function getAppointmentCardLabel(apt: Appointment, leadStatusByLeadId: Record<string, string>): string {
+  if (apt.lead_id && leadStatusByLeadId[apt.lead_id]) {
+    const status = leadStatusByLeadId[apt.lead_id];
+    return STATUS_LABELS[status] ?? status ?? 'תור';
+  }
+  return getServiceLabel(apt);
+}
+
+type TooltipState = {
+  apt: Appointment;
+  x: number;
+  y: number;
+};
+
+/** Lightweight hover tooltip: Client name, Service name, Time range */
+function AppointmentTooltip({ apt, x, y }: TooltipState) {
+  const serviceLabel = getServiceLabel(apt);
+  const startStr = moment(apt.datetime).format('HH:mm');
+  const endStr = moment(new Date(new Date(apt.datetime).getTime() + apt.duration_minutes * 60000)).format('HH:mm');
+
+  return (
+    <div
+      className="fixed z-[200] w-52 rounded-xl border border-neutral-200 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-3 py-2.5 shadow-lg pointer-events-none"
+      style={{ top: y + 10, left: x + 8 }}
+      dir="rtl"
+    >
+      <p className="text-xs font-semibold text-slate-900 dark:text-zinc-100 truncate">{apt.patient_name}</p>
+      <p className="text-[11px] text-slate-500 dark:text-zinc-400 truncate mt-0.5">{serviceLabel}</p>
+      <p className="text-[11px] text-slate-600 dark:text-zinc-300 tabular-nums mt-0.5">{startStr} – {endStr}</p>
+    </div>
+  );
+}
+
+type EventCardProps = {
+  event: CalendarEvent;
+  onTooltipShow: (apt: Appointment, x: number, y: number) => void;
+  onTooltipHide: () => void;
+};
+
+/** Minimal card: Line 1 = Service, Line 2 = Client, Line 3 = Time range; service icon in lower corner. Click opens LeadDetailDrawer (phone/WhatsApp/AI there). */
+const CustomAppointmentCard = memo(function CustomAppointmentCard({ event, onTooltipShow, onTooltipHide }: EventCardProps) {
+  const apt = event.resource;
+  const category = getServiceCategory(apt);
+  const serviceLabel = getServiceLabel(apt);
+  const startStr = moment(event.start).format('HH:mm');
+  const endStr = moment(event.end).format('HH:mm');
+  const icon = SERVICE_ICON[category];
+  const cardClass = SERVICE_CARD_CLASS[category];
+
+  return (
+    <div
+      className={`rbc-event-card h-full w-full flex flex-col rounded-lg shadow-sm px-2 py-1 text-xs overflow-hidden cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] min-w-0 border-r-4 ${cardClass}`}
+      dir="rtl"
+      onMouseEnter={(e) => onTooltipShow(apt, e.clientX, e.clientY)}
+      onMouseMove={(e) => onTooltipShow(apt, e.clientX, e.clientY)}
+      onMouseLeave={onTooltipHide}
+    >
+      <p className="text-[10px] font-semibold truncate leading-tight opacity-90">{serviceLabel}</p>
+      <p className="text-xs font-bold truncate leading-tight mt-0.5">{apt.patient_name}</p>
+      <p className="text-[10px] tabular-nums truncate mt-0.5 opacity-90">{startStr}–{endStr}</p>
+      <div className="mt-auto pt-1 flex justify-end">
+        <span className="text-base leading-none select-none" aria-hidden>{icon}</span>
+      </div>
+    </div>
+  );
+});
+
+/** Get YYYY-MM-DD for an event start in Israel timezone */
+function getEventDateStr(start: Date): string {
+  return new Date(start).toLocaleDateString('en-CA', { timeZone: ISRAEL_TZ });
+}
+
+type DayColumn = {
+  dateStr: string;
+  dayLabel: string;
+  dayNum: number;
+  isToday: boolean;
+  events: CalendarEvent[];
+};
+
+/** Card-based week board: day columns with stacked appointment cards, no time grid */
+function WeekBoard({
+  dayColumns,
+  todayStr,
+  onSelectEvent,
+  onAddDay,
+  leadStatusByLeadId,
+}: {
+  dayColumns: DayColumn[];
+  todayStr: string;
+  onSelectEvent: (event: CalendarEvent) => void;
+  onAddDay: (dateStr: string) => void;
+  leadStatusByLeadId: Record<string, string>;
+}) {
+  return (
+    <div className="flex w-full flex-1 min-h-0 flex-row-reverse overflow-x-auto overflow-y-hidden" dir="ltr">
+      {dayColumns.map((col) => (
+        <div
+          key={col.dateStr}
+          className={`flex min-w-[112px] flex-1 flex-col border-s border-slate-200 dark:border-slate-700 last:border-s-0 ${col.isToday ? 'bg-indigo-50/60 dark:bg-indigo-950/25' : 'bg-slate-50/70 dark:bg-slate-900/40'}`}
+        >
+          <div className={`sticky top-0 z-10 flex flex-col border-b border-slate-200 dark:border-slate-700 px-2 py-1.5 ${col.isToday ? 'bg-indigo-50 dark:bg-indigo-950/40' : 'bg-white dark:bg-slate-900'}`}>
+            <p className={`text-xs font-semibold text-right leading-tight ${col.isToday ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400'}`}>
+              {col.dayLabel}
+            </p>
+            <p className="text-sm font-bold text-slate-900 dark:text-white text-right tabular-nums leading-tight">{col.dayNum}</p>
+            <button
+              type="button"
+              onClick={() => onAddDay(col.dateStr)}
+              className="mt-1 flex items-center justify-center gap-1 rounded-md border border-dashed border-slate-300 dark:border-slate-600 py-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-400 dark:hover:border-slate-500 transition-colors"
+            >
+              <Plus className="h-3 w-3" /> הוסף
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto space-y-1.5 p-2 min-h-[180px]">
+            {col.events
+              .slice()
+              .sort((a, b) => a.start.getTime() - b.start.getTime())
+              .map((ev) => (
+                <WeekBoardCard key={ev.id} event={ev} onClick={() => onSelectEvent(ev)} leadStatusByLeadId={leadStatusByLeadId} />
+              ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Appointment block for the week board: solid colored block, clear hierarchy. Click opens LeadDetailDrawer. */
+const WeekBoardCard = memo(function WeekBoardCard({ event, onClick, leadStatusByLeadId }: { event: CalendarEvent; onClick: () => void; leadStatusByLeadId: Record<string, string> }) {
+  const apt = event.resource;
+  const category = getServiceCategory(apt);
+  const cardLabel = getAppointmentCardLabel(apt, leadStatusByLeadId);
+  const leadStatus = apt.lead_id ? leadStatusByLeadId[apt.lead_id] : null;
+  const cardClass = leadStatus && LEAD_STATUS_CARD_CLASS[leadStatus]
+    ? LEAD_STATUS_CARD_CLASS[leadStatus]
+    : SERVICE_CARD_CLASS[category];
+  const startStr = moment(event.start).format('HH:mm');
+  const endStr = moment(event.end).format('HH:mm');
+  const icon = SERVICE_ICON[category];
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full min-w-0 text-right rounded-md px-2.5 py-2 cursor-pointer transition-all duration-150 hover:brightness-95 hover:shadow-md flex flex-col gap-0.5 ${cardClass}`}
+      dir="rtl"
+    >
+      <p className="text-xs font-bold truncate leading-tight opacity-95">{cardLabel}</p>
+      <p className="text-[11px] font-medium tabular-nums leading-tight opacity-90">{startStr} – {endStr}</p>
+      <p className="text-xs font-medium truncate leading-tight opacity-95">{apt.patient_name}</p>
+      <div className="flex items-center justify-end mt-0.5">
+        <span className="text-sm leading-none select-none opacity-80" aria-hidden>{icon}</span>
+      </div>
+    </button>
+  );
+});
+
+const MESSAGES = {
+  week: 'שבוע',
+  day: 'יום',
+  today: 'היום',
+  previous: 'הקודם',
+  next: 'הבא',
+  showMore: (total: number) => `+${total} נוספים`,
+  noEventsInRange: 'אין תורים בטווח זה',
+  date: 'תאריך',
+  time: 'שעה',
+  event: 'תור',
+  allDay: 'כל היום',
+};
+
 export function CalendarView({ initialDate }: { initialDate?: string } = {}) {
-  const today = new Date();
-  const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth() + 1);
+  const today = useMemo(() => new Date(), []);
+
+  const [currentDate, setCurrentDate] = useState<Date>(() => {
+    if (initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate)) {
+      return new Date(initialDate + 'T12:00:00');
+    }
+    return today;
+  });
+  const [currentView, setCurrentView] = useState<'week' | 'day'>('week');
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
-  const [showNewForm, setShowNewForm] = useState(false);
-  const [prefillDate, setPrefillDate] = useState<string | undefined>(undefined);
   const [drawerLead, setDrawerLead] = useState<Lead | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'month' | 'week'>('week');
-  const [weekStart, setWeekStart] = useState<string>(() =>
-    getWeekStart(today.getFullYear(), today.getMonth() + 1, today.getDate()),
-  );
-  const [hoveredApt, setHoveredApt] = useState<{ apt: Appointment; anchor: HTMLElement } | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  const todayStr = toIsraelDateString(today.toISOString());
+  const [showNewForm, setShowNewForm] = useState(false);
+  const [prefillDate, setPrefillDate] = useState<string | undefined>(undefined);
+  const [prefillTime, setPrefillTime] = useState<string | undefined>(undefined);
+  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
+  const tooltipTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [fetchedMonths, setFetchedMonths] = useState<Set<string>>(new Set());
+  const [leadStatusByLeadId, setLeadStatusByLeadId] = useState<Record<string, string>>({});
+  const [leadStatusFetched, setLeadStatusFetched] = useState(false);
 
   useEffect(() => {
-    if (!initialDate || !/^\d{4}-\d{2}-\d{2}$/.test(initialDate)) return;
-    const [y, m, d] = initialDate.split('-').map(Number);
-    if (!d || d < 1 || d > 31 || !m || m < 1 || m > 12) return;
-    setYear(y);
-    setMonth(m);
-    setSelectedDay(d);
-    setWeekStart(getWeekStart(y, m, d));
-  }, [initialDate]);
+    const leadIds = new Set(appointments.map((a) => a.lead_id).filter(Boolean) as string[]);
+    if (leadIds.size === 0) {
+      setLeadStatusFetched(true);
+      return;
+    }
+    const missing = [...leadIds].filter((id) => !(id in leadStatusByLeadId));
+    if (missing.length === 0) {
+      setLeadStatusFetched(true);
+      return;
+    }
+    setLeadStatusFetched(false);
+    let cancelled = false;
+    fetch('/api/leads', { credentials: 'include' })
+      .then((res) => res.json())
+      .then((data: { leads?: Lead[] }) => {
+        if (cancelled) return;
+        const leads = data.leads ?? [];
+        setLeadStatusByLeadId((prev) => {
+          const next = { ...prev };
+          for (const lead of leads) {
+            if (lead.id && lead.status != null && lead.status !== '') next[lead.id] = lead.status;
+          }
+          return next;
+        });
+        setLeadStatusFetched(true);
+      })
+      .catch(() => setLeadStatusFetched(true));
+    return () => { cancelled = true; };
+  }, [appointments, leadStatusByLeadId]);
 
   const fetchAppointments = useCallback(async (y: number, m: number) => {
+    const key = `${y}-${m}`;
     setLoading(true);
     setError(null);
     const res = await fetch(`/api/appointments?month=${m}&year=${y}`, { credentials: 'include' });
     const json = await res.json();
     if (!res.ok) {
       setError(json.error ?? 'טעינת תורים נכשלה');
-      setAppointments([]);
     } else {
-      setAppointments((json.appointments ?? []) as Appointment[]);
+      const fetched = (json.appointments ?? []) as Appointment[];
+      setAppointments((prev) => {
+        const ids = new Set(fetched.map((a) => a.id));
+        const filtered = prev.filter((a) => !ids.has(a.id));
+        return [...filtered, ...fetched];
+      });
+      setFetchedMonths((prev) => new Set([...prev, key]));
     }
     setLoading(false);
   }, []);
 
   useEffect(() => {
-    fetchAppointments(year, month);
-  }, [year, month, fetchAppointments]);
+    const m = currentDate.getMonth() + 1;
+    const y = currentDate.getFullYear();
+    const key = `${y}-${m}`;
+    if (!fetchedMonths.has(key)) {
+      fetchAppointments(y, m);
+    }
+  }, [currentDate, fetchedMonths, fetchAppointments]);
 
-  function prevMonth() {
-    if (month === 1) {
-      setMonth(12);
-      setYear((y) => y - 1);
-    } else setMonth((m) => m - 1);
-  }
-  function nextMonth() {
-    if (month === 12) {
-      setMonth(1);
-      setYear((y) => y + 1);
-    } else setMonth((m) => m + 1);
-  }
-  function prevWeek() {
-    const prev = addDays(weekStart, -7);
-    setWeekStart(prev);
-    const [y, m] = prev.split('-').map(Number);
-    setYear(y);
-    setMonth(m);
-  }
-  function nextWeek() {
-    const next = addDays(weekStart, 7);
-    setWeekStart(next);
-    const [y, m] = next.split('-').map(Number);
-    setYear(y);
-    setMonth(m);
+  const events = useMemo<CalendarEvent[]>(() => {
+    return appointments.map((apt) => {
+      const start = new Date(apt.datetime);
+      const end = new Date(start.getTime() + (apt.duration_minutes ?? 30) * 60000);
+      return {
+        id: apt.id,
+        title: apt.patient_name,
+        start,
+        end,
+        resource: apt,
+      };
+    });
+  }, [appointments]);
+
+  const handleNavigate = useCallback((date: Date) => {
+    setCurrentDate(date);
+  }, []);
+
+  const handleViewChange = useCallback((view: string) => {
+    if (view === 'week' || view === 'day') setCurrentView(view);
+  }, []);
+
+  const handleSelectEvent = useCallback(async (event: object) => {
+    const calEvent = event as CalendarEvent;
+    const apt = calEvent.resource;
+    if (!apt.lead_id) return;
+    try {
+      const res = await fetch(`/api/leads/${apt.lead_id}`, { credentials: 'include' });
+      if (res.ok) {
+        const json = await res.json();
+        setDrawerLead(json.lead as Lead);
+      } else {
+        setDrawerLead({ id: apt.lead_id, full_name: apt.patient_name } as Lead);
+      }
+    } catch {
+      setDrawerLead({ id: apt.lead_id, full_name: apt.patient_name } as Lead);
+    }
+    setDrawerOpen(true);
+  }, []);
+
+  const handleTooltipShow = useCallback((apt: Appointment, x: number, y: number) => {
+    if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current);
+    setTooltip({ apt, x, y });
+  }, []);
+
+  const handleTooltipHide = useCallback(() => {
+    tooltipTimeout.current = setTimeout(() => setTooltip(null), 120);
+  }, []);
+
+  const todayStr = useMemo(() => {
+    const d = new Date(today.toLocaleString('en-US', { timeZone: ISRAEL_TZ }));
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }, [today]);
+
+  const dayColumns = useMemo<DayColumn[]>(() => {
+    // Israeli week: Sunday (יום א') first, Saturday (יום ש') last
+    const start = currentView === 'day'
+      ? moment(currentDate).startOf('day')
+      : moment(currentDate).subtract(moment(currentDate).day(), 'days').startOf('day');
+    const count = currentView === 'day' ? 1 : 7;
+    const cols: DayColumn[] = [];
+    for (let i = 0; i < count; i++) {
+      const m = moment(start).add(i, 'days');
+      const dateStr = m.format('YYYY-MM-DD');
+      const eventsForDay = events.filter((ev) => getEventDateStr(ev.start) === dateStr);
+      cols.push({
+        dateStr,
+        dayLabel: m.locale('he').format('ddd'),
+        dayNum: m.date(),
+        isToday: dateStr === todayStr,
+        events: eventsForDay,
+      });
+    }
+    return cols;
+  }, [currentDate, currentView, events, todayStr]);
+
+  const handleAddDay = useCallback((dateStr: string) => {
+    setPrefillDate(dateStr);
+    setPrefillTime(undefined);
+    setShowNewForm(true);
+  }, []);
+
+  const todayCount = useMemo(() =>
+    appointments.filter((a) => {
+      const d = new Date(a.datetime);
+      const israelDate = new Date(d.toLocaleString('en-US', { timeZone: ISRAEL_TZ }));
+      const dateStr = `${israelDate.getFullYear()}-${String(israelDate.getMonth() + 1).padStart(2, '0')}-${String(israelDate.getDate()).padStart(2, '0')}`;
+      return dateStr === todayStr;
+    }).length,
+    [appointments, todayStr]
+  );
+
+  function goToToday() {
+    setCurrentDate(new Date());
   }
 
-  const focusedDateStr = selectedDay
-    ? `${year}-${String(month).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`
-    : weekStart;
-
-  function prevDay() {
-    const prev = addDays(focusedDateStr, -1);
-    const [y, m, d] = prev.split('-').map(Number);
-    setYear(y);
-    setMonth(m);
-    setSelectedDay(d);
-    setWeekStart(getWeekStart(y, m, d));
-  }
-  function nextDay() {
-    const next = addDays(focusedDateStr, 1);
-    const [y, m, d] = next.split('-').map(Number);
-    setYear(y);
-    setMonth(m);
-    setSelectedDay(d);
-    setWeekStart(getWeekStart(y, m, d));
-  }
-
-  function appointmentsForDay(day: number): Appointment[] {
-    const dayStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return appointments.filter((a) => toIsraelDateString(a.datetime) === dayStr);
-  }
-
-  async function handleDelete(id: string) {
-    const res = await fetch(`/api/appointments?id=${id}`, { method: 'DELETE', credentials: 'include' });
-    if (res.ok) {
-      setAppointments((prev) => prev.filter((a) => a.id !== id));
-      setSelectedDay(null);
+  function goPrev() {
+    if (currentView === 'week') {
+      setCurrentDate((d) => {
+        const nd = new Date(d);
+        nd.setDate(nd.getDate() - 7);
+        return nd;
+      });
+    } else {
+      setCurrentDate((d) => {
+        const nd = new Date(d);
+        nd.setDate(nd.getDate() - 1);
+        return nd;
+      });
     }
   }
 
-  function handleAddFromDay(day: number) {
-    setPrefillDate(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
-    setShowNewForm(true);
+  function goNext() {
+    if (currentView === 'week') {
+      setCurrentDate((d) => {
+        const nd = new Date(d);
+        nd.setDate(nd.getDate() + 7);
+        return nd;
+      });
+    } else {
+      setCurrentDate((d) => {
+        const nd = new Date(d);
+        nd.setDate(nd.getDate() + 1);
+        return nd;
+      });
+    }
   }
 
-  const grid = buildCalendarGrid(year, month);
-
-  const now = new Date();
-  const israelNow = new Date(now.toLocaleString('en-US', { timeZone: ISRAEL_TZ }));
-  const dayOfWeek = israelNow.getDay();
-  const todayWeekStart = new Date(israelNow);
-  todayWeekStart.setDate(todayWeekStart.getDate() - dayOfWeek);
-  todayWeekStart.setHours(0, 0, 0, 0);
-  const todayWeekEnd = new Date(todayWeekStart);
-  todayWeekEnd.setDate(todayWeekEnd.getDate() + 7);
-  const todayWeekStartStr = toIsraelDateString(todayWeekStart.toISOString());
-  const todayWeekEndStr = toIsraelDateString(todayWeekEnd.toISOString());
-
-  const todayCount = appointments.filter((a) => toIsraelDateString(a.datetime) === todayStr).length;
-  const weekCount = appointments.filter((a) => {
-    const d = toIsraelDateString(a.datetime);
-    return d >= todayWeekStartStr && d < todayWeekEndStr;
-  }).length;
-  const aiCreatedCount = appointments.filter((a) => a.is_ai_created === true).length;
-  const totalThisMonth = appointments.length;
-  const followUpCount = appointments.filter((a) => a.type === 'follow_up').length;
-  const newCount = appointments.filter((a) => a.type === 'new').length;
-  const appointmentsForWeek = appointments.filter((a) => {
-    const d = toIsraelDateString(a.datetime);
-    return d >= weekStart && d < addDays(weekStart, 7);
-  });
-  const todayAppointments = appointments.filter((a) => toIsraelDateString(a.datetime) === todayStr);
+  const headerTitle = useMemo(() => {
+    if (currentView === 'day') {
+      return moment(currentDate).locale('he').format('dddd, D MMMM YYYY');
+    }
+    const weekStart = moment(currentDate).subtract(moment(currentDate).day(), 'days').startOf('day');
+    const weekEnd = moment(weekStart).add(6, 'days');
+    if (weekStart.month() === weekEnd.month()) {
+      return `${weekStart.format('D')}–${weekEnd.format('D MMMM YYYY')}`;
+    }
+    return `${weekStart.format('D MMM')} – ${weekEnd.format('D MMM YYYY')}`;
+  }, [currentDate, currentView]);
 
   return (
     <div
-      className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm dark:shadow overflow-hidden flex flex-col"
+      className="rbc-rtl-wrapper rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden flex flex-col"
       dir="rtl"
+      style={{ minHeight: '80vh' }}
     >
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shrink-0">
-        <div className="flex items-center justify-between gap-4 px-5 py-3 flex-row-reverse">
-          <div className="flex items-center gap-3 flex-row-reverse min-w-0">
-            <p className="text-lg font-semibold text-slate-900 dark:text-white truncate">{formatDayLong(focusedDateStr)}</p>
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500 dark:text-slate-400">
-              <Calendar className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="flex items-center gap-2 flex-row-reverse shrink-0">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between gap-4 px-5 py-3 border-b border-slate-200 dark:border-slate-800 shrink-0 flex-row-reverse">
+        <div className="flex items-center gap-2 flex-row-reverse min-w-0">
+          <CalendarIcon className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
+          <span className="text-base font-semibold text-slate-900 dark:text-white truncate">{headerTitle}</span>
+        </div>
+        <div className="flex items-center gap-2 flex-row-reverse shrink-0">
+          <button
+            onClick={() => { setPrefillDate(undefined); setPrefillTime(undefined); setShowNewForm(true); }}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" /> חדש
+          </button>
+          <button
+            onClick={goToToday}
+            className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            היום
+          </button>
+          <button
+            onClick={goNext}
+            className="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            aria-label="הבא"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            onClick={goPrev}
+            className="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            aria-label="הקודם"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+          <div className="flex rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
             <button
-              onClick={() => { setPrefillDate(undefined); setShowNewForm(true); }}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              onClick={() => setCurrentView('week')}
+              className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${currentView === 'week' ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
             >
-              <Plus className="h-3.5 w-3.5" /> חדש
+              שבוע
             </button>
             <button
-              onClick={() => {
-                setYear(today.getFullYear());
-                setMonth(today.getMonth() + 1);
-                setWeekStart(getWeekStart(today.getFullYear(), today.getMonth() + 1, today.getDate()));
-                setSelectedDay(today.getDate());
-              }}
-              className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              onClick={() => setCurrentView('day')}
+              className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${currentView === 'day' ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
             >
-              היום
+              יום
             </button>
-            <button onClick={nextDay} className="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="יום הבא" title="יום הבא">
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button onClick={prevDay} className="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="יום קודם" title="יום קודם">
-              <ChevronRight className="h-4 w-4" />
-            </button>
-            {viewMode === 'week' ? (
-              <>
-                <button onClick={nextWeek} className="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="שבוע הבא">
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-                <button onClick={prevWeek} className="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="שבוע שעבר">
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-              </>
-            ) : (
-              <>
-                <button onClick={nextMonth} className="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="חודש הבא">
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-                <button onClick={prevMonth} className="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="חודש שעבר">
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-              </>
-            )}
-            <div className="flex rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
-              <button
-                onClick={() => { setViewMode('week'); setWeekStart(getWeekStart(year, month, selectedDay || 1)); }}
-                className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${viewMode === 'week' ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-              >
-                שבוע
-              </button>
-              <button
-                onClick={() => setViewMode('month')}
-                className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${viewMode === 'month' ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-              >
-                חודש
-              </button>
-            </div>
           </div>
         </div>
-        {!loading && (
-          <div className="px-5 pb-2 pt-0 text-right" dir="rtl">
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              היום: {todayCount} תורים
-              {todayAppointments.filter((a) => (a.status ?? '') === 'cancelled').length > 0 && (
-                <> | {todayAppointments.filter((a) => (a.status ?? '') === 'cancelled').length} בוטלו</>
-              )}
-              {(() => {
-                const slotsTotal = (WEEK_END_HOUR - WEEK_START_HOUR) * (60 / SLOT_MINUTES);
-                const occupied = todayAppointments.reduce((s, a) => s + Math.ceil((a.duration_minutes ?? 30) / SLOT_MINUTES), 0);
-                const free = Math.max(0, slotsTotal - occupied);
-                return free > 0 ? <> | {free} פנויים</> : null;
-              })()}
-            </p>
-          </div>
-        )}
       </div>
 
-      <div className="flex flex-1 min-h-0 flex-row-reverse">
-        <div className="flex-1 min-w-0 flex flex-col">
-          {!loading && <DaySummaryHeader todayCount={todayCount} weekCount={weekCount} aiCreatedCount={aiCreatedCount} />}
-          {!loading && totalThisMonth > 0 && (
-            <div className="flex items-center gap-4 border-b border-slate-100 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-5 py-2.5 flex-row-reverse justify-end">
-              <div className="flex items-center gap-1.5 flex-row-reverse">
-                <span className="h-2.5 w-2.5 rounded-full bg-blue-400" />
-                <span className="text-xs text-slate-600 dark:text-zinc-400">{newCount} חדש</span>
-              </div>
-              <div className="flex items-center gap-1.5 flex-row-reverse">
-                <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-                <span className="text-xs text-slate-600 dark:text-zinc-400">{followUpCount} מעקב</span>
-              </div>
-            </div>
-          )}
-          {viewMode === 'month' && (
-            <div className="grid grid-cols-7 border-b border-slate-100 dark:border-zinc-700 bg-slate-50/40 dark:bg-zinc-700/60" dir="rtl">
-              {DAY_NAMES.map((d) => (
-                <div key={d} className="py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                  {d}
-                </div>
-              ))}
-            </div>
-          )}
-          {error && <div className="px-5 py-3 text-sm text-red-600 dark:text-red-400">{error}</div>}
-          {loading && (
-            <div className="flex justify-center py-16">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-slate-900 dark:border-t-zinc-300" />
-            </div>
-          )}
-          {!loading && viewMode === 'week' && (
-            <WeekView
-              weekStartStr={weekStart}
-              appointments={appointmentsForWeek}
-              onSlotClick={(_, dayStr) => {
-                const [y, m, d] = dayStr.split('-').map(Number);
-                setYear(y);
-                setMonth(m);
-                setSelectedDay(d);
-              }}
-              onAppointmentHover={(apt, el) => setHoveredApt({ apt, anchor: el })}
-              onAppointmentHoverEnd={() => setHoveredApt(null)}
-              todayStr={todayStr}
-            />
-          )}
-          {!loading && viewMode === 'month' && (
-            <MonthView
-              year={year}
-              month={month}
-              grid={grid}
-              appointmentsForDay={appointmentsForDay}
-              onSelectDay={(d) => setSelectedDay(d)}
-              todayStr={todayStr}
-              onAppointmentHoverStart={(apt, el) => setHoveredApt({ apt, anchor: el })}
-              onAppointmentHoverEnd={() => setHoveredApt(null)}
-            />
-          )}
+      {/* Stats bar */}
+      {!loading && (
+        <div className="px-5 py-2 border-b border-slate-100 dark:border-slate-800 text-right shrink-0">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            היום: {todayCount} תורים · {appointments.length} החודש
+          </p>
         </div>
-
-        <TodaySidebar open={sidebarOpen} onToggle={() => setSidebarOpen((o) => !o)} appointments={todayAppointments} />
-      </div>
-
-      {hoveredApt && <HoverPopover appointment={hoveredApt.apt} phone={null} anchor={hoveredApt.anchor} />}
-
-      {selectedDay !== null && (
-        <DayModal
-          day={selectedDay}
-          month={month}
-          year={year}
-          appointments={appointmentsForDay(selectedDay)}
-          onClose={() => setSelectedDay(null)}
-          onDelete={handleDelete}
-          onAdd={handleAddFromDay}
-          onViewLead={(lead) => { setDrawerLead(lead); setDrawerOpen(true); }}
-        />
       )}
 
+      {/* Loading / Error */}
+      {loading && (
+        <div className="flex justify-center py-16 shrink-0">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-slate-900 dark:border-t-zinc-300" />
+        </div>
+      )}
+      {error && (
+        <div className="px-5 py-3 text-sm text-red-600 dark:text-red-400 shrink-0">{error}</div>
+      )}
+
+      {/* Card-based week board: show only after lead statuses are ready to avoid "ייעוץ" flash */}
+      {!loading && (leadStatusFetched || !appointments.some((a) => a.lead_id)) && (
+        <div className="flex-1 min-h-0 flex flex-col" style={{ minHeight: 480 }}>
+          <WeekBoard
+            dayColumns={dayColumns}
+            todayStr={todayStr}
+            onSelectEvent={handleSelectEvent}
+            onAddDay={handleAddDay}
+            leadStatusByLeadId={leadStatusByLeadId}
+          />
+        </div>
+      )}
+      {!loading && !leadStatusFetched && appointments.some((a) => a.lead_id) && (
+        <div className="flex flex-1 min-h-0 items-center justify-center" style={{ minHeight: 480 }}>
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-slate-900 dark:border-t-zinc-300" />
+        </div>
+      )}
+
+      {/* Tooltip */}
+      {tooltip && <AppointmentTooltip {...tooltip} />}
+
+      {/* LeadDetailDrawer */}
       <LeadDetailDrawer
         lead={drawerLead}
         open={drawerOpen}
@@ -345,9 +580,11 @@ export function CalendarView({ initialDate }: { initialDate?: string } = {}) {
         onEdit={() => {}}
       />
 
+      {/* New Appointment Form */}
       {showNewForm && (
         <NewAppointmentForm
           prefillDate={prefillDate}
+          prefillTime={prefillTime}
           onClose={() => setShowNewForm(false)}
           onSuccess={(apt) => {
             setAppointments((prev) => [...prev, apt]);

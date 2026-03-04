@@ -139,6 +139,50 @@ export async function createPatient(
   return { data: data as Patient, error: null };
 }
 
+/** Returns set of normalized phone numbers already in use for the clinic (for import dedup). */
+export async function getExistingPatientPhones(clinicId: string): Promise<{ data: Set<string>; error: unknown }> {
+  const supabase = getSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from('patients')
+    .select('phone')
+    .eq('clinic_id', clinicId)
+    .is('deleted_at', null);
+  if (error) return { data: new Set(), error };
+  const set = new Set((data ?? []).map((r: { phone?: string }) => normalizePhone(r.phone)));
+  return { data: set, error: null };
+}
+
+/** Batch insert patients. Skips rows with empty normalized phone. */
+export async function createPatientsBatch(
+  clinicId: string,
+  payloads: CreatePatientPayload[]
+): Promise<{ inserted: number; error: unknown }> {
+  if (payloads.length === 0) return { inserted: 0, error: null };
+  const supabase = getSupabaseAdminClient();
+  const rows = payloads.map((p) => {
+    const raw = (p.phone ?? '').trim();
+    const phoneNorm = normalizePhone(p.phone) || raw;
+    const phone = phoneNorm || (p.lead_id ? `lead-${p.lead_id}` : 'no-phone');
+    const lastVisit = p.last_visit_date ?? null;
+    const status = p.status ?? computeStatusFromLastVisit(lastVisit);
+    return {
+      clinic_id: clinicId,
+      lead_id: p.lead_id ?? null,
+      full_name: (p.full_name ?? '').trim() || 'ללא שם',
+      phone,
+      total_revenue: p.total_revenue ?? 0,
+      visits_count: p.visits_count ?? 0,
+      last_visit_date: lastVisit,
+      status,
+      updated_at: new Date().toISOString(),
+    };
+  }).filter((r) => r.phone && r.phone !== 'no-phone');
+  if (rows.length === 0) return { inserted: 0, error: null };
+  const { error } = await supabase.from('patients').insert(rows);
+  if (error) return { inserted: 0, error };
+  return { inserted: rows.length, error: null };
+}
+
 export async function updatePatient(
   patientId: string,
   clinicId: string,

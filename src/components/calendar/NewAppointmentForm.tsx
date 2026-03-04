@@ -7,11 +7,12 @@ import { formatFullDateTime } from '@/lib/calendar/time.utils';
 
 export type NewAppointmentFormProps = {
   prefillDate?: string;
+  prefillTime?: string;
   onClose: () => void;
   onSuccess: (apt: Appointment) => void;
 };
 
-export function NewAppointmentForm({ prefillDate, onClose, onSuccess }: NewAppointmentFormProps) {
+export function NewAppointmentForm({ prefillDate, prefillTime, onClose, onSuccess }: NewAppointmentFormProps) {
   const [patientName, setPatientName] = useState('');
   const [date, setDate] = useState(() => {
     if (prefillDate) {
@@ -24,7 +25,7 @@ export function NewAppointmentForm({ prefillDate, onClose, onSuccess }: NewAppoi
     const year = now.getFullYear();
     return `${day}/${month}/${year}`;
   });
-  const [time, setTime] = useState('08:00');
+  const [time, setTime] = useState(() => prefillTime ?? '08:00');
   const [type, setType] = useState<AppointmentType>('new');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);

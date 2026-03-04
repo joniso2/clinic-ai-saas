@@ -18,7 +18,10 @@ import {
   MessageCircle,
   Archive,
   FileText,
+  Download,
+  Upload,
 } from 'lucide-react';
+import { CustomersImportModal } from './CustomersImportModal';
 import type { Patient } from '@/types/patients';
 import type { Lead } from '@/types/leads';
 import type { CompletedAppointmentRow } from '@/repositories/appointment.repository';
@@ -178,7 +181,35 @@ export function CustomersTab() {
   const [closedLeads, setClosedLeads] = useState<Lead[]>([]);
   const [closedLeadsLoading, setClosedLeadsLoading] = useState(false);
   const [deleteLeadId, setDeleteLeadId] = useState<string | null>(null);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const [downloadingTemplate, setDownloadingTemplate] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
+
+  const downloadTemplate = useCallback(async () => {
+    setDownloadingTemplate(true);
+    try {
+      const res = await fetch('/api/customers/export-template', { credentials: 'include' });
+      if (!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'customers_import_template.xlsx';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setToast('שגיאה בהורדת התבנית');
+    } finally {
+      setDownloadingTemplate(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   const fetchClosedLeads = useCallback(async () => {
     setClosedLeadsLoading(true);
@@ -422,14 +453,33 @@ export function CustomersTab() {
                 dir="rtl"
               />
             </div>
-            <button
-              type="button"
-              onClick={() => router.push('/dashboard')}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-sm font-medium text-slate-700 dark:text-zinc-300 transition hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-sm"
-            >
-              חזרה ללידים
-              <ArrowRight className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-3 flex-wrap">
+              <button
+                type="button"
+                onClick={downloadTemplate}
+                disabled={downloadingTemplate}
+                className="inline-flex items-center gap-2 rounded-md border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 transition shadow-sm disabled:opacity-60"
+              >
+                {downloadingTemplate ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" /> : <Download className="h-4 w-4" />}
+                הורד תבנית Excel
+              </button>
+              <button
+                type="button"
+                onClick={() => setImportModalOpen(true)}
+                className="inline-flex items-center gap-2 rounded-md border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 transition shadow-sm"
+              >
+                <Upload className="h-4 w-4" />
+                ייבוא לקוחות
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/dashboard')}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-sm font-medium text-slate-700 dark:text-zinc-300 transition hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-sm"
+              >
+                חזרה ללידים
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
           {/* Collapsible filters */}
@@ -627,6 +677,21 @@ export function CustomersTab() {
               </div>
             </div>
           )}
+
+          {importModalOpen && (
+            <CustomersImportModal
+              onClose={() => setImportModalOpen(false)}
+              onSuccess={() => {
+                setToast('ייבוא הושלם בהצלחה');
+                fetchCustomers();
+              }}
+            />
+          )}
+          {toast && (
+            <div className="fixed bottom-6 left-1/2 z-[70] -translate-x-1/2 rounded-xl bg-zinc-800 dark:bg-zinc-700 border border-zinc-700 dark:border-zinc-600 px-4 py-2.5 text-sm text-zinc-200 dark:text-zinc-100 shadow-xl">
+              {toast}
+            </div>
+          )}
         </div>
       );
     }
@@ -664,7 +729,24 @@ export function CustomersTab() {
             dir="rtl"
           />
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            type="button"
+            onClick={downloadTemplate}
+            disabled={downloadingTemplate}
+            className="inline-flex items-center gap-2 rounded-md border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 transition shadow-sm disabled:opacity-60"
+          >
+            {downloadingTemplate ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" /> : <Download className="h-4 w-4" />}
+            הורד תבנית Excel
+          </button>
+          <button
+            type="button"
+            onClick={() => setImportModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-md border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 transition shadow-sm"
+          >
+            <Upload className="h-4 w-4" />
+            ייבוא לקוחות
+          </button>
           <span className="inline-flex items-center rounded-lg bg-slate-100 dark:bg-zinc-800/80 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-zinc-300 tabular-nums">
             {filteredCount} לקוחות
           </span>
@@ -950,6 +1032,23 @@ export function CustomersTab() {
         </div>
       )}
 
+      {/* Import modal */}
+      {importModalOpen && (
+        <CustomersImportModal
+          onClose={() => setImportModalOpen(false)}
+          onSuccess={() => {
+            setToast('ייבוא הושלם בהצלחה');
+            fetchCustomers();
+          }}
+        />
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 z-[70] -translate-x-1/2 rounded-xl bg-zinc-800 dark:bg-zinc-700 border border-zinc-700 dark:border-zinc-600 px-4 py-2.5 text-sm text-zinc-200 dark:text-zinc-100 shadow-xl">
+          {toast}
+        </div>
+      )}
     </>
   );
 }

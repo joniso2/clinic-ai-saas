@@ -292,8 +292,8 @@ export function DashboardLayoutClient({ children, initialRole, initialUserEmail 
 
         {/* RTL: flex-row (no reverse) places first child (aside) on the right. */}
       <div className="flex flex-1 min-h-0">
-        <aside className="hidden md:flex w-[268px] shrink-0 flex-col border-e border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-8 transition-colors duration-300 text-right">
-          <nav className="flex flex-col gap-1">
+        <aside className="hidden md:flex w-[180px] shrink-0 flex-col border-e border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-8 transition-colors duration-300 text-right">
+          <nav className="flex flex-col space-y-2">
             {sidebarItems.map(({ id, label, icon: Icon, href }) => {
               const active = isActive(href);
               return (
@@ -308,13 +308,13 @@ export function DashboardLayoutClient({ children, initialRole, initialUserEmail 
                       router.push(href);
                     }
                   }}
-                  className={`inline-flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors duration-200 flex-row-reverse justify-end ${
+                  className={`inline-flex w-full flex-row-reverse justify-end items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 ${
                     active
-                      ? 'bg-slate-100 text-slate-900 dark:bg-zinc-800 dark:text-zinc-100'
-                      : 'text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200'
+                      ? 'bg-slate-100 text-slate-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-100 [&_svg]:text-inherit'
+                      : 'text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-zinc-200'
                   }`}
                 >
-                  <Icon className="h-4 w-4 shrink-0" />
+                  <Icon className="h-5 w-5 shrink-0" />
                   <span>{label}</span>
                 </button>
               );
