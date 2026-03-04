@@ -215,7 +215,7 @@ function buildKPIs(
           label: 'בריאות אינטגרציות',
           value: Math.round(platform.integrationHealthPercent),
           suffix: '%' as const,
-          trend: (platform.integrationHealthPercent ?? 0) >= 80 ? 'up' : (platform.integrationHealthPercent ?? 0) >= 50 ? 'neutral' : 'down',
+          trend: ((platform.integrationHealthPercent ?? 0) >= 80 ? 'up' : (platform.integrationHealthPercent ?? 0) >= 50 ? 'neutral' : 'down') as 'up' | 'down' | 'neutral',
           change: 0,
         }]
       : []),

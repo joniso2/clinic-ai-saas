@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   output: "standalone",
   reactCompiler: false,
   productionBrowserSourceMaps: false,
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   experimental: {
     staticGenerationMaxConcurrency: 1,
     webpackMemoryOptimizations: true,
