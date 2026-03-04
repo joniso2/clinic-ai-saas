@@ -59,7 +59,7 @@ export async function createLead(payload: CreateLeadPayload): Promise<{
 }> {
   const supabase = getSupabaseAdminClient();
 
-  const phoneVal = payload.phone != null ? (normalizePhone(payload.phone) ?? payload.phone.trim() || null) : null;
+  const phoneVal = payload.phone != null ? (normalizePhone(payload.phone) ?? (payload.phone.trim() || null)) : null;
   const fullName = (payload.full_name && payload.full_name.trim()) || 'Unknown';
   const insertPayload: Record<string, unknown> = {
     clinic_id: payload.clinic_id,
