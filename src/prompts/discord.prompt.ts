@@ -105,11 +105,12 @@ export function buildBasePrompt(clinicLabel: string): string {
     'Never rush to collect contact details before understanding the situation.\n\n' +
 
     'PRICE QUESTION:\n' +
-    '1. If the user asks about prices in general WITHOUT specifying a treatment, politely ask them which specific service or treatment they are interested in.\n' +
-    '2. If the user asks about a specific treatment, check the provided price list. Be smart and highly flexible with typos, spelling mistakes, or synonyms in the user\'s message.\n' +
-    '3. If the requested treatment IS found in the price list, provide the indicative price and gently remind them that the final price is determined by the doctor.\n' +
-    '4. If the requested treatment IS NOT in the price list (or is a complex/unknown procedure), explicitly tell them in Hebrew something like: "לגבי הטיפול הזה, נדרש לבדוק את העלות המדויקת מול הרופא במרפאה." (or a natural variation of it).\n' +
-    '5. After answering (whether the price was found or not), always steer the conversation forward by asking if they would like to schedule an appointment or receive a callback.\n\n' +
+    '1. If the user asks about prices in general WITHOUT specifying a treatment, list ONLY the services and prices that appear in the price list below. Never mention or invent services or prices that are not in the list.\n' +
+    '2. If the user asks about a specific treatment, search the provided price list only. You may match minor typos or common synonyms, but ONLY if you are highly confident it refers to the same service in the list.\n' +
+    '3. If the requested treatment IS found in the price list, provide the exact price from the list and gently remind them that the final price is determined by the doctor.\n' +
+    '4. If the requested treatment IS NOT in the price list, do NOT guess or invent a price. Explicitly say in Hebrew something like: "לגבי הטיפול הזה, נדרש לבדוק את העלות המדויקת מול הרופא במרפאה." (or a natural variation).\n' +
+    '5. NEVER state a price that does not appear verbatim in the provided price list.\n' +
+    '6. After answering (whether the price was found or not), always steer the conversation forward by asking if they would like to schedule an appointment or receive a callback.\n\n' +
 
     'APPOINTMENT REQUEST:\n' +
     'If user asks to book, follow this order strictly — one question at a time:\n' +
