@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useCallback, lazy, Suspense } from 'react';
-import { ChevronRight } from 'lucide-react';
-import { HeroSection } from '@/components/booking/HeroSection';
+import Link from 'next/link';
+import { ChevronRight, ArrowLeft } from 'lucide-react';
 import { ServiceList } from '@/components/booking/ServiceList';
 import { WorkerSelector } from '@/components/booking/WorkerSelector';
 import { DateSelector } from '@/components/booking/DateSelector';
@@ -187,26 +187,35 @@ export function BookingFlow({ data }: Props) {
     }
   };
 
-  const isHeroStep = step === 'services';
   const isSuccessStep = step === 'success';
   const pct = progressPercent(step, stepFlow);
+  const isServicesStep = step === 'services';
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
+    <div className="min-h-screen bg-[#FAFAFA]" dir="rtl">
       {activeTab === 'booking' && (
         <>
-          {isHeroStep && <HeroSection clinic={clinic} />}
-
-          {!isHeroStep && !isSuccessStep && (
-            <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+          {/* Header: back to landing when on services step, else step back + progress */}
+          {!isSuccessStep && (
+            <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
               <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-2">
-                <button
-                  onClick={goBack}
-                  className="p-2 -mr-1 rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation"
-                  aria-label="חזרה"
-                >
-                  <ChevronRight className="w-5 h-5 text-gray-600" />
-                </button>
+                {isServicesStep ? (
+                  <Link
+                    href={`/book/${clinic.slug}`}
+                    className="p-2 -mr-1 rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation flex items-center gap-1 text-gray-600"
+                    aria-label="חזרה לדף הבית"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </Link>
+                ) : (
+                  <button
+                    onClick={goBack}
+                    className="p-2 -mr-1 rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation"
+                    aria-label="חזרה"
+                  >
+                    <ChevronRight className="w-5 h-5 text-gray-600" />
+                  </button>
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-gray-400 truncate">{clinic.name}</p>
                   <h2 className="font-semibold text-gray-800 text-sm leading-tight">
@@ -231,7 +240,7 @@ export function BookingFlow({ data }: Props) {
             )}
 
             {step === 'services' && (
-              <div key="services" className="animate-booking-fade-in">
+              <div key="services" className="animate-booking-fade-in pt-6">
                 <ServiceList
                   services={services}
                   onSelect={handleServiceSelect}

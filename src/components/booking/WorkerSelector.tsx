@@ -1,4 +1,6 @@
-import { User } from 'lucide-react';
+'use client';
+
+import { motion } from 'framer-motion';
 import type { ClinicWorker } from '@/types/booking';
 
 interface Props {
@@ -7,57 +9,34 @@ interface Props {
   selectedId?: string;
 }
 
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-}
-
-const AVATAR_COLORS = [
-  'bg-indigo-100 text-indigo-700',
-  'bg-purple-100 text-purple-700',
-  'bg-sky-100 text-sky-700',
-  'bg-emerald-100 text-emerald-700',
-  'bg-rose-100 text-rose-700',
-  'bg-amber-100 text-amber-700',
-];
-
 export function WorkerSelector({ workers, onSelect, selectedId }: Props) {
   return (
     <div className="px-4 pt-5 pb-4">
-      <h2 className="text-lg font-bold text-gray-800 mb-4">בחר מטפל</h2>
-      <div className="grid grid-cols-2 gap-3">
-        {workers.map((worker, idx) => {
+      <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-5">בחר מטפל</h2>
+      <div className="flex flex-col gap-3">
+        {workers.map((worker, i) => {
           const isSelected = selectedId === worker.id;
-          const colorClass = AVATAR_COLORS[idx % AVATAR_COLORS.length];
-
           return (
-            <button
+            <motion.button
               key={worker.id}
               onClick={() => onSelect(worker)}
-              className={`flex flex-col items-center gap-3 p-5 rounded-2xl border transition-all duration-150 active:scale-[0.97] touch-manipulation
-                ${
-                  isSelected
-                    ? 'border-indigo-500 bg-indigo-50 shadow-md shadow-indigo-100'
-                    : 'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-md'
-                }
-              `}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.04, duration: 0.3 }}
+              className={`w-full rounded-2xl px-5 py-4 text-right transition-all duration-200 active:scale-[0.99] touch-manipulation
+                shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]
+                ${isSelected
+                  ? 'border-2 border-indigo-500 bg-indigo-50/50'
+                  : 'border border-gray-100 bg-white hover:border-gray-200'
+                }`}
             >
-              <div
-                className={`w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold ${colorClass}`}
-              >
-                {getInitials(worker.name) || <User className="w-6 h-6" />}
-              </div>
-              <span className="font-medium text-gray-800 text-sm text-center leading-tight">
+              <span className="font-semibold text-gray-900 text-base tracking-tight block">
                 {worker.name}
               </span>
               {isSelected && (
-                <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                <span className="mt-1 inline-block text-xs font-medium text-indigo-600">נבחר</span>
               )}
-            </button>
+            </motion.button>
           );
         })}
       </div>

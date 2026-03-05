@@ -19,10 +19,11 @@ import {
   Trash2,
   Pencil,
   Upload,
+  Video,
 } from 'lucide-react';
 
 type Clinic = { id: string; name: string | null; slug: string | null; logo_url?: string | null };
-type PageData = { clinic: { id: string; name: string; address: string | null; hero_image: string | null; logo_url: string | null; slug: string }; gallery: Array<{ id: string; image_url: string; sort_order: number }> };
+type PageData = { clinic: { id: string; name: string; address: string | null; hero_image: string | null; hero_video: string | null; logo_url: string | null; slug: string }; gallery: Array<{ id: string; image_url: string; sort_order: number }> };
 type Section = { id: string; section_type: string; position: number; is_enabled: boolean; settings_json: unknown };
 type MediaItem = { id: string; url: string; type: string; filename: string | null; created_at: string };
 type Service = { id: string; service_name: string; price: number; duration_minutes: number; description?: string | null; is_active: boolean };
@@ -219,13 +220,20 @@ export function BookingSitePageClient({
           {/* 1. Media Library */}
           <MediaLibraryCard clinicId={clinicId} media={media} setMedia={setMedia} />
 
-          {/* 2. Page Builder */}
+          {/* 2. Hero Video */}
+          <HeroVideoCard
+            clinicId={clinicId}
+            heroVideo={pageData?.clinic?.hero_video ?? null}
+            onSaved={loadData}
+          />
+
+          {/* 3. Page Builder */}
           <PageBuilderCard clinicId={clinicId} sections={sections} setSections={setSections} />
 
-          {/* 3. Gallery */}
+          {/* 4. Gallery */}
           <GalleryCard clinicId={clinicId} gallery={pageData?.gallery ?? []} pageData={pageData} setPageData={setPageData} media={media} />
 
-          {/* 4. Services */}
+          {/* 5. Services */}
           <ServicesCard
             clinicId={clinicId}
             services={services}
@@ -236,7 +244,7 @@ export function BookingSitePageClient({
             setServiceModalOpen={setServiceModalOpen}
           />
 
-          {/* 5. Products */}
+          {/* 6. Products */}
           <ProductsCard
             clinicId={clinicId}
             products={products}
@@ -248,7 +256,7 @@ export function BookingSitePageClient({
             media={media}
           />
 
-          {/* 6. Preview */}
+          {/* 7. Preview */}
           <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden shadow-sm">
             <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 p-4 border-b border-slate-200 dark:border-zinc-700 flex items-center gap-2">
               <Eye className="h-4 w-4" />
@@ -271,6 +279,163 @@ export function BookingSitePageClient({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+const HERO_VIDEO_ACCEPT = 'video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov';
+const HERO_VIDEO_MAX_MB = 50;
+const HERO_VIDEO_MAX_BYTES = HERO_VIDEO_MAX_MB * 1024 * 1024;
+
+function HeroVideoCard({
+  clinicId,
+  heroVideo,
+  onSaved,
+}: {
+  clinicId: string;
+  heroVideo: string | null;
+  onSaved: (cid: string) => void;
+}) {
+  const [file, setFile] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  const validate = (f: File): string | null => {
+    const ext = f.name.split('.').pop()?.toLowerCase();
+    if (!['mp4', 'webm', 'mov'].includes(ext ?? '')) return 'נא להעלות קובץ וידאו (MP4, WebM או MOV)';
+    if (f.size > HERO_VIDEO_MAX_BYTES) return `גודל מקסימלי: ${HERO_VIDEO_MAX_MB}MB`;
+    return null;
+  };
+
+  const save = async () => {
+    if (!file) return;
+    const err = validate(file);
+    if (err) {
+      setError(err);
+      return;
+    }
+    setError(null);
+    setSaving(true);
+    try {
+      const fd = new FormData();
+      fd.set('file', file);
+      fd.set('clinic_id', clinicId);
+      const uploadRes = await fetch('/api/super-admin/booking-site/upload', { method: 'POST', body: fd, credentials: 'include' });
+      const uploadJson = await uploadRes.json();
+      if (!uploadRes.ok || !uploadJson.url) {
+        setError(uploadJson?.error ?? 'ההעלאה נכשלה');
+        return;
+      }
+      const putRes = await fetch(`/api/super-admin/booking-site/page?clinic_id=${clinicId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hero_video: uploadJson.url }),
+        credentials: 'include',
+      });
+      if (!putRes.ok) {
+        const j = await putRes.json();
+        setError(j?.error ?? 'שמירה נכשלה');
+        return;
+      }
+      setFile(null);
+      onSaved(clinicId);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const clear = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/super-admin/booking-site/page?clinic_id=${clinicId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hero_video: null }),
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const j = await res.json();
+        setError(j?.error ?? 'הסרה נכשלה');
+        return;
+      }
+      onSaved(clinicId);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const f = e.dataTransfer.files?.[0];
+    if (!f) return;
+    setFile(f);
+    setError(validate(f));
+  };
+
+  const onFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setFile(f);
+    setError(validate(f));
+    e.target.value = '';
+  };
+
+  return (
+    <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+      <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 p-4 border-b border-slate-200 dark:border-zinc-700 flex items-center gap-2">
+        <Video className="h-4 w-4 text-indigo-500" />
+        וידאו רקע לדף הבית (Hero)
+      </h2>
+      <div className="p-5 space-y-5">
+        {heroVideo && (
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-2">תצוגה מקדימה</p>
+            <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-600 bg-neutral-900 aspect-video max-h-44 shadow-inner">
+              <video src={heroVideo} controls className="w-full h-full object-contain" playsInline />
+            </div>
+            <button type="button" onClick={clear} disabled={saving} className="mt-3 text-sm font-medium text-red-600 dark:text-red-400 hover:underline disabled:opacity-50">
+              הסר וידאו
+            </button>
+          </div>
+        )}
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-2">העלאת וידאו חדש</p>
+          <div
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={onDrop}
+            className={`rounded-xl border-2 border-dashed p-8 text-center transition-all duration-200 ${dragOver ? 'border-indigo-500 bg-indigo-50/60 dark:bg-indigo-900/25' : 'border-slate-200 dark:border-zinc-600 hover:border-slate-300 dark:hover:border-zinc-500'}`}
+          >
+            <input
+              type="file"
+              accept={HERO_VIDEO_ACCEPT}
+              onChange={onFileSelect}
+              className="hidden"
+              id="hero-video-upload"
+            />
+            <label htmlFor="hero-video-upload" className="cursor-pointer block">
+              <Upload className="h-10 w-10 mx-auto text-slate-400 dark:text-zinc-500 mb-3" />
+              <p className="text-sm font-medium text-slate-600 dark:text-zinc-300">גרור קובץ לכאן או לחץ לבחירה</p>
+              <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">MP4, WebM או MOV — עד {HERO_VIDEO_MAX_MB}MB</p>
+            </label>
+          </div>
+        </div>
+        {file && (
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-700 px-4 py-3">
+            <span className="text-sm font-medium text-slate-700 dark:text-zinc-300 truncate">{file.name}</span>
+            <div className="flex gap-2 shrink-0">
+              <button type="button" onClick={() => setFile(null)} className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300">ביטול</button>
+              <button type="button" onClick={save} disabled={saving || !!error} className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 disabled:opacity-50 shadow-sm">
+                {saving ? 'שומר...' : 'שמור'}
+              </button>
+            </div>
+          </div>
+        )}
+        {error && <p className="text-sm font-medium text-red-600 dark:text-red-400">{error}</p>}
+      </div>
     </div>
   );
 }

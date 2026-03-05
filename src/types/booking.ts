@@ -4,6 +4,7 @@ export interface Clinic {
   slug: string;
   logo_url: string | null;
   hero_image: string | null;
+  hero_video: string | null;
   address: string | null;
   lat: number | null;
   lng: number | null;

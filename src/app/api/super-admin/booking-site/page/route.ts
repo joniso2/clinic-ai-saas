@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   const supabase = getSupabaseAdmin();
   const { data: clinic } = await supabase
     .from('clinics')
-    .select('id, name, hero_image, logo_url, slug')
+    .select('id, name, hero_image, hero_video, logo_url, slug')
     .eq('id', clinicId)
     .maybeSingle();
   const { data: settings } = await supabase
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
 
   const resolved = clinic
     ? { ...clinic, address: settings?.address ?? null }
-    : { id: clinicId, name: '', address: settings?.address ?? null, hero_image: null as string | null, logo_url: null as string | null, slug: clinicId };
+    : { id: clinicId, name: '', address: settings?.address ?? null, hero_image: null as string | null, hero_video: null as string | null, logo_url: null as string | null, slug: clinicId };
   return NextResponse.json({ clinic: resolved, gallery: gallery ?? [] });
 }
 
@@ -61,6 +61,7 @@ export async function PUT(req: NextRequest) {
   const updates: Record<string, unknown> = {};
   if (body.name !== undefined) updates.name = body.name === '' || body.name === null ? '' : String(body.name).trim();
   if (body.hero_image !== undefined) updates.hero_image = body.hero_image === '' || body.hero_image === null ? null : body.hero_image;
+  if (body.hero_video !== undefined) updates.hero_video = body.hero_video === '' || body.hero_video === null ? null : body.hero_video;
   if (body.logo_url !== undefined) updates.logo_url = body.logo_url === '' || body.logo_url === null ? null : body.logo_url;
 
   if (Object.keys(updates).length > 0) {
@@ -68,7 +69,7 @@ export async function PUT(req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const { data: clinic } = await supabase.from('clinics').select('id, name, hero_image, logo_url, slug').eq('id', clinicId).single();
+  const { data: clinic } = await supabase.from('clinics').select('id, name, hero_image, hero_video, logo_url, slug').eq('id', clinicId).single();
   const { data: st } = await supabase.from('clinic_settings').select('address').eq('clinic_id', clinicId).maybeSingle();
   return NextResponse.json({ ...clinic, address: st?.address ?? null });
 }
