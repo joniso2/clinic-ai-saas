@@ -1,8 +1,58 @@
 'use client';
 
 import { useState } from 'react';
-import { Building2, Phone, MapPin, Globe, DollarSign, Image, FileText, Save, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { Building2, Phone, MapPin, Globe, DollarSign, Image, FileText, Save, CheckCircle2, AlertCircle, Loader2, Link2, Copy, ExternalLink } from 'lucide-react';
 import type { ClinicSettings } from '@/services/settings.service';
+
+function BookingLinkCard({ slug }: { slug: string }) {
+  const [copied, setCopied] = useState(false);
+  const url = typeof window !== 'undefined'
+    ? `${window.location.origin}/book/${slug}`
+    : `/book/${slug}`;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="rounded-2xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/60 dark:bg-indigo-950/30 overflow-hidden">
+      <div className="border-b border-indigo-100 dark:border-indigo-900/60 bg-indigo-50 dark:bg-indigo-950/50 px-5 py-4 flex items-center gap-3">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-white">
+          <Link2 className="h-4 w-4" />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">קישור עמוד הזמנה</h3>
+          <p className="text-xs text-slate-500 dark:text-zinc-400">שלח ללקוחות לקביעת תור ישירה</p>
+        </div>
+      </div>
+      <div className="px-5 py-4 flex items-center gap-2">
+        <code className="flex-1 truncate rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-zinc-800 px-3.5 py-2.5 text-sm font-mono text-indigo-700 dark:text-indigo-300 select-all">
+          {url}
+        </code>
+        <button
+          onClick={handleCopy}
+          title="העתק קישור"
+          className="flex-shrink-0 flex items-center gap-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-zinc-800 px-3.5 py-2.5 text-sm font-medium text-slate-700 dark:text-zinc-200 hover:bg-indigo-50 dark:hover:bg-zinc-700 transition-colors"
+        >
+          {copied ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+          {copied ? 'הועתק' : 'העתק'}
+        </button>
+        <a
+          href={`/book/${slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="פתח עמוד הזמנה"
+          className="flex-shrink-0 flex items-center gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors"
+        >
+          <ExternalLink className="h-4 w-4" />
+          פתח
+        </a>
+      </div>
+    </div>
+  );
+}
 
 const TIMEZONES = [
   { value: 'Asia/Jerusalem', label: 'Asia/Jerusalem (IL)' },
@@ -70,10 +120,12 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
 export function GeneralTab({
   settings,
   clinicName,
+  clinicSlug,
   userEmail,
 }: {
   settings: ClinicSettings;
   clinicName: string | null;
+  clinicSlug: string | null;
   userEmail: string | null;
 }) {
   const [form, setForm] = useState({
@@ -143,6 +195,11 @@ export function GeneralTab({
           </div>
         </div>
       </div>
+
+      {/* Booking page link */}
+      {clinicSlug && (
+        <BookingLinkCard slug={clinicSlug} />
+      )}
 
       {/* Editable contact + locale */}
       <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden">

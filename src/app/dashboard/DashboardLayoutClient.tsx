@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { Users, BarChart3, Settings as SettingsIcon, Calendar as CalendarIcon, Menu, DollarSign, LayoutDashboard, Building2, Link2, Activity, Brain, UserCheck, MessageSquare, Radio, PackageOpen, Wand2 } from 'lucide-react';
+import { Users, BarChart3, Settings as SettingsIcon, Calendar as CalendarIcon, Menu, DollarSign, LayoutDashboard, Building2, Link2, Activity, Brain, UserCheck, MessageSquare, Radio, PackageOpen, Wand2, Globe } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { useEffect, useRef, useState } from 'react';
 import MobileDrawer from '@/components/dashboard/MobileDrawer';
@@ -21,18 +21,19 @@ const NAV_ITEMS = [
 const SUPER_ADMIN_HREF = '/dashboard/super-admin';
 
 const SUPER_ADMIN_SECTIONS = [
-  { id: 'overview',     label: 'סקירת מערכת',     icon: LayoutDashboard, hash: '#overview' },
-  { id: 'clinics',      label: 'קליניקות',        icon: Building2,       hash: '#clinics' },
-  { id: 'integrations', label: 'אינטגרציות',      icon: Link2,           hash: '#integrations' },
-  { id: 'messaging',    label: 'מסרים',           icon: MessageSquare,   hash: '#messaging' },
-  { id: 'live',         label: 'שיחות חיות',      icon: Radio,           hash: '#live' },
-  { id: 'ai',           label: 'מודלי AI',        icon: Brain,           hash: '#ai' },
-  { id: 'ai-persona',  label: 'AI Persona',      icon: Wand2,           hash: '#ai-persona' },
-  { id: 'traffic',      label: 'תעבורה וביצועים', icon: Activity,        hash: '#traffic' },
-  { id: 'pricing',      label: 'תמחור גלובלי',   icon: DollarSign,      hash: '#pricing' },
-  { id: 'services',     label: 'שירותים',         icon: PackageOpen,     hash: '#services' },
-  { id: 'users',        label: 'משתמשים',         icon: Users,           hash: '#users' },
-  { id: 'settings',     label: 'הגדרות מערכת',    icon: SettingsIcon,    hash: '#settings' },
+  { id: 'overview',      label: 'סקירת מערכת',     icon: LayoutDashboard, hash: '#overview' },
+  { id: 'clinics',       label: 'קליניקות',        icon: Building2,       hash: '#clinics' },
+  { id: 'booking-site',  label: 'אתר טלפוני',      icon: Globe,           href: '/dashboard/super-admin/booking-site' },
+  { id: 'integrations',  label: 'אינטגרציות',      icon: Link2,           hash: '#integrations' },
+  { id: 'messaging',     label: 'מסרים',           icon: MessageSquare,   hash: '#messaging' },
+  { id: 'live',          label: 'שיחות חיות',      icon: Radio,           hash: '#live' },
+  { id: 'ai',            label: 'מודלי AI',        icon: Brain,           hash: '#ai' },
+  { id: 'ai-persona',    label: 'AI Persona',      icon: Wand2,           hash: '#ai-persona' },
+  { id: 'traffic',       label: 'תעבורה וביצועים', icon: Activity,        hash: '#traffic' },
+  { id: 'pricing',       label: 'תמחור גלובלי',   icon: DollarSign,      hash: '#pricing' },
+  { id: 'services',      label: 'שירותים',         icon: PackageOpen,     hash: '#services' },
+  { id: 'users',         label: 'משתמשים',         icon: Users,           hash: '#users' },
+  { id: 'settings',      label: 'הגדרות מערכת',    icon: SettingsIcon,    hash: '#settings' },
 ] as const;
 
 type DashboardLayoutClientProps = {
@@ -131,7 +132,7 @@ export function DashboardLayoutClient({ children, initialRole, initialUserEmail 
   }, []);
 
   const sidebarItems = isSuperAdmin
-    ? SUPER_ADMIN_SECTIONS.map((s) => ({ id: s.id, label: s.label, icon: s.icon, href: `${SUPER_ADMIN_HREF}${s.hash}` }))
+    ? SUPER_ADMIN_SECTIONS.map((s) => ({ id: s.id, label: s.label, icon: s.icon, href: (s as { hash?: string; href?: string }).href ?? `${SUPER_ADMIN_HREF}${(s as { hash: string }).hash}` }))
     : [...NAV_ITEMS];
 
   const isActive = (href: string) => {
@@ -141,7 +142,7 @@ export function DashboardLayoutClient({ children, initialRole, initialUserEmail 
       if (href.includes('#')) return pathname?.startsWith(SUPER_ADMIN_HREF) && currentHash === '#' + href.split('#')[1];
       return pathname === href;
     }
-    return pathname?.startsWith(href) ?? false;
+    return pathname === href || (pathname?.startsWith(href) ?? false);
   };
 
   const handleNavClick = (href: string) => {

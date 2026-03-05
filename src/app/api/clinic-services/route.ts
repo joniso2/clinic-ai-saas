@@ -10,7 +10,7 @@ export async function GET() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('clinic_services')
-    .select('id, clinic_id, service_name, price, aliases, is_active, created_at')
+    .select('id, clinic_id, service_name, price, duration_minutes, aliases, is_active, created_at')
     .eq('clinic_id', row.clinic_id)
     .order('service_name');
 
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   if (!row?.clinic_id) return NextResponse.json({ error: 'לא מאומת או ללא קליניקה' }, { status: 401 });
   if (row.role !== 'CLINIC_ADMIN') return NextResponse.json({ error: 'אין הרשאה לערוך תמחור' }, { status: 403 });
 
-  let body: { service_name?: string; price?: number; aliases?: string[]; is_active?: boolean; description?: string | null };
+  let body: { service_name?: string; price?: number; duration_minutes?: number; aliases?: string[]; is_active?: boolean; description?: string | null };
   try {
     body = await req.json();
   } catch {
@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
   if (!service_name || price == null || Number.isNaN(price)) {
     return NextResponse.json({ error: 'שם שירות ומחיר חובה' }, { status: 400 });
   }
+  const duration_minutes = body.duration_minutes != null ? Math.max(1, Math.min(480, Math.round(Number(body.duration_minutes)))) : 30;
 
   const supabase = await createClient();
   const { data: existing } = await supabase
@@ -53,10 +54,11 @@ export async function POST(req: NextRequest) {
       clinic_id: row.clinic_id,
       service_name,
       price,
+      duration_minutes,
       aliases,
       is_active: body.is_active !== false,
     })
-    .select('id, clinic_id, service_name, price, aliases, is_active')
+    .select('id, clinic_id, service_name, price, duration_minutes, aliases, is_active')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

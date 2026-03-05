@@ -22,7 +22,7 @@ export async function GET() {
   const supabase = getSupabaseAdmin();
   const { data: clinics, error: clinicsError } = await supabase
     .from('clinics')
-    .select('id, name')
+    .select('id, name, slug, logo_url')
     .order('name');
 
   if (clinicsError) {

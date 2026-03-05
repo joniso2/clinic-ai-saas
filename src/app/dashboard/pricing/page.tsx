@@ -10,6 +10,7 @@ type ClinicService = {
   clinic_id: string;
   service_name: string;
   price: number;
+  duration_minutes: number;
   aliases: string[];
   is_active: boolean;
   description?: string | null;
@@ -219,6 +220,7 @@ export default function PricingPage() {
                   <tr className="sticky top-0 z-10 border-b border-slate-200 dark:border-zinc-700 bg-slate-50/95 dark:bg-zinc-800/95">
                     <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">שם שירות</th>
                     <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">מחיר</th>
+                    <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">משך</th>
                     <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">סטטוס</th>
                     <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">שימושים</th>
                     <th className="w-32 px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">פעולות</th>
@@ -227,7 +229,7 @@ export default function PricingPage() {
                 <tbody>
                   {filteredServices.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-4 py-12 text-center text-sm text-slate-500 dark:text-zinc-500">
+                      <td colSpan={6} className="px-4 py-12 text-center text-sm text-slate-500 dark:text-zinc-500">
                         אין תוצאות לחיפוש
                       </td>
                     </tr>
@@ -249,6 +251,9 @@ export default function PricingPage() {
                         </td>
                         <td className="px-4 py-3 text-right tabular-nums text-slate-700 dark:text-zinc-300">
                           {formatCurrencyILS(s.price)}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm text-slate-600 dark:text-zinc-400 tabular-nums">
+                          {(s.duration_minutes ?? 30)} דק׳
                         </td>
                         <td className="px-4 py-3 text-right">
                           <span
@@ -367,6 +372,7 @@ function ServiceFormModal({
 }) {
   const [name, setName] = useState(service?.service_name ?? '');
   const [price, setPrice] = useState(service?.price ?? 0);
+  const [durationMinutes, setDurationMinutes] = useState(service?.duration_minutes ?? 30);
   const [aliasesStr, setAliasesStr] = useState(
     Array.isArray(service?.aliases) ? service.aliases.join(', ') : ''
   );
@@ -388,6 +394,7 @@ function ServiceFormModal({
       setFieldErrors((prev) => ({ ...prev, price: 'יש להזין מחיר תקין (מספר אי־שלילי)' }));
       return;
     }
+    const duration = Math.max(1, Math.min(480, Math.round(Number(durationMinutes)) || 30));
     const aliases = aliasesStr
       .split(',')
       .map((s) => s.trim())
@@ -397,6 +404,7 @@ function ServiceFormModal({
       const payload = {
         service_name: trimmed,
         price: numPrice,
+        duration_minutes: duration,
         aliases,
         is_active: active,
         description: description.trim() || null,
@@ -500,6 +508,22 @@ function ServiceFormModal({
             {fieldErrors.price && (
               <p className="mt-1 text-xs text-red-600 dark:text-red-400 text-right">{fieldErrors.price}</p>
             )}
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 text-right mb-1.5">
+              משך הטיפול (דקות) <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={480}
+              step={1}
+              value={durationMinutes}
+              onChange={(e) => setDurationMinutes(e.target.value === '' ? 30 : Number(e.target.value))}
+              className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 text-right tabular-nums placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-zinc-500/50 transition-colors"
+              placeholder="30"
+            />
+            <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400 text-right">1–480 דקות</p>
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 text-right mb-1.5">

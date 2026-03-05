@@ -36,10 +36,12 @@ const TABS: { id: TabId; label: string; icon: React.ElementType; description: st
 
 export function SettingsTab({
   clinicName,
+  clinicSlug,
   userEmail,
   settings,
 }: {
   clinicName: string | null;
+  clinicSlug: string | null;
   userEmail: string | null;
   settings: ClinicSettings | null;
 }) {
@@ -119,7 +121,7 @@ export function SettingsTab({
       {/* ── Tab content ───────────────────────────────────────────────────── */}
       <div className="flex-1 min-w-0">
         {activeTab === 'general' && (
-          <GeneralTab settings={defaultSettings} clinicName={clinicName} userEmail={userEmail} />
+          <GeneralTab settings={defaultSettings} clinicName={clinicName} clinicSlug={clinicSlug} userEmail={userEmail} />
         )}
         {activeTab === 'scheduling' && (
           <SchedulingTab settings={defaultSettings} />

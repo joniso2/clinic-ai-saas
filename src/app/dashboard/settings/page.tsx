@@ -8,6 +8,7 @@ import type { ClinicSettings } from '@/services/settings.service';
 export default function SettingsPage() {
   const [userEmail, setUserEmail]   = useState<string | null>(null);
   const [clinicName, setClinicName] = useState<string | null>(null);
+  const [clinicSlug, setClinicSlug] = useState<string | null>(null);
   const [settings, setSettings]     = useState<ClinicSettings | null>(null);
 
   useEffect(() => {
@@ -17,7 +18,7 @@ export default function SettingsPage() {
 
       const { data: clinicLink, error } = await supabase
         .from('clinic_users')
-        .select(`clinic:clinics!clinic_users1_clinic_id_fkey (id, name)`)
+        .select(`clinic:clinics!clinic_users1_clinic_id_fkey (id, name, slug)`)
         .eq('user_id', session.user.id)
         .single();
 
@@ -25,9 +26,10 @@ export default function SettingsPage() {
 
       const clinic = (
         Array.isArray(clinicLink.clinic) ? clinicLink.clinic[0] : clinicLink.clinic
-      ) as { id: string; name: string } | null;
+      ) as { id: string; name: string; slug: string } | null;
 
       if (clinic?.name) setClinicName(clinic.name);
+      if (clinic?.slug) setClinicSlug(clinic.slug);
 
       // Fetch full clinic settings from the API
       try {
@@ -49,7 +51,7 @@ export default function SettingsPage() {
         <h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-zinc-100 sm:text-3xl">הגדרות</h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">מרכז שליטה למרפאה.</p>
       </div>
-      <SettingsTab clinicName={clinicName} userEmail={userEmail} settings={settings} />
+      <SettingsTab clinicName={clinicName} clinicSlug={clinicSlug} userEmail={userEmail} settings={settings} />
     </>
   );
 }
