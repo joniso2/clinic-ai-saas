@@ -12,9 +12,70 @@ import {
   getClinicName,
 } from '@/services/discord-guild.service';
 import type { AppointmentType } from '@/types/appointments';
+import type { WorkingHoursDay } from '@/repositories/settings.repository';
 import logger from '@/lib/logger';
 
 const DISCORD_GUILD_UNMAPPED_REPLY = 'אנא פנה לשרת הרשמי של המרפאה לצורך המשך טיפול.';
+
+const DEFAULT_OPEN_TIME  = '08:00';
+const DEFAULT_CLOSE_TIME = '16:00';
+
+/** Hour (0–23) in Israel time for a given Date. */
+function getIsraelHour(date: Date): number {
+  return parseInt(
+    new Intl.DateTimeFormat('en-IL', { timeZone: 'Asia/Jerusalem', hour: 'numeric', hour12: false }).format(date),
+    10,
+  );
+}
+
+/** Minute (0–59) in Israel time. */
+function getIsraelMinute(date: Date): number {
+  return parseInt(
+    new Intl.DateTimeFormat('en-IL', { timeZone: 'Asia/Jerusalem', minute: '2-digit' }).format(date),
+    10,
+  );
+}
+
+/** Day of week (0 = Sunday … 6 = Saturday) in Israel time. */
+function getIsraelDayOfWeek(date: Date): number {
+  const long = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Jerusalem', weekday: 'long' }).format(date);
+  const days: Record<string, number> = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
+  return days[long] ?? 0;
+}
+
+/**
+ * Check if a date/time falls within clinic business hours.
+ * Uses clinic working_hours for the requested day (Israel time).
+ * Returns { within, openTime, closeTime, dayClosed } for the message when outside hours.
+ * dayClosed = true when the clinic is closed the entire day (e.g. Saturday disabled).
+ */
+function isWithinBusinessHours(
+  date: Date,
+  workingHours: WorkingHoursDay[],
+): { within: boolean; openTime: string; closeTime: string; dayClosed?: boolean } {
+  const dayIndex = getIsraelDayOfWeek(date);
+  const dayConfig = workingHours.find((w) => w.day === dayIndex);
+
+  if (!dayConfig) {
+    const apptMins = getIsraelHour(date) * 60 + getIsraelMinute(date);
+    const openMins = 8 * 60;
+    const closeMins = 16 * 60;
+    const within = apptMins >= openMins && apptMins < closeMins;
+    return { within, openTime: DEFAULT_OPEN_TIME, closeTime: DEFAULT_CLOSE_TIME };
+  }
+
+  if (!dayConfig.enabled) {
+    return { within: false, openTime: dayConfig.open, closeTime: dayConfig.close, dayClosed: true };
+  }
+
+  const [openH, openM] = dayConfig.open.split(':').map(Number);
+  const [closeH, closeM] = dayConfig.close.split(':').map(Number);
+  const openMins  = openH * 60 + (openM || 0);
+  const closeMins = closeH * 60 + (closeM || 0);
+  const apptMins  = getIsraelHour(date) * 60 + getIsraelMinute(date);
+  const within = apptMins >= openMins && apptMins < closeMins;
+  return { within, openTime: dayConfig.open, closeTime: dayConfig.close };
+}
 
 function calculatePriorityLevel(urgency_level: string | null | undefined): 'low' | 'medium' | 'high' {
   if (urgency_level === 'high') return 'high';
@@ -223,6 +284,26 @@ export async function processDiscordMessage(params: {
 
     if (!clinicId) {
       return logPipelineAndReturn(DISCORD_GUILD_UNMAPPED_REPLY);
+    }
+
+    // ── Server-side validation: past date/time (do not trust AI) ─────────────────
+    const appointmentDate = new Date(resolvedDatetimeRaw);
+    if (appointmentDate < new Date()) {
+      console.log('[Discord] Appointment in the past — rejecting before schedule');
+      return logPipelineAndReturn('נראה שהשעה שבחרת כבר עברה. באיזה יום ושעה יהיה לך נוח להגיע?');
+    }
+
+    // ── Server-side business hours validation (do not trust AI) ─────────────────
+    const workingHours = settings?.working_hours ?? [];
+    const hoursCheck = isWithinBusinessHours(appointmentDate, workingHours);
+    if (!hoursCheck.within) {
+      console.log('[Discord] Appointment outside business hours — rejecting before schedule');
+      if (hoursCheck.dayClosed) {
+        return logPipelineAndReturn('הקליניקה סגורה ביום זה. באיזה יום אחר יהיה לך נוח להגיע?');
+      }
+      return logPipelineAndReturn(
+        `הקליניקה פתוחה בין ${hoursCheck.openTime} ל-${hoursCheck.closeTime}. באיזו שעה יהיה לך נוח להגיע?`,
+      );
     }
 
     // ── Upsert lead by email/phone first, then fall back to name ────────────────
