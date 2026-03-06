@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { Building2, Phone, MapPin, Globe, DollarSign, Image, FileText, Save, CheckCircle2, AlertCircle, Loader2, Link2, Copy, ExternalLink } from 'lucide-react';
+import { AdminHeroMediaEditor } from '@/components/clica/AdminHeroMediaEditor';
 import type { ClinicSettings } from '@/services/settings.service';
 
 function BookingLinkCard({ slug }: { slug: string }) {
   const [copied, setCopied] = useState(false);
   const url = typeof window !== 'undefined'
-    ? `${window.location.origin}/book/${slug}`
-    : `/book/${slug}`;
+    ? `${window.location.origin}/${slug}`
+    : `/${slug}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(url);
@@ -40,7 +41,7 @@ function BookingLinkCard({ slug }: { slug: string }) {
           {copied ? 'הועתק' : 'העתק'}
         </button>
         <a
-          href={`/book/${slug}`}
+          href={`/${slug}`}
           target="_blank"
           rel="noopener noreferrer"
           title="פתח עמוד הזמנה"
@@ -200,6 +201,9 @@ export function GeneralTab({
       {clinicSlug && (
         <BookingLinkCard slug={clinicSlug} />
       )}
+
+      {/* Hero media (Clica / premium landing) */}
+      <AdminHeroMediaEditor />
 
       {/* Editable contact + locale */}
       <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden">

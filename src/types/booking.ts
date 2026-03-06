@@ -5,6 +5,8 @@ export interface Clinic {
   logo_url: string | null;
   hero_image: string | null;
   hero_video: string | null;
+  /** Optional: image URL for the hero 3D slot (replaces live 3D orb when set) */
+  hero_3d_slot_image_url?: string | null;
   address: string | null;
   lat: number | null;
   lng: number | null;

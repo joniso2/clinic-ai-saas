@@ -22,7 +22,7 @@ export async function GET() {
   const supabase = getSupabaseAdmin();
   const { data: clinic } = await supabase
     .from('clinics')
-    .select('id, name, hero_image, logo_url, slug')
+    .select('id, name, hero_image, hero_video, hero_3d_slot_image_url, logo_url, slug')
     .eq('id', clinicId)
     .maybeSingle();
 
@@ -41,6 +41,8 @@ export async function GET() {
         name: '',
         address,
         hero_image: null as string | null,
+        hero_video: null as string | null,
+        hero_3d_slot_image_url: null as string | null,
         logo_url: null as string | null,
         slug: clinicId,
       };
@@ -84,6 +86,8 @@ export async function PUT(req: NextRequest) {
   const currentName = existing && 'name' in existing ? (existing as { name?: string }).name : undefined;
   if (nameVal !== undefined) updates.name = nameVal || currentName || 'מרפאה';
   if (body.hero_image !== undefined) updates.hero_image = body.hero_image === '' || body.hero_image === null ? null : body.hero_image;
+  if (body.hero_video !== undefined) updates.hero_video = body.hero_video === '' || body.hero_video === null ? null : body.hero_video;
+  if (body.hero_3d_slot_image_url !== undefined) updates.hero_3d_slot_image_url = body.hero_3d_slot_image_url === '' || body.hero_3d_slot_image_url === null ? null : body.hero_3d_slot_image_url;
   if (body.logo_url !== undefined) updates.logo_url = body.logo_url === '' || body.logo_url === null ? null : body.logo_url;
 
   if (existing) {
@@ -116,6 +120,8 @@ export async function PUT(req: NextRequest) {
         id: clinicId,
         name: name || 'מרפאה',
         hero_image: body.hero_image === '' || body.hero_image === null ? null : body.hero_image,
+        hero_video: body.hero_video === '' || body.hero_video === null ? null : body.hero_video,
+        hero_3d_slot_image_url: body.hero_3d_slot_image_url === '' || body.hero_3d_slot_image_url === null ? null : body.hero_3d_slot_image_url,
         logo_url: body.logo_url === '' || body.logo_url === null ? null : body.logo_url,
         slug,
       },
