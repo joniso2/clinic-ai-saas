@@ -201,21 +201,24 @@ export async function processDiscordMessage(params: {
     // If no datetime — check if patient wants earliest slot or needs to choose
     let resolvedDatetimeRaw = datetimeRaw;
     if (!resolvedDatetimeRaw) {
-      // Only auto-book if reply is PENDING_SCHEDULE (patient wants earliest/any slot)
+      // PENDING_SCHEDULE: suggest closest slot and ask for confirmation — do NOT book yet
       if (analysis.reply === 'PENDING_SCHEDULE' && clinicId) {
-        console.log('[Discord] PENDING_SCHEDULE with no datetime — finding closest available slot');
+        console.log('[Discord] PENDING_SCHEDULE — suggesting closest slot (no auto-book)');
         const now = new Date();
         const suggestions = await appointmentService.suggestClosestAvailable(clinicId, now, 1, schedulingConfig);
         if (suggestions.length > 0) {
-          resolvedDatetimeRaw = suggestions[0];
-          console.log('[Discord] Auto-selected slot:', resolvedDatetimeRaw);
-        } else {
-          return logPipelineAndReturn('מצטערים, אין זמינות בשבועות הקרובים. פנה אלינו ישירות לתיאום.');
+          const closestSlot = suggestions[0];
+          const formattedTime = appointmentService.formatAppointmentTime(closestSlot);
+          return logPipelineAndReturn(
+            `התור הפנוי הקרוב ביותר שיש לנו הוא ${formattedTime}. תרצה שאשריין לך את התור הזה?`,
+          );
         }
-      } else {
-        // Patient hasn't specified — let the AI reply guide them to choose a date
-        return logPipelineAndReturn(analysis.reply ?? 'באיזה תאריך ושעה תרצה לקבוע?');
+        return logPipelineAndReturn(
+          'בדקתי ביומן ולצערי לא מצאתי תורים פנויים בזמן הקרוב. תרצה שאבדוק לתאריכים רחוקים יותר?',
+        );
       }
+      // Patient hasn't specified — let the AI reply guide them to choose a date
+      return logPipelineAndReturn(analysis.reply ?? 'באיזה תאריך ושעה תרצה לקבוע?');
     }
 
     if (!clinicId) {
