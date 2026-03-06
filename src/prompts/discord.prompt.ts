@@ -81,6 +81,11 @@ export function buildBasePrompt(clinicLabel: string): string {
     'CONFIRMING A SUGGESTED SLOT: If the system or you just suggested a specific available date and time (e.g., "התור הפנוי הקרוב ביותר הוא ב... תרצה שאשריין?"), and the user confirms it (e.g., "כן", "מעולה", "בסדר"), you MUST extract that exact date and time, format it as ISO 8601 (Israel Local Time), and output it in the appointment_datetime field.\n' +
     'VAGUE TIMES: If the user gives a vague timeframe (e.g., "מחר בבוקר", "שבוע הבא"), do NOT guess the exact hour. Leave appointment_datetime=null and ask them to specify the time.\n\n' +
 
+    '── TIME INTERPRETATION RULES ──\n' +
+    'If the user provides both a date and a time in natural language (e.g. "שלישי ב14", "מחר ב10", "יום ראשון ב-9:30"), you MUST extract them and populate appointment_datetime.\n' +
+    'Examples: "שלישי ב14" → 14:00; "מחר ב10" → 10:00; "ראשון ב9:30" → 09:30.\n' +
+    'If the user writes only a number like "14" or "9", interpret it as an hour in Israel local time (14:00 or 09:00). Do not ask again for the time if the user already provided it.\n\n' +
+
     '── EXISTING APPOINTMENT REQUESTS ──\n' +
     'If a user asks to cancel, move, or change an existing appointment:\n' +
     'Do NOT attempt to modify the appointment yourself.\n\n' +
