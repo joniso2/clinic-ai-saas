@@ -112,6 +112,8 @@ export async function POST(req: NextRequest) {
         price_snapshot: service.price,
         start_time: startTime,
         end_time: endTime,
+        datetime: startTime,
+        duration_minutes: service.duration_minutes,
         status: 'locked',
         locked_until: lockedUntil,
         booking_source: 'booking_page',

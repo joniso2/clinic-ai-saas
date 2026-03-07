@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import * as leadRepository from '@/repositories/lead.repository';
 
 export async function POST(req: NextRequest) {
   try {
@@ -40,6 +41,37 @@ export async function POST(req: NextRequest) {
 
     if (apptError || !appointment) {
       return NextResponse.json({ error: 'Appointment expired or already confirmed' }, { status: 400 });
+    }
+
+    // Create a lead so the visitor appears in the CRM
+    try {
+      const existing = await leadRepository.getLeadByEmailOrPhone(
+        appointment.clinic_id,
+        null,
+        phone,
+      );
+      let leadId = existing.data?.id ?? null;
+
+      if (!leadId) {
+        const { data: newLead } = await leadRepository.createLead({
+          clinic_id: appointment.clinic_id,
+          full_name: phone,
+          phone,
+          source: 'booking',
+          status: 'Pending',
+          next_appointment: appointment.start_time ?? appointment.datetime ?? null,
+        });
+        leadId = newLead?.id ?? null;
+      }
+
+      if (leadId) {
+        await supabase
+          .from('appointments')
+          .update({ lead_id: leadId })
+          .eq('id', appointment_id);
+      }
+    } catch (leadErr) {
+      console.error('verify-otp lead creation error (non-blocking):', leadErr);
     }
 
     return NextResponse.json({ success: true, appointment });

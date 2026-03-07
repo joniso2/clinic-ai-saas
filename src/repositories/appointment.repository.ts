@@ -158,11 +158,11 @@ export async function deleteAppointment(
   return { data: data as { lead_id: string | null } | null, error: null };
 }
 
-/** Update appointment datetime and/or duration_minutes (used for drag-and-drop / resize). */
+/** Update appointment datetime, duration_minutes, and/or status. */
 export async function updateAppointment(
   id: string,
   clinicId: string,
-  updates: { datetime?: string; duration_minutes?: number },
+  updates: { datetime?: string; duration_minutes?: number; status?: string },
 ): Promise<{ data: Appointment | null; error: unknown }> {
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase

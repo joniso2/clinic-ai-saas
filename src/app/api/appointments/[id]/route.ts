@@ -37,21 +37,23 @@ export async function PATCH(
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
     }
 
-    const { datetime, duration_minutes } = body as {
+    const { datetime, duration_minutes, status } = body as {
       datetime?: string;
       duration_minutes?: number;
+      status?: 'scheduled' | 'completed' | 'cancelled';
     };
 
-    if (datetime === undefined && duration_minutes === undefined) {
+    if (datetime === undefined && duration_minutes === undefined && status === undefined) {
       return NextResponse.json(
-        { error: 'At least one of datetime or duration_minutes is required' },
+        { error: 'At least one of datetime, duration_minutes, or status is required' },
         { status: 400 },
       );
     }
 
-    const updates: { datetime?: string; duration_minutes?: number } = {};
+    const updates: { datetime?: string; duration_minutes?: number; status?: string } = {};
     if (datetime !== undefined) updates.datetime = datetime;
     if (duration_minutes !== undefined) updates.duration_minutes = duration_minutes;
+    if (status !== undefined) updates.status = status;
 
     const { data, error } = await appointmentRepo.updateAppointment(id, clinicId, updates);
     if (error) {
