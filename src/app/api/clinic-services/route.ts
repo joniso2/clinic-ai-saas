@@ -10,12 +10,35 @@ export async function GET() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('clinic_services')
-    .select('id, clinic_id, service_name, price, duration_minutes, aliases, is_active, created_at')
+    .select('id, clinic_id, service_name, price, duration_minutes, aliases, is_active, category, created_at')
     .eq('clinic_id', row.clinic_id)
     .order('service_name');
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ services: data ?? [], role: row.role });
+
+  // Aggregate bookings count and total revenue per service from appointments
+  const { data: appts } = await supabase
+    .from('appointments')
+    .select('service_name, revenue')
+    .eq('clinic_id', row.clinic_id);
+
+  const statsMap = new Map<string, { bookings_count: number; total_revenue: number }>();
+  for (const appt of appts ?? []) {
+    const key = (appt.service_name ?? '').toLowerCase().trim();
+    if (!key) continue;
+    const entry = statsMap.get(key) ?? { bookings_count: 0, total_revenue: 0 };
+    entry.bookings_count += 1;
+    entry.total_revenue += Number(appt.revenue ?? 0);
+    statsMap.set(key, entry);
+  }
+
+  const services = (data ?? []).map((s) => {
+    const key = s.service_name.toLowerCase().trim();
+    const stats = statsMap.get(key) ?? { bookings_count: 0, total_revenue: 0 };
+    return { ...s, ...stats };
+  });
+
+  return NextResponse.json({ services, role: row.role });
 }
 
 /** POST /api/clinic-services — add service. CLINIC_ADMIN only. */
@@ -24,7 +47,7 @@ export async function POST(req: NextRequest) {
   if (!row?.clinic_id) return NextResponse.json({ error: 'לא מאומת או ללא קליניקה' }, { status: 401 });
   if (row.role !== 'CLINIC_ADMIN') return NextResponse.json({ error: 'אין הרשאה לערוך תמחור' }, { status: 403 });
 
-  let body: { service_name?: string; price?: number; duration_minutes?: number; aliases?: string[]; is_active?: boolean; description?: string | null };
+  let body: { service_name?: string; price?: number; duration_minutes?: number; aliases?: string[]; is_active?: boolean; description?: string | null; category?: string | null };
   try {
     body = await req.json();
   } catch {
@@ -57,8 +80,9 @@ export async function POST(req: NextRequest) {
       duration_minutes,
       aliases,
       is_active: body.is_active !== false,
+      category: body.category?.trim() || null,
     })
-    .select('id, clinic_id, service_name, price, duration_minutes, aliases, is_active')
+    .select('id, clinic_id, service_name, price, duration_minutes, aliases, is_active, category')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

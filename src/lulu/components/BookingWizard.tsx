@@ -1,23 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { C } from "@/lulu/lib/tokens";
 import { SP, SP_FAST, stagger, slideStep } from "@/lulu/lib/animations";
 import { useBookingState } from "@/lulu/lib/hooks";
-import { SERVICES } from "@/lulu/data/services";
-import { TIMES } from "@/lulu/data/booking";
+import type { Service } from "@/lulu/data/services";
 import MagneticButton from "@/lulu/components/MagneticButton";
 import ServiceCard from "@/lulu/components/ServiceCard";
 
-const LABELS = ["שירות", "תאריך ושעה", "פרטים"];
+const LABELS = ["שירות", "תאריך ושעה", "פרטים", "אימות"];
 
 function fmtDay(d: Date) {
   return d.toLocaleDateString("he-IL", { weekday: "short", day: "2-digit", month: "short" });
 }
 
-/** Slug from URL path (e.g. /lulu/booking -> lulu) */
 function getSlugFromPath(pathname: string): string {
   const segments = pathname.split("/").filter(Boolean);
   return segments[0] ?? "lulu";
@@ -31,33 +29,104 @@ export default function BookingWizard() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Live data state
+  const [clinicId, setClinicId] = useState("");
+  const [services, setServices] = useState<Service[]>([]);
+  const [loadingServices, setLoadingServices] = useState(true);
+  const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+  const [loadingTimes, setLoadingTimes] = useState(false);
+  const [appointmentId, setAppointmentId] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+
+  // Fetch clinic + services on mount
+  useEffect(() => {
+    fetch(`/api/clinics/${slug}`)
+      .then((r) => r.json())
+      .then((data) => {
+        setClinicId(data.clinic?.id ?? "");
+        const raw: Array<{ id: string; service_name: string; price: number; duration_minutes: number; description?: string | null }> =
+          data.services ?? [];
+        setServices(
+          raw.map((sv, i) => ({
+            id: i + 1,
+            serviceId: sv.id,
+            emoji: "✨",
+            name: sv.service_name,
+            price: sv.price,
+            dur: `${sv.duration_minutes} דק׳`,
+            desc: sv.description ?? "",
+          }))
+        );
+      })
+      .catch(() => setServices([]))
+      .finally(() => setLoadingServices(false));
+  }, [slug]);
+
+  // Fetch available time slots when date or service changes
+  useEffect(() => {
+    if (!s.date || !s.service?.serviceId || !clinicId) return;
+    set({ time: "" });
+    setAvailableTimes([]);
+    setLoadingTimes(true);
+    fetch(`/api/availability?clinic_id=${clinicId}&service_id=${encodeURIComponent(s.service.serviceId)}&date=${s.date}`)
+      .then((r) => r.json())
+      .then((data) => setAvailableTimes(data.slots ?? []))
+      .catch(() => setAvailableTimes([]))
+      .finally(() => setLoadingTimes(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.date, s.service?.serviceId, clinicId]);
+
   const goNext = () => { setDir(1); next(); };
   const goPrev = () => { setDir(-1); prev(); };
 
+  // Step 2: lock slot, then advance to OTP step
   const submit = async () => {
     setSubmitError(null);
     setSubmitting(true);
     try {
-      const res = await fetch("/api/public/booking", {
+      const res = await fetch("/api/book/lock-slot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          slug,
-          full_name: s.name,
+          clinic_id: clinicId,
+          service_id: s.service?.serviceId,
+          date: s.date,
+          time: s.time,
           phone: s.phone,
-          service_name: s.service?.name ?? undefined,
-          service_price: s.service?.price ?? undefined,
-          date: s.date || undefined,
-          time: s.time || undefined,
+          full_name: s.name,
         }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error((data as { error?: string }).error || "שגיאה בשמירת ההזמנה");
+        throw new Error((data as { error?: string }).error ?? "שגיאה בנעילת הזמנה");
+      }
+      const data = await res.json();
+      setAppointmentId(data.appointment_id);
+      goNext();
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : "שגיאה בנעילת הזמנה");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Step 3: verify OTP → confirm booking
+  const verifyOtp = async () => {
+    setSubmitError(null);
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/book/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appointment_id: appointmentId, phone: s.phone, code: otpCode }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: string }).error ?? "קוד שגוי");
       }
       set({ done: true });
     } catch (e) {
-      setSubmitError(e instanceof Error ? e.message : "שגיאה בשמירת ההזמנה");
+      setSubmitError(e instanceof Error ? e.message : "קוד שגוי");
     } finally {
       setSubmitting(false);
     }
@@ -170,11 +239,17 @@ export default function BookingWizard() {
               <h3 className="font-display" style={{ fontSize: 26, fontWeight: 300, marginBottom: 18, color: C.ink }}>
                 בחרי שירות
               </h3>
-              <motion.div variants={stagger} initial="hidden" animate="visible" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {SERVICES.map((sv) => (
-                  <ServiceCard key={sv.id} svc={sv} selected={s.service?.id === sv.id} onSelect={(svc) => set({ service: svc })} />
-                ))}
-              </motion.div>
+              {loadingServices ? (
+                <p style={{ color: C.dim, fontSize: 14, textAlign: "center", padding: "32px 0" }}>טוענת שירותים...</p>
+              ) : services.length === 0 ? (
+                <p style={{ color: C.dim, fontSize: 14, textAlign: "center", padding: "32px 0" }}>לא נמצאו שירותים</p>
+              ) : (
+                <motion.div variants={stagger} initial="hidden" animate="visible" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {services.map((sv) => (
+                    <ServiceCard key={sv.id} svc={sv} selected={s.service?.id === sv.id} onSelect={(svc) => set({ service: svc })} />
+                  ))}
+                </motion.div>
+              )}
               <div style={{ marginTop: 22 }}>
                 <MagneticButton
                   onClick={goNext}
@@ -237,34 +312,42 @@ export default function BookingWizard() {
               <p style={{ fontSize: 11, letterSpacing: "0.08em", color: C.dim, margin: "20px 0 10px", textTransform: "uppercase" }}>
                 שעה
               </p>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
-                {TIMES.map((t) => {
-                  const sel = s.time === t;
-                  return (
-                    <motion.button
-                      key={t}
-                      whileTap={{ scale: 0.92 }}
-                      onClick={() => set({ time: t })}
-                      style={{
-                        padding: "11px 0",
-                        borderRadius: 12,
-                        cursor: "pointer",
-                        textAlign: "center",
-                        minHeight: 44,
-                        background: sel ? C.rose : C.card,
-                        border: `1.5px solid ${sel ? C.rose : C.border}`,
-                        color: sel ? "#fff" : C.dim,
-                        fontSize: 13,
-                        fontFamily: "'Heebo',sans-serif",
-                        boxShadow: sel ? "0 4px 14px rgba(200,68,106,0.25)" : "none",
-                        transition: "all .15s",
-                      }}
-                    >
-                      {t}
-                    </motion.button>
-                  );
-                })}
-              </div>
+              {loadingTimes ? (
+                <p style={{ color: C.dim, fontSize: 13, padding: "12px 0" }}>טוענת שעות פנויות...</p>
+              ) : !s.date ? (
+                <p style={{ color: C.muted, fontSize: 13, padding: "12px 0" }}>בחרי תאריך כדי לראות שעות פנויות</p>
+              ) : availableTimes.length === 0 ? (
+                <p style={{ color: C.dim, fontSize: 13, padding: "12px 0" }}>אין שעות פנויות ביום זה</p>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
+                  {availableTimes.map((t) => {
+                    const sel = s.time === t;
+                    return (
+                      <motion.button
+                        key={t}
+                        whileTap={{ scale: 0.92 }}
+                        onClick={() => set({ time: t })}
+                        style={{
+                          padding: "11px 0",
+                          borderRadius: 12,
+                          cursor: "pointer",
+                          textAlign: "center",
+                          minHeight: 44,
+                          background: sel ? C.rose : C.card,
+                          border: `1.5px solid ${sel ? C.rose : C.border}`,
+                          color: sel ? "#fff" : C.dim,
+                          fontSize: 13,
+                          fontFamily: "'Heebo',sans-serif",
+                          boxShadow: sel ? "0 4px 14px rgba(200,68,106,0.25)" : "none",
+                          transition: "all .15s",
+                        }}
+                      >
+                        {t}
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              )}
               <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
                 <motion.button
                   whileTap={{ scale: 0.96 }}
@@ -370,9 +453,63 @@ export default function BookingWizard() {
                     backgroundSize: "200% auto",
                     color: "#fff",
                   }}
-                  aria-label="אשרי הזמנה"
+                  aria-label="שלחי קוד אימות"
                 >
-                  {submitting ? "שולח..." : "אשרי הזמנה 🌸"}
+                  {submitting ? "שולח..." : "שלחי קוד אימות ←"}
+                </MagneticButton>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 3: OTP */}
+          {s.step === 3 && (
+            <motion.div key="s3" {...slideStep(dir)}>
+              <h3 className="font-display" style={{ fontSize: 26, fontWeight: 300, marginBottom: 6, color: C.ink }}>
+                אימות טלפון
+              </h3>
+              <p style={{ color: C.dim, fontSize: 13, marginBottom: 22, lineHeight: 1.7 }}>
+                שלחנו קוד אימות ל‑<strong style={{ color: C.rose }}>{s.phone}</strong>
+              </p>
+              <div className="fl">
+                <input
+                  className="inp"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder=" "
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={6}
+                  autoComplete="one-time-code"
+                />
+                <label>קוד אימות</label>
+              </div>
+              {submitError && (
+                <p style={{ color: C.rose, fontSize: 13, marginTop: 12 }} role="alert">
+                  {submitError}
+                </p>
+              )}
+              <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={goPrev}
+                  disabled={submitting}
+                  style={{ ...btnStyle(true), flex: 1, background: "transparent", color: C.dim, border: `1.5px solid ${C.border}` }}
+                >
+                  → חזרה
+                </motion.button>
+                <MagneticButton
+                  onClick={verifyOtp}
+                  disabled={otpCode.length < 4 || submitting}
+                  style={{
+                    ...btnStyle(otpCode.length >= 4 && !submitting),
+                    flex: 2,
+                    background: `linear-gradient(120deg,${C.rose} 0%,#e06888 50%,${C.rose} 100%)`,
+                    backgroundSize: "200% auto",
+                    color: "#fff",
+                  }}
+                  aria-label="אמתי את הקוד"
+                >
+                  {submitting ? "בודק..." : "אמתי ← ✓"}
                 </MagneticButton>
               </div>
             </motion.div>

@@ -14,7 +14,7 @@ export async function PATCH(
   const { id } = await params;
   if (!id) return NextResponse.json({ error: 'חסר מזהה שירות' }, { status: 400 });
 
-  let body: { service_name?: string; price?: number; duration_minutes?: number; aliases?: string[]; is_active?: boolean; description?: string | null };
+  let body: { service_name?: string; price?: number; duration_minutes?: number; aliases?: string[]; is_active?: boolean; description?: string | null; category?: string | null };
   try {
     body = await req.json();
   } catch {
@@ -28,6 +28,7 @@ export async function PATCH(
   if (body.duration_minutes !== undefined) updates.duration_minutes = Math.max(1, Math.min(480, Math.round(Number(body.duration_minutes))));
   if (body.aliases !== undefined) updates.aliases = Array.isArray(body.aliases) ? body.aliases : [];
   if (body.is_active !== undefined) updates.is_active = Boolean(body.is_active);
+  if (body.category !== undefined) updates.category = body.category?.trim() || null;
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'אין שדות לעדכון' }, { status: 400 });
   }
@@ -49,7 +50,7 @@ export async function PATCH(
     .update(updates)
     .eq('id', id)
     .eq('clinic_id', row.clinic_id)
-    .select('id, service_name, price, duration_minutes, aliases, is_active')
+    .select('id, service_name, price, duration_minutes, aliases, is_active, category')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

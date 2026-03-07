@@ -1,10 +1,11 @@
 export interface Service {
-  id:    number;
-  emoji: string;
-  name:  string;
-  price: number;
-  dur:   string;
-  desc:  string;
+  id:         number;
+  serviceId?: string; // UUID from DB (absent on static services)
+  emoji:      string;
+  name:       string;
+  price:      number;
+  dur:        string;
+  desc:       string;
 }
 
 export const SERVICES: Service[] = [
