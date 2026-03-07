@@ -20,6 +20,7 @@ export type Lead = {
   estimated_deal_value?: number | null;
   last_contact_date?: string | null;
   next_follow_up_date?: string | null;
+  next_appointment?: string | null;
   source?: LeadSource | string | null;
   // Intelligence fields
   conversation_summary?: string | null;

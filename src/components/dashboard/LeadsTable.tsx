@@ -193,6 +193,7 @@ function PendingReviewModal({
   onReject,
   onClose,
   onScheduleAppointment,
+  acceptLoading = false,
 }: {
   lead: Lead;
   nextAppointment?: string;
@@ -200,6 +201,7 @@ function PendingReviewModal({
   onReject: (reason: RejectReason) => void;
   onClose: () => void;
   onScheduleAppointment: (lead: Lead) => void;
+  acceptLoading?: boolean;
 }) {
   const [mode, setMode] = useState<'main' | 'reject'>('main');
   const [rejectReason, setRejectReason] = useState<RejectReason | ''>('');
@@ -251,9 +253,10 @@ function PendingReviewModal({
               <button
                 type="button"
                 onClick={onAccept}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition"
+                disabled={acceptLoading}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed px-4 py-2.5 text-sm font-semibold text-white transition"
               >
-                ✓ אשר ואישור תור
+                {acceptLoading ? 'מאשר...' : '✓ אשר ואישור תור'}
               </button>
             ) : (
               <div className="rounded-xl border border-dashed border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800/50 px-4 py-4 text-center space-y-3">
@@ -531,6 +534,7 @@ export function LeadsTable({
   onEdit,
   onDelete,
   onStatusChange,
+  onAcceptPendingLead,
   onMarkContacted,
   onScheduleFollowUp,
   onScheduleAppointment,
@@ -545,6 +549,7 @@ export function LeadsTable({
   onEdit: (lead: Lead) => void;
   onDelete: (lead: Lead) => void;
   onStatusChange: (leadId: string, status: LeadStatus) => void;
+  onAcceptPendingLead?: (lead: Lead) => Promise<void>;
   onMarkContacted: (leadId: string) => void;
   onScheduleFollowUp: (leadId: string) => void;
   onScheduleAppointment: (lead: Lead) => void;
@@ -567,6 +572,7 @@ export function LeadsTable({
   const [sortDesc, setSortDesc] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [pendingReviewLead, setPendingReviewLead] = useState<Lead | null>(null);
+  const [acceptingLeadId, setAcceptingLeadId] = useState<string | null>(null);
   const [completeLead, setCompleteLead] = useState<Lead | null>(null);
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<string | null>(null);
@@ -653,9 +659,19 @@ export function LeadsTable({
     return p === 'Urgent' || (p === 'High' && next);
   };
 
-  const handleAccept = (lead: Lead) => {
-    onStatusChange(lead.id, 'Appointment scheduled');
-    setPendingReviewLead(null);
+  const handleAccept = async (lead: Lead) => {
+    if (onAcceptPendingLead) {
+      setAcceptingLeadId(lead.id);
+      try {
+        await onAcceptPendingLead(lead);
+        setPendingReviewLead(null);
+      } finally {
+        setAcceptingLeadId(null);
+      }
+    } else {
+      onStatusChange(lead.id, 'Appointment scheduled');
+      setPendingReviewLead(null);
+    }
   };
 
   const handleReject = (lead: Lead, reason: string) => {
@@ -983,6 +999,7 @@ export function LeadsTable({
           onReject={(reason) => handleReject(pendingReviewLead, reason)}
           onClose={() => setPendingReviewLead(null)}
           onScheduleAppointment={(lead) => { setPendingReviewLead(null); onScheduleAppointment(lead); }}
+          acceptLoading={acceptingLeadId === pendingReviewLead.id}
         />
       )}
 

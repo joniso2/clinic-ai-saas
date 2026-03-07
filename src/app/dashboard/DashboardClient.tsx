@@ -235,6 +235,43 @@ export default function DashboardClient() {
     await handleUpdateLeadStatus(leadId, 'Contacted');
   };
 
+  /** When accepting a pending lead: if it has a requested appointment (e.g. from website), create it in the calendar only if this lead does not already have an appointment (avoid duplicate). */
+  const handleAcceptPendingLead = async (lead: Lead) => {
+    if (lead.next_appointment) {
+      const datetime = lead.next_appointment.includes('T') ? lead.next_appointment : `${lead.next_appointment}T00:00:00`;
+      const d = new Date(datetime);
+      const month = d.getMonth() + 1;
+      const year = d.getFullYear();
+      const resList = await fetch(`/api/appointments?month=${month}&year=${year}`, { credentials: 'include' });
+      const jsonList = (await resList.json().catch(() => ({}))) as { appointments?: { lead_id?: string | null }[] };
+      const existingForLead = (jsonList.appointments ?? []).some((a) => a.lead_id === lead.id);
+      if (!existingForLead) {
+        const res = await fetch('/api/appointments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            patient_name: lead.full_name ?? 'ליד',
+            datetime,
+            type: 'new',
+            lead_id: lead.id,
+          }),
+        });
+        if (res.status === 201) {
+          const json = (await res.json().catch(() => ({}))) as { appointment?: { datetime: string; lead_id?: string } };
+          if (json.appointment?.datetime) {
+            setNextAppointmentsByLeadId((prev) => ({
+              ...prev,
+              [lead.id]: json.appointment!.datetime,
+            }));
+          }
+        }
+      }
+    }
+    await handleUpdateLeadStatus(lead.id, 'Appointment scheduled');
+    await refreshNextAppointments();
+  };
+
   const handleRejectLead = async (leadId: string, reason: string) => {
     const rejectedAt = new Date().toISOString();
     const res = await fetch(`/api/leads/${leadId}`, {
@@ -409,6 +446,13 @@ export default function DashboardClient() {
       const existing = map[apt.lead_id];
       if (!existing || new Date(apt.datetime) < new Date(existing)) {
         map[apt.lead_id] = apt.datetime;
+      }
+    }
+    // Show requested appointment (e.g. from website booking) when no calendar appointment yet
+    for (const lead of leads) {
+      if (lead.next_appointment && map[lead.id] === undefined) {
+        const t = new Date(lead.next_appointment).getTime();
+        if (t >= nowMs) map[lead.id] = lead.next_appointment;
       }
     }
     setNextAppointmentsByLeadId(map);
@@ -595,6 +639,7 @@ export default function DashboardClient() {
           onEdit={(lead) => setEditLead(lead)}
           onDelete={(lead) => setDeleteLead(lead)}
           onStatusChange={handleUpdateLeadStatus}
+          onAcceptPendingLead={handleAcceptPendingLead}
           onMarkContacted={handleMarkContacted}
           onScheduleFollowUp={handleScheduleFollowUp}
           onScheduleAppointment={(lead) => setAppointmentLead(lead)}
