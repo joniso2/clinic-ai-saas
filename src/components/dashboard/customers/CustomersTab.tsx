@@ -986,43 +986,72 @@ export function CustomersTab() {
           </div>
 
           <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
-            <table className="w-full text-right min-w-[600px]" dir="rtl">
+            <table className="w-full text-right table-fixed" dir="rtl">
               <thead className="sticky top-0 z-10 bg-slate-50/95 dark:bg-zinc-800/95 backdrop-blur-sm text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                 <tr className="border-b border-slate-100 dark:border-zinc-800">
-                  <th className="py-3 px-5">לקוח</th>
-                  <th className="py-3 px-4">טלפון</th>
-                  <th className="py-3 px-4">מקור</th>
-                  <th className="py-3 px-4">תאריך</th>
-                  <th className="py-3 px-4">שווי</th>
-                  <th className="py-3 px-4 w-12" />
+                  <th className="py-3 px-3 w-[5%] text-center">
+                    <input
+                      type="checkbox"
+                      checked={filteredClosedLeads.length > 0 && filteredClosedLeads.every((l) => selectedIds.has(l.id))}
+                      onChange={(e) => e.target.checked ? selectAll(filteredClosedLeads.map((l) => l.id)) : clearSelected()}
+                      className="rounded border-slate-300 dark:border-zinc-600 text-indigo-500 focus:ring-indigo-500/30"
+                    />
+                  </th>
+                  <th className="py-3 pl-2 pr-3 w-[22%]">לקוח</th>
+                  <th className="py-3 pr-2 pl-3 w-[16%]">טלפון</th>
+                  <th className="py-3 px-3 w-[11%]">מקור</th>
+                  <th className="py-3 px-3 w-[14%]">תאריך</th>
+                  <th className="py-3 px-3 w-[14%]">ביקור אחרון</th>
+                  <th className="py-3 px-3 w-[12%]">שווי</th>
+                  <th className="py-3 px-2 w-[6%]">פעולות</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredClosedLeads.length === 0 ? (
-                  <tr><td colSpan={6} className="py-16 text-center text-sm text-slate-400 dark:text-zinc-500">אין תוצאות</td></tr>
-                ) : filteredClosedLeads.map((l) => (
+                  <tr><td colSpan={8} className="py-16 text-center text-sm text-slate-400 dark:text-zinc-500">אין תוצאות</td></tr>
+                ) : filteredClosedLeads.map((l) => {
+                  const recall = getRecall(l.id);
+                  const isSelected = selectedIds.has(l.id);
+                  return (
                   <tr key={l.id} onClick={() => { setDetailLead(l); }}
-                    className="border-b border-slate-50 dark:border-zinc-800/60 last:border-0 hover:bg-indigo-50/40 dark:hover:bg-indigo-900/10 cursor-pointer transition-colors group">
-                    <td className="py-3.5 px-5">
-                      <div className="flex items-center gap-3">
-                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getAvatarColor(l.id)} text-white text-xs font-bold`}>{getInitials(l.full_name)}</div>
-                        <span className="font-medium text-slate-800 dark:text-zinc-100">{l.full_name || '—'}</span>
+                    className={`border-b border-slate-50 dark:border-zinc-800/60 last:border-0 cursor-pointer transition-colors group ${isSelected ? 'bg-indigo-50/60 dark:bg-indigo-900/15' : 'hover:bg-indigo-50/40 dark:hover:bg-indigo-900/10'}`}>
+                    <td className="py-3.5 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelected(l.id)}
+                        className="rounded border-slate-300 dark:border-zinc-600 text-indigo-500 focus:ring-indigo-500/30"
+                      />
+                    </td>
+                    <td className="py-3.5 pl-2 pr-3 min-w-0">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getAvatarColor(l.id)} text-white text-xs font-bold`}>
+                          {getInitials(l.full_name)}
+                          {recall.active && (
+                            <span className="absolute -top-1 -left-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 border-2 border-white dark:border-zinc-900">
+                              <BellRing className="h-2 w-2 text-white" />
+                            </span>
+                          )}
+                        </div>
+                        <span className="font-medium text-slate-800 dark:text-zinc-100 truncate">{l.full_name || '—'}</span>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4">
-                      <a href={l.phone ? `tel:${l.phone}` : '#'} onClick={(e) => e.stopPropagation()} dir="ltr" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">{formatPhoneILS(l.phone)}</a>
+                    <td className="py-3.5 pr-2 pl-3 min-w-0">
+                      <a href={l.phone ? `tel:${l.phone}` : '#'} onClick={(e) => e.stopPropagation()} dir="ltr" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline truncate block">{formatPhoneILS(l.phone)}</a>
                     </td>
-                    <td className="py-3.5 px-4"><SourceBadge source={l.source} /></td>
-                    <td className="py-3.5 px-4 text-sm text-slate-500 dark:text-zinc-400">{formatDate(getCloseDateLead(l))}</td>
-                    <td className="py-3.5 px-4 text-sm font-semibold text-slate-800 dark:text-zinc-200 tabular-nums">{getValueLead(l) > 0 ? formatCurrencyILS(getValueLead(l)) : '—'}</td>
-                    <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
+                    <td className="py-3.5 px-3"><SourceBadge source={l.source} /></td>
+                    <td className="py-3.5 px-3 text-sm text-slate-500 dark:text-zinc-400 whitespace-nowrap">{formatDate(getCloseDateLead(l))}</td>
+                    <td className="py-3.5 px-3 text-sm text-slate-500 dark:text-zinc-400">—</td>
+                    <td className="py-3.5 px-3 text-sm font-semibold text-slate-800 dark:text-zinc-200 tabular-nums">{getValueLead(l) > 0 ? formatCurrencyILS(getValueLead(l)) : '—'}</td>
+                    <td className="py-3.5 px-2 text-center" onClick={(e) => e.stopPropagation()}>
                       <button type="button" onClick={() => setDeleteLeadId(l.id)}
                         className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 dark:text-zinc-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition opacity-0 group-hover:opacity-100">
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -1120,7 +1149,7 @@ export function CustomersTab() {
         </div>
 
         <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
-          <table className="w-full text-right min-w-[680px]" dir="rtl">
+          <table className="w-full text-right" style={{ minWidth: '860px' }} dir="rtl">
             <thead className="sticky top-0 z-10 bg-slate-50/95 dark:bg-zinc-800/95 backdrop-blur-sm text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
               <tr className="border-b border-slate-100 dark:border-zinc-800">
                 <th className="py-3 pr-4 pl-3 w-10" onClick={(e) => e.stopPropagation()}>
@@ -1131,13 +1160,13 @@ export function CustomersTab() {
                     className="rounded border-slate-300 dark:border-zinc-600 text-indigo-500 focus:ring-indigo-500/30"
                   />
                 </th>
-                <th className="py-3 px-4">לקוח</th>
-                <th className="py-3 px-4">טלפון</th>
-                <th className="py-3 px-4">ביקור אחרון</th>
-                <th className="py-3 px-4">הכנסה</th>
-                <th className="py-3 px-4">ביקורים</th>
-                <th className="py-3 px-4">סטטוס</th>
-                <th className="py-3 px-4 w-12" />
+                <th className="py-3 px-4 min-w-[180px]">לקוח</th>
+                <th className="py-3 px-4 w-36">טלפון</th>
+                <th className="py-3 px-4 w-32">ביקור אחרון</th>
+                <th className="py-3 px-4 w-28">הכנסה</th>
+                <th className="py-3 px-4 w-24">ביקורים</th>
+                <th className="py-3 px-4 w-24">סטטוס</th>
+                <th className="py-3 px-4 w-10" />
               </tr>
             </thead>
             <tbody>
@@ -1181,16 +1210,16 @@ export function CustomersTab() {
                         <span className="font-medium text-slate-800 dark:text-zinc-100 truncate max-w-[160px]">{c.full_name}</span>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 w-36">
                       <a href={`tel:${c.phone}`} onClick={(e) => e.stopPropagation()} dir="ltr" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">{formatPhoneILS(c.phone)}</a>
                     </td>
-                    <td className="py-3.5 px-4 text-sm text-slate-500 dark:text-zinc-400">{formatDate(c.last_visit_date)}</td>
-                    <td className="py-3.5 px-4 text-sm font-semibold text-slate-800 dark:text-zinc-200 tabular-nums">{formatCurrencyILS(Number(c.total_revenue))}</td>
-                    <td className="py-3.5 px-4 text-sm text-slate-500 dark:text-zinc-400 tabular-nums">{c.visits_count}</td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 w-32 text-sm text-slate-500 dark:text-zinc-400 whitespace-nowrap">{formatDate(c.last_visit_date)}</td>
+                    <td className="py-3.5 px-4 w-28 text-sm font-semibold text-slate-800 dark:text-zinc-200 tabular-nums whitespace-nowrap">{formatCurrencyILS(Number(c.total_revenue))}</td>
+                    <td className="py-3.5 px-4 w-24 text-sm text-slate-500 dark:text-zinc-400 tabular-nums">{c.visits_count}</td>
+                    <td className="py-3.5 px-4 w-24">
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusBadge.cls}`}>{statusBadge.label}</span>
                     </td>
-                    <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
+                    <td className="py-3.5 px-4 w-10" onClick={(e) => e.stopPropagation()}>
                       <button type="button" onClick={() => setDeleteId(c.id)}
                         className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 dark:text-zinc-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition opacity-0 group-hover:opacity-100">
                         <Trash2 className="h-3.5 w-3.5" />
