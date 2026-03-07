@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Plus, Phone, MessageCircle, Sparkles } from 'lucide-react';
+import { X, Plus, Phone, MessageCircle, Sparkles, ReceiptText } from 'lucide-react';
 import type { Appointment } from '@/types/appointments';
 import type { Lead } from '@/types/leads';
 import { formatTime } from '@/lib/calendar/time.utils';
 import { TYPE_PILL } from '@/lib/calendar/calendar.utils';
+import type { BillingSettings, BillingDocumentWithItems } from '@/types/billing';
+import { CreateDocumentModal } from '@/components/billing/CreateDocumentModal';
 
 export type DayModalProps = {
   day: number;
@@ -22,23 +24,37 @@ export function DayModal({
   day, month, year, appointments, onClose, onDelete, onAdd, onViewLead,
 }: DayModalProps) {
   const [leadCache, setLeadCache] = useState<Record<string, Lead>>({});
+  const [billingSettings, setBillingSettings] = useState<BillingSettings | null | 'loading' | 'none'>('loading');
+  const [receiptApt, setReceiptApt] = useState<Appointment | null>(null);
+
+  // Fetch billing settings once so we can enable/disable the receipt button
+  useEffect(() => {
+    fetch('/api/billing-settings')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => setBillingSettings(data?.settings ?? 'none'))
+      .catch(() => setBillingSettings('none'));
+  }, []);
+
+  const handleIssueReceipt = (apt: Appointment) => {
+    if (billingSettings && billingSettings !== 'loading' && billingSettings !== 'none') {
+      setReceiptApt(apt);
+    }
+  };
 
   useEffect(() => {
-    const ids = appointments.map((a) => a.lead_id).filter(Boolean) as string[];
+    const ids = [...new Set(appointments.map((a) => a.lead_id).filter(Boolean) as string[])];
     if (ids.length === 0) return;
-    Promise.all(
-      ids.map((id) =>
-        fetch(`/api/leads/${id}`, { credentials: 'include' })
-          .then((r) => r.ok ? r.json() : null)
-          .catch(() => null),
-      ),
-    ).then((results) => {
-      const cache: Record<string, Lead> = {};
-      results.forEach((res, i) => {
-        if (res?.lead) cache[ids[i]] = res.lead as Lead;
-      });
-      setLeadCache(cache);
-    });
+    const params = new URLSearchParams({ ids: ids.join(',') });
+    fetch(`/api/leads/by-ids?${params}`, { credentials: 'include' })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        const cache: Record<string, Lead> = {};
+        (data?.leads ?? []).forEach((lead: Lead) => {
+          if (lead?.id) cache[lead.id] = lead;
+        });
+        setLeadCache(cache);
+      })
+      .catch(() => {});
   }, [appointments]);
 
   const dateLabel = new Intl.DateTimeFormat('he-IL', {
@@ -58,6 +74,7 @@ export function DayModal({
   }
 
   return (
+    <>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 px-5 py-4 flex-row-reverse">
@@ -127,6 +144,21 @@ export function DayModal({
                     AI Summary
                   </button>
                 )}
+
+                {apt.status != null && ['completed', 'נסגר'].includes(apt.status) && (
+                  <button
+                    onClick={() => handleIssueReceipt(apt)}
+                    disabled={billingSettings === 'loading' || billingSettings === 'none'}
+                    title={billingSettings === 'none' ? 'נדרש להגדיר פרטי עסק תחילה' : 'הפק קבלה עבור תור זה'}
+                    className="mt-2 flex items-center gap-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40
+                      px-2.5 py-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400
+                      hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors
+                      disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <ReceiptText className="h-3 w-3" />
+                    הפק קבלה
+                  </button>
+                )}
               </div>
             );
           })}
@@ -140,5 +172,19 @@ export function DayModal({
         </div>
       </div>
     </div>
+
+    {receiptApt && billingSettings && billingSettings !== 'loading' && billingSettings !== 'none' && (
+      <CreateDocumentModal
+        settings={billingSettings}
+        appointmentId={receiptApt.id}
+        appointmentLabel={`${receiptApt.patient_name} — ${formatTime(receiptApt.datetime)}`}
+        prefillCustomerName={receiptApt.patient_name}
+        prefillServiceName={receiptApt.service_name ?? undefined}
+        prefillPrice={receiptApt.revenue ?? undefined}
+        onClose={() => setReceiptApt(null)}
+        onIssued={(_doc: BillingDocumentWithItems) => setReceiptApt(null)}
+      />
+    )}
+    </>
   );
 }

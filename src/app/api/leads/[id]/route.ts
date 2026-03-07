@@ -27,34 +27,40 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const clinicId = await getClinicIdFromSession();
-  if (!clinicId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const clinicId = await getClinicIdFromSession();
+    if (!clinicId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const { id: leadId } = await params;
+    const { data: lead, error } = await leadRepository.getLeadById(leadId, clinicId);
+    if (error || !lead) {
+      return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
+    }
+    return NextResponse.json({ lead });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-  const { id: leadId } = await params;
-  const { data: lead, error } = await leadRepository.getLeadById(leadId, clinicId);
-  if (error || !lead) {
-    return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
-  }
-  return NextResponse.json({ lead });
 }
 
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const clinicId = await getClinicIdFromSession();
-  if (!clinicId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { id: leadId } = await params;
-  let body: unknown;
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+    const clinicId = await getClinicIdFromSession();
+    if (!clinicId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id: leadId } = await params;
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
 
   const data = body as Partial<{
     full_name: string;
@@ -260,27 +266,36 @@ export async function PUT(
     );
   }
   return NextResponse.json({ ok: true, ...(closeWarning && { warning: closeWarning }) });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
 }
 
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const clinicId = await getClinicIdFromSession();
-  if (!clinicId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  try {
+    const clinicId = await getClinicIdFromSession();
+    if (!clinicId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-  const { id } = await params;
-  await appointmentRepository.deleteAppointmentsByLeadId(id, clinicId);
-  const { error } = await leadRepository.deleteLead(id, clinicId);
-  if (error) {
-    console.error('Error deleting lead:', error);
-    const notFound = error instanceof Error && error.message.includes('not found');
-    return NextResponse.json(
-      { error: notFound ? 'Lead not found or already deleted' : 'Failed to delete lead' },
-      { status: notFound ? 404 : 500 },
-    );
+    const { id } = await params;
+    await appointmentRepository.deleteAppointmentsByLeadId(id, clinicId);
+    const { error } = await leadRepository.deleteLead(id, clinicId);
+    if (error) {
+      console.error('Error deleting lead:', error);
+      const notFound = error instanceof Error && error.message.includes('not found');
+      return NextResponse.json(
+        { error: notFound ? 'Lead not found or already deleted' : 'Failed to delete lead' },
+        { status: notFound ? 404 : 500 },
+      );
+    }
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-  return NextResponse.json({ ok: true });
 }

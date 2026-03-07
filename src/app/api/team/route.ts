@@ -10,25 +10,31 @@ async function getClinicIdAndRole(): Promise<{ clinicId: string; role: string } 
 
 /** GET /api/team — list team members for current clinic. */
 export async function GET() {
-  const ctx = await getClinicIdAndRole();
-  if (!ctx) return NextResponse.json({ error: 'לא מאומת או ללא גישה לקליניקה' }, { status: 401 });
+  try {
+    const ctx = await getClinicIdAndRole();
+    if (!ctx) return NextResponse.json({ error: 'לא מאומת או ללא גישה לקליניקה' }, { status: 401 });
 
-  const members = await settingsRepo.getTeamMembers(ctx.clinicId);
-  return NextResponse.json({ members, role: ctx.role });
+    const members = await settingsRepo.getTeamMembers(ctx.clinicId);
+    return NextResponse.json({ members, role: ctx.role });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
 }
 
 /** POST /api/team — add team member (CLINIC_ADMIN only). Creates Supabase user + clinic_users row. */
 export async function POST(req: NextRequest) {
-  const ctx = await getClinicIdAndRole();
-  if (!ctx) return NextResponse.json({ error: 'לא מאומת או ללא גישה לקליניקה' }, { status: 401 });
-  if (ctx.role !== 'CLINIC_ADMIN') return NextResponse.json({ error: 'אין הרשאה להוסיף אנשי צוות' }, { status: 403 });
-
-  let body: { full_name?: string; email?: string; password?: string; role_display?: string };
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'נתונים לא תקינים' }, { status: 400 });
-  }
+    const ctx = await getClinicIdAndRole();
+    if (!ctx) return NextResponse.json({ error: 'לא מאומת או ללא גישה לקליניקה' }, { status: 401 });
+    if (ctx.role !== 'CLINIC_ADMIN') return NextResponse.json({ error: 'אין הרשאה להוסיף אנשי צוות' }, { status: 403 });
+
+    let body: { full_name?: string; email?: string; password?: string; role_display?: string };
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'נתונים לא תקינים' }, { status: 400 });
+    }
 
   const full_name = typeof body.full_name === 'string' ? body.full_name.trim() : '';
   const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
@@ -55,20 +61,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 400 });
   }
   return NextResponse.json(member, { status: 201 });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
 }
 
 /** PATCH /api/team — update member role (CLINIC_ADMIN only). */
 export async function PATCH(req: NextRequest) {
-  const ctx = await getClinicIdAndRole();
-  if (!ctx) return NextResponse.json({ error: 'לא מאומת או ללא גישה לקליניקה' }, { status: 401 });
-  if (ctx.role !== 'CLINIC_ADMIN') return NextResponse.json({ error: 'אין הרשאה לעדכן תפקידים' }, { status: 403 });
-
-  let body: { user_id?: string; role_display?: string };
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'נתונים לא תקינים' }, { status: 400 });
-  }
+    const ctx = await getClinicIdAndRole();
+    if (!ctx) return NextResponse.json({ error: 'לא מאומת או ללא גישה לקליניקה' }, { status: 401 });
+    if (ctx.role !== 'CLINIC_ADMIN') return NextResponse.json({ error: 'אין הרשאה לעדכן תפקידים' }, { status: 403 });
+
+    let body: { user_id?: string; role_display?: string };
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'נתונים לא תקינים' }, { status: 400 });
+    }
 
   const user_id = typeof body.user_id === 'string' ? body.user_id.trim() : '';
   const role_display = typeof body.role_display === 'string' ? body.role_display : '';
@@ -80,20 +91,25 @@ export async function PATCH(req: NextRequest) {
   const { error } = await settingsRepo.updateTeamMemberRole(ctx.clinicId, user_id, role_display);
   if (error) return NextResponse.json({ error: error.message || 'עדכון נכשל' }, { status: 500 });
   return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
 }
 
 /** DELETE /api/team — remove member from clinic (CLINIC_ADMIN only). */
 export async function DELETE(req: NextRequest) {
-  const ctx = await getClinicIdAndRole();
-  if (!ctx) return NextResponse.json({ error: 'לא מאומת או ללא גישה לקליניקה' }, { status: 401 });
-  if (ctx.role !== 'CLINIC_ADMIN') return NextResponse.json({ error: 'אין הרשאה להסיר אנשי צוות' }, { status: 403 });
-
-  let body: { user_id?: string };
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'נתונים לא תקינים' }, { status: 400 });
-  }
+    const ctx = await getClinicIdAndRole();
+    if (!ctx) return NextResponse.json({ error: 'לא מאומת או ללא גישה לקליניקה' }, { status: 401 });
+    if (ctx.role !== 'CLINIC_ADMIN') return NextResponse.json({ error: 'אין הרשאה להסיר אנשי צוות' }, { status: 403 });
+
+    let body: { user_id?: string };
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'נתונים לא תקינים' }, { status: 400 });
+    }
 
   const user_id = typeof body.user_id === 'string' ? body.user_id.trim() : '';
   if (!user_id) return NextResponse.json({ error: 'מזהה משתמש חובה' }, { status: 400 });
@@ -101,4 +117,8 @@ export async function DELETE(req: NextRequest) {
   const { error } = await settingsRepo.removeTeamMember(ctx.clinicId, user_id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ removed: true });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
 }

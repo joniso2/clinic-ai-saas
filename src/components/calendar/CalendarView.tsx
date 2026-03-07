@@ -3,12 +3,16 @@
 import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import moment from 'moment';
 import 'moment/locale/he';
-import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import type { Appointment } from '@/types/appointments';
 import type { Lead } from '@/types/leads';
+import type { BillingSettings, BillingDocumentWithItems } from '@/types/billing';
 import { STATUS_LABELS } from '@/lib/hebrew';
 import { LeadDetailDrawer } from '@/components/dashboard/LeadDetailDrawer';
 import { NewAppointmentForm } from './NewAppointmentForm';
+import { DayModal } from './DayModal';
+import { AppointmentReceiptPrompt } from '@/components/billing/AppointmentReceiptPrompt';
+import { CreateDocumentModal } from '@/components/billing/CreateDocumentModal';
 
 moment.locale('he');
 const ISRAEL_TZ = 'Asia/Jerusalem';
@@ -104,12 +108,16 @@ function WeekBoard({
   todayStr,
   onSelectEvent,
   onAddDay,
+  onDayClick,
+  onComplete,
   leadStatusByLeadId,
 }: {
   dayColumns: DayColumn[];
   todayStr: string;
   onSelectEvent: (event: CalendarEvent) => void;
   onAddDay: (dateStr: string) => void;
+  onDayClick: (dateStr: string) => void;
+  onComplete: (apt: Appointment) => void;
   leadStatusByLeadId: Record<string, string>;
 }) {
   return (
@@ -123,7 +131,13 @@ function WeekBoard({
             <p className={`text-xs font-semibold text-right leading-tight ${col.isToday ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400'}`}>
               {col.dayLabel}
             </p>
-            <p className="text-sm font-bold text-slate-900 dark:text-white text-right tabular-nums leading-tight">{col.dayNum}</p>
+            <button
+              type="button"
+              onClick={() => onDayClick(col.dateStr)}
+              className={`text-sm font-bold text-right tabular-nums leading-tight transition-colors hover:underline cursor-pointer bg-transparent border-0 p-0 ${col.isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-900 dark:text-white'}`}
+            >
+              {col.dayNum}
+            </button>
             <button
               type="button"
               onClick={() => onAddDay(col.dateStr)}
@@ -137,7 +151,7 @@ function WeekBoard({
               .slice()
               .sort((a, b) => a.start.getTime() - b.start.getTime())
               .map((ev) => (
-                <WeekBoardCard key={ev.id} event={ev} onClick={() => onSelectEvent(ev)} leadStatusByLeadId={leadStatusByLeadId} />
+                <WeekBoardCard key={ev.id} event={ev} onClick={() => onSelectEvent(ev)} onComplete={onComplete} leadStatusByLeadId={leadStatusByLeadId} />
               ))}
           </div>
         </div>
@@ -147,7 +161,7 @@ function WeekBoard({
 }
 
 /** Appointment block for the week board: solid colored block, clear hierarchy. Click opens LeadDetailDrawer. */
-const WeekBoardCard = memo(function WeekBoardCard({ event, onClick, leadStatusByLeadId }: { event: CalendarEvent; onClick: () => void; leadStatusByLeadId: Record<string, string> }) {
+const WeekBoardCard = memo(function WeekBoardCard({ event, onClick, onComplete, leadStatusByLeadId }: { event: CalendarEvent; onClick: () => void; onComplete?: (apt: Appointment) => void; leadStatusByLeadId: Record<string, string> }) {
   const apt = event.resource;
   const category = getServiceCategory(apt);
   const cardLabel = getAppointmentCardLabel(apt, leadStatusByLeadId);
@@ -158,21 +172,34 @@ const WeekBoardCard = memo(function WeekBoardCard({ event, onClick, leadStatusBy
   const startStr = moment(event.start).format('HH:mm');
   const endStr = moment(event.end).format('HH:mm');
   const icon = SERVICE_ICON[category];
+  const canComplete = apt.status !== 'completed' && apt.status !== 'cancelled' && apt.status !== 'נסגר';
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`w-full min-w-0 text-right rounded-md px-2.5 py-2 cursor-pointer transition-all duration-150 hover:brightness-95 hover:shadow-md flex flex-col gap-0.5 ${cardClass}`}
-      dir="rtl"
-    >
-      <p className="text-xs font-bold truncate leading-tight opacity-95">{cardLabel}</p>
-      <p className="text-[11px] font-medium tabular-nums leading-tight opacity-90">{startStr} – {endStr}</p>
-      <p className="text-xs font-medium truncate leading-tight opacity-95">{apt.patient_name}</p>
-      <div className="flex items-center justify-end mt-0.5">
-        <span className="text-sm leading-none select-none opacity-80" aria-hidden>{icon}</span>
-      </div>
-    </button>
+    <div className="relative group">
+      <button
+        type="button"
+        onClick={onClick}
+        className={`w-full min-w-0 text-right rounded-md px-2.5 py-2 cursor-pointer transition-all duration-150 hover:brightness-95 hover:shadow-md flex flex-col gap-0.5 ${cardClass}`}
+        dir="rtl"
+      >
+        <p className="text-xs font-bold truncate leading-tight opacity-95">{cardLabel}</p>
+        <p className="text-[11px] font-medium tabular-nums leading-tight opacity-90">{startStr} – {endStr}</p>
+        <p className="text-xs font-medium truncate leading-tight opacity-95">{apt.patient_name}</p>
+        <div className="flex items-center justify-end mt-0.5">
+          <span className="text-sm leading-none select-none opacity-80" aria-hidden>{icon}</span>
+        </div>
+      </button>
+      {canComplete && onComplete && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onComplete(apt); }}
+          title="סמן כהושלם"
+          className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity rounded-full bg-emerald-500 text-white p-0.5 hover:bg-emerald-600 z-10"
+        >
+          <Check className="h-3 w-3" />
+        </button>
+      )}
+    </div>
   );
 });
 
@@ -197,6 +224,10 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
   const [fetchedMonths, setFetchedMonths] = useState<Set<string>>(new Set());
   const [leadStatusByLeadId, setLeadStatusByLeadId] = useState<Record<string, string>>({});
   const [leadStatusFetched, setLeadStatusFetched] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<{ day: number; month: number; year: number } | null>(null);
+  const [receiptPromptApt, setReceiptPromptApt] = useState<Appointment | null>(null);
+  const [receiptModalApt, setReceiptModalApt] = useState<Appointment | null>(null);
+  const [billingSettings, setBillingSettings] = useState<BillingSettings | null | 'loading' | 'none'>(null);
 
   useEffect(() => {
     setFetchedMonths((prev) => (prev.size === 0 ? prev : new Set()));
@@ -351,6 +382,51 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
     setShowNewForm(true);
   }, []);
 
+  const handleDayClick = useCallback((dateStr: string) => {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    setSelectedDay({ day: d, month: m, year: y });
+  }, []);
+
+  const handleCompleteAppointment = useCallback(async (apt: Appointment) => {
+    try {
+      const res = await fetch(`/api/appointments/${apt.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status: 'completed' }),
+      });
+      if (!res.ok) return;
+      setAppointments((prev) =>
+        prev.map((a) => a.id === apt.id ? { ...a, status: 'completed' } : a),
+      );
+      setReceiptPromptApt(apt);
+    } catch {}
+  }, []);
+
+  const handleIssueReceiptFromPrompt = useCallback(async (apt: Appointment) => {
+    setReceiptPromptApt(null);
+    if (billingSettings && billingSettings !== 'loading' && billingSettings !== 'none') {
+      setReceiptModalApt(apt);
+      return;
+    }
+    try {
+      const res = await fetch('/api/billing-settings');
+      const data = res.ok ? await res.json() : null;
+      const s: BillingSettings | null = data?.settings ?? null;
+      setBillingSettings(s ?? 'none');
+      if (s) setReceiptModalApt(apt);
+      else alert('נדרש להגדיר פרטי עסק תחילה');
+    } catch {
+      setBillingSettings('none');
+    }
+  }, [billingSettings]);
+
+  const selectedDayAppointments = useMemo(() => {
+    if (!selectedDay) return [];
+    const dateStr = `${selectedDay.year}-${String(selectedDay.month).padStart(2, '0')}-${String(selectedDay.day).padStart(2, '0')}`;
+    return appointments.filter((a) => getEventDateStr(new Date(a.datetime)) === dateStr);
+  }, [selectedDay, appointments]);
+
   const todayCount = useMemo(() =>
     appointments.filter((a) => {
       const d = new Date(a.datetime);
@@ -492,6 +568,8 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
             todayStr={todayStr}
             onSelectEvent={handleSelectEvent}
             onAddDay={handleAddDay}
+            onDayClick={handleDayClick}
+            onComplete={handleCompleteAppointment}
             leadStatusByLeadId={leadStatusByLeadId}
           />
         </div>
@@ -512,6 +590,52 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
         onScheduleFollowUp={() => {}}
         onEdit={() => {}}
       />
+
+      {/* Day Modal */}
+      {selectedDay && (
+        <DayModal
+          day={selectedDay.day}
+          month={selectedDay.month}
+          year={selectedDay.year}
+          appointments={selectedDayAppointments}
+          onClose={() => setSelectedDay(null)}
+          onDelete={(id) => setAppointments((prev) => prev.filter((a) => a.id !== id))}
+          onAdd={(day) => {
+            const dateStr = `${selectedDay.year}-${String(selectedDay.month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            setSelectedDay(null);
+            handleAddDay(dateStr);
+          }}
+          onViewLead={(lead) => {
+            setSelectedDay(null);
+            setDrawerLead(lead);
+            setDrawerOpen(true);
+          }}
+        />
+      )}
+
+      {/* Appointment completion receipt prompt */}
+      {receiptPromptApt && (
+        <AppointmentReceiptPrompt
+          appointmentLabel={`${receiptPromptApt.patient_name} — ${moment(receiptPromptApt.datetime).format('HH:mm')}`}
+          onIssue={() => handleIssueReceiptFromPrompt(receiptPromptApt)}
+          onDismiss={() => setReceiptPromptApt(null)}
+        />
+      )}
+
+      {/* Receipt modal from completion prompt */}
+      {receiptModalApt && billingSettings && billingSettings !== 'loading' && billingSettings !== 'none' && (
+        <CreateDocumentModal
+          settings={billingSettings}
+          appointmentId={receiptModalApt.id}
+          appointmentLabel={`${receiptModalApt.patient_name} — ${moment(receiptModalApt.datetime).format('HH:mm')}`}
+          prefillCustomerName={receiptModalApt.patient_name}
+          prefillServiceName={receiptModalApt.service_name ?? undefined}
+          prefillPrice={receiptModalApt.revenue ?? undefined}
+          fromAppointment
+          onClose={() => setReceiptModalApt(null)}
+          onIssued={(_doc: BillingDocumentWithItems) => setReceiptModalApt(null)}
+        />
+      )}
 
       {/* New Appointment Form */}
       {showNewForm && (

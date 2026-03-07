@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   Search, Trash2, X, Phone, DollarSign, ArrowRight, UserCheck, Users,
   Calendar, MessageCircle, Archive, FileText, Download, Upload,
-  Bell, BellRing, ChevronDown, TrendingUp, Sparkles, Clock, Filter, SortAsc, Send,
+  Bell, BellRing, ChevronDown, TrendingUp, Sparkles, Clock, Filter, SortAsc, Send, ReceiptText,
 } from 'lucide-react';
 import { CustomersImportModal } from './CustomersImportModal';
 import { MessagingPanel } from './MessagingPanel';
@@ -13,6 +13,10 @@ import type { Patient } from '@/types/patients';
 import type { Lead } from '@/types/leads';
 import type { CompletedAppointmentRow } from '@/repositories/appointment.repository';
 import { formatCurrencyILS, formatPhoneILS, PATIENT_STATUS_LABELS, SOURCE_LABELS } from '@/lib/hebrew';
+import type { BillingDocumentWithItems, BillingSettings } from '@/types/billing';
+import { DOC_TYPE_LABELS } from '@/types/billing';
+import { DocumentDrawer } from '@/components/billing/DocumentDrawer';
+import { CreateDocumentModal } from '@/components/billing/CreateDocumentModal';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -203,6 +207,58 @@ function CustomerDrawer({
   const initials = getInitials(customer?.full_name);
   const daysAgo = daysSince(customer?.last_visit_date ?? null);
 
+  // Billing tab state
+  const [activeTab, setActiveTab] = useState<'details' | 'billing'>('details');
+  const [billingDocs, setBillingDocs] = useState<BillingDocumentWithItems[]>([]);
+  const [billingLoading, setBillingLoading] = useState(false);
+  const [billingError, setBillingError] = useState<string | null>(null);
+  const [selectedBillingDoc, setSelectedBillingDoc] = useState<BillingDocumentWithItems | null>(null);
+  const [billingDrawerOpen, setBillingDrawerOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [billingSettingsData, setBillingSettingsData] = useState<BillingSettings | null | 'loading' | 'none'>(null);
+
+  // Reset tabs when customer changes
+  useEffect(() => { setActiveTab('details'); setBillingDocs([]); }, [customer?.id]);
+
+  const loadBillingDocs = useCallback(async () => {
+    if (!customer?.id) return;
+    setBillingLoading(true);
+    setBillingError(null);
+    try {
+      const res = await fetch(`/api/billing-documents?patient_id=${customer.id}&limit=50`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'שגיאה');
+      setBillingDocs(data.documents ?? []);
+    } catch {
+      setBillingError('שגיאה בטעינת מסמכים');
+    } finally {
+      setBillingLoading(false);
+    }
+  }, [customer?.id]);
+
+  // Load billing docs whenever the customer changes
+  useEffect(() => {
+    loadBillingDocs();
+  }, [loadBillingDocs]);
+
+  const handleOpenCreateModal = useCallback(async () => {
+    if (billingSettingsData && billingSettingsData !== 'loading' && billingSettingsData !== 'none') {
+      setCreateModalOpen(true);
+      return;
+    }
+    setBillingSettingsData('loading');
+    try {
+      const res = await fetch('/api/billing-settings');
+      const data = res.ok ? await res.json() : null;
+      const s: BillingSettings | null = data?.settings ?? null;
+      setBillingSettingsData(s ?? 'none');
+      if (s) setCreateModalOpen(true);
+      else alert('נדרש להגדיר פרטי עסק תחילה');
+    } catch {
+      setBillingSettingsData('none');
+    }
+  }, [billingSettingsData]);
+
   const SUGGESTION_CLS: Record<string, string> = {
     amber:   'bg-amber-50 border-amber-200/70 text-amber-700 dark:bg-amber-900/20 dark:border-amber-800/40 dark:text-amber-300',
     indigo:  'bg-indigo-50 border-indigo-200/70 text-indigo-700 dark:bg-indigo-900/20 dark:border-indigo-800/40 dark:text-indigo-300',
@@ -238,10 +294,112 @@ function CustomerDrawer({
           </button>
         </div>
 
+
         <div className="flex-1 p-5 space-y-5">
           {loading && !customer ? (
             <div className="flex justify-center py-12">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-indigo-500" />
+            </div>
+          ) : false ? (
+            /* ── Billing tab ───────────────────────────────────────── */
+            <div className="space-y-4">
+              {/* Section header */}
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-[0.1em]">קבלות וחשבוניות</p>
+                <button
+                  type="button"
+                  onClick={handleOpenCreateModal}
+                  disabled={billingSettingsData === 'loading'}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ReceiptText className="h-3.5 w-3.5" />
+                  הפק קבלה
+                </button>
+              </div>
+
+              {/* Loading */}
+              {billingLoading && (
+                <div className="flex justify-center py-10">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-indigo-500" />
+                </div>
+              )}
+
+              {/* Error */}
+              {billingError && (
+                <p className="text-sm text-red-500 py-4 text-center">{billingError}</p>
+              )}
+
+              {/* Empty state */}
+              {!billingLoading && !billingError && billingDocs.length === 0 && (
+                <div className="py-10 text-center">
+                  <FileText className="mx-auto h-8 w-8 text-slate-300 dark:text-zinc-600 mb-2" />
+                  <p className="text-sm text-slate-400 dark:text-zinc-500">אין מסמכים עבור לקוח זה</p>
+                  <p className="text-xs text-slate-300 dark:text-zinc-600 mt-1">לחץ "הפק קבלה" כדי ליצור מסמך ראשון</p>
+                </div>
+              )}
+
+              {/* Documents table */}
+              {billingDocs.length > 0 && (
+                <div className="rounded-xl border border-slate-100 dark:border-zinc-800 overflow-hidden">
+                  {/* Table header */}
+                  <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 bg-slate-50 dark:bg-zinc-800/60 px-3 py-2 border-b border-slate-100 dark:border-zinc-800">
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500">תאריך</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500">סוג</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500 text-left">שירות</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500 text-left">סכום</span>
+                  </div>
+                  {/* Rows */}
+                  <div className="divide-y divide-slate-50 dark:divide-zinc-800/60">
+                    {billingDocs.map((doc) => (
+                      <button
+                        key={doc.id}
+                        type="button"
+                        onClick={() => { setSelectedBillingDoc(doc); setBillingDrawerOpen(true); }}
+                        className="w-full grid grid-cols-[1fr_auto_auto_auto] gap-2 items-center px-3 py-2.5
+                          text-right hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors"
+                      >
+                        <span className="text-xs text-slate-600 dark:text-zinc-300 tabular-nums">
+                          {new Date(doc.issued_at).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                        </span>
+                        <span className="text-xs font-medium text-slate-700 dark:text-zinc-200 whitespace-nowrap">
+                          {DOC_TYPE_LABELS[doc.doc_type]}
+                        </span>
+                        <span className="text-xs text-slate-500 dark:text-zinc-400 truncate max-w-[72px] text-left">
+                          {doc.items?.[0]?.description ?? '—'}
+                        </span>
+                        <span className="text-xs font-semibold text-slate-900 dark:text-zinc-100 tabular-nums whitespace-nowrap text-left">
+                          ₪{Number(doc.total).toLocaleString('he-IL', { minimumFractionDigits: 0 })}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Document drawer */}
+              {selectedBillingDoc && (
+                <DocumentDrawer
+                  doc={selectedBillingDoc}
+                  open={billingDrawerOpen}
+                  onClose={() => setBillingDrawerOpen(false)}
+                  onCancelled={(id) => setBillingDocs((prev) => prev.map((d) => d.id === id ? { ...d, status: 'cancelled' as const } : d))}
+                />
+              )}
+
+              {/* Create document modal */}
+              {createModalOpen && billingSettingsData && billingSettingsData !== 'loading' && billingSettingsData !== 'none' && (
+                <CreateDocumentModal
+                  settings={billingSettingsData}
+                  patientId={customer.id}
+                  prefillCustomerName={customer.full_name ?? undefined}
+                  prefillPhone={customer.phone ?? undefined}
+                  onClose={() => setCreateModalOpen(false)}
+                  onIssued={(doc) => {
+                    setBillingDocs((prev) => [doc, ...prev]);
+                    setCreateModalOpen(false);
+                  }}
+                />
+              )}
             </div>
           ) : customer ? (
             <>
@@ -273,6 +431,103 @@ function CustomerDrawer({
                   <p className="text-[2rem] font-bold text-slate-900 dark:text-zinc-50 tabular-nums leading-none">{formatCurrencyILS(Number(customer.total_revenue))}</p>
                   <p className="mt-1.5 text-xs text-slate-500 dark:text-zinc-400">{customer.visits_count} ביקורים · ביקור אחרון {formatDate(customer.last_visit_date)}</p>
                 </div>
+              </section>
+
+              {/* Billing: קבלות וחשבוניות */}
+              <section>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-[0.1em]">קבלות וחשבוניות</p>
+                  <button
+                    type="button"
+                    onClick={handleOpenCreateModal}
+                    disabled={billingSettingsData === 'loading'}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ReceiptText className="h-3.5 w-3.5" />
+                    הפק קבלה
+                  </button>
+                </div>
+
+                {billingLoading && (
+                  <div className="flex justify-center py-5">
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-indigo-500" />
+                  </div>
+                )}
+                {billingError && (
+                  <p className="text-sm text-red-500 py-3 text-center">{billingError}</p>
+                )}
+
+                {!billingLoading && !billingError && billingDocs.length === 0 && (
+                  <div className="py-6 text-center rounded-xl border border-dashed border-slate-200 dark:border-zinc-700">
+                    <FileText className="mx-auto h-7 w-7 text-slate-300 dark:text-zinc-600 mb-2" />
+                    <p className="text-sm text-slate-400 dark:text-zinc-500">אין קבלות עדיין ללקוח זה</p>
+                    <button
+                      type="button"
+                      onClick={handleOpenCreateModal}
+                      className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 transition-colors"
+                    >
+                      <ReceiptText className="h-3.5 w-3.5" />
+                      הפק קבלה
+                    </button>
+                  </div>
+                )}
+
+                {billingDocs.length > 0 && (
+                  <div className="rounded-xl border border-slate-100 dark:border-zinc-800 overflow-hidden">
+                    <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 bg-slate-50 dark:bg-zinc-800/60 px-3 py-2 border-b border-slate-100 dark:border-zinc-800">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500">תאריך</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500">סוג</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500 text-left">שירות</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500 text-left">סכום</span>
+                    </div>
+                    <div className="divide-y divide-slate-50 dark:divide-zinc-800/60">
+                      {billingDocs.map((doc) => (
+                        <button
+                          key={doc.id}
+                          type="button"
+                          onClick={() => { setSelectedBillingDoc(doc); setBillingDrawerOpen(true); }}
+                          className="w-full grid grid-cols-[1fr_auto_auto_auto] gap-2 items-center px-3 py-2.5 text-right hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors"
+                        >
+                          <span className="text-xs text-slate-600 dark:text-zinc-300 tabular-nums">
+                            {new Date(doc.issued_at).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                          </span>
+                          <span className="text-xs font-medium text-slate-700 dark:text-zinc-200 whitespace-nowrap">
+                            {DOC_TYPE_LABELS[doc.doc_type]}
+                          </span>
+                          <span className="text-xs text-slate-500 dark:text-zinc-400 truncate max-w-[72px] text-left">
+                            {doc.items?.[0]?.description ?? '—'}
+                          </span>
+                          <span className="text-xs font-semibold text-slate-900 dark:text-zinc-100 tabular-nums whitespace-nowrap text-left">
+                            ₪{Number(doc.total).toLocaleString('he-IL', { minimumFractionDigits: 0 })}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedBillingDoc && (
+                  <DocumentDrawer
+                    doc={selectedBillingDoc}
+                    open={billingDrawerOpen}
+                    onClose={() => setBillingDrawerOpen(false)}
+                    onCancelled={(id) => setBillingDocs((prev) => prev.map((d) => d.id === id ? { ...d, status: 'cancelled' as const } : d))}
+                  />
+                )}
+
+                {createModalOpen && billingSettingsData && billingSettingsData !== 'loading' && billingSettingsData !== 'none' && (
+                  <CreateDocumentModal
+                    settings={billingSettingsData}
+                    patientId={customer.id}
+                    prefillCustomerName={customer.full_name ?? undefined}
+                    prefillPhone={customer.phone ?? undefined}
+                    onClose={() => setCreateModalOpen(false)}
+                    onIssued={(doc) => {
+                      setBillingDocs((prev) => [doc, ...prev]);
+                      setCreateModalOpen(false);
+                    }}
+                  />
+                )}
               </section>
 
               {/* Suggested actions */}
@@ -408,6 +663,7 @@ function CustomerDrawer({
 
 // ─── Lead Drawer (fallback mode) ──────────────────────────────────────────────
 
+
 function LeadDrawer({ lead, onClose, onWhatsApp, onBackToLeads, onDelete }: {
   lead: Lead;
   onClose: () => void;
@@ -419,6 +675,7 @@ function LeadDrawer({ lead, onClose, onWhatsApp, onBackToLeads, onDelete }: {
   const value = lead.estimated_deal_value ?? 0;
 
   return (
+    <>
     <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-slate-900/40 dark:bg-zinc-950/60 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
       <div
@@ -470,6 +727,14 @@ function LeadDrawer({ lead, onClose, onWhatsApp, onBackToLeads, onDelete }: {
             </section>
           )}
 
+          {/* Billing: only for customers (patients), not for leads */}
+          <section>
+            <p className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-[0.1em] mb-2">קבלות וחשבוניות</p>
+            <div className="py-6 text-center rounded-xl border border-dashed border-slate-200 dark:border-zinc-700 bg-slate-50/50 dark:bg-zinc-800/30">
+              <p className="text-sm text-slate-500 dark:text-zinc-400">חיוב זמין רק לאחר שהליד הופך ללקוח</p>
+            </div>
+          </section>
+
           <section className="pt-1">
             <p className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-[0.1em] mb-2">פעולות</p>
             <div className="grid grid-cols-2 gap-2 mb-2">
@@ -500,6 +765,7 @@ function LeadDrawer({ lead, onClose, onWhatsApp, onBackToLeads, onDelete }: {
       </div>
       <style>{`@keyframes slideInFromRight{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}`}</style>
     </div>
+  </>
   );
 }
 

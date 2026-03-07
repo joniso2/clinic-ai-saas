@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, Mail, Phone, Calendar, Tag, DollarSign, Brain, AlertTriangle, Clock } from 'lucide-react';
+import { X, Mail, Phone, Calendar, Tag, DollarSign, Brain, AlertTriangle, Clock, Receipt } from 'lucide-react';
 import type { Lead } from '@/types/leads';
 import {
   getDisplayPriority,
@@ -9,6 +9,8 @@ import {
   type LeadStatus,
 } from '@/types/leads';
 import { formatCurrencyILS, STATUS_LABELS, PRIORITY_LABELS, SOURCE_LABELS } from '@/lib/hebrew';
+import type { BillingSettings } from '@/types/billing';
+import { CreateDocumentModal } from '@/components/billing/CreateDocumentModal';
 
 const PRIORITY_STYLES: Record<Priority, string> = {
   Low: 'bg-slate-100 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300',
@@ -219,6 +221,20 @@ export function LeadDetailDrawer({
   onEdit: (lead: Lead) => void;
 }) {
   const [phoneModalOpen, setPhoneModalOpen] = useState(false);
+  const [billingSettings, setBillingSettings] = useState<BillingSettings | null>(null);
+  const [receiptOpen, setReceiptOpen] = useState(false);
+
+  const isClosedLead = lead?.status === 'Closed' || lead?.status === 'נסגר';
+
+  const handleIssueReceipt = async () => {
+    if (!billingSettings) {
+      const res = await fetch('/api/billing-settings');
+      const data = await res.json();
+      if (!data.settings) { alert('נא להגדיר פרטי עסק תחילה'); return; }
+      setBillingSettings(data.settings);
+    }
+    setReceiptOpen(true);
+  };
 
   useEffect(() => {
     if (open) {
@@ -337,6 +353,18 @@ export function LeadDetailDrawer({
                     <p className="text-sm font-semibold text-slate-900 dark:text-zinc-100">{formatCurrencyILS(lead.estimated_deal_value!)}</p>
                   </div>
                 )}
+
+                {isClosedLead && (
+                  <button
+                    type="button"
+                    onClick={handleIssueReceipt}
+                    className="flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5
+                      text-sm font-semibold text-white shadow-sm transition-colors w-full justify-center"
+                  >
+                    <Receipt className="h-4 w-4 shrink-0" />
+                    הפק קבלה
+                  </button>
+                )}
               </div>
               {/* Left column (second in DOM for RTL): נוצר, קשר אחרון, מעקב הבא */}
               <div className="space-y-5">
@@ -423,6 +451,20 @@ export function LeadDetailDrawer({
         <PhoneContactModal
           phone={lead.phone}
           onClose={() => setPhoneModalOpen(false)}
+        />
+      )}
+
+      {/* Receipt Modal */}
+      {receiptOpen && billingSettings && (
+        <CreateDocumentModal
+          settings={billingSettings}
+          fromAppointment
+          prefillCustomerName={lead.full_name ?? ''}
+          prefillPhone={lead.phone ?? undefined}
+          prefillServiceName={lead.interest ?? undefined}
+          prefillPrice={lead.estimated_deal_value ?? undefined}
+          onClose={() => setReceiptOpen(false)}
+          onIssued={() => setReceiptOpen(false)}
         />
       )}
     </>

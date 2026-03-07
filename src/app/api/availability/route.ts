@@ -6,17 +6,18 @@ import moment from 'moment-timezone';
 const TZ = 'Asia/Jerusalem';
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const clinic_id = searchParams.get('clinic_id');
-  const service_id = searchParams.get('service_id');
-  const worker_id = searchParams.get('worker_id');
-  const date = searchParams.get('date');
+  try {
+    const { searchParams } = new URL(req.url);
+    const clinic_id = searchParams.get('clinic_id');
+    const service_id = searchParams.get('service_id');
+    const worker_id = searchParams.get('worker_id');
+    const date = searchParams.get('date');
 
-  if (!clinic_id || !service_id || !date) {
-    return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
-  }
+    if (!clinic_id || !service_id || !date) {
+      return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
+    }
 
-  const supabase = getSupabaseAdmin();
+    const supabase = getSupabaseAdmin();
 
   const { data: service } = await supabase
     .from('clinic_services')
@@ -119,4 +120,8 @@ export async function GET(req: NextRequest) {
   });
 
   return NextResponse.json({ slots });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
 }

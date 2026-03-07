@@ -186,7 +186,7 @@ export async function POST(req: NextRequest) {
 /** DELETE /api/appointments?id=UUID — deletes the appointment and, if it had a lead_id, the associated lead. */
 export async function DELETE(req: NextRequest) {
   try {
-    const clinicId = await getClinicIdFromSession();
+    const clinicId = await getEffectiveClinicId(req);
     if (!clinicId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

@@ -8,8 +8,8 @@ import type { ClinicSettings } from '@/services/settings.service';
 function BookingLinkCard({ slug }: { slug: string }) {
   const [copied, setCopied] = useState(false);
   const url = typeof window !== 'undefined'
-    ? `${window.location.origin}/${slug}`
-    : `/${slug}`;
+    ? `${window.location.origin}/book/${slug}`
+    : `/book/${slug}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(url);
@@ -41,7 +41,7 @@ function BookingLinkCard({ slug }: { slug: string }) {
           {copied ? 'הועתק' : 'העתק'}
         </button>
         <a
-          href={`/${slug}`}
+          href={`/book/${slug}`}
           target="_blank"
           rel="noopener noreferrer"
           title="פתח עמוד הזמנה"

@@ -5,10 +5,11 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
 ) {
-  const { slug } = await params;
-  const supabase = getSupabaseAdmin();
+  try {
+    const { slug } = await params;
+    const supabase = getSupabaseAdmin();
 
-  const { data: clinic, error } = await supabase
+    const { data: clinic, error } = await supabase
     .from('clinics')
     .select('*')
     .eq('slug', slug)
@@ -55,4 +56,8 @@ export async function GET(
     gallery: gallery ?? [],
     workingHours: workingHours ?? [],
   });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
 }
