@@ -30,7 +30,7 @@ export function LandingView({ clinic, products, slug }: Props) {
   const hasPhone = Boolean(clinic.phone?.trim());
 
   const goToBooking = () => {
-    router.push(`/book/${slug}/booking`);
+    router.push(`/${slug}/booking`);
   };
 
   return (

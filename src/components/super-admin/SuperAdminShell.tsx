@@ -14,25 +14,35 @@
  */
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import {
   LayoutDashboard, Building2, DollarSign, Link2,
   Activity, Brain, Users, Settings, PackageOpen, MessageSquare, Radio, Wand2,
 } from 'lucide-react';
 import type { OverviewPageData } from '@/types/analytics';
 
-// Section components
-import OverviewSection              from '@/components/super-admin/overview/OverviewSection';
-import TenantManagementSection      from '@/components/super-admin/tenants/TenantManagementSection';
-import PricingSection               from '@/components/super-admin/pricing/PricingSection';
-import IntegrationsSection          from '@/components/super-admin/integrations/IntegrationsSection';
-import MessagingSection             from '@/components/super-admin/messaging/MessagingSection';
-import LiveConversationsSection     from '@/components/super-admin/messaging/LiveConversationsSection';
-import TrafficSection               from '@/components/super-admin/traffic/TrafficSection';
-import AIControlSection             from '@/components/super-admin/ai/AIControlSection';
-import SystemUsersSection           from '@/components/super-admin/users/SystemUsersSection';
-import SystemSettingsSection        from '@/components/super-admin/settings/SystemSettingsSection';
-import TenantServicesOverrideSection from '@/components/super-admin/services/TenantServicesOverrideSection';
-import AIPersonaSection              from '@/components/super-admin/ai/AIPersonaSection';
+function SectionSkeleton() {
+  return (
+    <div className="animate-pulse space-y-4 py-6">
+      <div className="h-6 w-40 rounded bg-slate-200 dark:bg-zinc-700" />
+      <div className="h-4 w-56 rounded bg-slate-100 dark:bg-zinc-800" />
+      <div className="h-64 rounded-xl bg-slate-100 dark:bg-zinc-800" />
+    </div>
+  );
+}
+
+const OverviewSection              = dynamic(() => import('@/components/super-admin/overview/OverviewSection'), { loading: () => <SectionSkeleton /> });
+const TenantManagementSection      = dynamic(() => import('@/components/super-admin/tenants/TenantManagementSection'), { loading: () => <SectionSkeleton /> });
+const PricingSection               = dynamic(() => import('@/components/super-admin/pricing/PricingSection'), { loading: () => <SectionSkeleton /> });
+const IntegrationsSection          = dynamic(() => import('@/components/super-admin/integrations/IntegrationsSection'), { loading: () => <SectionSkeleton /> });
+const MessagingSection             = dynamic(() => import('@/components/super-admin/messaging/MessagingSection'), { loading: () => <SectionSkeleton /> });
+const LiveConversationsSection     = dynamic(() => import('@/components/super-admin/messaging/LiveConversationsSection'), { loading: () => <SectionSkeleton /> });
+const TrafficSection               = dynamic(() => import('@/components/super-admin/traffic/TrafficSection'), { loading: () => <SectionSkeleton /> });
+const AIControlSection             = dynamic(() => import('@/components/super-admin/ai/AIControlSection'), { loading: () => <SectionSkeleton /> });
+const SystemUsersSection           = dynamic(() => import('@/components/super-admin/users/SystemUsersSection'), { loading: () => <SectionSkeleton /> });
+const SystemSettingsSection        = dynamic(() => import('@/components/super-admin/settings/SystemSettingsSection'), { loading: () => <SectionSkeleton /> });
+const TenantServicesOverrideSection = dynamic(() => import('@/components/super-admin/services/TenantServicesOverrideSection'), { loading: () => <SectionSkeleton /> });
+const AIPersonaSection              = dynamic(() => import('@/components/super-admin/ai/AIPersonaSection'), { loading: () => <SectionSkeleton /> });
 
 // ─── Navigation config (SaaS infrastructure console) ─────────────────────────────
 const SECTIONS = [

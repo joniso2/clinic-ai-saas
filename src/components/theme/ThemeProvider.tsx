@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 
 type Theme = 'light' | 'dark';
 
@@ -41,19 +41,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     setTheme((prev) => {
       const next: Theme = prev === 'dark' ? 'light' : 'dark';
       localStorage.setItem('theme', next);
       applyTheme(next);
       return next;
     });
-  };
+  }, []);
 
-  // The blocking script in layout.tsx handles flash prevention.
-  // We still gate the toggle on mount to avoid hydration mismatch.
+  const resolvedTheme = mounted ? theme : 'light';
+  const ctxValue = useMemo<ThemeContextValue>(
+    () => ({ theme: resolvedTheme, toggleTheme }),
+    [resolvedTheme, toggleTheme],
+  );
+
   return (
-    <ThemeContext.Provider value={{ theme: mounted ? theme : 'light', toggleTheme }}>
+    <ThemeContext.Provider value={ctxValue}>
       {children}
     </ThemeContext.Provider>
   );

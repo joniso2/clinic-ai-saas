@@ -201,7 +201,7 @@ export function BookingFlow({ data }: Props) {
               <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-2">
                 {isServicesStep ? (
                   <Link
-                    href={`/book/${clinic.slug}`}
+                    href={`/${clinic.slug}`}
                     className="p-2 -mr-1 rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation flex items-center gap-1 text-gray-600"
                     aria-label="חזרה לדף הבית"
                   >

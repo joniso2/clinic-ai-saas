@@ -127,9 +127,19 @@ export function DashboardLayoutClient({ children, initialRole, initialUserEmail 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const onScroll = () => setScrolled(el.scrollTop > 8);
+    let rafId = 0;
+    const onScroll = () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        setScrolled(el.scrollTop > 8);
+        rafId = 0;
+      });
+    };
     el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
   }, []);
 
   const sidebarItems = isSuperAdmin

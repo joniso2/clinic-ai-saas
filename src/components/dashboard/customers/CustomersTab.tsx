@@ -850,7 +850,13 @@ export function CustomersTab() {
 
   // Filter state
   const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(searchInput), 250);
+    return () => clearTimeout(id);
+  }, [searchInput]);
   const [revenueMinInput, setRevenueMinInput] = useState('');
   const [lastVisitOver6, setLastVisitOver6] = useState(false);
   const [dateFrom, setDateFrom] = useState('');
@@ -958,7 +964,7 @@ export function CustomersTab() {
   // ── Filtered lists ───────────────────────────────────────────────────────────
 
   const filteredCustomers = useMemo(() => {
-    const q = searchInput.trim().toLowerCase();
+    const q = debouncedSearch.trim().toLowerCase();
     let list = customers.filter((c) => {
       if (q) {
         const qd = q.replace(/\D/g, '');
@@ -988,10 +994,10 @@ export function CustomersTab() {
         default: return db - da;
       }
     });
-  }, [customers, searchInput, dateFrom, dateTo, revenueMinFilter, revenueMaxFilter, withRevenueOnly, withoutValueOnly, sortBy]);
+  }, [customers, debouncedSearch, dateFrom, dateTo, revenueMinFilter, revenueMaxFilter, withRevenueOnly, withoutValueOnly, sortBy]);
 
   const filteredClosedLeads = useMemo(() => {
-    const q = searchInput.trim().toLowerCase();
+    const q = debouncedSearch.trim().toLowerCase();
     let list = closedLeads.filter((l) => {
       if (q) {
         const qd = q.replace(/\D/g, '');
@@ -1022,7 +1028,7 @@ export function CustomersTab() {
         default: return db - da;
       }
     });
-  }, [closedLeads, searchInput, sourceFilter, dateFrom, dateTo, revenueMinFilter, revenueMaxFilter, withRevenueOnly, withoutValueOnly, sortBy]);
+  }, [closedLeads, debouncedSearch, sourceFilter, dateFrom, dateTo, revenueMinFilter, revenueMaxFilter, withRevenueOnly, withoutValueOnly, sortBy]);
 
   const hasActiveFilters = !!dateFrom || !!dateTo || revenueMinFilter !== '' || revenueMaxFilter !== ''
     || withRevenueOnly || withoutValueOnly || !!statusFilter || lastVisitOver6 || !!sourceFilter;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import {
   Building2,
   CalendarDays,
@@ -12,14 +13,25 @@ import {
   CreditCard,
 } from 'lucide-react';
 import type { ClinicSettings } from '@/services/settings.service';
-import { GeneralTab }      from '@/components/dashboard/settings/GeneralTab';
-import { SchedulingTab }   from '@/components/dashboard/settings/SchedulingTab';
-import { AutomationTab }   from '@/components/dashboard/settings/AutomationTab';
-import { AITab }           from '@/components/dashboard/settings/AITab';
-import { IntegrationsTab } from '@/components/dashboard/settings/IntegrationsTab';
-import { TeamTab }         from '@/components/dashboard/settings/TeamTab';
-import { SecurityTab }     from '@/components/dashboard/settings/SecurityTab';
-import { BillingTab }      from '@/components/dashboard/settings/BillingTab';
+
+function TabSkeleton() {
+  return (
+    <div className="animate-pulse space-y-4 py-4">
+      <div className="h-5 w-32 rounded bg-slate-200 dark:bg-zinc-700" />
+      <div className="h-4 w-48 rounded bg-slate-100 dark:bg-zinc-800" />
+      <div className="h-40 rounded-xl bg-slate-100 dark:bg-zinc-800" />
+    </div>
+  );
+}
+
+const GeneralTab      = dynamic(() => import('@/components/dashboard/settings/GeneralTab').then((m) => m.GeneralTab), { loading: () => <TabSkeleton /> });
+const SchedulingTab   = dynamic(() => import('@/components/dashboard/settings/SchedulingTab').then((m) => m.SchedulingTab), { loading: () => <TabSkeleton /> });
+const AutomationTab   = dynamic(() => import('@/components/dashboard/settings/AutomationTab').then((m) => m.AutomationTab), { loading: () => <TabSkeleton /> });
+const AITab           = dynamic(() => import('@/components/dashboard/settings/AITab').then((m) => m.AITab), { loading: () => <TabSkeleton /> });
+const IntegrationsTab = dynamic(() => import('@/components/dashboard/settings/IntegrationsTab').then((m) => m.IntegrationsTab), { loading: () => <TabSkeleton /> });
+const TeamTab         = dynamic(() => import('@/components/dashboard/settings/TeamTab').then((m) => m.TeamTab), { loading: () => <TabSkeleton /> });
+const SecurityTab     = dynamic(() => import('@/components/dashboard/settings/SecurityTab').then((m) => m.SecurityTab), { loading: () => <TabSkeleton /> });
+const BillingTab      = dynamic(() => import('@/components/dashboard/settings/BillingTab').then((m) => m.BillingTab), { loading: () => <TabSkeleton /> });
 
 type TabId = 'general' | 'scheduling' | 'automation' | 'ai' | 'integrations' | 'team' | 'security' | 'billing';
 

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import moment from 'moment';
 import 'moment/locale/he';
 import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Check } from 'lucide-react';
@@ -8,11 +9,27 @@ import type { Appointment } from '@/types/appointments';
 import type { Lead } from '@/types/leads';
 import type { BillingSettings, BillingDocumentWithItems } from '@/types/billing';
 import { STATUS_LABELS } from '@/lib/hebrew';
-import { LeadDetailDrawer } from '@/components/dashboard/LeadDetailDrawer';
-import { NewAppointmentForm } from './NewAppointmentForm';
-import { DayModal } from './DayModal';
-import { AppointmentReceiptPrompt } from '@/components/billing/AppointmentReceiptPrompt';
-import { CreateDocumentModal } from '@/components/billing/CreateDocumentModal';
+
+const LeadDetailDrawer = dynamic(
+  () => import('@/components/dashboard/LeadDetailDrawer').then((m) => m.LeadDetailDrawer),
+  { ssr: false },
+);
+const NewAppointmentForm = dynamic(
+  () => import('./NewAppointmentForm').then((m) => m.NewAppointmentForm),
+  { ssr: false },
+);
+const DayModal = dynamic(
+  () => import('./DayModal').then((m) => m.DayModal),
+  { ssr: false },
+);
+const AppointmentReceiptPrompt = dynamic(
+  () => import('@/components/billing/AppointmentReceiptPrompt').then((m) => m.AppointmentReceiptPrompt),
+  { ssr: false },
+);
+const CreateDocumentModal = dynamic(
+  () => import('@/components/billing/CreateDocumentModal').then((m) => m.CreateDocumentModal),
+  { ssr: false },
+);
 
 moment.locale('he');
 const ISRAEL_TZ = 'Asia/Jerusalem';
@@ -147,10 +164,7 @@ function WeekBoard({
             </button>
           </div>
           <div className="flex-1 overflow-y-auto space-y-1.5 p-2 min-h-[180px]">
-            {col.events
-              .slice()
-              .sort((a, b) => a.start.getTime() - b.start.getTime())
-              .map((ev) => (
+            {col.events.map((ev) => (
                 <WeekBoardCard key={ev.id} event={ev} onClick={() => onSelectEvent(ev)} onComplete={onComplete} leadStatusByLeadId={leadStatusByLeadId} />
               ))}
           </div>
@@ -223,6 +237,8 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
   const [prefillTime, setPrefillTime] = useState<string | undefined>(undefined);
   const [fetchedMonths, setFetchedMonths] = useState<Set<string>>(new Set());
   const [leadStatusByLeadId, setLeadStatusByLeadId] = useState<Record<string, string>>({});
+  const leadStatusRef = useRef(leadStatusByLeadId);
+  leadStatusRef.current = leadStatusByLeadId;
   const [leadStatusFetched, setLeadStatusFetched] = useState(false);
   const [selectedDay, setSelectedDay] = useState<{ day: number; month: number; year: number } | null>(null);
   const [receiptPromptApt, setReceiptPromptApt] = useState<Appointment | null>(null);
@@ -252,7 +268,8 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
       setLeadStatusFetched(true);
       return;
     }
-    const missing = [...leadIds].filter((id) => !(id in leadStatusByLeadId));
+    const current = leadStatusRef.current;
+    const missing = [...leadIds].filter((id) => !(id in current));
     if (missing.length === 0) {
       setLeadStatusFetched(true);
       return;
@@ -276,7 +293,7 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
       })
       .catch(() => setLeadStatusFetched(true));
     return () => { cancelled = true; };
-  }, [appointments, leadStatusByLeadId, clinicId]);
+  }, [appointments, clinicId]);
 
   const fetchAppointments = useCallback(async (y: number, m: number) => {
     const key = `${y}-${m}`;
@@ -364,7 +381,9 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
     for (let i = 0; i < count; i++) {
       const m = moment(start).add(i, 'days');
       const dateStr = m.format('YYYY-MM-DD');
-      const eventsForDay = events.filter((ev) => getEventDateStr(ev.start) === dateStr);
+      const eventsForDay = events
+        .filter((ev) => getEventDateStr(ev.start) === dateStr)
+        .sort((a, b) => a.start.getTime() - b.start.getTime());
       cols.push({
         dateStr,
         dayLabel: m.locale('he').format('ddd'),
@@ -444,41 +463,34 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
     [appointments, todayStr]
   );
 
-  function goToToday() {
+  const goToToday = useCallback(() => {
     setCurrentDate(new Date());
-  }
+  }, []);
 
-  function goPrev() {
-    if (currentView === 'week') {
-      setCurrentDate((d) => {
-        const nd = new Date(d);
-        nd.setDate(nd.getDate() - 7);
-        return nd;
-      });
-    } else {
-      setCurrentDate((d) => {
-        const nd = new Date(d);
-        nd.setDate(nd.getDate() - 1);
-        return nd;
-      });
-    }
-  }
+  const goPrev = useCallback(() => {
+    setCurrentDate((d) => {
+      const nd = new Date(d);
+      nd.setDate(nd.getDate() - (currentView === 'week' ? 7 : 1));
+      return nd;
+    });
+  }, [currentView]);
 
-  function goNext() {
-    if (currentView === 'week') {
-      setCurrentDate((d) => {
-        const nd = new Date(d);
-        nd.setDate(nd.getDate() + 7);
-        return nd;
-      });
-    } else {
-      setCurrentDate((d) => {
-        const nd = new Date(d);
-        nd.setDate(nd.getDate() + 1);
-        return nd;
-      });
-    }
-  }
+  const goNext = useCallback(() => {
+    setCurrentDate((d) => {
+      const nd = new Date(d);
+      nd.setDate(nd.getDate() + (currentView === 'week' ? 7 : 1));
+      return nd;
+    });
+  }, [currentView]);
+
+  const noopHandler = useCallback(() => {}, []);
+  const handleCloseDrawer = useCallback(() => setDrawerOpen(false), []);
+  const handleCloseDayModal = useCallback(() => setSelectedDay(null), []);
+  const handleDeleteAppointment = useCallback(
+    (id: string) => setAppointments((prev) => prev.filter((a) => a.id !== id)),
+    [],
+  );
+  const handleCloseReceiptModal = useCallback(() => setReceiptModalApt(null), []);
 
   const headerTitle = useMemo(() => {
     if (currentView === 'day') {
@@ -591,11 +603,11 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
       <LeadDetailDrawer
         lead={drawerLead}
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        onStatusChange={() => {}}
-        onMarkContacted={() => {}}
-        onScheduleFollowUp={() => {}}
-        onEdit={() => {}}
+        onClose={handleCloseDrawer}
+        onStatusChange={noopHandler}
+        onMarkContacted={noopHandler}
+        onScheduleFollowUp={noopHandler}
+        onEdit={noopHandler}
       />
 
       {/* Day Modal */}
@@ -605,8 +617,8 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
           month={selectedDay.month}
           year={selectedDay.year}
           appointments={selectedDayAppointments}
-          onClose={() => setSelectedDay(null)}
-          onDelete={(id) => setAppointments((prev) => prev.filter((a) => a.id !== id))}
+          onClose={handleCloseDayModal}
+          onDelete={handleDeleteAppointment}
           onAdd={(day) => {
             const dateStr = `${selectedDay.year}-${String(selectedDay.month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             setSelectedDay(null);
@@ -639,8 +651,8 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
           prefillServiceName={receiptModalApt.service_name ?? undefined}
           prefillPrice={receiptModalApt.revenue ?? undefined}
           fromAppointment
-          onClose={() => setReceiptModalApt(null)}
-          onIssued={(_doc: BillingDocumentWithItems) => setReceiptModalApt(null)}
+          onClose={handleCloseReceiptModal}
+          onIssued={handleCloseReceiptModal}
         />
       )}
 

@@ -565,11 +565,17 @@ export function LeadsTable({
   onRejectLead?: (leadId: string, reason: string) => void;
 }) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<Priority | ''>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [sortKey, setSortKey] = useState<SortKey>('created');
   const [openFilter, setOpenFilter] = useState<'priority' | 'status' | 'sort' | null>(null);
   const [sortDesc, setSortDesc] = useState(true);
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(searchQuery), 250);
+    return () => clearTimeout(id);
+  }, [searchQuery]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [pendingReviewLead, setPendingReviewLead] = useState<Lead | null>(null);
   const [acceptingLeadId, setAcceptingLeadId] = useState<string | null>(null);
@@ -602,8 +608,8 @@ export function LeadsTable({
       );
     }
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.trim().toLowerCase();
       list = list.filter(
         (l) =>
           (l.full_name ?? '').toLowerCase().includes(q) ||
@@ -632,7 +638,7 @@ export function LeadsTable({
       return sortDesc ? -cmp : cmp;
     });
     return list;
-  }, [leads, searchQuery, priorityFilter, statusFilter, sortKey, sortDesc]);
+  }, [leads, debouncedSearch, priorityFilter, statusFilter, sortKey, sortDesc]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {

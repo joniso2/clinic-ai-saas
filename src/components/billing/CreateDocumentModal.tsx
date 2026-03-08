@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { X, ChevronLeft, Check, Plus, Trash2 } from 'lucide-react';
 import type {
   BillingDocType, BillingSettings, CreateDocumentItem, PaymentMethod,
@@ -77,10 +77,12 @@ export function CreateDocumentModal({ settings, appointmentId, appointmentLabel,
 
   const allowedTypes = ALLOWED_DOC_TYPES[settings.business_type] ?? [];
 
-  // Computed totals (derived from items — preview only; server recomputes on issue)
-  const previewTotals = computeDocumentTotals(
-    items.map((i) => ({ quantity: i.quantity, unit_price: i.unit_price })),
-    0.18,
+  const previewTotals = useMemo(
+    () => computeDocumentTotals(
+      items.map((i) => ({ quantity: i.quantity, unit_price: i.unit_price })),
+      0.18,
+    ),
+    [items],
   );
 
   const loadServices = useCallback(() => {

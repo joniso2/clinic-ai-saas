@@ -1,17 +1,28 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import type { Lead, LeadStatus } from '../../types/leads';
 import type { Appointment } from '@/types/appointments';
-import { ScheduleAppointmentModal } from './ScheduleAppointmentModal';
 import { LeadsKpiCards } from '../../components/dashboard/LeadsKpiCards';
 import { LeadsTable } from '../../components/dashboard/LeadsTable';
-import { LeadDetailDrawer } from '../../components/dashboard/LeadDetailDrawer';
 import { ConfirmDeleteModal } from '../../components/dashboard/ConfirmDeleteModal';
-import { EditLeadModal } from '../../components/dashboard/EditLeadModal';
 import { LeadsEmptyState } from '../../components/dashboard/LeadsEmptyState';
+
+const LeadDetailDrawer = dynamic(
+  () => import('../../components/dashboard/LeadDetailDrawer').then((m) => m.LeadDetailDrawer),
+  { ssr: false },
+);
+const EditLeadModal = dynamic(
+  () => import('../../components/dashboard/EditLeadModal').then((m) => m.EditLeadModal),
+  { ssr: false },
+);
+const ScheduleAppointmentModal = dynamic(
+  () => import('./ScheduleAppointmentModal').then((m) => m.ScheduleAppointmentModal),
+  { ssr: false },
+);
 
 export default function DashboardClient() {
   const router = useRouter();
@@ -94,8 +105,10 @@ export default function DashboardClient() {
 
       setClinicId(clinicIdFromMetadata);
 
-      await fetchLeads(clinicIdFromMetadata);
-      void fetchPricingServices();
+      await Promise.all([
+        fetchLeads(clinicIdFromMetadata),
+        fetchPricingServices(),
+      ]);
       setLoading(false);
     };
 
@@ -218,7 +231,7 @@ export default function DashboardClient() {
     setSubmittingLead(false);
   };
 
-  const handleUpdateLeadStatus = async (leadId: string, status: LeadStatus) => {
+  const handleUpdateLeadStatus = useCallback(async (leadId: string, status: LeadStatus) => {
     const res = await fetch(`/api/leads/${leadId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -234,11 +247,11 @@ export default function DashboardClient() {
       prev.map((l) => (l.id === leadId ? { ...l, status } : l))
     );
     setDrawerLead((prev) => (prev?.id === leadId ? { ...prev, status } : prev));
-  };
+  }, []);
 
-  const handleMarkContacted = async (leadId: string) => {
+  const handleMarkContacted = useCallback(async (leadId: string) => {
     await handleUpdateLeadStatus(leadId, 'Contacted');
-  };
+  }, [handleUpdateLeadStatus]);
 
   /** When accepting a pending lead: if it has a requested appointment (e.g. from website), create it in the calendar only if this lead does not already have an appointment (avoid duplicate). */
   const handleAcceptPendingLead = async (lead: Lead) => {
@@ -277,7 +290,7 @@ export default function DashboardClient() {
     await refreshNextAppointments();
   };
 
-  const handleRejectLead = async (leadId: string, reason: string) => {
+  const handleRejectLead = useCallback(async (leadId: string, reason: string) => {
     const rejectedAt = new Date().toISOString();
     const res = await fetch(`/api/leads/${leadId}`, {
       method: 'PUT',
@@ -306,9 +319,9 @@ export default function DashboardClient() {
         ? { ...prev, status: 'Disqualified', reject_reason: reason, rejected_at: rejectedAt }
         : prev
     );
-  };
+  }, []);
 
-  const handleScheduleFollowUp = async (leadId: string) => {
+  const handleScheduleFollowUp = useCallback(async (leadId: string) => {
     const next = new Date();
     next.setDate(next.getDate() + 7);
     const dateStr = next.toISOString().slice(0, 10);
@@ -329,9 +342,9 @@ export default function DashboardClient() {
     setDrawerLead((prev) =>
       prev?.id === leadId ? { ...prev, next_follow_up_date: dateStr } : prev
     );
-  };
+  }, []);
 
-  const handleUpdateDealValue = async (leadId: string, value: number) => {
+  const handleUpdateDealValue = useCallback(async (leadId: string, value: number) => {
     const res = await fetch(`/api/leads/${leadId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -349,7 +362,7 @@ export default function DashboardClient() {
       prev?.id === leadId ? { ...prev, estimated_deal_value: value } : prev
     );
     return null;
-  };
+  }, []);
 
   const [existingPatientPending, setExistingPatientPending] = useState<{
     leadId: string;
@@ -463,7 +476,7 @@ export default function DashboardClient() {
     setNextAppointmentsByLeadId(map);
   };
 
-  const handleEditSave = async (id: string, data: Partial<Lead>) => {
+  const handleEditSave = useCallback(async (id: string, data: Partial<Lead>) => {
     setSavingEdit(true);
     setError(null);
     const res = await fetch(`/api/leads/${id}`, {
@@ -484,7 +497,7 @@ export default function DashboardClient() {
     setDrawerLead((prev) => (prev?.id === id ? { ...prev, ...data } : prev));
     setEditLead(null);
     setSavingEdit(false);
-  };
+  }, []);
 
   const handleDeleteLead = async () => {
     if (!deleteLead) return;
@@ -504,9 +517,18 @@ export default function DashboardClient() {
     setDeleteLead(null);
     setDrawerLead((prev) => (prev?.id === deletedId ? null : prev));
     setLeads((prev) => prev.filter((l) => l.id !== deletedId));
-    await fetchLeads(clinicId);
     setDeleting(false);
   };
+
+  const handleViewLead = useCallback((lead: Lead) => setDrawerLead(lead), []);
+  const handleOpenEdit = useCallback((lead: Lead) => setEditLead(lead), []);
+  const handleOpenDelete = useCallback((lead: Lead) => setDeleteLead(lead), []);
+  const handleOpenAppointment = useCallback((lead: Lead) => setAppointmentLead(lead), []);
+  const handleCloseDrawer = useCallback(() => setDrawerLead(null), []);
+  const handleEditFromDrawer = useCallback((lead: Lead) => {
+    setDrawerLead(null);
+    setEditLead(lead);
+  }, []);
 
   return (
     <>
@@ -640,14 +662,14 @@ export default function DashboardClient() {
       {!loading && !error && leads.length > 0 && (
         <LeadsTable
           leads={leads}
-          onView={(lead) => setDrawerLead(lead)}
-          onEdit={(lead) => setEditLead(lead)}
-          onDelete={(lead) => setDeleteLead(lead)}
+          onView={handleViewLead}
+          onEdit={handleOpenEdit}
+          onDelete={handleOpenDelete}
           onStatusChange={handleUpdateLeadStatus}
           onAcceptPendingLead={handleAcceptPendingLead}
           onMarkContacted={handleMarkContacted}
           onScheduleFollowUp={handleScheduleFollowUp}
-          onScheduleAppointment={(lead) => setAppointmentLead(lead)}
+          onScheduleAppointment={handleOpenAppointment}
           onUpdateDealValue={handleUpdateDealValue}
           onCompleteLead={handleCompleteLead}
           pricingServices={pricingServices}
@@ -659,14 +681,11 @@ export default function DashboardClient() {
       <LeadDetailDrawer
         lead={drawerLead}
         open={!!drawerLead}
-        onClose={() => setDrawerLead(null)}
+        onClose={handleCloseDrawer}
         onStatusChange={handleUpdateLeadStatus}
         onMarkContacted={handleMarkContacted}
         onScheduleFollowUp={handleScheduleFollowUp}
-        onEdit={(lead) => {
-          setDrawerLead(null);
-          setEditLead(lead);
-        }}
+        onEdit={handleEditFromDrawer}
       />
 
       <ConfirmDeleteModal
