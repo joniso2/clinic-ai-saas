@@ -17,11 +17,12 @@ export async function GET(req: NextRequest) {
   if (!row?.clinic_id) return NextResponse.json({ error: 'לא מאומת' }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
-  const docType   = searchParams.get('doc_type');
-  const status    = searchParams.get('status');
-  const from      = searchParams.get('from');
-  const to        = searchParams.get('to');
-  const patientId = searchParams.get('patient_id');
+  const docType       = searchParams.get('doc_type');
+  const status        = searchParams.get('status');
+  const from          = searchParams.get('from');
+  const to            = searchParams.get('to');
+  const patientId     = searchParams.get('patient_id');
+  const appointmentId = searchParams.get('appointment_id');
   const page     = Math.max(1, parseInt(searchParams.get('page')  ?? '1',  10));
   const limit    = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '50', 10)));
   const offset   = (page - 1) * limit;
@@ -39,7 +40,8 @@ export async function GET(req: NextRequest) {
   if (status)    query = query.eq('status', status);
   if (from)      query = query.gte('issued_at', from);
   if (to)        query = query.lte('issued_at', to);
-  if (patientId) query = query.eq('patient_id', patientId);
+  if (patientId)     query = query.eq('patient_id', patientId);
+  if (appointmentId) query = query.eq('appointment_id', appointmentId);
 
   const { data, error, count } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

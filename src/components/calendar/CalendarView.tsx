@@ -399,6 +399,13 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
       setAppointments((prev) =>
         prev.map((a) => a.id === apt.id ? { ...a, status: 'completed' } : a),
       );
+      // Check if a receipt already exists for this appointment before prompting
+      try {
+        const checkRes = await fetch(`/api/billing-documents?appointment_id=${apt.id}&limit=1`, { credentials: 'include' });
+        const checkData = checkRes.ok ? await checkRes.json() : null;
+        const existing = (checkData?.documents ?? []).filter((d: { status: string }) => d.status !== 'cancelled');
+        if (existing.length > 0) return; // Receipt already exists — skip prompt
+      } catch { /* proceed to prompt on network error */ }
       setReceiptPromptApt(apt);
     } catch {}
   }, []);

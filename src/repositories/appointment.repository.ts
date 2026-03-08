@@ -141,6 +141,23 @@ export async function getCompletedAppointmentsByPatientId(
   return { data: (data ?? []) as CompletedAppointmentRow[], error: null };
 }
 
+/** Check if a completed appointment already exists for a lead (duplicate protection). */
+export async function getCompletedAppointmentsByLeadId(
+  leadId: string,
+  clinicId: string,
+): Promise<{ data: CompletedAppointmentRow[]; error: unknown }> {
+  const supabase = getSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from('appointments')
+    .select('id, datetime, service_name, revenue, notes')
+    .eq('lead_id', leadId)
+    .eq('clinic_id', clinicId)
+    .eq('status', 'completed')
+    .limit(1);
+  if (error) return { data: [], error };
+  return { data: (data ?? []) as CompletedAppointmentRow[], error: null };
+}
+
 /** Delete an appointment by id + clinicId (ownership check). Returns the deleted row's lead_id if any. */
 export async function deleteAppointment(
   id: string,

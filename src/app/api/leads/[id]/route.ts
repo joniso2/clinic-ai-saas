@@ -229,21 +229,24 @@ export async function PUT(
     }
 
     if (patientId && patientCreated) {
-      const { error: aptErr } = await appointmentRepository.createAppointment({
-        clinic_id: clinicId,
-        patient_name: name,
-        datetime: nowIso,
-        type: 'new',
-        lead_id: leadId,
-        patient_id: patientId,
-        status: 'completed',
-        revenue: value,
-        service_name: data.service_name ?? null,
-        notes: data.notes ?? null,
-      } as Parameters<typeof appointmentRepository.createAppointment>[0]);
-      if (aptErr) {
-        console.error('Error creating completed appointment:', aptErr);
-        // Lead still gets updated below
+      // Duplicate protection: skip if a completed appointment already exists for this lead
+      const { data: existingApts } = await appointmentRepository.getCompletedAppointmentsByLeadId(leadId, clinicId);
+      if (!existingApts || existingApts.length === 0) {
+        const { error: aptErr } = await appointmentRepository.createAppointment({
+          clinic_id: clinicId,
+          patient_name: name,
+          datetime: nowIso,
+          type: 'new',
+          lead_id: leadId,
+          patient_id: patientId,
+          status: 'completed',
+          revenue: value,
+          service_name: data.service_name ?? null,
+          notes: data.notes ?? null,
+        } as Parameters<typeof appointmentRepository.createAppointment>[0]);
+        if (aptErr) {
+          console.error('Error creating completed appointment:', aptErr);
+        }
       }
     }
     // If patientCreated === false (e.g. table missing), we still update the lead and return success with warning

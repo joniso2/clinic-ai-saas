@@ -26,6 +26,7 @@ export function DayModal({
   const [leadCache, setLeadCache] = useState<Record<string, Lead>>({});
   const [billingSettings, setBillingSettings] = useState<BillingSettings | null | 'loading' | 'none'>('loading');
   const [receiptApt, setReceiptApt] = useState<Appointment | null>(null);
+  const [appointmentReceiptMap, setAppointmentReceiptMap] = useState<Record<string, boolean>>({});
 
   // Fetch billing settings once so we can enable/disable the receipt button
   useEffect(() => {
@@ -34,6 +35,29 @@ export function DayModal({
       .then((data) => setBillingSettings(data?.settings ?? 'none'))
       .catch(() => setBillingSettings('none'));
   }, []);
+
+  // Check which completed appointments already have receipts
+  useEffect(() => {
+    const completedIds = appointments
+      .filter((a) => a.status != null && ['completed', 'נסגר'].includes(a.status))
+      .map((a) => a.id);
+    if (completedIds.length === 0) return;
+    Promise.all(
+      completedIds.map((id) =>
+        fetch(`/api/billing-documents?appointment_id=${id}&limit=1`, { credentials: 'include' })
+          .then((r) => r.ok ? r.json() : null)
+          .then((d) => {
+            const issued = (d?.documents ?? []).filter((doc: { status: string }) => doc.status !== 'cancelled');
+            return [id, issued.length > 0] as [string, boolean];
+          })
+          .catch(() => [id, false] as [string, boolean])
+      )
+    ).then((results) => {
+      const map: Record<string, boolean> = {};
+      for (const [id, has] of results) map[id] = has;
+      setAppointmentReceiptMap(map);
+    });
+  }, [appointments]);
 
   const handleIssueReceipt = (apt: Appointment) => {
     if (billingSettings && billingSettings !== 'loading' && billingSettings !== 'none') {
@@ -146,18 +170,25 @@ export function DayModal({
                 )}
 
                 {apt.status != null && ['completed', 'נסגר'].includes(apt.status) && (
-                  <button
-                    onClick={() => handleIssueReceipt(apt)}
-                    disabled={billingSettings === 'loading' || billingSettings === 'none'}
-                    title={billingSettings === 'none' ? 'נדרש להגדיר פרטי עסק תחילה' : 'הפק קבלה עבור תור זה'}
-                    className="mt-2 flex items-center gap-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40
-                      px-2.5 py-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400
-                      hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors
-                      disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    <ReceiptText className="h-3 w-3" />
-                    הפק קבלה
-                  </button>
+                  appointmentReceiptMap[apt.id] ? (
+                    <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
+                      <ReceiptText className="h-3 w-3" />
+                      קבלה הופקה
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => handleIssueReceipt(apt)}
+                      disabled={billingSettings === 'loading' || billingSettings === 'none'}
+                      title={billingSettings === 'none' ? 'נדרש להגדיר פרטי עסק תחילה' : 'הפק קבלה עבור תור זה'}
+                      className="mt-2 flex items-center gap-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40
+                        px-2.5 py-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400
+                        hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors
+                        disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <ReceiptText className="h-3 w-3" />
+                      הפק קבלה
+                    </button>
+                  )
                 )}
               </div>
             );
@@ -181,8 +212,12 @@ export function DayModal({
         prefillCustomerName={receiptApt.patient_name}
         prefillServiceName={receiptApt.service_name ?? undefined}
         prefillPrice={receiptApt.revenue ?? undefined}
+        fromAppointment
         onClose={() => setReceiptApt(null)}
-        onIssued={(_doc: BillingDocumentWithItems) => setReceiptApt(null)}
+        onIssued={(_doc: BillingDocumentWithItems) => {
+          setAppointmentReceiptMap((prev) => ({ ...prev, [receiptApt.id]: true }));
+          setReceiptApt(null);
+        }}
       />
     )}
     </>
