@@ -1,3 +1,4 @@
+import path from 'path';
 import {
   Document,
   Page,
@@ -9,13 +10,15 @@ import {
 import type { BillingDocumentWithItems } from '@/types/billing';
 import { DOC_TYPE_LABELS } from '@/types/billing';
 
-// Register Heebo — supports Hebrew glyphs, available via Google Fonts CDN
+// Local static TTFs (Hebrew + Latin merged) — no network dependency at render time
+const fontsDir = path.join(process.cwd(), 'public', 'fonts');
+
 Font.register({
   family: 'Heebo',
   fonts: [
-    { src: 'https://fonts.gstatic.com/s/heebo/v26/NGSpv5_NC0k9P_v6ZUCbLRAHxK1EiSysd0mm_00.woff2', fontWeight: 400 },
-    { src: 'https://fonts.gstatic.com/s/heebo/v26/NGSpv5_NC0k9P_v6ZUCbLRAHxK1EiS6Sd0mm_00.woff2', fontWeight: 600 },
-    { src: 'https://fonts.gstatic.com/s/heebo/v26/NGSpv5_NC0k9P_v6ZUCbLRAHxK1EiSuQd0mm_00.woff2', fontWeight: 700 },
+    { src: path.join(fontsDir, 'Heebo-400.ttf'), fontWeight: 400 },
+    { src: path.join(fontsDir, 'Heebo-600.ttf'), fontWeight: 600 },
+    { src: path.join(fontsDir, 'Heebo-700.ttf'), fontWeight: 700 },
   ],
 });
 

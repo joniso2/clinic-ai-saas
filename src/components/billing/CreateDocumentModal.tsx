@@ -97,6 +97,26 @@ export function CreateDocumentModal({ settings, appointmentId, appointmentLabel,
     if (step === 1) loadServices();
   }, [step, loadServices]);
 
+  // Auto-match prefilled service name to a clinic service for service_id + price
+  useEffect(() => {
+    if (!prefillServiceName || services.length === 0) return;
+    setItems((prev) =>
+      prev.map((item) => {
+        if (item.service_id) return item;
+        const norm = item.description.trim().toLowerCase();
+        const match = services.find(
+          (s) => s.service_name.trim().toLowerCase() === norm,
+        );
+        if (!match) return item;
+        return {
+          ...item,
+          service_id: match.id,
+          unit_price: item.unit_price || match.price,
+        };
+      }),
+    );
+  }, [services, prefillServiceName]);
+
   // ── Item helpers ────────────────────────────────────────────
   const addItem = () =>
     setItems((prev) => [...prev, { description: '', quantity: 1, unit_price: 0 }]);

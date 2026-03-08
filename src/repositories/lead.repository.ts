@@ -85,7 +85,7 @@ export async function createLead(payload: CreateLeadPayload): Promise<{
   const { data, error } = await supabase
     .from('leads')
     .insert(insertPayload)
-    .select('id')
+    .select('*')
     .single();
 
   if (error) {

@@ -124,7 +124,12 @@ export default function DashboardClient() {
         (payload) => {
           const newLead = payload.new as Lead;
           setLeads((prev) => {
-            if (prev.find((l) => l.id === newLead.id)) return prev;
+            const idx = prev.findIndex((l) => l.id === newLead.id);
+            if (idx >= 0) {
+              const updated = [...prev];
+              updated[idx] = { ...updated[idx], ...newLead };
+              return updated;
+            }
             return [newLead, ...prev];
           });
         }

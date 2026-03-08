@@ -24,11 +24,37 @@ export function DocumentDrawer({ doc, open, onClose, onCancelled }: Props) {
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   if (!open || !doc) return null;
 
-  const handleDownloadPDF = () => {
-    window.open(`/api/billing-documents/${doc.id}/pdf`, '_blank');
+  const handleDownloadPDF = async () => {
+    setPdfError(null);
+    setPdfLoading(true);
+    try {
+      const res = await fetch(`/api/billing-documents/${doc.id}/pdf`);
+      if (!res.ok) {
+        const text = await res.text();
+        console.error(`[DocumentDrawer] PDF download failed (${res.status}):`, text);
+        let errorMsg = 'שגיאה בהורדת PDF';
+        try { errorMsg = (JSON.parse(text) as { error?: string }).error ?? errorMsg; } catch {}
+        throw new Error(errorMsg);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${doc.doc_number}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setPdfError(e instanceof Error ? e.message : 'שגיאה בהורדת PDF');
+    } finally {
+      setPdfLoading(false);
+    }
   };
 
   const handleWhatsApp = () => {
@@ -296,13 +322,17 @@ export function DocumentDrawer({ doc, open, onClose, onCancelled }: Props) {
           {/* Primary: download */}
           <button
             onClick={handleDownloadPDF}
+            disabled={pdfLoading}
             className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900
               dark:bg-zinc-100 px-4 py-2.5 text-sm font-medium text-white dark:text-zinc-900
-              hover:bg-slate-700 dark:hover:bg-zinc-300 transition-colors"
+              hover:bg-slate-700 dark:hover:bg-zinc-300 transition-colors disabled:opacity-50"
           >
             <Download className="h-4 w-4" />
-            הורדת PDF
+            {pdfLoading ? 'מוריד...' : 'הורדת PDF'}
           </button>
+          {pdfError && (
+            <p className="text-xs text-red-600 dark:text-red-400 text-center">{pdfError}</p>
+          )}
 
           {/* Secondary: WhatsApp + Email + Copy */}
           <div className="flex items-center gap-2">

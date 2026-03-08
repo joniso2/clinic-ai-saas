@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { renderToBuffer } = require('@react-pdf/renderer');
+import { renderToBuffer } from '@react-pdf/renderer';
 import { createElement } from 'react';
 import { getClinicUser } from '@/lib/auth-server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { BillingDocumentPDF } from '@/components/billing/BillingDocumentPDF';
 import { PAYMENT_METHOD_LABELS } from '@/types/billing';
 import type { BillingDocumentWithItems, PaymentMethod } from '@/types/billing';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -56,8 +58,14 @@ export async function GET(_req: NextRequest, { params }: Params) {
       })
     ) as Uint8Array;
   } catch (e) {
-    console.error('[pdf] render error', e);
-    return NextResponse.json({ error: 'שגיאה ביצירת PDF' }, { status: 500 });
+    const msg = e instanceof Error ? e.message : String(e);
+    const stack = e instanceof Error ? e.stack : '';
+    console.error('[pdf] render error:', msg);
+    if (stack) console.error('[pdf] stack:', stack);
+    return NextResponse.json(
+      { error: 'שגיאה ביצירת PDF', detail: process.env.NODE_ENV === 'development' ? msg : undefined },
+      { status: 500 },
+    );
   }
 
   // Audit (fire-and-forget)

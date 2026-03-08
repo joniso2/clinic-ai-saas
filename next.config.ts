@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  serverExternalPackages: [
+    "@react-pdf/renderer",
+    "@react-pdf/font",
+    "@react-pdf/layout",
+    "@react-pdf/pdfkit",
+    "@react-pdf/reconciler",
+    "fontkit",
+  ],
   experimental: {
     staticGenerationMaxConcurrency: 1,
     webpackMemoryOptimizations: true,

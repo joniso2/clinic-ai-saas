@@ -1,15 +1,31 @@
 'use client';
 
-import { useState } from 'react';
-import { X, Calendar as CalendarIcon } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, Calendar as CalendarIcon, Clock } from 'lucide-react';
 import type { Lead } from '@/types/leads';
 import type { Appointment, AppointmentType } from '@/types/appointments';
+
+type WorkingHoursDay = {
+  day: number;
+  enabled: boolean;
+  open: string;
+  close: string;
+};
 
 type Props = {
   lead: Lead;
   onClose: () => void;
   onScheduled: (appointment: Appointment) => void;
 };
+
+const DAY_LABELS_HE = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+
+const DEFAULT_HOURS: WorkingHoursDay[] = Array.from({ length: 7 }, (_, i) => ({
+  day: i,
+  enabled: i < 6,
+  open: '08:00',
+  close: '16:00',
+}));
 
 export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) {
   const [patientName] = useState(lead.full_name ?? '');
@@ -18,16 +34,97 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
     const day = String(now.getDate()).padStart(2, '0');
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const year = now.getFullYear();
-    return `${day}/${month}/${year}`; // stored as DD/MM/YYYY internally
+    return `${day}/${month}/${year}`;
   });
-  const [time, setTime] = useState('08:00');
+  const [time, setTime] = useState('');
   const type: AppointmentType = 'new';
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [workingHours, setWorkingHours] = useState<WorkingHoursDay[]>(DEFAULT_HOURS);
+  const dateRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((d) => {
+        const wh = d?.settings?.working_hours;
+        if (Array.isArray(wh) && wh.length === 7) {
+          setWorkingHours(wh);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Set default time to the opening hour of today when hours load
+  useEffect(() => {
+    if (!time) {
+      const jsDay = new Date().getDay();
+      const dayConfig = workingHours.find((d) => d.day === jsDay);
+      if (dayConfig?.enabled) {
+        setTime(dayConfig.open);
+      } else {
+        setTime(workingHours.find((d) => d.enabled)?.open ?? '08:00');
+      }
+    }
+  }, [workingHours, time]);
+
+  function getSelectedDayConfig(): WorkingHoursDay | undefined {
+    const parts = date.split('/');
+    if (parts.length !== 3) return undefined;
+    const [dayStr, monthStr, yearStr] = parts;
+    const d = new Date(
+      parseInt(yearStr, 10),
+      parseInt(monthStr, 10) - 1,
+      parseInt(dayStr, 10),
+    );
+    if (isNaN(d.getTime())) return undefined;
+    return workingHours.find((w) => w.day === d.getDay());
+  }
+
+  const dayConfig = getSelectedDayConfig();
+  const isDayClosed = dayConfig ? !dayConfig.enabled : false;
+
+  function openDatePicker() {
+    const el = dateRef.current;
+    if (el) {
+      try { el.showPicker(); } catch { el.focus(); el.click(); }
+    }
+  }
+
+  function getDateValidation(): string | null {
+    if (isDayClosed) {
+      const parts = date.split('/');
+      if (parts.length === 3) {
+        const d = new Date(
+          parseInt(parts[2], 10),
+          parseInt(parts[1], 10) - 1,
+          parseInt(parts[0], 10),
+        );
+        const dayName = DAY_LABELS_HE[d.getDay()] ?? '';
+        return `הקליניקה סגורה ביום ${dayName}`;
+      }
+      return 'הקליניקה סגורה ביום זה';
+    }
+    return null;
+  }
+
+  function getTimeValidation(): string | null {
+    if (!dayConfig?.enabled || !time) return null;
+    if (time < dayConfig.open || time > dayConfig.close) {
+      return `השעה חייבת להיות בין ${dayConfig.open} ל-${dayConfig.close}`;
+    }
+    return null;
+  }
+
+  const dateError = getDateValidation();
+  const timeError = getTimeValidation();
+  const hasValidationError = !!dateError || !!timeError;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!patientName.trim() || !date || !time) return;
+    if (hasValidationError) return;
     setSubmitting(true);
     setError(null);
 
@@ -89,109 +186,133 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md rounded-2xl bg-white shadow-2xl"
+        className="w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden"
+        dir="rtl"
       >
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 flex-row-reverse">
-          <div className="flex items-center gap-2 flex-row-reverse">
-            <CalendarIcon className="h-4 w-4 text-slate-500" />
-            <h2 className="text-base font-semibold text-slate-900 text-right">
-              קבע תור
-            </h2>
+        {/* Header */}
+        <div className="bg-slate-900 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
+                <CalendarIcon className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-white">קביעת תור</h2>
+                <p className="text-xs text-slate-400">{patientName}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full p-1.5 text-slate-400 hover:bg-white/10 hover:text-white transition-colors"
+              aria-label="סגור"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100"
-            aria-label="סגור"
-          >
-            <X className="h-4 w-4" />
-          </button>
         </div>
 
-        <div className="space-y-4 px-5 py-4">
+        <div className="space-y-4 px-6 py-5">
           {error && (
-            <div className="whitespace-pre-line rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            <div className="whitespace-pre-line rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-700 leading-relaxed">
               {error}
             </div>
           )}
 
+          {/* Date field */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-700 text-right block">
-              שם המטופל
+            <label className="text-xs font-medium text-slate-600 block">
+              תאריך
             </label>
-            <input
-              type="text"
-              value={patientName}
-              readOnly
-              className="block w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600 cursor-default focus:outline-none"
-            />
+            <button
+              type="button"
+              onClick={openDatePicker}
+              className={`relative flex w-full items-center gap-2 rounded-xl border px-3.5 py-3 text-sm transition-colors text-right
+                ${dateError
+                  ? 'border-red-300 bg-red-50 hover:border-red-400'
+                  : 'border-slate-200 bg-white hover:border-slate-300 focus-within:ring-2 focus-within:ring-slate-900/10 focus-within:border-slate-400'
+                }`}
+            >
+              <CalendarIcon className="h-4 w-4 text-slate-400 shrink-0" />
+              <span className="flex-1 tabular-nums text-slate-900">{date}</span>
+              {dayConfig?.enabled && (
+                <span className="text-xs text-slate-400">
+                  {DAY_LABELS_HE[dayConfig.day]}
+                </span>
+              )}
+              <input
+                ref={dateRef}
+                type="date"
+                value={(() => {
+                  const parts = date.split('/');
+                  if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                  return '';
+                })()}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val) {
+                    const [y, m, d] = val.split('-');
+                    setDate(`${d}/${m}/${y}`);
+                  }
+                }}
+                required
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                tabIndex={-1}
+              />
+            </button>
+            {dateError && (
+              <p className="text-xs text-red-600 mt-1">{dateError}</p>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 text-right block">
-                תאריך
-              </label>
-              <div className="relative">
-                <div className="flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900">
-                  <span className="flex-1 tabular-nums">{date}</span>
-                  <CalendarIcon className="h-4 w-4 text-slate-400 cursor-pointer hover:text-slate-700 transition-colors" onClick={() => {
-                    const el = document.getElementById('appt-date-picker') as HTMLInputElement | null;
-                    el?.showPicker?.();
-                    el?.click();
-                  }} />
-                </div>
-                <input
-                  id="appt-date-picker"
-                  type="date"
-                  value={(() => {
-                    const parts = date.split('/');
-                    if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
-                    return '';
-                  })()}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val) {
-                      const [y, m, d] = val.split('-');
-                      setDate(`${d}/${m}/${y}`);
-                    }
-                  }}
-                  required
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 text-right block">
-                שעה (08:00–16:00)
-              </label>
+          {/* Time field */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-slate-600 block">
+              שעה
+              {dayConfig?.enabled && (
+                <span className="text-slate-400 font-normal mr-1">
+                  ({dayConfig.open}–{dayConfig.close})
+                </span>
+              )}
+            </label>
+            <div className={`relative flex items-center gap-2 rounded-xl border px-3.5 py-3 text-sm transition-colors
+              ${timeError
+                ? 'border-red-300 bg-red-50'
+                : 'border-slate-200 bg-white hover:border-slate-300 focus-within:ring-2 focus-within:ring-slate-900/10 focus-within:border-slate-400'
+              }`}
+            >
+              <Clock className="h-4 w-4 text-slate-400 shrink-0" />
               <input
                 type="time"
                 value={time}
-                min="08:00"
-                max="15:30"
+                min={dayConfig?.enabled ? dayConfig.open : '08:00'}
+                max={dayConfig?.enabled ? dayConfig.close : '16:00'}
                 onChange={(e) => setTime(e.target.value)}
                 required
-                className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
+                disabled={isDayClosed}
+                className="flex-1 bg-transparent text-slate-900 focus:outline-none disabled:text-slate-400 disabled:cursor-not-allowed"
               />
             </div>
+            {timeError && (
+              <p className="text-xs text-red-600 mt-1">{timeError}</p>
+            )}
           </div>
-
         </div>
 
-        <div className="flex justify-start gap-3 border-t border-slate-100 px-5 py-3 flex-row-reverse">
+        {/* Footer */}
+        <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4 bg-slate-50/50">
           <button
             type="button"
             onClick={onClose}
             disabled={submitting}
-            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-white hover:border-slate-300 disabled:opacity-50 transition-colors"
           >
             ביטול
           </button>
           <button
             type="submit"
-            disabled={submitting}
-            className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+            disabled={submitting || hasValidationError || isDayClosed}
+            className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             {submitting ? 'קובע…' : 'קבע תור'}
           </button>
@@ -200,4 +321,3 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
     </div>
   );
 }
-
