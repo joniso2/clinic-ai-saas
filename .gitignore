@@ -41,3 +41,12 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# Claude AI worktrees
+.claude/
+
+# VSCode local settings
+.vscode/
+
+# Local audit reports
+*.pdf
