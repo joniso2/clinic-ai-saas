@@ -80,7 +80,7 @@ export function SettingsTab({
   };
 
   return (
-    <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-7 flex-row-reverse lg:flex-row-reverse">
+    <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-7 lg:flex-row-reverse">
       {/* ── Sidebar / tab nav ─────────────────────────────────────────────── */}
       <nav className="lg:w-52 shrink-0">
         {/* Mobile: horizontal scroll */}

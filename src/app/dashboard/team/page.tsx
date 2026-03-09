@@ -14,6 +14,7 @@ import {
   UserCircle,
   Shield,
 } from './team-components';
+import { getAvatarColor, getInitials } from '@/components/dashboard/customers/customers-helpers';
 
 export default function TeamPage() {
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -105,17 +106,99 @@ export default function TeamPage() {
         </div>
       )}
 
+      {/* ── Mobile card list ── */}
       {!loading && !error && members.length > 0 && (
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-950 shadow-sm overflow-hidden ring-1 ring-slate-900/[0.03] dark:ring-white/[0.03]">
+        <div className="flex flex-col gap-3 md:hidden" dir="rtl">
+          {members.map((m) => {
+            const avatarBg = getAvatarColor(m.full_name || m.user_id);
+            const initials = getInitials(m.full_name);
+            return (
+              <div
+                key={m.user_id}
+                className="rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm"
+              >
+                {/* Top row: avatar + name + role */}
+                <div className="flex items-center gap-3">
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${avatarBg}`}>
+                    {initials}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[15px] font-semibold text-slate-900 dark:text-slate-50">
+                      {m.full_name || '—'}
+                    </p>
+                    <span className="inline-flex rounded-lg px-2 py-0.5 text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 mt-0.5">
+                      {getRoleDisplay(m.role, m.job_title)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Middle: email + status */}
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px]">
+                  <span className="text-slate-500 dark:text-slate-400 truncate">{m.email}</span>
+                  <span
+                    className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-semibold ${
+                      m.banned_until
+                        ? 'bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400'
+                        : 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-400'
+                    }`}
+                  >
+                    {m.banned_until ? 'לא פעיל' : 'פעיל'}
+                  </span>
+                </div>
+
+                {/* Bottom: permissions + actions */}
+                <div className="mt-3 flex items-center justify-between">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {ROLE_PERMISSIONS[getRoleDisplay(m.role, m.job_title)] ?? '—'}
+                  </p>
+                  {canEdit && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => (m.banned_until ? handleEnable(m.user_id) : handleDisable(m.user_id))}
+                        disabled={submitting}
+                        className="rounded-lg p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                        title={m.banned_until ? 'הפעל' : 'השבת'}
+                      >
+                        {m.banned_until ? <UserCheck className="h-4 w-4" /> : <UserX className="h-4 w-4" />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditRoleId(m.user_id)}
+                        className="rounded-lg p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                        title="ערוך תפקיד"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteId(m.user_id)}
+                        className="rounded-lg p-2 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                        title="הסר מצוות"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Desktop table ── */}
+      {!loading && !error && members.length > 0 && (
+        <div className="hidden md:block rounded-2xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-950 shadow-sm overflow-hidden ring-1 ring-slate-900/[0.03] dark:ring-white/[0.03]">
           <div className="overflow-x-auto overflow-y-visible" dir="rtl">
             <table className="min-w-full border-collapse">
               <thead>
                 <tr className="sticky top-0 z-10 border-b border-slate-200 dark:border-slate-700 bg-slate-100/95 dark:bg-slate-800/95">
                   <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right">שם</th>
                   <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right">תפקיד</th>
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right">אימייל</th>
+                  <th className="hidden lg:table-cell px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right">אימייל</th>
                   <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right">סטטוס</th>
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right">הרשאות</th>
+                  <th className="hidden lg:table-cell px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right">הרשאות</th>
                   {canEdit && <th className="w-28 px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right">פעולות</th>}
                 </tr>
               </thead>
@@ -133,7 +216,7 @@ export default function TeamPage() {
                         {getRoleDisplay(m.role, m.job_title)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right text-sm text-slate-600 dark:text-slate-400">{m.email}</td>
+                    <td className="hidden lg:table-cell px-4 py-3 text-right text-sm text-slate-600 dark:text-slate-400">{m.email}</td>
                     <td className="px-4 py-3 text-right">
                       <span
                         className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold ${
@@ -143,7 +226,7 @@ export default function TeamPage() {
                         {m.banned_until ? 'לא פעיל' : 'פעיל'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right text-xs text-slate-500 dark:text-slate-400">
+                    <td className="hidden lg:table-cell px-4 py-3 text-right text-xs text-slate-500 dark:text-slate-400">
                       {ROLE_PERMISSIONS[getRoleDisplay(m.role, m.job_title)] ?? '—'}
                     </td>
                     {canEdit && (

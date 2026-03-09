@@ -439,7 +439,54 @@ export function CustomersTab() {
             </div>
           </div>
 
-          <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
+          {/* ── Mobile Card Layout ── */}
+          <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+            {filteredClosedLeads.length === 0 ? (
+              <div className="py-12 text-center text-sm text-slate-400 dark:text-slate-500">אין תוצאות</div>
+            ) : filteredClosedLeads.map((l) => {
+              const recall = getRecall(l.id);
+              const isSelected = selectedIds.has(l.id);
+              return (
+                <div key={l.id} onClick={() => setDetailLead(l)}
+                  className={`px-4 py-3.5 cursor-pointer transition-colors active:scale-[0.99] ${isSelected ? 'bg-indigo-50/60 dark:bg-indigo-900/15' : ''}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getAvatarColor(l.id)} text-white text-xs font-bold`}>
+                        {getInitials(l.full_name)}
+                        {recall.active && (
+                          <span className="absolute -top-1 -start-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 border-2 border-white dark:border-slate-900">
+                            <BellRing className="h-2 w-2 text-white" />
+                          </span>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <span className="block font-medium text-slate-800 dark:text-slate-50 truncate">{l.full_name || '—'}</span>
+                        {l.phone && (
+                          <a href={`tel:${l.phone}`} onClick={(e) => e.stopPropagation()} dir="ltr" className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">{formatPhoneILS(l.phone)}</a>
+                        )}
+                      </div>
+                    </div>
+                    <input type="checkbox" checked={isSelected} onChange={() => toggleSelected(l.id)} onClick={(e) => e.stopPropagation()}
+                      className="rounded border-slate-300 dark:border-slate-600 text-indigo-500 focus:ring-indigo-500/30 shrink-0" />
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                    <SourceBadge source={l.source} />
+                    {getValueLead(l) > 0 && <span className="tabular-nums font-semibold text-slate-800 dark:text-slate-200">{formatCurrencyILS(getValueLead(l))}</span>}
+                    <span>{formatDate(getCloseDateLead(l))}</span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
+                    <button type="button" onClick={() => setDeleteLeadId(l.id)}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ── Desktop Table ── */}
+          <div className="hidden md:block overflow-x-auto max-h-[60vh] overflow-y-auto">
             <table className="w-full text-right table-fixed" dir="rtl">
               <thead className="sticky top-0 z-10 bg-slate-50/70 dark:bg-slate-800/50 backdrop-blur-sm text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-[0.08em]">
                 <tr className="border-b border-slate-100 dark:border-slate-800">
@@ -453,9 +500,9 @@ export function CustomersTab() {
                   </th>
                   <th className="py-3 ps-2 pe-3 w-[22%] text-right">לקוח</th>
                   <th className="py-3 pe-2 ps-3 w-[16%] text-right">טלפון</th>
-                  <th className="py-3 px-3 w-[11%] text-right">מקור</th>
+                  <th className="hidden lg:table-cell py-3 px-3 w-[11%] text-right">מקור</th>
                   <th className="py-3 px-3 w-[14%] text-right">תאריך</th>
-                  <th className="py-3 px-3 w-[14%] text-right">ביקור אחרון</th>
+                  <th className="hidden lg:table-cell py-3 px-3 w-[14%] text-right">ביקור אחרון</th>
                   <th className="py-3 px-3 w-[12%] text-right">שווי</th>
                   <th className="py-3 px-2 w-[6%]">פעולות</th>
                 </tr>
@@ -493,9 +540,9 @@ export function CustomersTab() {
                     <td className="py-3.5 pe-2 ps-3 min-w-0">
                       <a href={l.phone ? `tel:${l.phone}` : '#'} onClick={(e) => e.stopPropagation()} dir="ltr" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline truncate block">{formatPhoneILS(l.phone)}</a>
                     </td>
-                    <td className="py-3.5 px-3"><SourceBadge source={l.source} /></td>
+                    <td className="hidden lg:table-cell py-3.5 px-3"><SourceBadge source={l.source} /></td>
                     <td className="py-3.5 px-3 text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">{formatDate(getCloseDateLead(l))}</td>
-                    <td className="py-3.5 px-3 text-sm text-slate-500 dark:text-slate-400">—</td>
+                    <td className="hidden lg:table-cell py-3.5 px-3 text-sm text-slate-500 dark:text-slate-400">—</td>
                     <td className="py-3.5 px-3 text-sm font-semibold text-slate-800 dark:text-slate-200 tabular-nums">{getValueLead(l) > 0 ? formatCurrencyILS(getValueLead(l)) : '—'}</td>
                     <td className="py-3.5 px-2 text-center" onClick={(e) => e.stopPropagation()}>
                       <button type="button" onClick={() => setDeleteLeadId(l.id)}
@@ -602,7 +649,69 @@ export function CustomersTab() {
           </div>
         </div>
 
-        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
+        {/* ── Mobile Card Layout ── */}
+        <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+          {filteredCustomers.length === 0 ? (
+            <div className="py-12 text-center">
+              <div className="flex flex-col items-center gap-3 text-slate-400 dark:text-slate-500">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
+                  <FileText className="h-6 w-6" />
+                </div>
+                <p className="text-sm font-medium">אין תוצאות</p>
+                {hasActiveFilters && <button type="button" onClick={clearFilters} className="text-xs text-indigo-500 hover:underline">נקה סינון</button>}
+              </div>
+            </div>
+          ) : filteredCustomers.map((c) => {
+            const recall = getRecall(c.id);
+            const statusBadge = getStatusBadgeStyle(c.status);
+            const isSelected = selectedIds.has(c.id);
+            return (
+              <div key={c.id} onClick={() => { setDetailLead(null); setDetailId(c.id); }}
+                className={`px-4 py-3.5 cursor-pointer transition-colors active:scale-[0.99] ${isSelected ? 'bg-indigo-50/60 dark:bg-indigo-900/15' : ''}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getAvatarColor(c.id)} text-white text-xs font-bold`}>
+                      {getInitials(c.full_name)}
+                      {recall.active && (
+                        <span className="absolute -top-1 -start-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 border-2 border-white dark:border-slate-900">
+                          <BellRing className="h-2 w-2 text-white" />
+                        </span>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <span className="block font-medium text-slate-800 dark:text-slate-50 truncate">{c.full_name}</span>
+                      {c.phone && (
+                        <a href={`tel:${c.phone}`} onClick={(e) => e.stopPropagation()} dir="ltr" className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">{formatPhoneILS(c.phone)}</a>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${statusBadge.cls}`}>{statusBadge.label}</span>
+                    <input
+                      type="checkbox" checked={isSelected}
+                      onChange={() => toggleSelected(c.id)} onClick={(e) => e.stopPropagation()}
+                      className="rounded border-slate-300 dark:border-slate-600 text-indigo-500 focus:ring-indigo-500/30"
+                    />
+                  </div>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                  <span className="tabular-nums font-semibold text-slate-800 dark:text-slate-200">{formatCurrencyILS(Number(c.total_revenue))}</span>
+                  <span>{c.visits_count} ביקורים</span>
+                  {c.last_visit_date && <span>ביקור: {formatDate(c.last_visit_date)}</span>}
+                </div>
+                <div className="mt-2 flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
+                  <button type="button" onClick={() => setDeleteId(c.id)}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ── Desktop Table ── */}
+        <div className="hidden md:block overflow-x-auto max-h-[60vh] overflow-y-auto">
           <table className="w-full text-right" dir="rtl">
             <thead className="sticky top-0 z-10 bg-slate-50/70 dark:bg-slate-800/50 backdrop-blur-sm text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-[0.08em]">
               <tr className="border-b border-slate-100 dark:border-slate-800">
@@ -616,9 +725,9 @@ export function CustomersTab() {
                 </th>
                 <th className="py-3 px-4 min-w-[180px] text-right">לקוח</th>
                 <th className="py-3 px-4 w-36 text-right">טלפון</th>
-                <th className="py-3 px-4 w-32 text-right">ביקור אחרון</th>
+                <th className="hidden lg:table-cell py-3 px-4 w-32 text-right">ביקור אחרון</th>
                 <th className="py-3 px-4 w-28 text-right">הכנסה</th>
-                <th className="py-3 px-4 w-24 text-right">ביקורים</th>
+                <th className="hidden lg:table-cell py-3 px-4 w-24 text-right">ביקורים</th>
                 <th className="py-3 px-4 w-24 text-right">סטטוס</th>
                 <th className="py-3 px-4 w-10" />
               </tr>
@@ -667,9 +776,9 @@ export function CustomersTab() {
                     <td className="py-3.5 px-4 w-36">
                       <a href={`tel:${c.phone}`} onClick={(e) => e.stopPropagation()} dir="ltr" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">{formatPhoneILS(c.phone)}</a>
                     </td>
-                    <td className="py-3.5 px-4 w-32 text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">{formatDate(c.last_visit_date)}</td>
+                    <td className="hidden lg:table-cell py-3.5 px-4 w-32 text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">{formatDate(c.last_visit_date)}</td>
                     <td className="py-3.5 px-4 w-28 text-sm font-semibold text-slate-800 dark:text-slate-200 tabular-nums whitespace-nowrap">{formatCurrencyILS(Number(c.total_revenue))}</td>
-                    <td className="py-3.5 px-4 w-24 text-sm text-slate-500 dark:text-slate-400 tabular-nums">{c.visits_count}</td>
+                    <td className="hidden lg:table-cell py-3.5 px-4 w-24 text-sm text-slate-500 dark:text-slate-400 tabular-nums">{c.visits_count}</td>
                     <td className="py-3.5 px-4 w-24">
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusBadge.cls}`}>{statusBadge.label}</span>
                     </td>

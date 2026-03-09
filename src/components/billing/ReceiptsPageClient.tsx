@@ -178,7 +178,7 @@ export function ReceiptsPageClient() {
             ניהול קבלות, חשבוניות ומסמכי ביטול
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={handleExport}
             disabled={exporting}
@@ -322,8 +322,100 @@ export function ReceiptsPageClient() {
         </button>
       </div>
 
-      {/* ── Table ─────────────────────────────────────────────────────────── */}
-      <div className="w-full overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.06)] bg-white dark:bg-slate-900">
+      {/* ── Mobile card list ──────────────────────────────────────────────── */}
+      {loading ? (
+        <div className="md:hidden p-12 text-center">
+          <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600 dark:border-slate-600 dark:border-t-slate-200 mb-3" />
+          <p className="text-sm text-slate-400 dark:text-slate-500">טוען מסמכים...</p>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="md:hidden p-12 text-center">
+          <Receipt className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600 mb-3" />
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+            {search || docType || status ? 'לא נמצאו מסמכים התואמים לחיפוש' : 'אין מסמכים עדיין'}
+          </p>
+        </div>
+      ) : (
+        <div className="md:hidden space-y-3">
+          {filtered.map((doc) => (
+            <div
+              key={doc.id}
+              onClick={() => openDrawer(doc)}
+              className="rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900
+                shadow-[0_1px_3px_rgba(0,0,0,0.06)] p-4 cursor-pointer
+                active:bg-slate-50 dark:active:bg-slate-800/50 transition-colors"
+            >
+              {/* Top row: doc number + type badge */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-medium text-slate-700 dark:text-slate-300">
+                    {doc.doc_number}
+                  </span>
+                  <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium
+                    bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                    {DOC_TYPE_LABELS[doc.doc_type]}
+                  </span>
+                </div>
+                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+                  ${doc.status === 'issued'
+                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                    : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                  }`}>
+                  {doc.status === 'issued' ? 'הופק' : 'בוטל'}
+                </span>
+              </div>
+
+              {/* Middle: customer, date, total */}
+              <div className="space-y-1.5">
+                <p className="text-[14px] font-medium text-slate-800 dark:text-slate-200">
+                  {doc.customer_name}
+                </p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                    {fmtDate(doc.issued_at)}
+                  </span>
+                  <span className="text-[15px] font-semibold text-slate-900 dark:text-slate-50 tabular-nums">
+                    {fmtFull(doc.total)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* Mobile pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-1 py-3">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                מציג {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} מתוך {total}
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  disabled={page === 0}
+                  className="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100
+                    dark:hover:bg-slate-800 disabled:opacity-30 transition-colors"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+                <span className="text-xs text-slate-500 dark:text-slate-400 px-2 tabular-nums">
+                  {page + 1} / {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                  disabled={page >= totalPages - 1}
+                  className="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100
+                    dark:hover:bg-slate-800 disabled:opacity-30 transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Table (desktop) ─────────────────────────────────────────────── */}
+      <div className="hidden md:block w-full overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.06)] bg-white dark:bg-slate-900">
         {loading ? (
           <div className="p-12 text-center">
             <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600 dark:border-slate-600 dark:border-t-slate-200 mb-3" />

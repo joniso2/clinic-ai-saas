@@ -341,8 +341,108 @@ export function LeadsTable({
         </div>
       )}
 
-      {/* Table */}
-      <div className="w-full overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] bg-white dark:bg-slate-900">
+      {/* ── Mobile Card Layout ─────────────────────────────────────────── */}
+      <div className="md:hidden space-y-2" dir="rtl">
+        {filteredAndSorted.map((lead) => {
+          const priority = getDisplayPriority(lead);
+          const urgent = isUrgent(lead);
+          const isSelected = selectedIds.has(lead.id);
+          return (
+            <div
+              key={lead.id}
+              onClick={() => onView(lead)}
+              className={[
+                'rounded-xl border bg-white dark:bg-slate-900 p-3.5 transition-colors cursor-pointer active:scale-[0.99]',
+                isSelected
+                  ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50/80 dark:bg-indigo-950/25'
+                  : urgent
+                    ? 'border-red-200 dark:border-red-800/50 bg-red-50/40 dark:bg-red-950/10'
+                    : 'border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700',
+              ].join(' ')}
+            >
+              {/* Top row: name + status */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    {urgent && <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-red-500/90" />}
+                    <span className="text-sm font-bold text-slate-900 dark:text-slate-50 truncate">
+                      {lead.full_name || 'ליד ללא שם'}
+                    </span>
+                  </div>
+                  {lead.email && (
+                    <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5 truncate">{lead.email}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className={`inline-flex rounded-lg px-2 py-0.5 text-[11px] font-semibold ${PRIORITY_STYLES[priority]}`}>
+                    {PRIORITY_LABELS[priority] ?? priority}
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={(e) => { e.stopPropagation(); toggleSelect(lead.id); }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="h-4 w-4 rounded border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-800 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
+                    aria-label="בחר ליד"
+                  />
+                </div>
+              </div>
+
+              {/* Middle row: status + value + date */}
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-[11px] font-semibold ${STATUS_BADGE_STYLES[lead.status ?? 'Pending'] ?? STATUS_BADGE_STYLES['Pending']}`}>
+                  {STATUS_LABELS[lead.status ?? 'Pending'] ?? lead.status ?? STATUS_LABELS.Pending}
+                </span>
+                {(lead.estimated_deal_value ?? 0) > 0 && (
+                  <span className="tabular-nums text-slate-700 dark:text-slate-300 font-medium">
+                    {formatCurrencyILS(lead.estimated_deal_value!)}
+                  </span>
+                )}
+                {lead.last_contact_date && (
+                  <span className="tabular-nums text-slate-500 dark:text-slate-400">
+                    {formatDateDDMMYYYY(lead.last_contact_date)}
+                  </span>
+                )}
+                {lead.source && SOURCE_LABELS[lead.source] && (
+                  <span className="text-slate-500 dark:text-slate-400">{SOURCE_LABELS[lead.source]}</span>
+                )}
+              </div>
+
+              {/* Bottom row: actions */}
+              <div className="mt-2.5 flex items-center gap-1 border-t border-slate-100 dark:border-slate-800 pt-2" onClick={(e) => e.stopPropagation()}>
+                {lead.phone && (
+                  <a href={`tel:${lead.phone}`}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                    <Phone className="h-4 w-4" />
+                  </a>
+                )}
+                {lead.phone && (
+                  <a href={toWaHref(lead.phone)} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-green-50 dark:hover:bg-green-950/40 hover:text-green-600 dark:hover:text-green-400 transition-colors">
+                    <WhatsAppIcon className="h-4 w-4" />
+                  </a>
+                )}
+                <ActionIconButton icon={CalendarIcon} label="קבע תור" variant="view" onClick={() => onScheduleAppointment(lead)} />
+                <ActionIconButton icon={Pencil} label="עריכה" variant="edit" onClick={() => onEdit(lead)} />
+                {onCompleteLead && lead.status !== 'Closed' && lead.status !== 'Disqualified' && (
+                  <ActionIconButton icon={CheckCircle} label="סיום טיפול" variant="complete" onClick={() => setCompleteLead(lead)} />
+                )}
+                <div className="flex-1" />
+                <ActionIconButton icon={Trash2} label="מחיקה" variant="delete" onClick={() => onDelete(lead)} />
+              </div>
+            </div>
+          );
+        })}
+        {filteredAndSorted.length === 0 && (
+          <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-12 text-center">
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">אין לידים התואמים את הסינון.</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">נסה לשנות חיפוש או סינון, או הוסף ליד חדש.</p>
+          </div>
+        )}
+      </div>
+
+      {/* ── Desktop Table ──────────────────────────────────────────────── */}
+      <div className="hidden md:block w-full overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] bg-white dark:bg-slate-900">
         <div className="overflow-x-auto overflow-y-visible" dir="rtl">
           <table className="min-w-full border-collapse">
             <thead>
@@ -351,9 +451,9 @@ export function LeadsTable({
                 <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right">עדיפות</th>
                 <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right">שווי</th>
                 <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right">סטטוס</th>
-                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right">מקור</th>
-                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right">תאריך</th>
-                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right">מעקב הבא</th>
+                <th className="hidden lg:table-cell px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right">מקור</th>
+                <th className="hidden lg:table-cell px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right">תאריך</th>
+                <th className="hidden xl:table-cell px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right">מעקב הבא</th>
                 <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right">תור הבא</th>
                 {isDisqualifiedView && (
                   <>
@@ -519,13 +619,13 @@ export function LeadsTable({
                         </div>
                       )}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600 dark:text-slate-400 text-right align-middle">
+                    <td className="hidden lg:table-cell whitespace-nowrap px-4 py-3 text-xs text-slate-600 dark:text-slate-400 text-right align-middle">
                       {(lead.source && SOURCE_LABELS[lead.source]) ? SOURCE_LABELS[lead.source] : (lead.source || <span className="italic text-slate-400 dark:text-slate-500/80">לא ידוע</span>)}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs tabular-nums text-slate-600 dark:text-slate-400 text-right align-middle">
+                    <td className="hidden lg:table-cell whitespace-nowrap px-4 py-3 text-xs tabular-nums text-slate-600 dark:text-slate-400 text-right align-middle">
                       {lead.last_contact_date ? formatDateDDMMYYYY(lead.last_contact_date) : <span className="italic text-slate-400 dark:text-slate-500/80">עדיין לא נוצר קשר</span>}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs tabular-nums text-slate-600 dark:text-slate-400 text-right align-middle">
+                    <td className="hidden xl:table-cell whitespace-nowrap px-4 py-3 text-xs tabular-nums text-slate-600 dark:text-slate-400 text-right align-middle">
                       {lead.next_follow_up_date ? formatDateDDMMYYYY(lead.next_follow_up_date) : <span className="italic text-slate-400 dark:text-slate-500/80">אין מעקב</span>}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-right align-middle">
