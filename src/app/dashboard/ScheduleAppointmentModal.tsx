@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { X, Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
@@ -121,6 +121,32 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
   const timeError = getTimeValidation();
   const hasValidationError = !!dateError || !!timeError;
 
+  const timeSlots = useMemo(() => {
+    if (!dayConfig?.enabled) return [];
+    const slots: string[] = [];
+    const [startH, startM] = dayConfig.open.split(':').map(Number);
+    const [endH, endM] = dayConfig.close.split(':').map(Number);
+    const startMin = startH * 60 + startM;
+    const endMin = endH * 60 + endM;
+    for (let m = startMin; m <= endMin; m += 15) {
+      const h = Math.floor(m / 60);
+      const min = m % 60;
+      slots.push(`${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`);
+    }
+    return slots;
+  }, [dayConfig]);
+
+  const slotSections = useMemo(() => {
+    const sections: { label: string; slots: string[] }[] = [];
+    const morning = timeSlots.filter(t => t < '12:00');
+    const afternoon = timeSlots.filter(t => t >= '12:00' && t < '17:00');
+    const evening = timeSlots.filter(t => t >= '17:00');
+    if (morning.length) sections.push({ label: 'בוקר', slots: morning });
+    if (afternoon.length) sections.push({ label: 'צהריים', slots: afternoon });
+    if (evening.length) sections.push({ label: 'ערב', slots: evening });
+    return sections;
+  }, [timeSlots]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!patientName.trim() || !date || !time) return;
@@ -184,7 +210,7 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 px-4 backdrop-blur-sm">
       <form
         ref={panelRef}
         onSubmit={handleSubmit}
@@ -265,7 +291,7 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
             )}
           </div>
 
-          {/* Time field */}
+          {/* Time slots */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-600 block">
               שעה
@@ -275,24 +301,35 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
                 </span>
               )}
             </label>
-            <div className={`relative flex items-center gap-2 rounded-xl border px-3.5 py-3 text-sm transition-colors
-              ${timeError
-                ? 'border-red-300 bg-red-50'
-                : 'border-slate-200 bg-white hover:border-slate-300 focus-within:ring-2 focus-within:ring-slate-900/10 focus-within:border-slate-400'
-              }`}
-            >
-              <Clock className="h-4 w-4 text-slate-400 shrink-0" />
-              <input
-                type="time"
-                value={time}
-                min={dayConfig?.enabled ? dayConfig.open : '08:00'}
-                max={dayConfig?.enabled ? dayConfig.close : '16:00'}
-                onChange={(e) => setTime(e.target.value)}
-                required
-                disabled={isDayClosed}
-                className="flex-1 bg-transparent text-slate-900 focus:outline-none disabled:text-slate-400 disabled:cursor-not-allowed"
-              />
-            </div>
+            {isDayClosed ? (
+              <p className="text-xs text-slate-400 py-2">בחר יום פתוח כדי לראות שעות</p>
+            ) : slotSections.length > 0 ? (
+              <div className="space-y-2.5 max-h-48 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/50 p-3">
+                {slotSections.map(section => (
+                  <div key={section.label}>
+                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em] mb-1.5">{section.label}</p>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {section.slots.map(slot => (
+                        <button
+                          key={slot}
+                          type="button"
+                          onClick={() => setTime(slot)}
+                          className={`rounded-lg px-2 py-1.5 text-xs tabular-nums font-medium transition-colors
+                            ${time === slot
+                              ? 'bg-indigo-600 text-white shadow-sm'
+                              : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200'
+                            }`}
+                        >
+                          {slot}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 py-2">אין שעות פנויות ליום זה</p>
+            )}
             {timeError && (
               <p className="text-xs text-red-600 mt-1">{timeError}</p>
             )}

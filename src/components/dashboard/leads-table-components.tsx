@@ -198,6 +198,18 @@ export function PhoneContactModal({ phone, onClose }: { phone: string; onClose: 
   );
 }
 
+// ─── Book Time Slots ─────────────────────────────────────────────────────────
+
+const BOOK_TIME_SLOTS = (() => {
+  const slots: string[] = [];
+  for (let m = 8 * 60; m <= 18 * 60; m += 30) {
+    const h = Math.floor(m / 60);
+    const min = m % 60;
+    slots.push(`${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`);
+  }
+  return slots;
+})();
+
 // ─── Pending Review Modal ─────────────────────────────────────────────────────
 
 export function PendingReviewModal({
@@ -223,6 +235,7 @@ export function PendingReviewModal({
   const [bookTime, setBookTime] = useState('');
   const [bookLoading, setBookLoading] = useState(false);
   const [bookError, setBookError] = useState('');
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -265,7 +278,7 @@ export function PendingReviewModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
         onClick={onClose}
@@ -394,23 +407,50 @@ export function PendingReviewModal({
 
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300 text-right block">תאריך (DD/MM/YYYY)</label>
-                <input
-                  type="text"
-                  value={bookDate}
-                  onChange={(e) => setBookDate(e.target.value)}
-                  placeholder="DD/MM/YYYY"
-                  className="block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/50 focus:border-indigo-400 transition"
-                />
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300 text-right block">תאריך</label>
+                <div className="relative">
+                  <input
+                    ref={dateInputRef}
+                    type="date"
+                    className="absolute inset-0 opacity-0 pointer-events-none"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val) {
+                        const [y, m, d] = val.split('-');
+                        setBookDate(`${d}/${m}/${y}`);
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => dateInputRef.current?.showPicker()}
+                    className="flex w-full items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm text-right transition-colors hover:border-slate-300 dark:hover:border-slate-500"
+                  >
+                    <CalendarIcon className="h-4 w-4 text-slate-400 shrink-0" />
+                    <span className={bookDate ? 'text-slate-900 dark:text-slate-100 tabular-nums' : 'text-slate-400 dark:text-slate-500'}>
+                      {bookDate || 'בחר תאריך'}
+                    </span>
+                  </button>
+                </div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300 text-right block">שעה (HH:MM)</label>
-                <input
-                  type="time"
-                  value={bookTime}
-                  onChange={(e) => setBookTime(e.target.value)}
-                  className="block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/50 focus:border-indigo-400 transition"
-                />
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300 text-right block">שעה</label>
+                <div className="grid grid-cols-4 gap-1.5 max-h-36 overflow-y-auto">
+                  {BOOK_TIME_SLOTS.map(slot => (
+                    <button
+                      key={slot}
+                      type="button"
+                      onClick={() => setBookTime(slot)}
+                      className={`rounded-lg px-2 py-1.5 text-xs tabular-nums font-medium transition-colors
+                        ${bookTime === slot
+                          ? 'bg-indigo-600 text-white shadow-sm'
+                          : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200 dark:border-slate-700'
+                        }`}
+                    >
+                      {slot}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -534,7 +574,7 @@ export function CompleteLeadModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="סיום טיפול">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="סיום טיפול">
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div className="relative w-full max-w-sm rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-5 shadow-xl dark:shadow-2xl modal-enter text-right" dir="rtl">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">

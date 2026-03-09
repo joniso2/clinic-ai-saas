@@ -495,14 +495,24 @@ export function LeadsTable({
                               style={{ top: statusDropdownPos.top, right: statusDropdownPos.right }}
                               dir="rtl"
                             >
-                              {STATUS_OPTIONS.map(s => (
-                                <button key={s} type="button"
-                                  onClick={() => { onStatusChange(lead.id, s); setStatusDropdownId(null); setStatusDropdownPos(null); }}
-                                  className={`w-full text-right px-3 py-2 text-[13px] transition-colors hover:bg-slate-50 dark:hover:bg-slate-800
-                                    ${(lead.status ?? 'Pending') === s ? 'font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/30' : 'text-slate-700 dark:text-slate-300'}`}>
-                                  {STATUS_LABELS[s] ?? s}
-                                </button>
-                              ))}
+                              {STATUS_OPTIONS.map(s => {
+                                const dotColor: Record<string, string> = {
+                                  'Pending': 'bg-amber-400',
+                                  'Contacted': 'bg-sky-400',
+                                  'Appointment scheduled': 'bg-indigo-400',
+                                  'Closed': 'bg-emerald-400',
+                                  'Disqualified': 'bg-red-400',
+                                };
+                                return (
+                                  <button key={s} type="button"
+                                    onClick={() => { onStatusChange(lead.id, s); setStatusDropdownId(null); setStatusDropdownPos(null); }}
+                                    className={`w-full flex items-center gap-2 text-right px-3 py-2 text-[13px] transition-all duration-150 hover:bg-slate-50 dark:hover:bg-slate-800 hover:pe-4
+                                      ${(lead.status ?? 'Pending') === s ? 'font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/30' : 'text-slate-700 dark:text-slate-300'}`}>
+                                    <span className={`h-2 w-2 rounded-full shrink-0 ${dotColor[s] ?? 'bg-slate-400'}`} />
+                                    {STATUS_LABELS[s] ?? s}
+                                  </button>
+                                );
+                              })}
                             </div>,
                             document.body
                           )}
@@ -676,7 +686,7 @@ export function LeadsTable({
 
       {/* Deal Value Modal */}
       {dealValueLeadId && onUpdateDealValue && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" dir="rtl" role="dialog" aria-modal="true" aria-labelledby="deal-value-title">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" dir="rtl" role="dialog" aria-modal="true" aria-labelledby="deal-value-title">
           <div className="modal-enter w-full max-w-sm rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-xl p-5">
             <h2 id="deal-value-title" className="text-base font-semibold text-slate-900 dark:text-slate-50 text-right mb-3">הוסף שווי (₪)</h2>
             <input
