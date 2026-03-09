@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { AlertTriangle } from 'lucide-react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 export function ConfirmDeleteModal({
   open,
@@ -20,6 +21,9 @@ export function ConfirmDeleteModal({
   onCancel: () => void;
   loading?: boolean;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, open);
+
   useEffect(() => {
     if (open) {
       const handler = (e: KeyboardEvent) => {
@@ -39,12 +43,13 @@ export function ConfirmDeleteModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4"
-      role="dialog"
+      role="alertdialog"
       aria-modal="true"
       aria-labelledby="delete-modal-title"
       onClick={onCancel}
     >
       <div
+        ref={panelRef}
         className="modal-enter max-w-sm w-full rounded-2xl bg-white dark:bg-slate-900 shadow-[0_10px_30px_rgba(0,0,0,0.12),0_4px_8px_rgba(0,0,0,0.06)]"
         onClick={(e) => e.stopPropagation()}
       >

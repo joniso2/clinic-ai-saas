@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { X } from 'lucide-react';
 import { btn, input, inputLabel, sectionGroupLabel } from '@/lib/ui-classes';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { useUnsavedWarning } from '@/hooks/useUnsavedWarning';
 import type { Lead, LeadStatus } from '@/types/leads';
 
 interface NewLeadDrawerProps {
@@ -21,6 +23,9 @@ const STATUS_OPTIONS: { value: LeadStatus; label: string }[] = [
 ];
 
 export default function NewLeadDrawer({ open, clinicId, onClose, onCreated }: NewLeadDrawerProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, open);
+
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -28,6 +33,9 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated }: Ne
   const [status, setStatus] = useState<LeadStatus>('Pending');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isDirty = !!(name || phone || email);
+  useUnsavedWarning(isDirty && open);
 
   const resetForm = useCallback(() => {
     setName('');
@@ -91,15 +99,19 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated }: Ne
       {/* Backdrop */}
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm"
+          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm"
           onClick={onClose}
         />
       )}
 
       {/* Panel */}
       <aside
-        className={`fixed right-0 top-14 bottom-0 z-50 flex w-full max-w-[420px] flex-col bg-white dark:bg-slate-900 border-s border-slate-200 dark:border-slate-800 shadow-[0_10px_30px_rgba(0,0,0,0.12),0_4px_8px_rgba(0,0,0,0.06)] transition-transform duration-200 ease-out ${
-          open ? 'translate-x-0' : 'translate-x-full'
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="ליד חדש"
+        className={`fixed end-0 top-14 bottom-0 z-50 flex w-full sm:max-w-[420px] flex-col bg-white dark:bg-slate-900 border-s border-slate-200 dark:border-slate-800 shadow-[0_10px_30px_rgba(0,0,0,0.12),0_4px_8px_rgba(0,0,0,0.06)] transition-transform duration-200 ease-out ${
+          open ? 'translate-x-0' : 'ltr:translate-x-full rtl:-translate-x-full'
         }`}
       >
         {/* Sticky Header */}

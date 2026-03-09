@@ -286,7 +286,7 @@ export function AppointmentBreakdown({ metrics }: { metrics: AnalyticsData['appo
           <div key={seg.label} className="flex items-center gap-2 flex-row-reverse text-right">
             <div className={`h-2.5 w-2.5 rounded-full ${seg.color}`} />
             <span className="text-[13px] text-slate-600 dark:text-slate-400">{seg.label}</span>
-            <span className="text-[13px] font-semibold tabular-nums text-slate-900 dark:text-slate-100 mr-auto">
+            <span className="text-[13px] font-semibold tabular-nums text-slate-900 dark:text-slate-100 me-auto">
               {seg.count}
             </span>
           </div>

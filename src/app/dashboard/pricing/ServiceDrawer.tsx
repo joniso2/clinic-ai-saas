@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { Pencil, Trash2, Power, PowerOff, X, Package, CheckCircle2, XCircle } from 'lucide-react';
 import { formatCurrencyILS } from '@/lib/hebrew';
 import type { ClinicService } from './pricing-types';
@@ -15,6 +16,9 @@ export function ServiceDrawer({
   onToggle: () => void;
   onDelete: () => void;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, true);
+
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', h);
@@ -25,10 +29,13 @@ export function ServiceDrawer({
 
   return (
     <div className="fixed inset-0 z-40 flex" dir="rtl">
-      <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
       <div
-        className="relative mr-auto w-full max-w-sm bg-white dark:bg-slate-950 border-l border-slate-200 dark:border-slate-700 shadow-2xl flex flex-col"
-        style={{ animation: 'slideInDrawer 200ms ease-out forwards' }}
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="פרטי שירות"
+        className="drawer-enter relative me-auto w-full max-w-sm bg-white dark:bg-slate-950 border-l border-slate-200 dark:border-slate-700 shadow-2xl flex flex-col"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-5 py-4 shrink-0">

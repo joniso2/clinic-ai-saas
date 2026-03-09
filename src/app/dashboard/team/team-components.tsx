@@ -8,7 +8,7 @@ import { ROLE_DISPLAY_OPTIONS, getRoleDisplay } from './team-types';
 export function SummaryCard({ icon: Icon, value, label }: { icon: React.ComponentType<{ className?: string }>; value: number; label: string }) {
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-950 p-4 shadow-sm text-right">
-      <Icon className="h-5 w-5 text-slate-400 dark:text-slate-500 mb-2 ml-auto" />
+      <Icon className="h-5 w-5 text-slate-400 dark:text-slate-500 mb-2 me-auto" />
       <p className="text-2xl font-bold text-slate-900 dark:text-slate-50 tabular-nums">{value}</p>
       <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">{label}</p>
     </div>
@@ -79,8 +79,8 @@ export function AddMemberModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+      <div className="modal-enter w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex-row-reverse">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50 text-right">הוסף איש צוות</h2>
           <button type="button" onClick={onClose} className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="סגור">
@@ -190,8 +190,8 @@ export function EditRoleModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+      <div className="modal-enter w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex-row-reverse">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50 text-right">ערוך תפקיד</h2>
           <button type="button" onClick={onClose} className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="סגור">
@@ -229,8 +229,8 @@ export function EditRoleModal({
 
 export function ConfirmRemoveModal({ onConfirm, onCancel, loading }: { onConfirm: () => void; onCancel: () => void; loading: boolean }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-red-200/50 dark:border-red-900/40 bg-white dark:bg-slate-950 p-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+      <div className="modal-enter w-full max-w-md rounded-2xl border border-red-200/50 dark:border-red-900/40 bg-white dark:bg-slate-950 p-6 shadow-2xl">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50 text-right">הסר איש צוות</h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 text-right">האם להסיר את איש הצוות מהעסק? הוא לא יוכל לגשת שוב.</p>
         <div className="mt-6 flex gap-3 flex-row-reverse justify-start">

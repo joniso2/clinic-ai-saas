@@ -15,7 +15,7 @@ export default async function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden">
+    <div className="relative min-h-dvh w-full overflow-hidden">
       {/* Gradient background */}
       <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950" />
       {/* Subtle noise/texture overlay */}

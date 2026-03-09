@@ -151,7 +151,7 @@ function ComposeTab({
           />
           <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 px-4 py-2 bg-slate-50/60 dark:bg-slate-800/40">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 ml-1">הוסף משתנה:</span>
+              <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 ms-1">הוסף משתנה:</span>
               {VARIABLES.map((v) => (
                 <button
                   key={v.value}
@@ -210,7 +210,7 @@ function ComposeTab({
                     className="w-14 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1 text-sm text-center tabular-nums focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                   />
                   <span>ימים אחרונים</span>
-                  <span className="mr-auto rounded-full bg-slate-100 dark:bg-slate-700/80 px-2 py-0.5 text-xs font-medium text-slate-500 dark:text-slate-400 tabular-nums">
+                  <span className="me-auto rounded-full bg-slate-100 dark:bg-slate-700/80 px-2 py-0.5 text-xs font-medium text-slate-500 dark:text-slate-400 tabular-nums">
                     {customers.filter((c) => { const d = daysSince(c.last_visit_date); return d === null || d >= lastVisitDays; }).length} לקוחות
                   </span>
                 </span>
@@ -249,12 +249,12 @@ function ComposeTab({
                   value={scheduleDay}
                   onChange={(e) => setScheduleDay(e.target.value)}
                   onClick={() => setScheduleType('weekly')}
-                  className="appearance-none rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 pr-7 pl-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  className="appearance-none rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 pe-7 ps-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                   dir="rtl"
                 >
                   {DAYS_HE.map((d, i) => <option key={i} value={String(i + 1)}>{d}</option>)}
                 </select>
-                <ChevronDown className="absolute left-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
+                <ChevronDown className="absolute start-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
               </div>
               <span>בשבוע</span>
             </span>
@@ -474,11 +474,11 @@ export function MessagingPanel({
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 px-4 pb-4" dir="rtl">
-      <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
 
       <div
         className="relative w-full max-w-2xl bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col"
-        style={{ maxHeight: 'calc(100vh - 4rem)', animation: 'slideUpFade 200ms ease-out forwards' }}
+        style={{ maxHeight: 'calc(100dvh - 4rem)', animation: 'slideUpFade 200ms ease-out forwards' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4 bg-white dark:bg-slate-950 shrink-0">

@@ -50,7 +50,7 @@ export function GalleryView({ images }: Props) {
 
   if (images.length === 0) {
     return (
-      <div className="py-16 text-center text-gray-500" dir="rtl">
+      <div className="py-16 text-center text-slate-500" dir="rtl">
         <p className="text-base">אין תמונות או סרטונים בגלריה</p>
       </div>
     );
@@ -66,7 +66,7 @@ export function GalleryView({ images }: Props) {
               key={img.id}
               type="button"
               onClick={() => open(img.image_url)}
-              className="aspect-square overflow-hidden relative w-full min-w-0 bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 touch-manipulation block m-0"
+              className="aspect-square overflow-hidden relative w-full min-w-0 bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 touch-manipulation block m-0"
             >
               {video ? (
                 <GalleryVideo src={img.image_url} className="absolute inset-0 w-full h-full object-cover" />
@@ -88,7 +88,7 @@ export function GalleryView({ images }: Props) {
           <button
             type="button"
             onClick={close}
-            className="absolute top-4 left-4 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors z-10 touch-manipulation"
+            className="absolute top-4 start-4 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors z-10 touch-manipulation"
             aria-label="סגור"
           >
             <X className="w-6 h-6" />

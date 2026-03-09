@@ -557,7 +557,7 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
 
       {/* Delete confirmation dialog */}
       {pendingDeleteApt && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
           <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setPendingDeleteApt(null)} aria-hidden="true" />
           <div className="modal-enter relative w-full max-w-xs rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-5 shadow-xl text-right" dir="rtl">
             <div className="flex items-center gap-3 mb-3">

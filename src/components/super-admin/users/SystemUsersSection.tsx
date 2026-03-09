@@ -7,6 +7,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { UserPlus, Key, PowerOff, Power, Trash2, Shield, Clock, LogIn } from 'lucide-react';
+import { ConfirmDeleteModal } from '@/components/dashboard/ConfirmDeleteModal';
+import { btn, input, inputLabel } from '@/lib/ui-classes';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface SystemUser {
@@ -66,6 +68,7 @@ export default function SystemUsersSection() {
   const [fName, setFName] = useState('');
   const [fPwd, setFPwd] = useState('');
   const [actingUser, setActingUser] = useState<string | null>(null);
+  const [deleteUserIdConfirm, setDeleteUserIdConfirm] = useState<string | null>(null);
 
   // Fetch all system-level admin users from any clinic they're linked to
   const fetchUsers = useCallback(async () => {
@@ -133,12 +136,11 @@ export default function SystemUsersSection() {
   };
 
   const handleDelete = async (userId: string) => {
-    if (!confirm('למחוק משתמש מערכת?')) return;
     show('מחיקת מנהל מערכת — ידרוש אישור נוסף');
   };
 
   const severityStyles: Record<AuditEntry['severity'], string> = {
-    info:     'bg-zinc-700 text-zinc-300',
+    info:     'bg-slate-700 text-slate-300',
     warning:  'bg-amber-400/10 text-amber-400',
     critical: 'bg-red-400/10 text-red-400',
   };
@@ -152,35 +154,35 @@ export default function SystemUsersSection() {
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400 text-right">ניהול מנהלי-על, תפקידים, הרשאות ויומן פעולות.</p>
         </div>
         <button type="button" onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 text-sm font-semibold transition-colors flex-row-reverse">
+          className={`${btn.primary} flex-row-reverse`}>
           <UserPlus className="h-4 w-4" />הוסף מנהל מערכת
         </button>
       </div>
 
       {/* Admin users table */}
       <div>
-        <h3 className="text-sm font-semibold text-zinc-300 mb-3 flex items-center gap-2 flex-row-reverse">
+        <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2 flex-row-reverse">
           <Shield className="h-4 w-4 text-indigo-400" />
           מנהלי מערכת (SUPER_ADMIN)
         </h3>
-        <div className="rounded-xl border border-zinc-800 overflow-hidden bg-zinc-900">
+        <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900">
           <table className="w-full text-sm" dir="rtl">
             <thead>
-              <tr className="border-b border-zinc-800 bg-zinc-800/50">
+              <tr className="border-b border-slate-800 bg-slate-800/50">
                 {['שם','אימייל','תפקיד','סטטוס','כניסה אחרונה','פעולות'].map((h) => (
-                  <th key={h} className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{h}</th>
+                  <th key={h} className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} className="py-10 text-center text-zinc-500">טוען…</td></tr>
+                <tr><td colSpan={6} className="py-10 text-center text-slate-500">טוען…</td></tr>
               ) : users.length === 0 ? (
-                <tr><td colSpan={6} className="py-10 text-center text-zinc-500">אין מנהלי מערכת</td></tr>
+                <tr><td colSpan={6} className="py-10 text-center text-slate-500">אין מנהלי מערכת</td></tr>
               ) : users.map((u) => (
-                <tr key={u.user_id} className="border-b border-zinc-800/60 hover:bg-zinc-800/30 transition-colors">
-                  <td className="py-3 px-4 font-medium text-zinc-100">{u.full_name || '—'}</td>
-                  <td className="py-3 px-4 text-zinc-400 text-xs">{u.email}</td>
+                <tr key={u.user_id} className="border-b border-slate-800/60 hover:bg-slate-800/30 transition-colors">
+                  <td className="py-3 px-4 font-medium text-slate-100">{u.full_name || '—'}</td>
+                  <td className="py-3 px-4 text-slate-400 text-xs">{u.email}</td>
                   <td className="py-3 px-4">
                     <span className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-xs font-semibold bg-indigo-500/10 text-indigo-300">
                       <Shield className="h-3 w-3" />{u.role}
@@ -191,21 +193,21 @@ export default function SystemUsersSection() {
                       {u.banned_until ? 'מושבת' : 'פעיל'}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-zinc-500 text-xs">
+                  <td className="py-3 px-4 text-slate-500 text-xs">
                     {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString('he-IL') : '—'}
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex gap-1 justify-end flex-row-reverse">
                       <button type="button" onClick={() => handleImpersonate(u.user_id)} disabled={!!actingUser}
-                        className="p-1.5 rounded hover:bg-zinc-700 text-zinc-500 hover:text-zinc-300 transition-colors" title="חקיינות"><LogIn className="h-3.5 w-3.5" /></button>
+                        className="p-2 rounded hover:bg-slate-700 text-slate-500 hover:text-slate-300 transition-colors" title="חקיינות"><LogIn className="h-3.5 w-3.5" /></button>
                       <button type="button" onClick={() => handleReset(u.user_id)}
-                        className="p-1.5 rounded hover:bg-zinc-700 text-zinc-500 hover:text-zinc-300 transition-colors" title="איפוס סיסמה"><Key className="h-3.5 w-3.5" /></button>
+                        className="p-2 rounded hover:bg-slate-700 text-slate-500 hover:text-slate-300 transition-colors" title="איפוס סיסמה"><Key className="h-3.5 w-3.5" /></button>
                       <button type="button" onClick={() => handleToggle(u)}
-                        className="p-1.5 rounded hover:bg-zinc-700 text-zinc-500 hover:text-zinc-300 transition-colors" title={u.banned_until ? 'הפעל' : 'השבת'}>
+                        className="p-1.5 rounded hover:bg-slate-700 text-slate-500 hover:text-slate-300 transition-colors" title={u.banned_until ? 'הפעל' : 'השבת'}>
                         {u.banned_until ? <Power className="h-3.5 w-3.5" /> : <PowerOff className="h-3.5 w-3.5" />}
                       </button>
-                      <button type="button" onClick={() => handleDelete(u.user_id)}
-                        className="p-1.5 rounded hover:bg-red-900/30 text-zinc-500 hover:text-red-400 transition-colors" title="מחק"><Trash2 className="h-3.5 w-3.5" /></button>
+                      <button type="button" onClick={() => setDeleteUserIdConfirm(u.user_id)}
+                        className="p-1.5 rounded hover:bg-red-900/30 text-slate-500 hover:text-red-400 transition-colors" title="מחק"><Trash2 className="h-3.5 w-3.5" /></button>
                     </div>
                   </td>
                 </tr>
@@ -217,31 +219,31 @@ export default function SystemUsersSection() {
 
       {/* Audit log */}
       <div>
-        <h3 className="text-sm font-semibold text-zinc-300 mb-3 flex items-center gap-2 flex-row-reverse">
-          <Clock className="h-4 w-4 text-zinc-400" />
+        <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2 flex-row-reverse">
+          <Clock className="h-4 w-4 text-slate-400" />
           יומן פעולות (מוק)
         </h3>
-        <div className="rounded-xl border border-zinc-800 overflow-hidden bg-zinc-900">
+        <div className="rounded-xl border border-slate-800 overflow-hidden bg-slate-900">
           <table className="w-full text-sm" dir="rtl">
             <thead>
-              <tr className="border-b border-zinc-800 bg-zinc-800/50">
+              <tr className="border-b border-slate-800 bg-slate-800/50">
                 {['שחקן','פעולה','יעד','רמת חומרה','זמן'].map((h) => (
-                  <th key={h} className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{h}</th>
+                  <th key={h} className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {MOCK_AUDIT_LOG.map((entry) => (
-                <tr key={entry.id} className="border-b border-zinc-800/60 hover:bg-zinc-800/20 transition-colors">
-                  <td className="py-3 px-4 font-mono text-xs text-zinc-400">{entry.actor}</td>
-                  <td className="py-3 px-4 text-zinc-200">{ACTION_LABELS[entry.action] ?? entry.action}</td>
-                  <td className="py-3 px-4 text-zinc-400 text-xs">{entry.target}</td>
+                <tr key={entry.id} className="border-b border-slate-800/60 hover:bg-slate-800/20 transition-colors">
+                  <td className="py-3 px-4 font-mono text-xs text-slate-400">{entry.actor}</td>
+                  <td className="py-3 px-4 text-slate-200">{ACTION_LABELS[entry.action] ?? entry.action}</td>
+                  <td className="py-3 px-4 text-slate-400 text-xs">{entry.target}</td>
                   <td className="py-3 px-4">
                     <span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${severityStyles[entry.severity]}`}>
                       {entry.severity === 'info' ? 'מידע' : entry.severity === 'warning' ? 'אזהרה' : 'קריטי'}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-zinc-500 text-xs">
+                  <td className="py-3 px-4 text-slate-500 text-xs">
                     {new Date(entry.timestamp).toLocaleString('he-IL')}
                   </td>
                 </tr>
@@ -253,9 +255,9 @@ export default function SystemUsersSection() {
 
       {/* Create admin modal */}
       {createOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setCreateOpen(false)}>
-          <div className="rounded-2xl bg-zinc-900 border border-zinc-700 shadow-2xl max-w-sm w-full p-6 text-right" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-base font-bold text-zinc-100 mb-5">הוסף מנהל מערכת</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setCreateOpen(false)}>
+          <div className="modal-enter rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl max-w-sm w-full p-6 text-right" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-bold text-slate-100 mb-5">הוסף מנהל מערכת</h3>
             <div className="space-y-3">
               {[
                 { label: 'אימייל *', type: 'email', val: fEmail, set: setFEmail },
@@ -263,9 +265,9 @@ export default function SystemUsersSection() {
                 { label: 'סיסמה זמנית', type: 'text', val: fPwd, set: setFPwd },
               ].map(({ label, type, val, set }) => (
                 <div key={label}>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1">{label}</label>
+                  <label className={inputLabel}>{label}</label>
                   <input type={type} value={val} onChange={(e) => set(e.target.value)}
-                    className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500" />
+                    className={input} />
                 </div>
               ))}
               <div className="rounded-lg bg-amber-400/10 border border-amber-500/20 px-3 py-2 text-[11px] text-amber-300">
@@ -273,15 +275,23 @@ export default function SystemUsersSection() {
               </div>
             </div>
             <div className="flex gap-2 mt-5 justify-end">
-              <button type="button" onClick={() => setCreateOpen(false)} className="px-4 py-2 rounded-xl border border-zinc-700 text-zinc-300 text-sm hover:bg-zinc-800">ביטול</button>
+              <button type="button" onClick={() => setCreateOpen(false)} className={btn.secondary}>ביטול</button>
               <button type="button" onClick={handleCreate} disabled={creating || !fEmail.trim()}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold disabled:opacity-50 transition-colors">
+                className={btn.primary}>
                 {creating ? 'יוצר…' : 'צור'}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      <ConfirmDeleteModal
+        open={!!deleteUserIdConfirm}
+        title="מחיקת משתמש מערכת"
+        message="האם למחוק משתמש מערכת זה? פעולה זו אינה הפיכה."
+        onConfirm={() => { if (deleteUserIdConfirm) handleDelete(deleteUserIdConfirm); setDeleteUserIdConfirm(null); }}
+        onCancel={() => setDeleteUserIdConfirm(null)}
+      />
 
       {toast && (
         <div className="fixed bottom-6 start-1/2 -translate-x-1/2 z-50 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 px-4 py-2.5 text-sm font-medium shadow-xl">{toast}</div>

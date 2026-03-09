@@ -17,7 +17,7 @@ export function TenantSelector({
 }: TenantSelectorProps) {
   return (
     <div dir="rtl" className="flex flex-col gap-1.5">
-      <label htmlFor="tenant-select" className="text-xs font-medium text-zinc-400">
+      <label htmlFor="tenant-select" className="text-xs font-medium text-slate-400">
         קליניקה (Tenant)
       </label>
       <select
@@ -25,7 +25,7 @@ export function TenantSelector({
         value={selectedTenantId}
         onChange={(e) => onSelect(e.target.value)}
         disabled={loading}
-        className="rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 px-4 text-sm text-zinc-100 focus:border-indigo-500 focus:outline-none min-w-[220px] disabled:opacity-60"
+        className="rounded-xl border border-slate-700 bg-slate-900 py-2.5 px-4 text-sm text-slate-100 focus:border-indigo-500 focus:outline-none min-w-[220px] disabled:opacity-60"
       >
         <option value="">— בחר קליניקה —</option>
         {tenants.map((t) => (

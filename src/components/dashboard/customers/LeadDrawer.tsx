@@ -1,6 +1,9 @@
 'use client';
 
+import { useRef } from 'react';
 import { X, Phone, MessageCircle, ArrowRight, Trash2 } from 'lucide-react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 import type { Lead } from '@/types/leads';
 import { formatCurrencyILS, formatPhoneILS } from '@/lib/hebrew';
 import {
@@ -27,17 +30,21 @@ export function LeadDrawer({ lead, onClose, onWhatsApp, onBackToLeads, onDelete 
   onBackToLeads: () => void;
   onDelete: () => void;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, true);
+  useEscapeKey(true, onClose);
+
   const avatarColor = getAvatarColor(lead.id);
   const value = lead.estimated_deal_value ?? 0;
 
   return (
     <>
-    <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true">
-      <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
+    <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label="פרטי ליד">
+      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div
-        className="relative w-full max-w-[420px] bg-white dark:bg-slate-950 border-s border-slate-200 dark:border-slate-800 shadow-2xl overflow-y-auto flex flex-col"
+        ref={panelRef}
+        className="drawer-enter relative w-full max-w-[420px] bg-white dark:bg-slate-950 border-s border-slate-200 dark:border-slate-800 shadow-2xl overflow-y-auto flex flex-col"
         dir="rtl"
-        style={{ animation: 'slideInFromRight 220ms ease-out forwards' }}
       >
         <div className="sticky top-0 z-10 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">

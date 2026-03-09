@@ -8,6 +8,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Pencil, Trash2, Check, Zap, Building2, Crown } from 'lucide-react';
+import { btn, input, inputLabel } from '@/lib/ui-classes';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface TierFeature {
@@ -63,10 +64,10 @@ const PLAN_TIERS: PlanTier[] = [
 ];
 
 const COLOR_MAP: Record<string, { card: string; badge: string; button: string }> = {
-  zinc:    { card: 'border-zinc-700 bg-zinc-800 hover:bg-zinc-700',           badge: 'bg-zinc-700 text-zinc-200',          button: 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700' },
-  indigo:  { card: 'border-zinc-700 bg-zinc-800 hover:bg-zinc-700 border-indigo-500/30', badge: 'bg-indigo-500/20 text-indigo-300',   button: 'bg-indigo-600 hover:bg-indigo-500 text-white' },
-  violet:  { card: 'border-zinc-700 bg-zinc-800 hover:bg-zinc-700',           badge: 'bg-zinc-700 text-zinc-300',          button: 'bg-indigo-600 hover:bg-indigo-500 text-white' },
-  amber:   { card: 'border-zinc-700 bg-zinc-800 hover:bg-zinc-700',           badge: 'bg-amber-500/20 text-amber-400',     button: 'bg-indigo-600 hover:bg-indigo-500 text-white' },
+  zinc:    { card: 'border-slate-700 bg-slate-800 hover:bg-slate-700',           badge: 'bg-slate-700 text-slate-200',          button: 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700' },
+  indigo:  { card: 'border-slate-700 bg-slate-800 hover:bg-slate-700 border-indigo-500/30', badge: 'bg-indigo-500/20 text-indigo-300',   button: 'bg-indigo-600 hover:bg-indigo-500 text-white' },
+  violet:  { card: 'border-slate-700 bg-slate-800 hover:bg-slate-700',           badge: 'bg-slate-700 text-slate-300',          button: 'bg-indigo-600 hover:bg-indigo-500 text-white' },
+  amber:   { card: 'border-slate-700 bg-slate-800 hover:bg-slate-700',           badge: 'bg-amber-500/20 text-amber-400',     button: 'bg-indigo-600 hover:bg-indigo-500 text-white' },
 };
 
 function useToast() {
@@ -170,27 +171,27 @@ export default function PricingSection() {
               <div key={tier.id} className={`rounded-2xl border p-6 flex flex-col gap-4 transition-all duration-200 ${colors.card}`}>
                 <div className="flex items-center justify-between flex-row-reverse">
                   <span className={`rounded-lg px-2.5 py-1 text-xs font-semibold ${colors.badge}`}>{tier.name}</span>
-                  <Icon className="h-5 w-5 text-zinc-400" />
+                  <Icon className="h-5 w-5 text-slate-400" />
                 </div>
                 <div className="text-right">
                   {tier.priceMonthly === 0 && tier.id !== 'free' ? (
-                    <p className="text-lg font-bold text-zinc-100">מחיר מותאם</p>
+                    <p className="text-lg font-bold text-slate-100">מחיר מותאם</p>
                   ) : (
-                    <p className="text-2xl font-bold text-zinc-100 tabular-nums">
+                    <p className="text-2xl font-bold text-slate-100 tabular-nums">
                       {tier.priceMonthly === 0 ? 'חינם' : `₪${tier.priceMonthly}`}
-                      {tier.priceMonthly > 0 && <span className="text-xs text-zinc-400 font-normal">/חודש</span>}
+                      {tier.priceMonthly > 0 && <span className="text-xs text-slate-400 font-normal">/חודש</span>}
                     </p>
                   )}
                 </div>
-                <ul className="space-y-1.5 text-xs text-zinc-400 flex-1">
+                <ul className="space-y-1.5 text-xs text-slate-400 flex-1">
                   {tier.features.map((f) => (
-                    <li key={f.label} className={`flex items-center gap-2 flex-row-reverse ${f.included ? 'text-zinc-300' : 'text-zinc-500 line-through'}`}>
-                      <Check className={`h-3 w-3 shrink-0 ${f.included ? 'text-emerald-400' : 'text-zinc-700'}`} />
+                    <li key={f.label} className={`flex items-center gap-2 flex-row-reverse ${f.included ? 'text-slate-300' : 'text-slate-500 line-through'}`}>
+                      <Check className={`h-3 w-3 shrink-0 ${f.included ? 'text-emerald-400' : 'text-slate-700'}`} />
                       {f.label}
                     </li>
                   ))}
                 </ul>
-                <div className="text-[11px] text-zinc-500 border-t border-zinc-700 pt-3 space-y-0.5">
+                <div className="text-[11px] text-slate-500 border-t border-slate-700 pt-3 space-y-0.5">
                   <p>לידים: {tier.limits.leads === 'unlimited' ? '∞' : tier.limits.leads.toLocaleString()}</p>
                   <p>משתמשים: {typeof tier.limits.users === 'number' ? tier.limits.users : '∞'}</p>
                   <p>טוקני AI: {tier.limits.ai_tokens === 'unlimited' ? '∞' : (tier.limits.ai_tokens as number).toLocaleString()}</p>
@@ -207,12 +208,12 @@ export default function PricingSection() {
 
       {/* Per-tenant service management */}
       <div>
-        <h3 className="text-sm font-semibold text-zinc-300 mb-4">ניהול שירותים לפי לקוח</h3>
+        <h3 className="text-sm font-semibold text-slate-300 mb-4">ניהול שירותים לפי לקוח</h3>
         <div className="flex flex-row-reverse gap-4 items-end flex-wrap mb-5">
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">בחר לקוח</label>
+            <label className="block text-xs font-medium text-slate-400 mb-1.5">בחר לקוח</label>
             <select value={selectedTenantId} onChange={(e) => setSelectedTenantId(e.target.value)}
-              className="rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 px-4 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500 min-w-[220px]">
+              className="rounded-xl border border-slate-700 bg-slate-900 py-2.5 px-4 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 min-w-[220px]">
               <option value="">— בחר לקוח —</option>
               {tenants.map((t) => <option key={t.id} value={t.id}>{t.name ?? t.id}</option>)}
             </select>
@@ -220,45 +221,45 @@ export default function PricingSection() {
           {selectedTenantId && (
             <button type="button"
               onClick={() => { setSvcModal('add'); setEditingSvc(null); setSvName(''); setSvPrice(''); setSvAliases(''); setSvActive(true); }}
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 text-sm font-semibold transition-colors flex-row-reverse">
+              className={`${btn.primary} flex-row-reverse`}>
               <Plus className="h-4 w-4" />הוסף שירות
             </button>
           )}
         </div>
 
         {selectedTenantId && (
-          <div className="rounded-2xl border border-zinc-700 overflow-hidden bg-zinc-900">
+          <div className="rounded-2xl border border-slate-700 overflow-hidden bg-slate-900">
             {loadingSvc ? (
-              <div className="py-10 text-center text-zinc-500 text-sm">טוען…</div>
+              <div className="py-10 text-center text-slate-500 text-sm">טוען…</div>
             ) : (
               <table className="w-full text-sm" dir="rtl">
                 <thead>
-                  <tr className="border-b border-zinc-700 bg-zinc-800">
+                  <tr className="border-b border-slate-700 bg-slate-800">
                     {['שם שירות','מחיר','כינויים','סטטוס','פעולות'].map((h) => (
-                      <th key={h} className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{h}</th>
+                      <th key={h} className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {services.length === 0 ? (
-                    <tr><td colSpan={5} className="py-10 text-center text-zinc-500">אין שירותים — הוסף שירות ראשון</td></tr>
+                    <tr><td colSpan={5} className="py-10 text-center text-slate-500">אין שירותים — הוסף שירות ראשון</td></tr>
                   ) : services.map((s) => (
-                    <tr key={s.id} className="border-b border-zinc-700 hover:bg-zinc-800/50 transition-colors">
-                      <td className="py-3 px-4 font-medium text-zinc-100">{s.service_name}</td>
-                      <td className="py-3 px-4 text-zinc-300 tabular-nums">{s.price} ₪</td>
-                      <td className="py-3 px-4 text-zinc-500 text-xs">{(s.aliases ?? []).join(', ') || '—'}</td>
+                    <tr key={s.id} className="border-b border-slate-700 hover:bg-slate-800/50 transition-colors">
+                      <td className="py-3 px-4 font-medium text-slate-100">{s.service_name}</td>
+                      <td className="py-3 px-4 text-slate-300 tabular-nums">{s.price} ₪</td>
+                      <td className="py-3 px-4 text-slate-500 text-xs">{(s.aliases ?? []).join(', ') || '—'}</td>
                       <td className="py-3 px-4">
                         <button type="button" onClick={() => handleToggle(s)}
-                          className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${s.is_active ? 'bg-emerald-400/10 text-emerald-400 hover:bg-emerald-400/20' : 'bg-zinc-700 text-zinc-400 hover:bg-zinc-600'}`}>
+                          className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${s.is_active ? 'bg-emerald-400/10 text-emerald-400 hover:bg-emerald-400/20' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}>
                           {s.is_active ? 'פעיל' : 'מושבת'}
                         </button>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex gap-1 justify-end flex-row-reverse">
                           <button type="button" onClick={() => { setEditingSvc(s); setSvName(s.service_name); setSvPrice(String(s.price)); setSvAliases((s.aliases ?? []).join(', ')); setSvActive(s.is_active); setSvcModal('edit'); }}
-                            className="p-1.5 rounded hover:bg-zinc-700 text-zinc-500 hover:text-zinc-300 transition-colors"><Pencil className="h-4 w-4" /></button>
+                            className="p-1.5 rounded hover:bg-slate-700 text-slate-500 hover:text-slate-300 transition-colors"><Pencil className="h-4 w-4" /></button>
                           <button type="button" onClick={() => handleDelete(s.id)}
-                            className="p-1.5 rounded hover:bg-red-900/30 text-zinc-500 hover:text-red-400 transition-colors"><Trash2 className="h-4 w-4" /></button>
+                            className="p-1.5 rounded hover:bg-red-900/30 text-slate-500 hover:text-red-400 transition-colors"><Trash2 className="h-4 w-4" /></button>
                         </div>
                       </td>
                     </tr>
@@ -272,31 +273,31 @@ export default function PricingSection() {
 
       {/* Service modal */}
       {svcModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setSvcModal(null)}>
-          <div className="rounded-2xl bg-zinc-900 border border-zinc-700 shadow-2xl max-w-sm w-full p-6 text-right" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-base font-bold text-zinc-100 mb-5">{svcModal === 'add' ? 'הוסף שירות' : 'ערוך שירות'}</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setSvcModal(null)}>
+          <div className="modal-enter rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl max-w-sm w-full p-6 text-right" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-bold text-slate-100 mb-5">{svcModal === 'add' ? 'הוסף שירות' : 'ערוך שירות'}</h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1">שם שירות</label>
-                <input value={svName} onChange={(e) => setSvName(e.target.value)} className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500" />
+                <label className={inputLabel}>שם שירות</label>
+                <input value={svName} onChange={(e) => setSvName(e.target.value)} className={input} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1">מחיר (₪)</label>
-                <input type="number" value={svPrice} onChange={(e) => setSvPrice(e.target.value)} min="0" className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500" />
+                <label className={inputLabel}>מחיר (₪)</label>
+                <input type="number" value={svPrice} onChange={(e) => setSvPrice(e.target.value)} min="0" className={input} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1">כינויים (פסיק)</label>
-                <input value={svAliases} onChange={(e) => setSvAliases(e.target.value)} placeholder="ניקוי, שיננית" className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500" />
+                <label className={inputLabel}>כינויים (פסיק)</label>
+                <input value={svAliases} onChange={(e) => setSvAliases(e.target.value)} placeholder="ניקוי, שיננית" className={input} />
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={svActive} onChange={(e) => setSvActive(e.target.checked)} className="rounded border-zinc-600 bg-zinc-800" />
-                <span className="text-sm text-zinc-300">פעיל</span>
+                <input type="checkbox" checked={svActive} onChange={(e) => setSvActive(e.target.checked)} className="rounded border-slate-600 bg-slate-800" />
+                <span className="text-sm text-slate-300">פעיל</span>
               </label>
             </div>
             <div className="flex gap-2 mt-5 justify-end">
-              <button type="button" onClick={() => setSvcModal(null)} className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-sm">ביטול</button>
+              <button type="button" onClick={() => setSvcModal(null)} className={btn.secondary}>ביטול</button>
               <button type="button" onClick={svcModal === 'add' ? handleAdd : handleUpdate} disabled={saving || !svName.trim()}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold disabled:opacity-50 transition-colors">
+                className={btn.primary}>
                 {saving ? 'שומר…' : svcModal === 'add' ? 'הוסף' : 'שמור'}
               </button>
             </div>
@@ -305,7 +306,7 @@ export default function PricingSection() {
       )}
 
       {toast && (
-        <div className="fixed bottom-6 start-1/2 -translate-x-1/2 z-50 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-100 px-4 py-2.5 text-sm font-medium shadow-xl">{toast}</div>
+        <div className="fixed bottom-6 start-1/2 -translate-x-1/2 z-50 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 px-4 py-2.5 text-sm font-medium shadow-xl">{toast}</div>
       )}
     </div>
   );

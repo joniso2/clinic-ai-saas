@@ -23,7 +23,7 @@ function TrendBadge({ change, trend }: { change?: number; trend?: KPIMetric['tre
           ? 'text-emerald-400 bg-emerald-400/10'
           : isDown
           ? 'text-red-400 bg-red-400/10'
-          : 'text-zinc-400 bg-zinc-400/10',
+          : 'text-slate-400 bg-slate-400/10',
       ].join(' ')}
     >
       <Icon className="h-2.5 w-2.5 shrink-0" />

@@ -235,7 +235,7 @@ export default function OverviewChartsSection({
 
         <ChartCard title="סטטוס אינטגרציות">
           {integrationStatus.length > 0 ? (
-            <div className="divide-y divide-zinc-800 -mx-1 px-1">
+            <div className="divide-y divide-slate-800 -mx-1 px-1">
               {integrationStatus.map((r) => (
                 <IntegrationRow key={r.platform} record={r} />
               ))}

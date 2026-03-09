@@ -52,7 +52,7 @@ const SECTIONS = [
   { id: 'messaging',      label: 'מסרים',           icon: MessageSquare },
   { id: 'live',           label: 'שיחות חיות',      icon: Radio },
   { id: 'ai',             label: 'מודלי AI',        icon: Brain },
-  { id: 'ai-persona',    label: 'AI Persona',      icon: Wand2 },
+  { id: 'ai-persona',    label: 'פרסונה AI',      icon: Wand2 },
   { id: 'traffic',        label: 'תעבורה וביצועים', icon: Activity },
   { id: 'pricing',       label: 'תמחור גלובלי',    icon: DollarSign },
   { id: 'services',       label: 'שירותים',          icon: PackageOpen },

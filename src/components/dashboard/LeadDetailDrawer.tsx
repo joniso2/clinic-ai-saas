@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { X, Mail, Phone, Calendar, Tag, DollarSign, Receipt, Users } from 'lucide-react';
 import type { Lead } from '@/types/leads';
 import {
@@ -34,6 +35,9 @@ export function LeadDetailDrawer({
   onEdit: (lead: Lead) => void;
   mode?: 'overlay' | 'inline';
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, open);
+
   const [phoneModalOpen, setPhoneModalOpen] = useState(false);
   const [billingSettings, setBillingSettings] = useState<BillingSettings | null>(null);
   const [receiptOpen, setReceiptOpen] = useState(false);
@@ -313,7 +317,7 @@ export function LeadDetailDrawer({
   if (mode === 'inline') {
     return (
       <>
-        <div dir="rtl" className="flex h-full flex-col bg-white dark:bg-slate-950">
+        <div ref={panelRef} dir="rtl" role="dialog" aria-modal="false" aria-label="פרטי ליד" className="flex h-full flex-col bg-white dark:bg-slate-950">
           {drawerContent}
         </div>
         {portals}
@@ -327,14 +331,14 @@ export function LeadDetailDrawer({
     <>
       <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true">
         <div
-          className="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-[2px]"
+          className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
           onClick={onClose}
           aria-hidden="true"
         />
         <aside
+          ref={panelRef}
           dir="rtl"
-          className="relative w-full max-w-[420px] bg-white dark:bg-slate-950 border-s border-slate-200 dark:border-slate-800 shadow-2xl overflow-y-auto flex flex-col"
-          style={{ animation: 'slideInFromRight 220ms ease-out forwards' }}
+          className="drawer-enter relative w-full sm:max-w-[420px] bg-white dark:bg-slate-950 border-s border-slate-200 dark:border-slate-800 shadow-2xl overflow-y-auto flex flex-col"
           aria-label="פרטי ליד"
         >
           {drawerContent}

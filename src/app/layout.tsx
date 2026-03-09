@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Heebo } from 'next/font/google';
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { ToastProvider } from "@/components/ui/Toast";
 
 // Railway 1GB: avoid static generation at build time
 export const dynamic = "force-dynamic";
@@ -43,7 +44,9 @@ export default function RootLayout({
         className={`${heebo.variable} antialiased transition-colors duration-300`}
       >
         <ThemeProvider>
-          {children}
+          <ToastProvider>
+            {children}
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -237,7 +237,7 @@ function LayoutInner({ children, initialRole, initialUserEmail }: DashboardLayou
           {/* Desktop logo zone — mirrors sidebar width */}
           <div className={`hidden md:flex h-full shrink-0 items-center border-e border-slate-200 dark:border-slate-800
             transition-all duration-200 ease-in-out
-            ${collapsed ? 'w-16 justify-center' : 'w-[180px] gap-2.5 pl-3 pr-4'}`}>
+            ${collapsed ? 'w-16 justify-center' : 'w-[180px] gap-2.5 ps-3 pe-4'}`}>
             <ClinicLogo size={collapsed ? 'sm' : 'md'} />
             {!collapsed && (
               <div className="flex min-w-0 flex-col leading-tight text-right">

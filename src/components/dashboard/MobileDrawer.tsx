@@ -3,6 +3,8 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { ClinicLogo } from '@/components/brand/ClinicLogo';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 interface MobileDrawerProps {
   open: boolean;
@@ -12,6 +14,9 @@ interface MobileDrawerProps {
 
 export default function MobileDrawer({ open, onClose, children }: MobileDrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(drawerRef, open);
+  useEscapeKey(open, onClose);
+
   const touchStartX = useRef<number>(0);
   const touchCurrentX = useRef<number>(0);
 
@@ -63,10 +68,13 @@ export default function MobileDrawer({ open, onClose, children }: MobileDrawerPr
       {/* Drawer panel */}
       <div
         ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="תפריט"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className={`fixed top-0 left-0 z-50 h-full md:hidden flex flex-col bg-white dark:bg-slate-950 shadow-2xl
+        className={`fixed top-0 start-0 z-50 h-full md:hidden flex flex-col bg-white dark:bg-slate-950 shadow-2xl
           transition-transform duration-300 ease-in-out will-change-transform drawer-enter
           ${open ? 'translate-x-0' : '-translate-x-full'}`}
         style={{

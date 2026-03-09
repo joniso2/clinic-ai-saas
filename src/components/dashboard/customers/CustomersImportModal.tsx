@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { X, Upload, FileSpreadsheet } from 'lucide-react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 
@@ -124,6 +126,10 @@ export function CustomersImportModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, true);
+  useEscapeKey(true, onClose);
+
   const [file, setFile] = useState<File | null>(null);
   const [parsed, setParsed] = useState<ParsedImportRow[] | null>(null);
   const [columnError, setColumnError] = useState(false);
@@ -195,8 +201,8 @@ export function CustomersImportModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="import-title">
-      <div className="absolute inset-0 bg-slate-900/50 dark:bg-slate-950/60" onClick={onClose} aria-hidden="true" />
-      <div className="relative w-full max-w-2xl rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-lg overflow-hidden" dir="rtl">
+      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div ref={panelRef} className="modal-enter relative w-full max-w-2xl rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-lg overflow-hidden" dir="rtl">
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 px-5 py-4">
           <h2 id="import-title" className="text-lg font-semibold text-slate-900 dark:text-slate-50">ייבוא לקוחות מקובץ Excel / CSV</h2>
           <button type="button" onClick={onClose} className="p-2 rounded-md text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="סגור">

@@ -60,7 +60,7 @@ export default function SVGLineChart({
   if (data.length < 2) {
     return (
       <div
-        className="flex items-center justify-center text-xs text-zinc-600"
+        className="flex items-center justify-center text-xs text-slate-600"
         style={{ height }}
       >
         אין נתונים
@@ -99,7 +99,7 @@ export default function SVGLineChart({
             x={PAD}
             y={height - 3}
             fontSize="9"
-            className="fill-zinc-500"
+            className="fill-slate-500"
           >
             {data[0].label}
           </text>
@@ -108,7 +108,7 @@ export default function SVGLineChart({
             y={height - 3}
             fontSize="9"
             textAnchor="end"
-            className="fill-zinc-500"
+            className="fill-slate-500"
           >
             {data[data.length - 1].label}
           </text>

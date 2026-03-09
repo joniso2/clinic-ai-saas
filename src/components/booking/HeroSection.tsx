@@ -58,12 +58,12 @@ export function HeroSection({ clinic, onBookClick }: Props) {
         />
         {/* Logo (top corner) */}
         {clinic.logo_url?.trim() && (
-          <div className="absolute top-4 right-4 z-10 h-12 w-12 overflow-hidden rounded-xl shadow-lg ring-2 ring-white/30 sm:right-5 sm:h-14 sm:w-14">
+          <div className="absolute top-4 end-4 z-10 h-12 w-12 overflow-hidden rounded-xl shadow-lg ring-2 ring-white/30 sm:end-5 sm:h-14 sm:w-14">
             <img src={clinic.logo_url} alt="" className="h-full w-full object-cover" />
           </div>
         )}
         {/* CTA + greeting floating over bottom of hero */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 px-5 pb-6 pt-12 sm:pb-8 sm:pt-16">
+        <div className="absolute bottom-0 inset-x-0 z-10 px-5 pb-6 pt-12 sm:pb-8 sm:pt-16">
           <p className="text-sm font-medium text-white/95 sm:text-base">{greeting}</p>
           <button
             type="button"
@@ -79,18 +79,18 @@ export function HeroSection({ clinic, onBookClick }: Props) {
       <div className="border-t border-white/10 bg-white px-5 py-5 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] sm:py-6">
         <div className="mx-auto max-w-md text-right">
           {hasName && (
-            <h1 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
               {clinic.name}
             </h1>
           )}
           {hasAddress && (
-            <div className="mt-2 flex items-center justify-end gap-1.5 text-gray-500">
-              <MapPin className="h-4 w-4 shrink-0 text-gray-400" />
+            <div className="mt-2 flex items-center justify-end gap-1.5 text-slate-500">
+              <MapPin className="h-4 w-4 shrink-0 text-slate-400" />
               <span className="text-sm leading-relaxed">{clinic.address}</span>
             </div>
           )}
           {!hasName && !hasAddress && (
-            <p className="text-sm text-gray-400">הגדר שם וכתובת בהגדרות</p>
+            <p className="text-sm text-slate-400">הגדר שם וכתובת בהגדרות</p>
           )}
         </div>
       </div>

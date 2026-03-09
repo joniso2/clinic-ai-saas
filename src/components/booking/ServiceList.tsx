@@ -25,7 +25,7 @@ function formatPrice(price: number | null): string {
 export function ServiceList({ services, onSelect, selectedId }: Props) {
   if (services.length === 0) {
     return (
-      <div className="py-12 text-center text-gray-500">
+      <div className="py-12 text-center text-slate-500">
         <p className="text-lg">אין שירותים זמינים כרגע</p>
       </div>
     );
@@ -33,7 +33,7 @@ export function ServiceList({ services, onSelect, selectedId }: Props) {
 
   return (
     <div className="pt-6 pb-4">
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-5">בחר שירות</h2>
+      <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-5">בחר שירות</h2>
       <div className="flex flex-col gap-3">
         {services.map((service, i) => {
           const isSelected = selectedId === service.id;
@@ -49,16 +49,16 @@ export function ServiceList({ services, onSelect, selectedId }: Props) {
                 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]
                 ${isSelected
                   ? 'ring-2 ring-indigo-500 ring-offset-2 bg-white'
-                  : 'bg-white border border-gray-100/80 hover:border-gray-200'
+                  : 'bg-white border border-slate-100/80 hover:border-slate-200'
                 }`}
             >
               <div className="flex flex-row-reverse items-center gap-4 px-5 py-4">
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 text-base tracking-tight">
+                  <p className="font-semibold text-slate-900 text-base tracking-tight">
                     {service.service_name}
                   </p>
-                  <div className="flex items-center justify-end gap-1.5 mt-1 text-sm text-gray-500">
-                    <Clock className="h-4 w-4 text-gray-400 shrink-0" />
+                  <div className="flex items-center justify-end gap-1.5 mt-1 text-sm text-slate-500">
+                    <Clock className="h-4 w-4 text-slate-400 shrink-0" />
                     <span>{formatDuration(service.duration_minutes)}</span>
                   </div>
                 </div>

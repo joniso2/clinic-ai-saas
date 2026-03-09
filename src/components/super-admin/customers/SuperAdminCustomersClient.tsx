@@ -130,13 +130,13 @@ export function SuperAdminCustomersClient({ clinicId, clinicName }: Props) {
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center flex-row-reverse">
         <div className="relative flex-1 max-w-xs">
-          <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+          <Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
           <input
             type="search"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="חיפוש שם או טלפון..."
-            className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 pl-3 pr-9 py-2 text-sm text-right"
+            className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 ps-3 pe-9 py-2 text-sm text-right"
             dir="rtl"
           />
         </div>
@@ -150,7 +150,7 @@ export function SuperAdminCustomersClient({ clinicId, clinicName }: Props) {
             <ChevronDown className="h-4 w-4" />
           </button>
           {filterOpen && (
-            <div className="absolute top-full left-0 mt-1 z-50 w-48 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-lg p-3 text-right" dir="rtl">
+            <div className="absolute top-full start-0 mt-1 z-50 w-48 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-lg p-3 text-right" dir="rtl">
               <label className="block text-xs font-medium text-slate-500 dark:text-slate-400">סטטוס</label>
               <select
                 value={statusFilter}
@@ -227,8 +227,8 @@ export function SuperAdminCustomersClient({ clinicId, clinicName }: Props) {
 
       {detailId && (
         <div className="fixed inset-0 z-50 flex justify-end">
-          <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/60" onClick={() => setDetailId(null)} aria-hidden="true" />
-          <div className="relative w-full max-w-md bg-white dark:bg-slate-950 border-s border-slate-200 dark:border-slate-800 shadow-xl overflow-y-auto" dir="rtl">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setDetailId(null)} aria-hidden="true" />
+          <div className="drawer-enter relative w-full max-w-md bg-white dark:bg-slate-950 border-s border-slate-200 dark:border-slate-800 shadow-xl overflow-y-auto" dir="rtl">
             <div className="sticky top-0 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-4 py-3 bg-white dark:bg-slate-950">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">פרטי לקוח</h2>
               <button type="button" onClick={() => setDetailId(null)} className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="סגור">
@@ -282,9 +282,9 @@ export function SuperAdminCustomersClient({ clinicId, clinicName }: Props) {
       )}
 
       {deleteId && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/50" onClick={() => setDeleteId(null)} aria-hidden="true" />
-          <div className="relative rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-5 shadow-xl text-right max-w-sm w-full" dir="rtl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setDeleteId(null)} aria-hidden="true" />
+          <div className="modal-enter relative rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-5 shadow-xl text-right max-w-sm w-full" dir="rtl">
             <h3 className="font-semibold text-slate-900 dark:text-slate-50">מחיקת לקוח</h3>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">מחיקה רכה. ניתן לשחזר בהמשך.</p>
             <div className="mt-4 flex gap-2 justify-start">

@@ -9,9 +9,9 @@ export function StatusBadge({ status }: { status: string }) {
     <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold ${
       isActive
         ? 'bg-emerald-400/10 text-emerald-400'
-        : 'bg-zinc-700 text-zinc-400'
+        : 'bg-slate-700 text-slate-400'
     }`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-emerald-400' : 'bg-zinc-500'}`} />
+      <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-emerald-400' : 'bg-slate-500'}`} />
       {isActive ? 'פעיל' : 'מושבת'}
     </span>
   );

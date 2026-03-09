@@ -41,10 +41,10 @@ export function PhoneInput({ onSubmit, loading }: Props) {
         </div>
       </div>
 
-      <h2 className="text-xl font-bold text-gray-800 text-center mb-2">
+      <h2 className="text-xl font-bold text-slate-800 text-center mb-2">
         מספר טלפון
       </h2>
-      <p className="text-gray-500 text-sm text-center mb-8 leading-relaxed">
+      <p className="text-slate-500 text-sm text-center mb-8 leading-relaxed">
         נשלח אליך קוד אימות ב-SMS
         <br />
         לאישור ההזמנה
@@ -53,11 +53,11 @@ export function PhoneInput({ onSubmit, loading }: Props) {
       <div className="space-y-3">
         <div
           className={`flex items-center gap-2 bg-white border-2 rounded-2xl px-4 py-3.5 transition-colors
-          ${showError ? 'border-red-400' : 'border-gray-200 focus-within:border-indigo-500'}
+          ${showError ? 'border-red-400' : 'border-slate-200 focus-within:border-indigo-500'}
         `}
         >
-          <span className="text-gray-500 font-medium text-sm select-none">+972</span>
-          <div className="w-px h-5 bg-gray-200" />
+          <span className="text-slate-500 font-medium text-sm select-none">+972</span>
+          <div className="w-px h-5 bg-slate-200" />
           <input
             type="tel"
             inputMode="numeric"
@@ -67,7 +67,7 @@ export function PhoneInput({ onSubmit, loading }: Props) {
             onChange={(e) => setValue(e.target.value)}
             onBlur={() => setTouched(true)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            className="flex-1 bg-transparent outline-none text-gray-800 text-base placeholder-gray-300 tracking-wide"
+            className="flex-1 bg-transparent outline-none text-slate-800 text-base placeholder-slate-300 tracking-wide"
             autoFocus
             autoComplete="tel"
           />
@@ -84,7 +84,7 @@ export function PhoneInput({ onSubmit, loading }: Props) {
             ${
               valid && !loading
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 active:scale-[0.98]'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
             }
           `}
         >
@@ -99,7 +99,7 @@ export function PhoneInput({ onSubmit, loading }: Props) {
         </button>
       </div>
 
-      <p className="text-xs text-gray-400 text-center mt-4">
+      <p className="text-xs text-slate-400 text-center mt-4">
         המספר ישמש רק לאישור ההזמנה
       </p>
     </div>

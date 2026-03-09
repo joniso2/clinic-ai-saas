@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useToast } from '@/components/ui/Toast';
 import {
   Image as ImageIcon,
   Layout,
@@ -14,6 +15,7 @@ import {
   Upload,
   Video,
 } from 'lucide-react';
+import { btn, input } from '@/lib/ui-classes';
 import type { PageData, Section, MediaItem, Service, Product } from './booking-site-types';
 import { SECTION_LABELS } from './booking-site-types';
 
@@ -163,8 +165,8 @@ export function HeroVideoCard({
           <div className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-700 px-4 py-3">
             <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">{file.name}</span>
             <div className="flex gap-2 shrink-0">
-              <button type="button" onClick={() => setFile(null)} className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">ביטול</button>
-              <button type="button" onClick={save} disabled={saving || !!error} className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 disabled:opacity-50 shadow-sm">
+              <button type="button" onClick={() => setFile(null)} className={btn.ghost}>ביטול</button>
+              <button type="button" onClick={save} disabled={saving || !!error} className={btn.primary}>
                 {saving ? 'שומר...' : 'שמור'}
               </button>
             </div>
@@ -189,6 +191,7 @@ export function MediaLibraryCard({
 }) {
   const [uploading, setUploading] = useState(false);
   const [searchMedia, setSearchMedia] = useState('');
+  const toast = useToast();
 
   const upload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -208,9 +211,16 @@ export function MediaLibraryCard({
     }
   };
 
-  const remove = async (id: string) => {
-    await fetch(`/api/super-admin/booking-site/media/${id}`, { method: 'DELETE' });
+  const remove = (id: string) => {
+    const item = media.find((m) => m.id === id);
     setMedia((prev) => prev.filter((m) => m.id !== id));
+    const timer = setTimeout(() => {
+      fetch(`/api/super-admin/booking-site/media/${id}`, { method: 'DELETE' });
+    }, 5000);
+    toast.undo('המדיה נמחקה', () => {
+      clearTimeout(timer);
+      if (item) setMedia((prev) => [item, ...prev]);
+    });
   };
 
   const filtered = searchMedia.trim() ? media.filter((m) => (m.filename ?? m.url).toLowerCase().includes(searchMedia.toLowerCase())) : media;
@@ -223,7 +233,7 @@ export function MediaLibraryCard({
       </h2>
       <div className="p-4">
         <div className="flex flex-wrap gap-2 mb-3">
-          <label className="cursor-pointer inline-flex items-center gap-2 rounded-xl px-3 py-2 bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500">
+          <label className={`cursor-pointer ${btn.primary}`}>
             <Upload className="h-4 w-4" />
             {uploading ? 'מעלה...' : 'העלה תמונה או סרטון'}
             <input type="file" accept="image/*,video/*,video/mp4,video/webm,video/quicktime" className="hidden" onChange={upload} disabled={uploading} />
@@ -233,7 +243,7 @@ export function MediaLibraryCard({
             placeholder="חיפוש מדיה..."
             value={searchMedia}
             onChange={(e) => setSearchMedia(e.target.value)}
-            className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm w-40"
+            className={`${input} w-40`}
           />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
@@ -244,7 +254,7 @@ export function MediaLibraryCard({
               ) : (
                 <img src={m.url} alt="" className="w-full h-full object-cover" />
               )}
-              <button type="button" onClick={() => remove(m.id)} className="absolute top-1 left-1 p-1.5 rounded-lg bg-red-500/90 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+              <button type="button" onClick={() => remove(m.id)} className="absolute top-1 start-1 p-1.5 rounded-lg bg-red-500/90 text-white sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -332,6 +342,7 @@ export function GalleryCard({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  const toast = useToast();
 
   const toggleSelected = (id: string) => {
     setSelectedIds((prev) => {
@@ -372,9 +383,16 @@ export function GalleryCard({
     setPickerOpen(false);
   };
 
-  const remove = async (id: string) => {
-    await fetch(`/api/super-admin/booking-site/gallery/${id}`, { method: 'DELETE' });
+  const remove = (id: string) => {
+    const item = gallery.find((g) => g.id === id);
     setPageData((p) => (p ? { ...p, gallery: p.gallery.filter((g) => g.id !== id) } : null));
+    const timer = setTimeout(() => {
+      fetch(`/api/super-admin/booking-site/gallery/${id}`, { method: 'DELETE' });
+    }, 5000);
+    toast.undo('התמונה הוסרה מהגלריה', () => {
+      clearTimeout(timer);
+      if (item) setPageData((p) => (p ? { ...p, gallery: [...p.gallery, item] } : null));
+    });
   };
 
   const allMedia = media;
@@ -401,7 +419,7 @@ export function GalleryCard({
               ) : (
                 <img src={g.image_url} alt="" className="w-full h-full object-cover" />
               )}
-              <button type="button" onClick={() => remove(g.id)} className="absolute top-1 left-1 p-1.5 rounded-lg bg-red-500/90 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+              <button type="button" onClick={() => remove(g.id)} className="absolute top-1 start-1 p-1.5 rounded-lg bg-red-500/90 text-white sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -412,8 +430,8 @@ export function GalleryCard({
         </div>
       </div>
       {pickerOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => !adding && setPickerOpen(false)}>
-          <div className="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 max-w-lg w-full max-h-[80vh] overflow-auto text-right" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => !adding && setPickerOpen(false)}>
+          <div className="modal-enter rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 max-w-lg w-full max-h-[80vh] overflow-auto text-right" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-3">בחר תמונות או סרטונים מספריית המדיה</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">לחיצה על פריט תסמן אותו. בחר כמה שתרצה ולחץ &quot;הוסף לגלריה&quot;.</p>
             <div className="grid grid-cols-3 gap-2">
@@ -431,7 +449,7 @@ export function GalleryCard({
                     <img src={m.url} alt="" className="w-full h-full object-cover" />
                   )}
                   {selectedIds.has(m.id) && (
-                    <span className="absolute top-1 right-1 w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs font-bold">✓</span>
+                    <span className="absolute top-1 end-1 w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xs font-bold">✓</span>
                   )}
                 </button>
               ))}
@@ -443,11 +461,11 @@ export function GalleryCard({
                 type="button"
                 onClick={addSelected}
                 disabled={adding || selectedIds.size === 0}
-                className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 disabled:opacity-50 disabled:pointer-events-none"
+                className={btn.primary}
               >
                 {adding ? 'מוסיף...' : `הוסף לגלריה (${selectedIds.size})`}
               </button>
-              <button type="button" onClick={() => setPickerOpen(false)} disabled={adding} className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 text-sm font-medium disabled:opacity-50">
+              <button type="button" onClick={() => setPickerOpen(false)} disabled={adding} className={btn.secondary}>
                 ביטול
               </button>
             </div>
@@ -467,18 +485,18 @@ function ServiceModal({ initial, onSave, onClose }: { initial: Service | null; o
   const [description, setDescription] = useState(initial?.description ?? '');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
-      <div className="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 max-w-md w-full shadow-xl text-right" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={onClose}>
+      <div className="modal-enter rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 max-w-md w-full shadow-xl text-right" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">{initial ? 'עריכת שירות' : 'שירות חדש'}</h3>
         <div className="space-y-3">
-          <input type="text" placeholder="שם שירות" value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm" />
-          <input type="number" placeholder="מחיר" value={price || ''} onChange={(e) => setPrice(Number(e.target.value))} className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm" />
-          <input type="number" placeholder="משך (דק׳)" value={duration || ''} onChange={(e) => setDuration(Number(e.target.value) || 30)} className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm" />
-          <textarea placeholder="תיאור" value={description} onChange={(e) => setDescription(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm min-h-[80px]" />
+          <input type="text" placeholder="שם שירות" value={name} onChange={(e) => setName(e.target.value)} className={input} />
+          <input type="number" placeholder="מחיר" value={price || ''} onChange={(e) => setPrice(Number(e.target.value))} className={input} />
+          <input type="number" placeholder="משך (דק׳)" value={duration || ''} onChange={(e) => setDuration(Number(e.target.value) || 30)} className={input} />
+          <textarea placeholder="תיאור" value={description} onChange={(e) => setDescription(e.target.value)} className={`${input} min-h-[80px]`} />
         </div>
         <div className="flex gap-2 mt-4 justify-end">
-          <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 text-sm font-medium">ביטול</button>
-          <button type="button" onClick={() => onSave({ service_name: name.trim(), price, duration_minutes: duration, description: description.trim() || null })} className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500">שמור</button>
+          <button type="button" onClick={onClose} className={btn.secondary}>ביטול</button>
+          <button type="button" onClick={() => onSave({ service_name: name.trim(), price, duration_minutes: duration, description: description.trim() || null })} className={btn.primary}>שמור</button>
         </div>
       </div>
     </div>
@@ -553,7 +571,7 @@ export function ServicesCard({
             </tbody>
           </table>
         </div>
-        <button type="button" onClick={() => { setEditingService(null); setServiceModalOpen(true); }} className="mt-3 inline-flex items-center gap-2 rounded-xl px-3 py-2 bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500">
+        <button type="button" onClick={() => { setEditingService(null); setServiceModalOpen(true); }} className={`${btn.primary} mt-3`}>
           <Plus className="h-4 w-4" />
           שירות חדש
         </button>
@@ -607,12 +625,12 @@ function ProductModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
-      <div className="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 max-w-md w-full shadow-xl text-right" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={onClose}>
+      <div className="modal-enter rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 max-w-md w-full shadow-xl text-right" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">{initial ? 'עריכת מוצר' : 'מוצר חדש'}</h3>
         <div className="space-y-3">
-          <input type="text" placeholder="שם מוצר" value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm" />
-          <input type="number" placeholder="מחיר" value={price} onChange={(e) => setPrice(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm" />
+          <input type="text" placeholder="שם מוצר" value={name} onChange={(e) => setName(e.target.value)} className={input} />
+          <input type="number" placeholder="מחיר" value={price} onChange={(e) => setPrice(e.target.value)} className={input} />
           <div>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">תמונה</p>
             <input
@@ -628,23 +646,23 @@ function ProductModal({
                 type="button"
                 onClick={() => imageInputRef.current?.click()}
                 disabled={uploading}
-                className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className={btn.secondary}
               >
                 {uploading ? 'מעלה...' : 'העלה תמונה'}
               </button>
               {imageUrl ? (
                 <div className="relative w-14 h-14 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-600 shrink-0">
                   <img src={imageUrl} alt="" className="w-full h-full object-cover" />
-                  <button type="button" onClick={() => setImageUrl('')} className="absolute top-0 left-0 w-full h-full bg-black/50 flex items-center justify-center text-white text-xs">הסר</button>
+                  <button type="button" onClick={() => setImageUrl('')} className="absolute top-0 start-0 w-full h-full bg-black/50 flex items-center justify-center text-white text-xs">הסר</button>
                 </div>
               ) : null}
             </div>
           </div>
-          <textarea placeholder="תיאור" value={description} onChange={(e) => setDescription(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm min-h-[80px]" />
+          <textarea placeholder="תיאור" value={description} onChange={(e) => setDescription(e.target.value)} className={`${input} min-h-[80px]`} />
         </div>
         <div className="flex gap-2 mt-4 justify-end">
-          <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 text-sm font-medium">ביטול</button>
-          <button type="button" onClick={() => onSave({ name: name.trim(), price: price === '' ? null : Number(price), image_url: imageUrl.trim() || null, description: description.trim() || null })} className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500">שמור</button>
+          <button type="button" onClick={onClose} className={btn.secondary}>ביטול</button>
+          <button type="button" onClick={() => onSave({ name: name.trim(), price: price === '' ? null : Number(price), image_url: imageUrl.trim() || null, description: description.trim() || null })} className={btn.primary}>שמור</button>
         </div>
       </div>
     </div>
@@ -720,7 +738,7 @@ export function ProductsCard({
             </div>
           ))}
         </div>
-        <button type="button" onClick={() => { setEditingProduct(null); setProductModalOpen(true); }} className="mt-3 inline-flex items-center gap-2 rounded-xl px-3 py-2 bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500">
+        <button type="button" onClick={() => { setEditingProduct(null); setProductModalOpen(true); }} className={`${btn.primary} mt-3`}>
           <Plus className="h-4 w-4" />
           מוצר חדש
         </button>

@@ -92,13 +92,13 @@ export function OtpVerification({ phone, onVerify, onResend }: Props) {
         </div>
       </div>
 
-      <h2 className="text-xl font-bold text-gray-800 text-center mb-2">
+      <h2 className="text-xl font-bold text-slate-800 text-center mb-2">
         קוד אימות
       </h2>
-      <p className="text-gray-500 text-sm text-center mb-8 leading-relaxed">
+      <p className="text-slate-500 text-sm text-center mb-8 leading-relaxed">
         שלחנו קוד בן {OTP_LENGTH} ספרות
         <br />
-        <span className="font-medium text-gray-700 dir-ltr" dir="ltr">{phone}</span>
+        <span className="font-medium text-slate-700 dir-ltr" dir="ltr">{phone}</span>
       </p>
 
       <div className="flex gap-2 justify-center mb-6" dir="ltr">
@@ -118,7 +118,7 @@ export function OtpVerification({ phone, onVerify, onResend }: Props) {
               ${
                 digits[idx]
                   ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                  : 'border-gray-200 bg-white text-gray-800 focus:border-indigo-400'
+                  : 'border-slate-200 bg-white text-slate-800 focus:border-indigo-400'
               }
               ${verifying ? 'opacity-60' : ''}
             `}
@@ -134,9 +134,9 @@ export function OtpVerification({ phone, onVerify, onResend }: Props) {
 
       <div className="text-center">
         {resendCooldown > 0 ? (
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-slate-400">
             שלח שוב בעוד{' '}
-            <span className="font-semibold text-gray-600">{resendCooldown}</span>{' '}
+            <span className="font-semibold text-slate-600">{resendCooldown}</span>{' '}
             שניות
           </p>
         ) : (
@@ -149,7 +149,7 @@ export function OtpVerification({ phone, onVerify, onResend }: Props) {
         )}
       </div>
 
-      <p className="text-xs text-gray-400 text-center mt-3">
+      <p className="text-xs text-slate-400 text-center mt-3">
         {maskedPhone}
       </p>
     </div>

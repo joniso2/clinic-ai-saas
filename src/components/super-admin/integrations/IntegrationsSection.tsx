@@ -8,6 +8,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, CheckCircle2, XCircle, Bot, Webhook, RefreshCw, Send } from 'lucide-react';
+import { btn, input, inputLabel } from '@/lib/ui-classes';
 import type { DiscordMapping, TenantOption, ClinicIntegration, ClinicMetrics } from './integrations-types';
 import { MOCK_WEBHOOK_LOGS, CHANNEL_LABELS, PROVIDERS } from './integrations-types';
 import { useToast, StatusIcon, ConnectModal } from './integrations-shared';
@@ -154,16 +155,16 @@ export default function IntegrationsSection() {
           {metrics && (
             <div className="grid grid-cols-3 gap-4">
               <div className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-4">
-                <p className="text-xs text-zinc-500 mb-1">הודעות היום</p>
-                <p className="text-xl font-bold text-zinc-100">{metrics.messages_today}</p>
+                <p className="text-xs text-slate-500 mb-1">הודעות היום</p>
+                <p className="text-xl font-bold text-slate-100">{metrics.messages_today}</p>
               </div>
               <div className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-4">
-                <p className="text-xs text-zinc-500 mb-1">הודעות החודש</p>
-                <p className="text-xl font-bold text-zinc-100">{metrics.messages_this_month}</p>
+                <p className="text-xs text-slate-500 mb-1">הודעות החודש</p>
+                <p className="text-xl font-bold text-slate-100">{metrics.messages_this_month}</p>
               </div>
               <div className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-4">
-                <p className="text-xs text-zinc-500 mb-1">הודעה אחרונה</p>
-                <p className="text-sm font-medium text-zinc-300">
+                <p className="text-xs text-slate-500 mb-1">הודעה אחרונה</p>
+                <p className="text-sm font-medium text-slate-300">
                   {metrics.last_message_at ? new Date(metrics.last_message_at).toLocaleString('he-IL') : '—'}
                 </p>
               </div>
@@ -177,21 +178,21 @@ export default function IntegrationsSection() {
                 <div key={type} className="rounded-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-6">
                   <div className="flex items-center justify-between flex-row-reverse mb-3">
                     <span className="font-semibold text-slate-900 dark:text-slate-50">{CHANNEL_LABELS[type] ?? type}</span>
-                    {isConnected ? <CheckCircle2 className="h-5 w-5 text-emerald-400" /> : <XCircle className="h-5 w-5 text-zinc-500" />}
+                    {isConnected ? <CheckCircle2 className="h-5 w-5 text-emerald-400" /> : <XCircle className="h-5 w-5 text-slate-500" />}
                   </div>
-                  <p className="text-xs text-zinc-500 mb-3">{isConnected ? `${int?.provider}` : 'לא מחובר'}</p>
+                  <p className="text-xs text-slate-500 mb-3">{isConnected ? `${int?.provider}` : 'לא מחובר'}</p>
                   <div className="flex flex-col gap-2">
                     {!isConnected ? (
-                      <button type="button" onClick={() => setConnectModal(type)} className="w-full rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white py-2 text-sm font-medium">
+                      <button type="button" onClick={() => setConnectModal(type)} className={`${btn.primary} w-full`}>
                         התחבר
                       </button>
                     ) : (
                       <>
-                        <button type="button" onClick={() => handleDisconnect(int!.id)} className="w-full rounded-lg bg-zinc-700 hover:bg-zinc-600 text-zinc-200 py-2 text-sm">
+                        <button type="button" onClick={() => handleDisconnect(int!.id)} className={`${btn.secondary} w-full`}>
                           נתק
                         </button>
                         {(type === 'whatsapp' || type === 'sms') && (
-                          <button type="button" onClick={() => { setTestPhone(''); setTestMessage('בדיקה'); setTestChannel(type); }} className="w-full rounded-lg border border-zinc-600 text-zinc-300 py-2 text-sm flex items-center justify-center gap-1">
+                          <button type="button" onClick={() => { setTestPhone(''); setTestMessage('בדיקה'); setTestChannel(type); }} className="w-full rounded-lg border border-slate-600 text-slate-300 py-2 text-sm flex items-center justify-center gap-1">
                             <Send className="h-3.5 w-3.5" /> שלח הודעת בדיקה
                           </button>
                         )}
@@ -270,11 +271,11 @@ export default function IntegrationsSection() {
         <div className="flex items-center justify-between flex-row-reverse mb-4">
           <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">מיפויי Discord</h3>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={fetchAll} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors" title="רענן">
+            <button type="button" onClick={fetchAll} className={btn.icon} title="רענן">
               <RefreshCw className="h-4 w-4" />
             </button>
             <button type="button" onClick={() => { setModalOpen(true); setFClinicId(tenants[0]?.id ?? ''); setFGuildId(''); }}
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 text-sm font-semibold transition-colors flex-row-reverse">
+              className={`${btn.primary} flex-row-reverse`}>
               <Plus className="h-4 w-4" />הוסף מיפוי
             </button>
           </div>
@@ -286,9 +287,9 @@ export default function IntegrationsSection() {
           ) : (
             <table className="w-full text-sm" dir="rtl">
               <thead>
-                <tr className="border-b border-zinc-700 bg-zinc-800">
+                <tr className="border-b border-slate-700 bg-slate-800">
                   {['מזהה שרת (Guild ID)','שם לקוח','סטטוס','פעולות'].map((h) => (
-                    <th key={h} className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{h}</th>
+                    <th key={h} className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -296,15 +297,15 @@ export default function IntegrationsSection() {
                 {mappings.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="py-12 text-center">
-                      <Bot className="h-8 w-8 text-zinc-500 ms-auto me-auto mb-2 block" />
-                      <p className="text-sm text-zinc-400">אין מיפויי Discord עדיין</p>
-                      <p className="text-xs text-zinc-600 mt-1">הוסף מיפוי שרת כדי להתחיל</p>
+                      <Bot className="h-8 w-8 text-slate-500 ms-auto me-auto mb-2 block" />
+                      <p className="text-sm text-slate-400">אין מיפויי Discord עדיין</p>
+                      <p className="text-xs text-slate-600 mt-1">הוסף מיפוי שרת כדי להתחיל</p>
                     </td>
                   </tr>
                 ) : mappings.map((m) => (
-                  <tr key={m.id} className="border-b border-zinc-700 hover:bg-zinc-800/50 transition-colors">
-                    <td className="py-3 px-4 font-mono text-xs text-zinc-300">{m.guild_id}</td>
-                    <td className="py-3 px-4 font-medium text-zinc-100">{m.clinic_name}</td>
+                  <tr key={m.id} className="border-b border-slate-700 hover:bg-slate-800/50 transition-colors">
+                    <td className="py-3 px-4 font-mono text-xs text-slate-300">{m.guild_id}</td>
+                    <td className="py-3 px-4 font-medium text-slate-100">{m.clinic_name}</td>
                     <td className="py-3 px-4">
                       <span className="inline-flex items-center gap-1.5 text-xs text-emerald-400">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />מחובר
@@ -312,7 +313,7 @@ export default function IntegrationsSection() {
                     </td>
                     <td className="py-3 px-4">
                       <button type="button" onClick={() => handleDelete(m.id)}
-                        className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium bg-red-600 hover:bg-red-500 text-white transition-colors">
+                        className={`${btn.danger} text-xs px-2.5 py-1.5`}>
                         <Trash2 className="h-3.5 w-3.5" />הסר
                       </button>
                     </td>
@@ -326,21 +327,21 @@ export default function IntegrationsSection() {
 
       {/* Webhook activity log */}
       <div>
-        <h3 className="text-sm font-semibold text-zinc-300 mb-4">לוג פעילות Webhooks (מוק)</h3>
-        <div className="rounded-2xl border border-zinc-700 overflow-hidden bg-zinc-900">
+        <h3 className="text-sm font-semibold text-slate-300 mb-4">לוג פעילות Webhooks (מוק)</h3>
+        <div className="rounded-2xl border border-slate-700 overflow-hidden bg-slate-900">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-zinc-700 bg-zinc-800">
+              <tr className="border-b border-slate-700 bg-slate-800">
                 {['לקוח','אירוע','סטטוס','זמן תגובה','זמן'].map((h) => (
-                  <th key={h} className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">{h}</th>
+                  <th key={h} className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {MOCK_WEBHOOK_LOGS.map((log) => (
-                <tr key={log.id} className="border-b border-zinc-700 hover:bg-zinc-800/50">
-                  <td className="py-3 px-4 font-medium text-zinc-200">{log.tenantName}</td>
-                  <td className="py-3 px-4 font-mono text-xs text-zinc-400">{log.event}</td>
+                <tr key={log.id} className="border-b border-slate-700 hover:bg-slate-800/50">
+                  <td className="py-3 px-4 font-medium text-slate-200">{log.tenantName}</td>
+                  <td className="py-3 px-4 font-mono text-xs text-slate-400">{log.event}</td>
                   <td className="py-3 px-4">
                     <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md ${
                       log.status === 'success' ? 'bg-emerald-400/10 text-emerald-400' :
@@ -350,10 +351,10 @@ export default function IntegrationsSection() {
                       {log.status === 'success' ? 'הצליח' : log.status === 'failed' ? 'נכשל' : 'ממתין'}
                     </span>
                   </td>
-                  <td className="py-3 px-4 tabular-nums text-xs text-zinc-400">
+                  <td className="py-3 px-4 tabular-nums text-xs text-slate-400">
                     {log.responseMs > 0 ? `${log.responseMs}ms` : '—'}
                   </td>
-                  <td className="py-3 px-4 text-xs text-zinc-500">
+                  <td className="py-3 px-4 text-xs text-slate-500">
                     {new Date(log.timestamp).toLocaleTimeString('he-IL')}
                   </td>
                 </tr>
@@ -378,25 +379,25 @@ export default function IntegrationsSection() {
 
       {/* Send test message modal */}
       {testChannel && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setTestChannel(null)}>
-          <div className="rounded-2xl bg-zinc-900 border border-zinc-700 shadow-2xl max-w-sm w-full p-6 text-right" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-base font-bold text-zinc-100 mb-4">שלח הודעת בדיקה</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setTestChannel(null)}>
+          <div className="modal-enter rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl max-w-sm w-full p-6 text-right" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-bold text-slate-100 mb-4">שלח הודעת בדיקה</h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1">מס׳ טלפון</label>
+                <label className={inputLabel}>מס׳ טלפון</label>
                 <input type="text" value={testPhone} onChange={(e) => setTestPhone(e.target.value)} placeholder="+972..."
-                  className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100" />
+                  className={input} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1">הודעה</label>
+                <label className={inputLabel}>הודעה</label>
                 <input type="text" value={testMessage} onChange={(e) => setTestMessage(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100" />
+                  className={input} />
               </div>
             </div>
             <div className="flex gap-2 mt-5 justify-end">
-              <button type="button" onClick={() => setTestChannel(null)} className="px-4 py-2 rounded-xl bg-zinc-800 text-zinc-200 text-sm">ביטול</button>
+              <button type="button" onClick={() => setTestChannel(null)} className={btn.secondary}>ביטול</button>
               <button type="button" onClick={() => handleSendTest(testChannel, testPhone, testMessage)} disabled={sendingTest || !testMessage.trim()}
-                className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold disabled:opacity-50">
+                className={btn.primary}>
                 {sendingTest ? 'שולח…' : 'שלח'}
               </button>
             </div>
@@ -406,27 +407,27 @@ export default function IntegrationsSection() {
 
       {/* Add Discord modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setModalOpen(false)}>
-          <div className="rounded-2xl bg-zinc-900 border border-zinc-700 shadow-2xl max-w-sm w-full p-6 text-right" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-base font-bold text-zinc-100 mb-5">הוסף מיפוי Discord</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setModalOpen(false)}>
+          <div className="modal-enter rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl max-w-sm w-full p-6 text-right" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-bold text-slate-100 mb-5">הוסף מיפוי Discord</h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1">מזהה שרת (Guild ID)</label>
+                <label className={inputLabel}>מזהה שרת (Guild ID)</label>
                 <input type="text" value={fGuildId} onChange={(e) => setFGuildId(e.target.value)} placeholder="1234567890123456789"
-                  className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm font-mono text-zinc-100 focus:outline-none focus:border-indigo-500" />
+                  className={`${input} font-mono`} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1">לקוח</label>
+                <label className={inputLabel}>לקוח</label>
                 <select value={fClinicId} onChange={(e) => setFClinicId(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500">
+                  className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
                   {tenants.map((t) => <option key={t.id} value={t.id}>{t.name ?? t.id}</option>)}
                 </select>
               </div>
             </div>
             <div className="flex gap-2 mt-5 justify-end">
-              <button type="button" onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-sm">ביטול</button>
+              <button type="button" onClick={() => setModalOpen(false)} className={btn.secondary}>ביטול</button>
               <button type="button" onClick={handleAdd} disabled={saving || !fGuildId.trim()}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold disabled:opacity-50 transition-colors">
+                className={btn.primary}>
                 {saving ? 'שומר…' : 'הוסף'}
               </button>
             </div>
@@ -435,7 +436,7 @@ export default function IntegrationsSection() {
       )}
 
       {toast && (
-        <div className="fixed bottom-6 start-1/2 -translate-x-1/2 z-50 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-100 px-4 py-2.5 text-sm font-medium shadow-xl">{toast}</div>
+        <div className="fixed bottom-6 start-1/2 -translate-x-1/2 z-50 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 px-4 py-2.5 text-sm font-medium shadow-xl">{toast}</div>
       )}
     </div>
   );

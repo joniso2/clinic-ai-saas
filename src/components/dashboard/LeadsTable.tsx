@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import {
   Search,
@@ -17,6 +18,7 @@ import {
 import type { Lead } from '@/types/leads';
 import { getDisplayPriority, type Priority, type LeadStatus } from '@/types/leads';
 import { STATUS_LABELS, PRIORITY_LABELS, SOURCE_LABELS, formatCurrencyILS } from '@/lib/hebrew';
+import { useToast } from '@/components/ui/Toast';
 
 // Extracted modules
 import {
@@ -87,6 +89,9 @@ export function LeadsTable({
   const [sortDesc, setSortDesc] = useState(true);
 
   // ── Drag-to-trash ──
+  const toastApi = useToast();
+  const pendingDeleteRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<string>>(new Set());
   const [draggingLead, setDraggingLead] = useState<Lead | null>(null);
   const [trashHover, setTrashHover] = useState(false);
   const [hasFinePointer, setHasFinePointer] = useState(false);
@@ -116,6 +121,7 @@ export function LeadsTable({
   const [toast, setToast] = useState<string | null>(null);
   const [phoneModalPhone, setPhoneModalPhone] = useState<string | null>(null);
   const [statusDropdownId, setStatusDropdownId] = useState<string | null>(null);
+  const [statusDropdownPos, setStatusDropdownPos] = useState<{ top: number; right: number } | null>(null);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
   const [dealValueLeadId, setDealValueLeadId] = useState<string | null>(null);
   const [dealValueInput, setDealValueInput] = useState('');
@@ -171,8 +177,12 @@ export function LeadsTable({
       }
       return sortDesc ? -cmp : cmp;
     });
+    // Hide leads pending undo-delete
+    if (pendingDeleteIds.size > 0) {
+      list = list.filter((l) => !pendingDeleteIds.has(l.id));
+    }
     return list;
-  }, [leads, debouncedSearch, priorityFilter, statusFilter, sortKey, sortDesc]);
+  }, [leads, debouncedSearch, priorityFilter, statusFilter, sortKey, sortDesc, pendingDeleteIds]);
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -235,13 +245,13 @@ export function LeadsTable({
       <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white dark:border-slate-800/70 dark:bg-slate-950/90 px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between flex-row-reverse">
         <div className="flex flex-wrap items-center gap-3 flex-row-reverse justify-end">
           <div className="relative">
-            <Search className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
+            <Search className="absolute end-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
             <input
               type="search"
               placeholder="חיפוש לפי שם או אימייל..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white py-2 pr-9 pl-4 text-sm text-right text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:border-slate-700/60 dark:bg-slate-800/60 dark:text-slate-200 dark:placeholder:text-slate-500 dark:focus:border-slate-500 dark:focus:ring-slate-500/50 transition-colors duration-150 sm:w-56"
+              className="w-full rounded-lg border border-slate-200 bg-white py-2 pe-9 ps-4 text-sm text-right text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:border-slate-700/60 dark:bg-slate-800/60 dark:text-slate-200 dark:placeholder:text-slate-500 dark:focus:border-slate-500 dark:focus:ring-slate-500/50 transition-colors duration-150 sm:w-56"
             />
           </div>
           <FilterDropdown
@@ -402,7 +412,7 @@ export function LeadsTable({
                           }}
                           onDragEnd={() => { setDraggingLead(null); setTrashHover(false); }}
                           onClick={(e) => e.stopPropagation()}
-                          className="absolute start-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing p-1 rounded transition-opacity duration-150 z-10"
+                          className="absolute start-1 top-1/2 -translate-y-1/2 sm:opacity-0 sm:group-hover:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing p-1 rounded transition-opacity duration-150 z-10"
                           title="גרור למחיקה"
                         >
                           <GripVertical className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
@@ -462,38 +472,39 @@ export function LeadsTable({
                           {STATUS_LABELS.Pending}
                         </button>
                       ) : (
-                        <div className="relative" ref={statusDropdownId === lead.id ? statusDropdownRef : undefined}>
+                        <div className="relative">
                           <button type="button"
-                            onClick={() => setStatusDropdownId(statusDropdownId === lead.id ? null : lead.id)}
+                            onClick={(e) => {
+                              if (statusDropdownId === lead.id) {
+                                setStatusDropdownId(null);
+                                setStatusDropdownPos(null);
+                              } else {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                setStatusDropdownPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+                                setStatusDropdownId(lead.id);
+                              }
+                            }}
                             className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[12px] font-semibold cursor-pointer transition-colors ${STATUS_BADGE_STYLES[lead.status ?? 'Pending'] ?? STATUS_BADGE_STYLES['Pending']}`}>
                             {STATUS_LABELS[lead.status ?? 'Pending'] ?? lead.status ?? STATUS_LABELS.Pending}
                             <ChevronDown className="h-3 w-3 shrink-0 opacity-70" />
                           </button>
-                          {statusDropdownId === lead.id && (
-                            <div className="absolute top-full end-0 mt-1 z-50 w-44 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-lg overflow-hidden py-1">
-                              {STATUS_OPTIONS.map(s => {
-                                const isActive = (lead.status ?? 'Pending') === s;
-                                const dotColors: Record<string, string> = {
-                                  Pending: 'bg-amber-400',
-                                  Contacted: 'bg-sky-400',
-                                  'Appointment scheduled': 'bg-blue-500',
-                                  Closed: 'bg-emerald-500',
-                                  Disqualified: 'bg-red-400',
-                                };
-                                return (
-                                  <button key={s} type="button"
-                                    onClick={() => { onStatusChange(lead.id, s); setStatusDropdownId(null); }}
-                                    className={`w-full flex items-center gap-2.5 text-right px-3 py-2.5 text-[13px] transition-all duration-150
-                                      ${isActive
-                                        ? 'font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30'
-                                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:ps-4'
-                                      }`}>
-                                    <span className={`h-2 w-2 rounded-full shrink-0 ${dotColors[s] ?? 'bg-slate-300'}`} />
-                                    {STATUS_LABELS[s] ?? s}
-                                  </button>
-                                );
-                              })}
-                            </div>
+                          {statusDropdownId === lead.id && statusDropdownPos && createPortal(
+                            <div
+                              ref={statusDropdownRef}
+                              className="fixed z-[70] w-40 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-lg overflow-hidden py-1"
+                              style={{ top: statusDropdownPos.top, right: statusDropdownPos.right }}
+                              dir="rtl"
+                            >
+                              {STATUS_OPTIONS.map(s => (
+                                <button key={s} type="button"
+                                  onClick={() => { onStatusChange(lead.id, s); setStatusDropdownId(null); setStatusDropdownPos(null); }}
+                                  className={`w-full text-right px-3 py-2 text-[13px] transition-colors hover:bg-slate-50 dark:hover:bg-slate-800
+                                    ${(lead.status ?? 'Pending') === s ? 'font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/30' : 'text-slate-700 dark:text-slate-300'}`}>
+                                  {STATUS_LABELS[s] ?? s}
+                                </button>
+                              ))}
+                            </div>,
+                            document.body
                           )}
                         </div>
                       )}
@@ -519,7 +530,7 @@ export function LeadsTable({
                       ) : (
                         <button
                           type="button"
-                          onClick={() => onScheduleAppointment(lead)}
+                          onClick={(e) => { e.stopPropagation(); onScheduleAppointment(lead); }}
                           title="קבע תור"
                           aria-label="קבע תור"
                           className="inline-flex items-center justify-center rounded-lg border border-emerald-200 dark:border-emerald-700/40 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/30"
@@ -539,7 +550,7 @@ export function LeadsTable({
                       </>
                     )}
                     <td className="relative px-3 py-2.5 align-middle" onClick={e => e.stopPropagation()}>
-                      <div className="flex items-center gap-0.5 flex-row-reverse justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                      <div className="flex items-center gap-0.5 flex-row-reverse justify-end sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150">
                         {lead.phone && (
                           <a href={`tel:${lead.phone}`}
                             className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400
@@ -594,7 +605,21 @@ export function LeadsTable({
           onDragLeave={() => setTrashHover(false)}
           onDrop={(e) => {
             e.preventDefault();
-            if (draggingLead) onDelete(draggingLead);
+            if (draggingLead) {
+              const lead = draggingLead;
+              setPendingDeleteIds((prev) => new Set(prev).add(lead.id));
+              const timer = setTimeout(() => {
+                onDelete(lead);
+                setPendingDeleteIds((prev) => { const next = new Set(prev); next.delete(lead.id); return next; });
+                pendingDeleteRef.current.delete(lead.id);
+              }, 5000);
+              pendingDeleteRef.current.set(lead.id, timer);
+              toastApi.undo(`"${lead.full_name}" יימחק`, () => {
+                clearTimeout(timer);
+                pendingDeleteRef.current.delete(lead.id);
+                setPendingDeleteIds((prev) => { const next = new Set(prev); next.delete(lead.id); return next; });
+              });
+            }
             setDraggingLead(null);
             setTrashHover(false);
           }}
@@ -651,8 +676,8 @@ export function LeadsTable({
 
       {/* Deal Value Modal */}
       {dealValueLeadId && onUpdateDealValue && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40" dir="rtl" role="dialog" aria-modal="true" aria-labelledby="deal-value-title">
-          <div className="w-full max-w-sm rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-xl p-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" dir="rtl" role="dialog" aria-modal="true" aria-labelledby="deal-value-title">
+          <div className="modal-enter w-full max-w-sm rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-xl p-5">
             <h2 id="deal-value-title" className="text-base font-semibold text-slate-900 dark:text-slate-50 text-right mb-3">הוסף שווי (₪)</h2>
             <input
               type="number"

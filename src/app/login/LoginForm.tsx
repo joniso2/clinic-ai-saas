@@ -108,7 +108,7 @@ export default function LoginForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   aria-invalid={!!error}
                   aria-describedby={error ? 'login-error' : undefined}
-                className={`block w-full rounded-xl border bg-white/90 pl-11 pr-4 py-3.5 text-right text-sm text-slate-900 shadow-sm transition-all duration-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/60 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.12)] focus-visible:ring-2 focus-visible:ring-indigo-400/60 ${
+                className={`block w-full rounded-xl border bg-white/90 ps-11 pe-4 py-3.5 text-right text-sm text-slate-900 shadow-sm transition-all duration-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/60 focus:shadow-[0_0_0_4px_rgba(99,102,241,0.12)] focus-visible:ring-2 focus-visible:ring-indigo-400/60 ${
                     error
                       ? 'border-red-300 focus:border-red-400'
                       : 'border-slate-300 focus:border-indigo-400'
@@ -118,7 +118,7 @@ export default function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((p) => !p)}
-                  className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-400/50 focus-visible:ring-2 focus-visible:ring-indigo-400/50"
+                  className="absolute start-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-400/50 focus-visible:ring-2 focus-visible:ring-indigo-400/50"
                   aria-label={showPassword ? 'הסתר סיסמה' : 'הצג סיסמה'}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

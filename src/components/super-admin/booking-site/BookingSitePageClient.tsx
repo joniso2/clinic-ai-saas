@@ -131,13 +131,13 @@ export function BookingSitePageClient({
           </div>
         )}
         <div className="relative mb-3">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
             type="text"
             placeholder="חיפוש קליניקה..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 pl-4 pr-10 py-2 text-sm text-right placeholder:text-slate-400"
+            className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 ps-4 pe-10 py-2 text-sm text-right placeholder:text-slate-400"
           />
         </div>
         {loadingClinics ? (

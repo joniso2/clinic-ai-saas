@@ -121,9 +121,9 @@ export function LandingView({ clinic, products, slug }: Props) {
         viewport={{ once: true, margin: '-40px' }}
         transition={fadeUp.transition}
       >
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">אודות</h2>
-        <h3 className="text-xl font-bold text-gray-900 tracking-tight">{clinicName}</h3>
-        <p className="mt-2 text-gray-600 text-sm leading-relaxed">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">אודות</h2>
+        <h3 className="text-xl font-bold text-slate-900 tracking-tight">{clinicName}</h3>
+        <p className="mt-2 text-slate-600 text-sm leading-relaxed">
           {hasAddress ? clinic.address : 'הזמינו תור בנוחות מהבית.'}
         </p>
       </motion.section>
@@ -137,9 +137,9 @@ export function LandingView({ clinic, products, slug }: Props) {
         viewport={{ once: true, margin: '-40px' }}
         transition={{ ...fadeUp.transition, delay: 0.05 }}
       >
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">מוצרים מובילים</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">מוצרים מובילים</h2>
         {products.length === 0 ? (
-          <p className="text-sm text-gray-400">אין מוצרים להצגה</p>
+          <p className="text-sm text-slate-400">אין מוצרים להצגה</p>
         ) : (
           <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory scrollbar-hide">
             {products.map((p, i) => (
@@ -149,17 +149,17 @@ export function LandingView({ clinic, products, slug }: Props) {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.04, duration: 0.3 }}
-                className="flex-shrink-0 w-[172px] snap-start rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                className="flex-shrink-0 w-[172px] snap-start rounded-2xl border border-slate-100 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="aspect-square bg-gray-50">
+                <div className="aspect-square bg-slate-50">
                   {p.image_url ? (
                     <img src={p.image_url} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    <div className="h-full w-full flex items-center justify-center text-gray-300 text-2xl">📦</div>
+                    <div className="h-full w-full flex items-center justify-center text-slate-300 text-2xl">📦</div>
                   )}
                 </div>
                 <div className="p-3">
-                  <p className="font-semibold text-gray-900 text-sm truncate">{p.name}</p>
+                  <p className="font-semibold text-slate-900 text-sm truncate">{p.name}</p>
                   <p className="mt-0.5 text-indigo-600 font-semibold text-sm">
                     {p.price != null ? `₪${p.price}` : '—'}
                   </p>
@@ -172,7 +172,7 @@ export function LandingView({ clinic, products, slug }: Props) {
 
       {/* ─── Footer ─── */}
       <motion.footer
-        className="border-t border-gray-100 bg-white px-5 py-8"
+        className="border-t border-slate-100 bg-white px-5 py-8"
         initial={fadeUp.initial}
         whileInView={fadeUp.animate}
         viewport={{ once: true }}
@@ -184,7 +184,7 @@ export function LandingView({ clinic, products, slug }: Props) {
               href={`https://maps.google.com/?q=${encodeURIComponent(clinic.address!)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-end gap-2 text-gray-600 text-sm hover:text-gray-900 transition-colors"
+              className="flex items-center justify-end gap-2 text-slate-600 text-sm hover:text-slate-900 transition-colors"
             >
               <MapPin className="h-4 w-4 shrink-0" />
               <span>{clinic.address}</span>
@@ -193,14 +193,14 @@ export function LandingView({ clinic, products, slug }: Props) {
           {hasPhone && (
             <a
               href={`tel:${clinic.phone!.replace(/\s/g, '')}`}
-              className="flex items-center justify-end gap-2 text-gray-600 text-sm hover:text-gray-900 transition-colors"
+              className="flex items-center justify-end gap-2 text-slate-600 text-sm hover:text-slate-900 transition-colors"
             >
               <Phone className="h-4 w-4 shrink-0" />
               <span>{clinic.phone}</span>
             </a>
           )}
           {!hasAddress && !hasPhone && (
-            <p className="text-sm text-gray-400">פרטי התקשורת יוצגו כאן</p>
+            <p className="text-sm text-slate-400">פרטי התקשורת יוצגו כאן</p>
           )}
         </div>
       </motion.footer>

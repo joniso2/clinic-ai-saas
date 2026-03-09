@@ -197,12 +197,12 @@ export function BookingFlow({ data }: Props) {
         <>
           {/* Header: back to landing when on services step, else step back + progress */}
           {!isSuccessStep && (
-            <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
+            <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-slate-100 shadow-sm">
               <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-2">
                 {isServicesStep ? (
                   <Link
                     href={`/${clinic.slug}`}
-                    className="p-2 -mr-1 rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation flex items-center gap-1 text-gray-600"
+                    className="p-2 -me-1 rounded-full hover:bg-slate-100 active:bg-slate-200 transition-colors touch-manipulation flex items-center gap-1 text-slate-600"
                     aria-label="חזרה לדף הבית"
                   >
                     <ArrowLeft className="w-5 h-5" />
@@ -210,20 +210,20 @@ export function BookingFlow({ data }: Props) {
                 ) : (
                   <button
                     onClick={goBack}
-                    className="p-2 -mr-1 rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors touch-manipulation"
+                    className="p-2 -me-1 rounded-full hover:bg-slate-100 active:bg-slate-200 transition-colors touch-manipulation"
                     aria-label="חזרה"
                   >
-                    <ChevronRight className="w-5 h-5 text-gray-600" />
+                    <ChevronRight className="w-5 h-5 text-slate-600" />
                   </button>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-400 truncate">{clinic.name}</p>
-                  <h2 className="font-semibold text-gray-800 text-sm leading-tight">
+                  <p className="text-xs text-slate-400 truncate">{clinic.name}</p>
+                  <h2 className="font-semibold text-slate-800 text-sm leading-tight">
                     {STEP_TITLES[step]}
                   </h2>
                 </div>
               </div>
-              <div className="h-0.5 bg-gray-100">
+              <div className="h-0.5 bg-slate-100">
                 <div
                   className="h-full bg-indigo-500 transition-all duration-500 ease-out"
                   style={{ width: `${pct}%` }}
@@ -314,7 +314,7 @@ export function BookingFlow({ data }: Props) {
 
       {activeTab === 'gallery' && (
         <div className="transition-opacity duration-200">
-          <Suspense fallback={<div className="py-12 text-center text-gray-500 text-sm">טוען...</div>}>
+          <Suspense fallback={<div className="py-12 text-center text-slate-500 text-sm">טוען...</div>}>
             <GalleryView images={gallery} />
           </Suspense>
         </div>
@@ -322,13 +322,13 @@ export function BookingFlow({ data }: Props) {
 
       {activeTab === 'products' && (
         <div className="transition-opacity duration-200">
-          <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-gray-100 max-w-md mx-auto">
+          <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-slate-100 max-w-md mx-auto">
             <div className="px-4 py-3">
-              <p className="text-xs text-gray-400">{clinic.name}</p>
-              <h2 className="font-semibold text-gray-800 text-sm">מוצרים</h2>
+              <p className="text-xs text-slate-400">{clinic.name}</p>
+              <h2 className="font-semibold text-slate-800 text-sm">מוצרים</h2>
             </div>
           </div>
-          <Suspense fallback={<div className="py-12 text-center text-gray-500 text-sm">טוען...</div>}>
+          <Suspense fallback={<div className="py-12 text-center text-slate-500 text-sm">טוען...</div>}>
             <ProductsView products={products} />
           </Suspense>
         </div>
@@ -336,13 +336,13 @@ export function BookingFlow({ data }: Props) {
 
       {activeTab === 'team' && (
         <div className="transition-opacity duration-200">
-          <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-gray-100 max-w-md mx-auto">
+          <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-slate-100 max-w-md mx-auto">
             <div className="px-4 py-3">
-              <p className="text-xs text-gray-400">{clinic.name}</p>
-              <h2 className="font-semibold text-gray-800 text-sm">צוות</h2>
+              <p className="text-xs text-slate-400">{clinic.name}</p>
+              <h2 className="font-semibold text-slate-800 text-sm">צוות</h2>
             </div>
           </div>
-          <Suspense fallback={<div className="py-12 text-center text-gray-500 text-sm">טוען...</div>}>
+          <Suspense fallback={<div className="py-12 text-center text-slate-500 text-sm">טוען...</div>}>
             <TeamView clinic={clinic} />
           </Suspense>
         </div>

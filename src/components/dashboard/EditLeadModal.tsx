@@ -1,7 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { X } from 'lucide-react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
+import { useUnsavedWarning } from '@/hooks/useUnsavedWarning';
 import type { Lead } from '@/types/leads';
 import type { LeadStatus } from '@/types/leads';
 
@@ -18,11 +21,24 @@ export function EditLeadModal({
   onSave: (id: string, data: Partial<Lead>) => Promise<void>;
   loading: boolean;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, open);
+  useEscapeKey(open, onClose);
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [interest, setInterest] = useState('');
   const [status, setStatus] = useState<LeadStatus>('Pending');
+
+  const isDirty = !!(lead && (
+    name !== (lead.full_name ?? '') ||
+    email !== (lead.email ?? '') ||
+    phone !== (lead.phone ?? '') ||
+    interest !== (lead.interest ?? '') ||
+    status !== ((lead.status as LeadStatus) ?? 'Pending')
+  ));
+  useUnsavedWarning(isDirty && open);
 
   useEffect(() => {
     if (lead) {
@@ -69,6 +85,7 @@ export function EditLeadModal({
       onClick={onClose}
     >
       <div
+        ref={panelRef}
         className="modal-enter max-w-lg w-full rounded-2xl bg-white dark:bg-slate-900 shadow-[0_10px_30px_rgba(0,0,0,0.12),0_4px_8px_rgba(0,0,0,0.06)]"
         dir="rtl"
         onClick={(e) => e.stopPropagation()}

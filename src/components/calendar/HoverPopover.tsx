@@ -32,7 +32,8 @@ export function HoverPopover({ appointment, phone, anchor }: HoverPopoverProps) 
   return (
     <div
       ref={popRef}
-      className="fixed z-[60] w-48 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2.5 shadow-lg"
+      role="tooltip"
+      className="fixed z-50 w-48 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2.5 shadow-lg"
       style={{ top: pos.top, left: pos.left, transform: 'translateY(-100%)' }}
       dir="rtl"
     >

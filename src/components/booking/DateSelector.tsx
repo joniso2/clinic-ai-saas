@@ -108,15 +108,15 @@ export function DateSelector({
   if (availableDatesSet.size === 0) {
     return (
       <div className="py-12 text-center">
-        <p className="text-lg font-medium text-gray-800">אין תאריכים זמינים</p>
-        <p className="text-sm text-gray-500 mt-2">לא הוגדרו שעות עבודה לימים הקרובים.</p>
+        <p className="text-lg font-medium text-slate-800">אין תאריכים זמינים</p>
+        <p className="text-sm text-slate-500 mt-2">לא הוגדרו שעות עבודה לימים הקרובים.</p>
       </div>
     );
   }
 
   return (
     <div className="pt-5 pb-4">
-      <div className="rounded-2xl overflow-hidden bg-white shadow-sm border border-gray-100">
+      <div className="rounded-2xl overflow-hidden bg-white shadow-sm border border-slate-100">
         {/* כותרת שחורה — חודש + חצים */}
         <div className="bg-black text-white flex items-center justify-between px-4 py-3">
           <button
@@ -141,11 +141,11 @@ export function DateSelector({
         </div>
 
         {/* ימי השבוע */}
-        <div className="grid grid-cols-7 border-b border-gray-100">
+        <div className="grid grid-cols-7 border-b border-slate-100">
           {HEBREW_WEEKDAYS.map((day) => (
             <div
               key={day}
-              className="py-2 text-center text-xs font-bold text-gray-800 border-l border-gray-100 first:border-l-0"
+              className="py-2 text-center text-xs font-bold text-slate-800 border-l border-slate-100 first:border-l-0"
             >
               {day}
             </div>
@@ -164,10 +164,10 @@ export function DateSelector({
                 type="button"
                 disabled={loading || !isAvailable}
                 onClick={() => isAvailable && !loading && onSelect(cell.date)}
-                className={`min-h-11 flex items-center justify-center text-sm font-bold border-b border-l border-gray-100 first:border-l-0 transition-colors
-                  ${!cell.isCurrentMonth ? 'text-gray-300' : 'text-gray-900'}
+                className={`min-h-11 flex items-center justify-center text-sm font-bold border-b border-l border-slate-100 first:border-l-0 transition-colors
+                  ${!cell.isCurrentMonth ? 'text-slate-300' : 'text-slate-900'}
                   ${!isAvailable && cell.isCurrentMonth ? 'text-red-500' : ''}
-                  ${isSelected ? 'bg-black text-white' : isAvailable && cell.isCurrentMonth ? 'hover:bg-gray-50' : ''}
+                  ${isSelected ? 'bg-black text-white' : isAvailable && cell.isCurrentMonth ? 'hover:bg-slate-50' : ''}
                   ${loading ? 'opacity-60' : ''}
                 `}
               >
@@ -183,7 +183,7 @@ export function DateSelector({
         )}
       </div>
       <p className="text-xs mt-3 text-center flex justify-center gap-4" dir="rtl">
-        <span className="text-gray-800">— יש תורים</span>
+        <span className="text-slate-800">— יש תורים</span>
         <span className="text-red-500">— אין תורים</span>
       </p>
     </div>

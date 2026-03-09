@@ -53,7 +53,7 @@ export function WeekView({ weekStartStr, appointments, onSlotClick, onAppointmen
     <div className="flex border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950" dir="rtl">
       <div className="w-12 shrink-0 border-s border-slate-200 dark:border-slate-800 bg-transparent">
         {timeLabels.map((t) => (
-          <div key={t} className="flex items-start justify-end pr-1.5 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800 first:border-t-0" style={{ height: SLOT_HEIGHT_PX }}>
+          <div key={t} className="flex items-start justify-end pe-1.5 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800 first:border-t-0" style={{ height: SLOT_HEIGHT_PX }}>
             {t}
           </div>
         ))}

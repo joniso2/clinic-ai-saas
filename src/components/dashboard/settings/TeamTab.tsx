@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Users, UserPlus, Trash2, Crown, Shield, User, Loader2, CheckCircle2, AlertCircle, Mail } from 'lucide-react';
+import { ConfirmDeleteModal } from '@/components/dashboard/ConfirmDeleteModal';
 
 type TeamMember = {
   user_id: string;
@@ -35,6 +36,7 @@ export function TeamTab() {
   const [inviteStatus, setInviteStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [inviteError, setInviteError] = useState('');
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [removeUserId, setRemoveUserId] = useState<string | null>(null);
 
   async function fetchMembers() {
     setLoading(true);
@@ -127,7 +129,7 @@ export function TeamTab() {
                 <RoleBadge role={member.role} />
                 <button
                   type="button"
-                  onClick={() => handleRemove(member.user_id)}
+                  onClick={() => setRemoveUserId(member.user_id)}
                   disabled={removingId === member.user_id}
                   className="rounded-lg p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors disabled:opacity-40"
                   title="Remove member"
@@ -156,13 +158,13 @@ export function TeamTab() {
         <div className="px-5 py-5 space-y-4">
           <div className="flex flex-wrap gap-3">
             <div className="flex-1 min-w-48 relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
+              <Mail className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
               <input
                 type="email"
                 value={inviteEmail}
                 onChange={(e) => { setInviteEmail(e.target.value); setInviteStatus('idle'); }}
                 placeholder="colleague@example.com"
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-700/50 pl-9 pr-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-50 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 transition-colors"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-700/50 ps-9 pe-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-50 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 transition-colors"
               />
             </div>
             <select
@@ -202,6 +204,14 @@ export function TeamTab() {
           </p>
         </div>
       </div>
+
+      <ConfirmDeleteModal
+        open={!!removeUserId}
+        title="הסרת חבר צוות"
+        message="האם להסיר את חבר הצוות? ניתן להוסיף אותו מחדש."
+        onConfirm={() => { if (removeUserId) handleRemove(removeUserId); setRemoveUserId(null); }}
+        onCancel={() => setRemoveUserId(null)}
+      />
 
       {/* Role descriptions */}
       <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden">

@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 import {
   X, Phone, Calendar, MessageCircle, Archive, FileText,
   Bell, BellRing, Sparkles, Clock, TrendingUp, ReceiptText,
@@ -66,6 +68,10 @@ export function CustomerDrawer({
   onSchedule: () => void;
   onDelete: () => void;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, !!customer);
+  useEscapeKey(!!customer, onClose);
+
   const suggestions = useMemo(() => computeSuggestions(customer, allCustomers), [customer, allCustomers]);
   const statusBadge = customer ? getStatusBadgeStyle(customer.status) : null;
   const avatarColor = customer ? getAvatarColor(customer.id) : 'bg-slate-400';
@@ -151,12 +157,12 @@ export function CustomerDrawer({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true">
-      <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
+    <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label="פרטי לקוח">
+      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div
-        className="relative w-full max-w-[420px] bg-white dark:bg-slate-950 border-s border-slate-200 dark:border-slate-800 shadow-2xl overflow-y-auto flex flex-col"
+        ref={panelRef}
+        className="drawer-enter relative w-full sm:max-w-[420px] bg-white dark:bg-slate-950 border-s border-slate-200 dark:border-slate-800 shadow-2xl overflow-y-auto flex flex-col"
         dir="rtl"
-        style={{ animation: 'slideInFromRight 220ms ease-out forwards' }}
       >
         {/* Header */}
         <div className="sticky top-0 z-10 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex items-center justify-between">
@@ -217,7 +223,7 @@ export function CustomerDrawer({
                   <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
                     {customer.visits_count} ביקורים · ביקור אחרון {formatDate(customer.last_visit_date)}
                     {billingDocsTotal !== null && (
-                      <span className="mr-1.5 text-emerald-600 dark:text-emerald-400">· לפי קבלות</span>
+                      <span className="me-1.5 text-emerald-600 dark:text-emerald-400">· לפי קבלות</span>
                     )}
                   </p>
                 </div>

@@ -26,7 +26,7 @@ export default function HorizontalBars({
 
   if (visible.length === 0) {
     return (
-      <p className="text-xs text-zinc-500 text-center py-6">אין נתונים להצגה</p>
+      <p className="text-xs text-slate-500 text-center py-6">אין נתונים להצגה</p>
     );
   }
 
@@ -35,7 +35,7 @@ export default function HorizontalBars({
       {visible.map((item, i) => (
         <div key={i} className="flex items-start gap-3">
           {/* Label */}
-          <span className="text-xs text-zinc-400 w-28 text-right truncate shrink-0 pt-0.5">
+          <span className="text-xs text-slate-400 w-28 text-right truncate shrink-0 pt-0.5">
             {item.label}
           </span>
 
@@ -43,7 +43,7 @@ export default function HorizontalBars({
           <div className="flex-1 space-y-1">
             {/* Primary */}
             <div className="flex items-center gap-2">
-              <div className="flex-1 bg-zinc-800 rounded-full overflow-hidden h-2">
+              <div className="flex-1 bg-slate-800 rounded-full overflow-hidden h-2">
                 <div
                   className="h-full rounded-full transition-all duration-700 ease-out"
                   style={{
@@ -52,7 +52,7 @@ export default function HorizontalBars({
                   }}
                 />
               </div>
-              <span className="text-xs tabular-nums text-zinc-200 w-14 text-right shrink-0">
+              <span className="text-xs tabular-nums text-slate-200 w-14 text-right shrink-0">
                 {valueFormatter(item.value)}
               </span>
             </div>
@@ -60,7 +60,7 @@ export default function HorizontalBars({
             {/* Secondary (optional) */}
             {item.secondaryValue !== undefined && (
               <div className="flex items-center gap-2">
-                <div className="flex-1 bg-zinc-800 rounded-full overflow-hidden h-1">
+                <div className="flex-1 bg-slate-800 rounded-full overflow-hidden h-1">
                   <div
                     className="h-full rounded-full transition-all duration-700 ease-out"
                     style={{
@@ -69,7 +69,7 @@ export default function HorizontalBars({
                     }}
                   />
                 </div>
-                <span className="text-xs tabular-nums text-zinc-500 w-14 text-right shrink-0">
+                <span className="text-xs tabular-nums text-slate-500 w-14 text-right shrink-0">
                   {valueFormatter(item.secondaryValue)}
                 </span>
               </div>

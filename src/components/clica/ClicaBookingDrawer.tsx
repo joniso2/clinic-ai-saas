@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { ServiceList } from '@/components/booking/ServiceList';
@@ -9,6 +9,8 @@ import { TimeGrid } from '@/components/booking/TimeGrid';
 import { PhoneInput } from '@/components/booking/PhoneInput';
 import { OtpVerification } from '@/components/booking/OtpVerification';
 import { SuccessScreen } from '@/components/booking/SuccessScreen';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 import type {
   Clinic,
   ClinicService,
@@ -46,6 +48,10 @@ export function ClicaBookingDrawer({
   workers,
   workingHours,
 }: ClicaBookingDrawerProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, isOpen);
+  useEscapeKey(isOpen, onClose);
+
   const [step, setStep] = useState<BookingStep>('services');
   const [selectedService, setSelectedService] = useState<ClinicService | null>(null);
   const [selectedWorker, setSelectedWorker] = useState<ClinicWorker | null>(workers[0] ?? null);
@@ -157,11 +163,15 @@ export function ClicaBookingDrawer({
 
   return (
     <motion.div
+      ref={panelRef}
       initial={false}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex flex-col bg-neutral-50"
       dir="rtl"
+      role="dialog"
+      aria-modal="true"
+      aria-label="הזמנת תור"
     >
       {/* Header */}
       <div className="flex-shrink-0 border-b border-neutral-200/80 bg-white/95 backdrop-blur-sm">

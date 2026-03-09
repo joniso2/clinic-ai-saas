@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { X, ChevronLeft, Check, Plus, Trash2 } from 'lucide-react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 import type {
   BillingDocType, BillingSettings, CreateDocumentItem, PaymentMethod,
   BillingDocumentWithItems,
@@ -48,6 +50,10 @@ const fmt = (n: number) =>
   `₪${Number(n).toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export function CreateDocumentModal({ settings, appointmentId, appointmentLabel, prefillCustomerName, prefillPhone, prefillServiceName, prefillPrice, patientId, fromAppointment, onClose, onIssued }: Props) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, true);
+  useEscapeKey(true, onClose);
+
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -190,8 +196,8 @@ export function CreateDocumentModal({ settings, appointmentId, appointmentLabel,
   const back = () => { setError(null); setStep((s) => s - 1); };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-2xl bg-white dark:bg-slate-950 rounded-2xl shadow-2xl flex flex-col max-h-[90vh]" dir="rtl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+      <div ref={panelRef} className="modal-enter w-full max-w-2xl bg-white dark:bg-slate-950 rounded-2xl shadow-2xl flex flex-col max-h-[90vh]" dir="rtl" role="dialog" aria-modal="true" aria-label="יצירת מסמך">
 
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4 shrink-0">

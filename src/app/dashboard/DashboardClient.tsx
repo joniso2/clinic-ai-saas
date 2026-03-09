@@ -516,14 +516,14 @@ export default function DashboardClient() {
           )}
 
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between flex-row-reverse sm:justify-end">
-            <div className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 card-shadow flex-row-reverse">
+            <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 card-shadow flex-row-reverse">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
               {leads.length} לידים במעקב
             </div>
             <button
               type="button"
               onClick={() => setShowNewLeadForm(true)}
-              className="inline-flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 active:scale-[0.98]"
+              className="inline-flex items-center justify-center rounded-xl bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 active:scale-[0.98]"
             >
               ליד חדש +
             </button>
@@ -637,9 +637,9 @@ export default function DashboardClient() {
       />
 
       {existingPatientPending && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="לקוח קיים">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="לקוח קיים">
           <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setExistingPatientPending(null)} aria-hidden="true" />
-          <div className="relative w-full max-w-sm rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-5 shadow-xl text-right" dir="rtl">
+          <div className="modal-enter relative w-full max-w-sm rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-5 shadow-xl text-right" dir="rtl">
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-50">לקוח קיים נמצא</h2>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">לעדכן לקוח קיים או ליצור רשומה חדשה?</p>
             <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">{existingPatientPending.patient.full_name} · {existingPatientPending.patient.phone}</p>

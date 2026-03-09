@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 import { X, Download, XCircle, FileText, User, Building2, MessageCircle, Mail, Copy, Check, Hash } from 'lucide-react';
 import type { BillingDocumentWithItems } from '@/types/billing';
 import { DOC_TYPE_LABELS, PAYMENT_METHOD_LABELS } from '@/types/billing';
@@ -19,6 +21,10 @@ const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric' });
 
 export function DocumentDrawer({ doc, open, onClose, onCancelled }: Props) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, open);
+  useEscapeKey(open, onClose);
+
   const [cancelling, setCancelling] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [confirmCancel, setConfirmCancel] = useState(false);
@@ -114,13 +120,17 @@ export function DocumentDrawer({ doc, open, onClose, onCancelled }: Props) {
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
+        className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Drawer panel */}
       <div
-        className="fixed top-0 left-0 bottom-0 z-50 w-full max-w-md bg-white dark:bg-slate-950
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="מסמך"
+        className="fixed top-0 start-0 bottom-0 z-50 w-full max-w-md bg-white dark:bg-slate-950
           shadow-[0_10px_30px_rgba(0,0,0,0.12),0_4px_8px_rgba(0,0,0,0.06)]
           dark:shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden drawer-enter"
         dir="rtl"

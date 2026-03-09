@@ -52,11 +52,11 @@ export function SuccessScreen({ appointment, service, worker, clinic }: Props) {
         <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mb-4">
           <CheckCircle className="w-10 h-10 text-green-500" strokeWidth={1.8} />
         </div>
-        <h2 className="text-2xl font-bold text-gray-800">התור אושר!</h2>
-        <p className="text-gray-500 text-sm mt-1">נשמח לראות אותך</p>
+        <h2 className="text-2xl font-bold text-slate-800">התור אושר!</h2>
+        <p className="text-slate-500 text-sm mt-1">נשמח לראות אותך</p>
       </div>
 
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-5">
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden mb-5">
         <div className="bg-indigo-600 px-5 py-4">
           <p className="text-indigo-100 text-xs font-medium">שירות</p>
           <p className="text-white text-lg font-bold mt-0.5">
@@ -69,12 +69,12 @@ export function SuccessScreen({ appointment, service, worker, clinic }: Props) {
           )}
         </div>
 
-        <div className="divide-y divide-gray-50">
+        <div className="divide-y divide-slate-50">
           <div className="flex items-center gap-3 px-5 py-4">
             <Calendar className="w-5 h-5 text-indigo-400 flex-shrink-0" />
             <div>
-              <p className="text-xs text-gray-400">תאריך</p>
-              <p className="font-semibold text-gray-800">
+              <p className="text-xs text-slate-400">תאריך</p>
+              <p className="font-semibold text-slate-800">
                 יום {day}, {date}
               </p>
             </div>
@@ -83,8 +83,8 @@ export function SuccessScreen({ appointment, service, worker, clinic }: Props) {
           <div className="flex items-center gap-3 px-5 py-4">
             <Clock className="w-5 h-5 text-indigo-400 flex-shrink-0" />
             <div>
-              <p className="text-xs text-gray-400">שעה</p>
-              <p className="font-semibold text-gray-800">
+              <p className="text-xs text-slate-400">שעה</p>
+              <p className="font-semibold text-slate-800">
                 {time} – {endTime}
               </p>
             </div>
@@ -94,8 +94,8 @@ export function SuccessScreen({ appointment, service, worker, clinic }: Props) {
             <div className="flex items-center gap-3 px-5 py-4">
               <User className="w-5 h-5 text-indigo-400 flex-shrink-0" />
               <div>
-                <p className="text-xs text-gray-400">מטפל/ת</p>
-                <p className="font-semibold text-gray-800">{worker.name}</p>
+                <p className="text-xs text-slate-400">מטפל/ת</p>
+                <p className="font-semibold text-slate-800">{worker.name}</p>
               </div>
             </div>
           )}
@@ -104,8 +104,8 @@ export function SuccessScreen({ appointment, service, worker, clinic }: Props) {
             <div className="flex items-center gap-3 px-5 py-4">
               <Navigation className="w-5 h-5 text-indigo-400 flex-shrink-0" />
               <div>
-                <p className="text-xs text-gray-400">כתובת</p>
-                <p className="font-semibold text-gray-800">{clinic.address}</p>
+                <p className="text-xs text-slate-400">כתובת</p>
+                <p className="font-semibold text-slate-800">{clinic.address}</p>
               </div>
             </div>
           )}
@@ -130,7 +130,7 @@ export function SuccessScreen({ appointment, service, worker, clinic }: Props) {
             href={googleMapsUrl(clinic.lat, clinic.lng, clinic.address)}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-white border-2 border-gray-200 text-gray-700 font-bold text-sm transition-all active:scale-[0.97] touch-manipulation"
+            className="flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-white border-2 border-slate-200 text-slate-700 font-bold text-sm transition-all active:scale-[0.97] touch-manipulation"
           >
             <svg viewBox="0 0 24 24" className="w-5 h-5">
               <path fill="#4285F4" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
@@ -141,7 +141,7 @@ export function SuccessScreen({ appointment, service, worker, clinic }: Props) {
         </div>
       )}
 
-      <p className="text-xs text-gray-400 text-center mt-6 leading-relaxed">
+      <p className="text-xs text-slate-400 text-center mt-6 leading-relaxed">
         לביטול התור ניתן לפנות ישירות ל{clinic.name}
         {clinic.phone && (
           <>

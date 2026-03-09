@@ -22,7 +22,7 @@ interface StatCardProps {
 }
 
 function StatCard({ label, value, icon: Icon, trend = 'neutral', sub }: StatCardProps) {
-  const trendColor = trend === 'good' ? 'text-emerald-400' : trend === 'bad' ? 'text-red-400' : 'text-zinc-400';
+  const trendColor = trend === 'good' ? 'text-emerald-400' : trend === 'bad' ? 'text-red-400' : 'text-slate-400';
   return (
     <div className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-4 text-right">
       <div className="flex items-center justify-between flex-row-reverse mb-2">
@@ -32,7 +32,7 @@ function StatCard({ label, value, icon: Icon, trend = 'neutral', sub }: StatCard
         </div>
       </div>
       <p className={`text-2xl font-bold tabular-nums leading-none ${trendColor}`}>{value}</p>
-      {sub && <p className="text-[11px] text-zinc-500 mt-1">{sub}</p>}
+      {sub && <p className="text-[11px] text-slate-500 mt-1">{sub}</p>}
     </div>
   );
 }
@@ -78,7 +78,7 @@ export default function TrafficSection() {
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
         </span>
         <span className="text-sm font-medium text-emerald-300">מערכת פעילה</span>
-        <span className="text-xs text-zinc-500 ms-auto">עדכון אחרון: עכשיו</span>
+        <span className="text-xs text-slate-500 ms-auto">עדכון אחרון: עכשיו</span>
       </div>
 
       {/* KPI row */}
@@ -128,7 +128,7 @@ export default function TrafficSection() {
             showXLabels
           />
           {/* Error rate threshold line annotation */}
-          <p className="text-[11px] text-zinc-500 text-right mt-2">
+          <p className="text-[11px] text-slate-500 text-right mt-2">
             סף אזהרה: 3% · סף קריטי: 5%
           </p>
         </ChartCard>

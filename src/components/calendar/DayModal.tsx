@@ -1,7 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Plus, Phone, MessageCircle, Sparkles, ReceiptText, Calendar as CalendarIcon } from 'lucide-react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
+import { ConfirmDeleteModal } from '@/components/dashboard/ConfirmDeleteModal';
 import type { Appointment } from '@/types/appointments';
 import type { Lead } from '@/types/leads';
 import { formatTime } from '@/lib/calendar/time.utils';
@@ -23,10 +26,15 @@ export type DayModalProps = {
 export function DayModal({
   day, month, year, appointments, onClose, onDelete, onAdd, onViewLead,
 }: DayModalProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, true);
+  useEscapeKey(true, onClose);
+
   const [leadCache, setLeadCache] = useState<Record<string, Lead>>({});
   const [billingSettings, setBillingSettings] = useState<BillingSettings | null | 'loading' | 'none'>('loading');
   const [receiptApt, setReceiptApt] = useState<Appointment | null>(null);
   const [appointmentReceiptMap, setAppointmentReceiptMap] = useState<Record<string, boolean>>({});
+  const [deleteAptId, setDeleteAptId] = useState<string | null>(null);
 
   // Fetch billing settings once so we can enable/disable the receipt button
   useEffect(() => {
@@ -98,7 +106,7 @@ export function DayModal({
   return (
     <>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-      <div className="modal-enter w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 shadow-[0_10px_30px_rgba(0,0,0,0.12),0_4px_8px_rgba(0,0,0,0.06)]">
+      <div ref={panelRef} className="modal-enter w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 shadow-[0_10px_30px_rgba(0,0,0,0.12),0_4px_8px_rgba(0,0,0,0.06)]" role="dialog" aria-modal="true" aria-label="תורים ליום">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex-row-reverse">
           <div className="text-right">
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">תורים</p>
@@ -133,7 +141,7 @@ export function DayModal({
               <div key={apt.id}
                 className="group relative overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800/80 transition hover:bg-slate-50/80 dark:hover:bg-slate-800/60 shadow-sm hover:shadow-md">
                 <div className="absolute start-0 top-0 bottom-0 w-1 rounded-s-xl" style={{ background: accentHex }} />
-                <div className="pl-4 pr-4 py-3">
+                <div className="px-4 py-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-[14px] font-semibold text-slate-900 dark:text-slate-100 leading-tight truncate">{apt.patient_name}</p>
@@ -149,8 +157,8 @@ export function DayModal({
                         )}
                       </div>
                     </div>
-                    <button onClick={() => onDelete(apt.id)}
-                      className="shrink-0 rounded-full p-1.5 text-slate-300 dark:text-slate-600 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                    <button onClick={() => setDeleteAptId(apt.id)}
+                      className="shrink-0 rounded-full p-1.5 text-slate-300 dark:text-slate-600 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-500 transition-colors sm:opacity-0 sm:group-hover:opacity-100">
                       <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -220,6 +228,14 @@ export function DayModal({
         </div>
       </div>
     </div>
+
+    <ConfirmDeleteModal
+      open={!!deleteAptId}
+      title="מחיקת תור"
+      message="האם למחוק את התור? לא ניתן לשחזר."
+      onConfirm={() => { if (deleteAptId) onDelete(deleteAptId); setDeleteAptId(null); }}
+      onCancel={() => setDeleteAptId(null)}
+    />
 
     {receiptApt && billingSettings && billingSettings !== 'loading' && billingSettings !== 'none' && (
       <CreateDocumentModal

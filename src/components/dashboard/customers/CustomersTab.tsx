@@ -271,7 +271,7 @@ export function CustomersTab() {
   // ── Filter panel (shared) ────────────────────────────────────────────────────
 
   const filterPanel = (
-    <div className="absolute left-0 top-full mt-2 z-30 w-80 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-2xl p-4 space-y-4" dir="rtl">
+    <div className="absolute start-0 top-full mt-2 z-30 w-80 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-2xl p-4 space-y-4" dir="rtl">
       <div className="grid grid-cols-2 gap-3">
         {[
           { label: 'תאריך מ-', type: 'date', value: dateFrom, onChange: setDateFrom },
@@ -451,8 +451,8 @@ export function CustomersTab() {
                       className="rounded border-slate-300 dark:border-slate-600 text-indigo-500 focus:ring-indigo-500/30"
                     />
                   </th>
-                  <th className="py-3 pl-2 pr-3 w-[22%] text-right">לקוח</th>
-                  <th className="py-3 pr-2 pl-3 w-[16%] text-right">טלפון</th>
+                  <th className="py-3 ps-2 pe-3 w-[22%] text-right">לקוח</th>
+                  <th className="py-3 pe-2 ps-3 w-[16%] text-right">טלפון</th>
                   <th className="py-3 px-3 w-[11%] text-right">מקור</th>
                   <th className="py-3 px-3 w-[14%] text-right">תאריך</th>
                   <th className="py-3 px-3 w-[14%] text-right">ביקור אחרון</th>
@@ -477,12 +477,12 @@ export function CustomersTab() {
                         className="rounded border-slate-300 dark:border-slate-600 text-indigo-500 focus:ring-indigo-500/30"
                       />
                     </td>
-                    <td className="py-3.5 pl-2 pr-3 min-w-0">
+                    <td className="py-3.5 ps-2 pe-3 min-w-0">
                       <div className="flex items-center gap-2 min-w-0">
                         <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getAvatarColor(l.id)} text-white text-xs font-bold`}>
                           {getInitials(l.full_name)}
                           {recall.active && (
-                            <span className="absolute -top-1 -left-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 border-2 border-white dark:border-slate-900">
+                            <span className="absolute -top-1 -start-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 border-2 border-white dark:border-slate-900">
                               <BellRing className="h-2 w-2 text-white" />
                             </span>
                           )}
@@ -490,7 +490,7 @@ export function CustomersTab() {
                         <span className="font-medium text-slate-800 dark:text-slate-50 truncate">{l.full_name || '—'}</span>
                       </div>
                     </td>
-                    <td className="py-3.5 pr-2 pl-3 min-w-0">
+                    <td className="py-3.5 pe-2 ps-3 min-w-0">
                       <a href={l.phone ? `tel:${l.phone}` : '#'} onClick={(e) => e.stopPropagation()} dir="ltr" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline truncate block">{formatPhoneILS(l.phone)}</a>
                     </td>
                     <td className="py-3.5 px-3"><SourceBadge source={l.source} /></td>
@@ -499,7 +499,7 @@ export function CustomersTab() {
                     <td className="py-3.5 px-3 text-sm font-semibold text-slate-800 dark:text-slate-200 tabular-nums">{getValueLead(l) > 0 ? formatCurrencyILS(getValueLead(l)) : '—'}</td>
                     <td className="py-3.5 px-2 text-center" onClick={(e) => e.stopPropagation()}>
                       <button type="button" onClick={() => setDeleteLeadId(l.id)}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition opacity-0 group-hover:opacity-100">
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition sm:opacity-0 sm:group-hover:opacity-100">
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </td>
@@ -603,10 +603,10 @@ export function CustomersTab() {
         </div>
 
         <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
-          <table className="w-full text-right" style={{ minWidth: '860px' }} dir="rtl">
+          <table className="w-full text-right" dir="rtl">
             <thead className="sticky top-0 z-10 bg-slate-50/70 dark:bg-slate-800/50 backdrop-blur-sm text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-[0.08em]">
               <tr className="border-b border-slate-100 dark:border-slate-800">
-                <th className="py-3 pr-4 pl-3 w-10" onClick={(e) => e.stopPropagation()}>
+                <th className="py-3 pe-4 ps-3 w-10" onClick={(e) => e.stopPropagation()}>
                   <input
                     type="checkbox"
                     checked={filteredCustomers.length > 0 && filteredCustomers.every((c) => selectedIds.has(c.id))}
@@ -643,7 +643,7 @@ export function CustomersTab() {
                 return (
                   <tr key={c.id} onClick={() => { setDetailLead(null); setDetailId(c.id); }}
                     className={`border-b border-slate-100 dark:border-slate-800/60 last:border-0 cursor-pointer transition-colors group ${isSelected ? 'bg-indigo-50/60 dark:bg-indigo-900/15' : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/40'}`}>
-                    <td className="py-3.5 pr-4 pl-3 w-10" onClick={(e) => e.stopPropagation()}>
+                    <td className="py-3.5 pe-4 ps-3 w-10" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -656,7 +656,7 @@ export function CustomersTab() {
                         <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getAvatarColor(c.id)} text-white text-xs font-bold`}>
                           {getInitials(c.full_name)}
                           {recall.active && (
-                            <span className="absolute -top-1 -left-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 border-2 border-white dark:border-slate-900">
+                            <span className="absolute -top-1 -start-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 border-2 border-white dark:border-slate-900">
                               <BellRing className="h-2 w-2 text-white" />
                             </span>
                           )}
@@ -675,7 +675,7 @@ export function CustomersTab() {
                     </td>
                     <td className="py-3.5 px-4 w-10" onClick={(e) => e.stopPropagation()}>
                       <button type="button" onClick={() => setDeleteId(c.id)}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition opacity-0 group-hover:opacity-100">
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition sm:opacity-0 sm:group-hover:opacity-100">
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </td>

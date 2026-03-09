@@ -55,9 +55,9 @@ export default function BillingSettingsForm({ initial, onClose, onSaved }: Props
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
       <div
-        className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-950 shadow-2xl"
+        className="modal-enter w-full max-w-lg rounded-2xl bg-white dark:bg-slate-950 shadow-2xl"
         dir="rtl"
       >
         {/* Header */}

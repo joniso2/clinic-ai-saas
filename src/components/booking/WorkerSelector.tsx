@@ -12,7 +12,7 @@ interface Props {
 export function WorkerSelector({ workers, onSelect, selectedId }: Props) {
   return (
     <div className="px-4 pt-5 pb-4">
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-5">בחר מטפל</h2>
+      <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-5">בחר מטפל</h2>
       <div className="flex flex-col gap-3">
         {workers.map((worker, i) => {
           const isSelected = selectedId === worker.id;
@@ -27,10 +27,10 @@ export function WorkerSelector({ workers, onSelect, selectedId }: Props) {
                 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)]
                 ${isSelected
                   ? 'border-2 border-indigo-500 bg-indigo-50/50'
-                  : 'border border-gray-100 bg-white hover:border-gray-200'
+                  : 'border border-slate-100 bg-white hover:border-slate-200'
                 }`}
             >
-              <span className="font-semibold text-gray-900 text-base tracking-tight block">
+              <span className="font-semibold text-slate-900 text-base tracking-tight block">
                 {worker.name}
               </span>
               {isSelected && (

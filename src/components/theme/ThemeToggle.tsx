@@ -28,7 +28,7 @@ export function ThemeToggle() {
           shadow-inner
           ${isDark
             ? 'bg-emerald-500'
-            : 'bg-zinc-300 dark:bg-slate-600'
+            : 'bg-slate-300 dark:bg-slate-600'
           }
         `}
       >

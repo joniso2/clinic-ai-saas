@@ -7,6 +7,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Brain, ChevronDown, Send, Cpu, DollarSign, Clock, Zap, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+import { btn, input, inputLabel } from '@/lib/ui-classes';
 import { AI_MODELS, DEFAULT_AI_CONFIG, getMockPromptHistory } from '@/services/mock-ai.service';
 import type { GlobalAIConfig } from '@/services/mock-ai.service';
 
@@ -24,13 +25,13 @@ function Slider({
   return (
     <div className="text-right">
       <div className="flex items-center justify-between flex-row-reverse mb-1.5">
-        <label className="text-xs font-medium text-zinc-400">{label}</label>
+        <label className="text-xs font-medium text-slate-400">{label}</label>
         <span className="text-sm font-semibold text-indigo-300 tabular-nums">{format ? format(value) : value}</span>
       </div>
       <input type="range" min={min} max={max} step={step} value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full h-1.5 rounded-full appearance-none bg-zinc-700 accent-indigo-500 cursor-pointer" />
-      <div className="flex justify-between text-[10px] text-zinc-500 mt-0.5 flex-row-reverse">
+        className="w-full h-1.5 rounded-full appearance-none bg-slate-700 accent-indigo-500 cursor-pointer" />
+      <div className="flex justify-between text-[10px] text-slate-500 mt-0.5 flex-row-reverse">
         <span>{format ? format(min) : min}</span>
         <span>{format ? format(max) : max}</span>
       </div>
@@ -42,10 +43,10 @@ function Slider({
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <div className="flex items-center justify-between flex-row-reverse py-2">
-      <span className="text-sm text-zinc-300">{label}</span>
+      <span className="text-sm text-slate-300">{label}</span>
       <button type="button" onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${checked ? 'bg-indigo-600' : 'bg-zinc-700'}`}>
-        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-zinc-200 shadow transition-all ${checked ? 'end-0.5' : 'start-0.5'}`} />
+        className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${checked ? 'bg-indigo-600' : 'bg-slate-700'}`}>
+        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-slate-200 shadow transition-all ${checked ? 'end-0.5' : 'start-0.5'}`} />
       </button>
     </div>
   );
@@ -141,32 +142,32 @@ export default function AIControlSection() {
       <div className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5">
         <div className="flex items-center justify-between flex-row-reverse mb-4">
           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 text-right">סטטוס LLM לפי קליניקה (בוט דיסקורד)</h3>
-          <button type="button" onClick={fetchClinicStatuses} disabled={statusLoading} className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 disabled:opacity-50" title="רענן">
+          <button type="button" onClick={fetchClinicStatuses} disabled={statusLoading} className={`${btn.icon} disabled:opacity-50`} title="רענן">
             <RefreshCw className={`h-4 w-4 ${statusLoading ? 'animate-spin' : ''}`} />
           </button>
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 text-right">איזה קליניקה על איזה מודל כרגע, והאם המפתח של הספק מוגדר (ירוק = הבוט יעבוד, אדום = חסר API key ב-Railway / .env).</p>
         {statusLoading ? (
-          <p className="text-sm text-zinc-500 text-right py-4">טוען…</p>
+          <p className="text-sm text-slate-500 text-right py-4">טוען…</p>
         ) : clinicStatuses.length === 0 ? (
-          <p className="text-sm text-zinc-500 text-right py-4">אין קליניקות.</p>
+          <p className="text-sm text-slate-500 text-right py-4">אין קליניקות.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-right text-sm">
               <thead>
-                <tr className="border-b border-zinc-700">
-                  <th className="py-2 px-3 font-medium text-zinc-400">קליניקה</th>
-                  <th className="py-2 px-3 font-medium text-zinc-400">ספק</th>
-                  <th className="py-2 px-3 font-medium text-zinc-400">מודל</th>
-                  <th className="py-2 px-3 font-medium text-zinc-400">סטטוס</th>
+                <tr className="border-b border-slate-700">
+                  <th className="py-2 px-3 font-medium text-slate-400">קליניקה</th>
+                  <th className="py-2 px-3 font-medium text-slate-400">ספק</th>
+                  <th className="py-2 px-3 font-medium text-slate-400">מודל</th>
+                  <th className="py-2 px-3 font-medium text-slate-400">סטטוס</th>
                 </tr>
               </thead>
               <tbody>
                 {clinicStatuses.map((row) => (
-                  <tr key={row.clinic_id} className="border-b border-zinc-800">
-                    <td className="py-2.5 px-3 text-zinc-200">{row.clinic_name ?? row.clinic_id}</td>
-                    <td className="py-2.5 px-3 text-zinc-300">{row.provider}</td>
-                    <td className="py-2.5 px-3 font-mono text-zinc-300">{row.model}</td>
+                  <tr key={row.clinic_id} className="border-b border-slate-800">
+                    <td className="py-2.5 px-3 text-slate-200">{row.clinic_name ?? row.clinic_id}</td>
+                    <td className="py-2.5 px-3 text-slate-300">{row.provider}</td>
+                    <td className="py-2.5 px-3 font-mono text-slate-300">{row.model}</td>
                     <td className="py-2.5 px-3">
                       {row.status === 'up' ? (
                         <span className="inline-flex items-center gap-1 text-emerald-400">
@@ -192,35 +193,35 @@ export default function AIControlSection() {
           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-4 text-right">מודל AI לפי קליניקה</h3>
           <div className="grid sm:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1 text-right">קליניקה</label>
-              <select value={selectedClinicId} onChange={(e) => setSelectedClinicId(e.target.value)} className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 text-right">
+              <label className={`${inputLabel} text-right`}>קליניקה</label>
+              <select value={selectedClinicId} onChange={(e) => setSelectedClinicId(e.target.value)} className={`${input} text-right`}>
                 {clinics.map((c) => <option key={c.id} value={c.id}>{c.name ?? c.id}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1 text-right">ספק</label>
-              <select value={aiPerClinic.provider} onChange={(e) => setAiPerClinic((a) => ({ ...a, provider: e.target.value, model: PROVIDER_MODELS[e.target.value]?.[0] ?? a.model }))} className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 text-right">
+              <label className={`${inputLabel} text-right`}>ספק</label>
+              <select value={aiPerClinic.provider} onChange={(e) => setAiPerClinic((a) => ({ ...a, provider: e.target.value, model: PROVIDER_MODELS[e.target.value]?.[0] ?? a.model }))} className={`${input} text-right`}>
                 {AI_PROVIDERS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1 text-right">מודל</label>
-              <select value={aiPerClinic.model} onChange={(e) => setAiPerClinic((a) => ({ ...a, model: e.target.value }))} className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 text-right">
+              <label className={`${inputLabel} text-right`}>מודל</label>
+              <select value={aiPerClinic.model} onChange={(e) => setAiPerClinic((a) => ({ ...a, model: e.target.value }))} className={`${input} text-right`}>
                 {(PROVIDER_MODELS[aiPerClinic.provider] ?? []).map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
             <div className="flex gap-4 items-end">
               <div className="flex-1">
-                <label className="block text-xs font-medium text-zinc-400 mb-1 text-right">טמפרטורה</label>
-                <input type="number" min={0} max={2} step={0.1} value={aiPerClinic.temperature} onChange={(e) => setAiPerClinic((a) => ({ ...a, temperature: Number(e.target.value) }))} className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 text-right" />
+                <label className={`${inputLabel} text-right`}>טמפרטורה</label>
+                <input type="number" min={0} max={2} step={0.1} value={aiPerClinic.temperature} onChange={(e) => setAiPerClinic((a) => ({ ...a, temperature: Number(e.target.value) }))} className={`${input} text-right`} />
               </div>
               <div className="flex-1">
-                <label className="block text-xs font-medium text-zinc-400 mb-1 text-right">מקס טוקנים</label>
-                <input type="number" min={100} max={128000} value={aiPerClinic.max_tokens} onChange={(e) => setAiPerClinic((a) => ({ ...a, max_tokens: Number(e.target.value) }))} className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 text-right" />
+                <label className={`${inputLabel} text-right`}>מקס טוקנים</label>
+                <input type="number" min={100} max={128000} value={aiPerClinic.max_tokens} onChange={(e) => setAiPerClinic((a) => ({ ...a, max_tokens: Number(e.target.value) }))} className={`${input} text-right`} />
               </div>
             </div>
           </div>
-          <button type="button" onClick={saveAiPerClinic} disabled={aiSaveStatus === 'saving'} className="rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 text-sm font-semibold disabled:opacity-50">
+          <button type="button" onClick={saveAiPerClinic} disabled={aiSaveStatus === 'saving'} className={btn.primary}>
             {aiSaveStatus === 'saving' ? 'שומר…' : aiSaveStatus === 'saved' ? '✓ נשמר' : 'שמור הגדרות קליניקה'}
           </button>
         </div>
@@ -249,25 +250,25 @@ export default function AIControlSection() {
 
             {/* Model selector */}
             <div className="mb-4 text-right">
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">מודל ברירת מחדל</label>
+              <label className={inputLabel}>מודל ברירת מחדל</label>
               <div className="relative">
                 <select value={config.globalModel} onChange={(e) => setConfig((c) => ({ ...c, globalModel: e.target.value }))}
-                  className="w-full appearance-none rounded-xl border border-zinc-700 bg-zinc-800 ps-4 pe-10 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500">
+                  className="w-full appearance-none rounded-xl border border-slate-700 bg-slate-800 ps-4 pe-10 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
                   {AI_MODELS.map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.label} — {m.provider} {m.recommended ? '(מומלץ)' : ''}
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
+                <ChevronDown className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
               </div>
-              <div className="mt-2 text-[11px] text-zinc-500 space-y-0.5 text-right">
+              <div className="mt-2 text-[11px] text-slate-500 space-y-0.5 text-right">
                 <p>חלון הקשר: {selectedModel.contextWindow.toLocaleString()} טוקנים</p>
                 <p>עלות: ${selectedModel.costPer1kInput}/1k input · ${selectedModel.costPer1kOutput}/1k output</p>
               </div>
             </div>
 
-            <div className="space-y-5 border-t border-zinc-800 pt-4">
+            <div className="space-y-5 border-t border-slate-800 pt-4">
               <Slider label="טמפרטורה" value={config.temperature} min={0} max={2} step={0.1}
                 onChange={(v) => setConfig((c) => ({ ...c, temperature: v }))}
                 format={(v) => v.toFixed(1)} />
@@ -276,7 +277,7 @@ export default function AIControlSection() {
                 format={(v) => v.toLocaleString()} />
             </div>
 
-            <div className="border-t border-zinc-800 pt-4 mt-4 space-y-1">
+            <div className="border-t border-slate-800 pt-4 mt-4 space-y-1">
               <Toggle label="סינון בטיחות" checked={config.safetyFilter} onChange={(v) => setConfig((c) => ({ ...c, safetyFilter: v }))} />
               <Toggle label="Streaming" checked={config.streamingEnabled} onChange={(v) => setConfig((c) => ({ ...c, streamingEnabled: v }))} />
             </div>
@@ -289,14 +290,14 @@ export default function AIControlSection() {
               value={config.systemPrompt}
               onChange={(e) => setConfig((c) => ({ ...c, systemPrompt: e.target.value }))}
               rows={5}
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500 resize-none text-right"
+              className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 resize-none text-right"
               dir="rtl"
             />
-            <p className="text-[11px] text-zinc-500 text-right mt-1">{config.systemPrompt.length} תווים</p>
+            <p className="text-[11px] text-slate-500 text-right mt-1">{config.systemPrompt.length} תווים</p>
           </div>
 
           <button type="button" onClick={handleSave}
-            className={`w-full rounded-xl py-2.5 text-sm font-semibold transition-colors ${saved ? 'bg-emerald-600 text-white' : 'bg-indigo-600 hover:bg-indigo-500 text-white'}`}>
+            className={`${saved ? btn.primary : btn.primary} w-full ${saved ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}>
             {saved ? '✓ נשמר!' : 'שמור הגדרות'}
           </button>
         </div>
@@ -309,16 +310,16 @@ export default function AIControlSection() {
               {testOutput ? (
                 <div className="space-y-3">
                   <div className="text-right">
-                    <span className="text-[10px] text-zinc-500">משתמש</span>
-                    <p className="text-zinc-300 bg-zinc-700 rounded-lg px-3 py-2 mt-1 inline-block">{testInput}</p>
+                    <span className="text-[10px] text-slate-500">משתמש</span>
+                    <p className="text-slate-300 bg-slate-700 rounded-lg px-3 py-2 mt-1 inline-block">{testInput}</p>
                   </div>
                   <div className="text-right">
                     <span className="text-[10px] text-indigo-400">AI ({selectedModel.label})</span>
-                    <p className="text-zinc-100 bg-indigo-950/60 border border-indigo-500/20 rounded-lg px-3 py-2 mt-1">{testOutput}</p>
+                    <p className="text-slate-100 bg-indigo-950/60 border border-indigo-500/20 rounded-lg px-3 py-2 mt-1">{testOutput}</p>
                   </div>
                 </div>
               ) : (
-                <p className="text-zinc-500 text-right pt-6">הקלד הודעה ולחץ שלח לבדיקת תגובת ה-AI</p>
+                <p className="text-slate-500 text-right pt-6">הקלד הודעה ולחץ שלח לבדיקת תגובת ה-AI</p>
               )}
             </div>
             <div className="flex gap-2 flex-row-reverse">
@@ -330,38 +331,38 @@ export default function AIControlSection() {
                 placeholder="הקלד הודעת בדיקה..."
                 rows={2}
                 dir="rtl"
-                className="flex-1 rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500 resize-none text-right"
+                className="flex-1 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 resize-none text-right"
               />
               <button type="button" onClick={handleTest} disabled={testing || !testInput.trim()}
-                className="self-end rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 disabled:opacity-50 transition-colors">
+                className={`${btn.primary} self-end`}>
                 {testing ? <Zap className="h-4 w-4 animate-pulse" /> : <Send className="h-4 w-4" />}
               </button>
             </div>
           </div>
 
           {/* Prompt history */}
-          <div className="rounded-xl bg-zinc-900 border border-zinc-800 overflow-hidden">
+          <div className="rounded-xl bg-slate-900 border border-slate-800 overflow-hidden">
             <button type="button" onClick={() => setHistoryOpen(!historyOpen)}
-              className="w-full flex items-center justify-between flex-row-reverse px-5 py-3.5 hover:bg-zinc-800/50 transition-colors">
-              <span className="text-sm font-semibold text-zinc-200">היסטוריית פרומפטים</span>
+              className="w-full flex items-center justify-between flex-row-reverse px-5 py-3.5 hover:bg-slate-800/50 transition-colors">
+              <span className="text-sm font-semibold text-slate-200">היסטוריית פרומפטים</span>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-zinc-500">{history.length} רשומות</span>
-                <ChevronDown className={`h-4 w-4 text-zinc-500 transition-transform ${historyOpen ? 'rotate-180' : ''}`} />
+                <span className="text-xs text-slate-500">{history.length} רשומות</span>
+                <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${historyOpen ? 'rotate-180' : ''}`} />
               </div>
             </button>
             {historyOpen && (
-              <div className="border-t border-zinc-800">
+              <div className="border-t border-slate-800">
                 {history.map((entry) => (
-                  <div key={entry.id} className="border-b border-zinc-800/60 px-5 py-3 hover:bg-zinc-800/30 text-right">
+                  <div key={entry.id} className="border-b border-slate-800/60 px-5 py-3 hover:bg-slate-800/30 text-right">
                     <div className="flex items-center justify-between flex-row-reverse mb-1">
-                      <span className="text-xs font-medium text-zinc-300">{entry.tenantName}</span>
-                      <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+                      <span className="text-xs font-medium text-slate-300">{entry.tenantName}</span>
+                      <div className="flex items-center gap-2 text-[11px] text-slate-500">
                         <span>{new Date(entry.timestamp).toLocaleTimeString('he-IL')}</span>
-                        <span className="font-mono bg-zinc-800 px-1.5 py-0.5 rounded">{entry.model}</span>
+                        <span className="font-mono bg-slate-800 px-1.5 py-0.5 rounded">{entry.model}</span>
                       </div>
                     </div>
-                    <p className="text-xs text-zinc-400 truncate">{entry.userMessage}</p>
-                    <div className="flex gap-3 mt-1 text-[11px] text-zinc-600 flex-row-reverse">
+                    <p className="text-xs text-slate-400 truncate">{entry.userMessage}</p>
+                    <div className="flex gap-3 mt-1 text-[11px] text-slate-600 flex-row-reverse">
                       <span>{entry.inputTokens + entry.outputTokens} tokens</span>
                       <span>${entry.costUsd.toFixed(5)}</span>
                       <span>{entry.durationMs}ms</span>

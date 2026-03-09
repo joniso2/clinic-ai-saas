@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Building2, Phone, MapPin, Globe, DollarSign, Image, FileText, Save, CheckCircle2, AlertCircle, Loader2, Link2, Copy, ExternalLink } from 'lucide-react';
 import { AdminHeroMediaEditor } from '@/components/clica/AdminHeroMediaEditor';
+import { useUnsavedWarning } from '@/hooks/useUnsavedWarning';
 import type { ClinicSettings } from '@/services/settings.service';
 
 function BookingLinkCard({ slug }: { slug: string }) {
@@ -139,6 +140,20 @@ export function GeneralTab({
   });
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  const initialForm = useMemo(() => ({
+    clinic_phone:        settings.clinic_phone        ?? '',
+    address:             settings.address             ?? '',
+    timezone:            settings.timezone            ?? 'Asia/Jerusalem',
+    currency:            settings.currency            ?? 'ILS',
+    logo_url:            settings.logo_url            ?? '',
+    business_description: settings.business_description ?? '',
+  }), [settings]);
+
+  const isDirty = Object.keys(form).some(
+    (key) => form[key as keyof typeof form] !== initialForm[key as keyof typeof initialForm]
+  );
+  useUnsavedWarning(isDirty);
 
   function set(key: keyof typeof form, value: string) {
     setForm((f) => ({ ...f, [key]: value }));

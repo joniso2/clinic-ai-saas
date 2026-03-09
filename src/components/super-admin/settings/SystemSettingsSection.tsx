@@ -8,6 +8,7 @@
 
 import { useState } from 'react';
 import { Flag, Shield, Mail, Key, Activity, AlertTriangle, Copy, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { btn, input, inputLabel } from '@/lib/ui-classes';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface FeatureFlag {
@@ -23,8 +24,8 @@ function Toggle({ checked, onChange, size = 'md' }: { checked: boolean; onChange
   const s = size === 'sm';
   return (
     <button type="button" onClick={() => onChange(!checked)}
-      className={`relative inline-flex rounded-full transition-colors shrink-0 ${s ? 'h-4 w-8' : 'h-5 w-9'} ${checked ? 'bg-indigo-600' : 'bg-zinc-700'}`}>
-      <span className={`absolute top-0.5 rounded-full bg-zinc-200 shadow transition-all ${s ? 'h-3 w-3' : 'h-4 w-4'} ${checked ? 'end-0.5' : 'start-0.5'}`} />
+      className={`relative inline-flex rounded-full transition-colors shrink-0 ${s ? 'h-4 w-8' : 'h-5 w-9'} ${checked ? 'bg-indigo-600' : 'bg-slate-700'}`}>
+      <span className={`absolute top-0.5 rounded-full bg-slate-200 shadow transition-all ${s ? 'h-3 w-3' : 'h-4 w-4'} ${checked ? 'end-0.5' : 'start-0.5'}`} />
     </button>
   );
 }
@@ -32,10 +33,10 @@ function Toggle({ checked, onChange, size = 'md' }: { checked: boolean; onChange
 // ─── Section card ─────────────────────────────────────────────────────────────
 function SettingsCard({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl bg-zinc-900 border border-zinc-800 overflow-hidden">
-      <div className="flex items-center gap-2.5 flex-row-reverse px-5 py-4 border-b border-zinc-800 bg-zinc-800/40">
-        <Icon className="h-4 w-4 text-zinc-400" />
-        <h3 className="text-sm font-semibold text-zinc-200">{title}</h3>
+    <div className="rounded-xl bg-slate-900 border border-slate-800 overflow-hidden">
+      <div className="flex items-center gap-2.5 flex-row-reverse px-5 py-4 border-b border-slate-800 bg-slate-800/40">
+        <Icon className="h-4 w-4 text-slate-400" />
+        <h3 className="text-sm font-semibold text-slate-200">{title}</h3>
       </div>
       <div className="p-5">{children}</div>
     </div>
@@ -56,16 +57,16 @@ function ApiKeyRow({ label, value }: { label: string; value: string }) {
   };
 
   return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-zinc-800 last:border-0 flex-row-reverse">
-      <span className="text-sm text-zinc-300 w-32 shrink-0 text-right">{label}</span>
-      <code className="flex-1 text-xs font-mono text-zinc-400 bg-zinc-800 rounded-lg px-3 py-1.5 text-right overflow-x-auto">
+    <div className="flex items-center gap-3 py-2.5 border-b border-slate-800 last:border-0 flex-row-reverse">
+      <span className="text-sm text-slate-300 w-32 shrink-0 text-right">{label}</span>
+      <code className="flex-1 text-xs font-mono text-slate-400 bg-slate-800 rounded-lg px-3 py-1.5 text-right overflow-x-auto">
         {visible ? value : masked}
       </code>
       <div className="flex gap-1 shrink-0">
-        <button type="button" onClick={() => setVisible(!visible)} className="p-1.5 rounded hover:bg-zinc-700 text-zinc-500 hover:text-zinc-300 transition-colors">
+        <button type="button" onClick={() => setVisible(!visible)} className="p-1.5 rounded hover:bg-slate-700 text-slate-500 hover:text-slate-300 transition-colors">
           {visible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
         </button>
-        <button type="button" onClick={copy} className="p-1.5 rounded hover:bg-zinc-700 text-zinc-500 hover:text-zinc-300 transition-colors" title="העתק">
+        <button type="button" onClick={copy} className="p-1.5 rounded hover:bg-slate-700 text-slate-500 hover:text-slate-300 transition-colors" title="העתק">
           {copied ? <span className="text-emerald-400 text-[10px]">✓</span> : <Copy className="h-3.5 w-3.5" />}
         </button>
       </div>
@@ -127,7 +128,7 @@ export default function SystemSettingsSection() {
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400 text-right">דגלי פיצ׳רים, מצב תחזוקה, מגבלות קצב, הגדרות אימייל ומפתחות API.</p>
         </div>
         <button type="button" onClick={handleSave}
-          className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition-colors ${saved ? 'bg-emerald-600 text-white' : 'bg-indigo-600 hover:bg-indigo-500 text-white'}`}>
+          className={`${btn.primary} ${saved ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}>
           {saved ? '✓ נשמר!' : 'שמור הכל'}
         </button>
       </div>
@@ -149,15 +150,15 @@ export default function SystemSettingsSection() {
           <div className="space-y-1">
             {Object.entries(featuresByCategory).map(([cat, items]) => (
               <div key={cat}>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-2 mt-3 first:mt-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2 mt-3 first:mt-0">
                   {cat === 'feature' ? 'פעיל' : cat === 'experimental' ? 'ניסיוני' : 'תחזוקה'}
                 </p>
                 {items.map((flag) => (
-                  <div key={flag.id} className="flex items-center gap-3 py-2 flex-row-reverse border-b border-zinc-800 last:border-0">
+                  <div key={flag.id} className="flex items-center gap-3 py-2 flex-row-reverse border-b border-slate-800 last:border-0">
                     <Toggle checked={flag.enabled} onChange={() => toggleFlag(flag.id)} size="sm" />
                     <div className="flex-1 text-right">
-                      <p className="text-sm text-zinc-200">{flag.label}</p>
-                      <p className="text-[11px] text-zinc-500">{flag.description}</p>
+                      <p className="text-sm text-slate-200">{flag.label}</p>
+                      <p className="text-[11px] text-slate-500">{flag.description}</p>
                     </div>
                   </div>
                 ))}
@@ -167,10 +168,10 @@ export default function SystemSettingsSection() {
 
           {/* Maintenance message */}
           {maintenanceMode && (
-            <div className="mt-4 border-t border-zinc-800 pt-4">
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">הודעת תחזוקה</label>
+            <div className="mt-4 border-t border-slate-800 pt-4">
+              <label className={inputLabel}>הודעת תחזוקה</label>
               <textarea value={maintenanceMsg} onChange={(e) => setMaintenanceMsg(e.target.value)} rows={2} dir="rtl"
-                className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-amber-500 resize-none" />
+                className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-amber-500 resize-none" />
             </div>
           )}
         </SettingsCard>
@@ -185,12 +186,12 @@ export default function SystemSettingsSection() {
             ].map(({ label, key, min, max }) => (
               <div key={key} className="text-right">
                 <div className="flex items-center justify-between flex-row-reverse mb-1.5">
-                  <label className="text-xs font-medium text-zinc-400">{label}</label>
+                  <label className={inputLabel}>{label}</label>
                   <span className="text-sm font-bold text-indigo-300 tabular-nums">{rateLimits[key].toLocaleString()}</span>
                 </div>
                 <input type="range" min={min} max={max} step={min} value={rateLimits[key]}
                   onChange={(e) => setRateLimits((r) => ({ ...r, [key]: Number(e.target.value) }))}
-                  className="w-full h-1.5 rounded-full appearance-none bg-zinc-700 accent-indigo-500 cursor-pointer" />
+                  className="w-full h-1.5 rounded-full appearance-none bg-slate-700 accent-indigo-500 cursor-pointer" />
               </div>
             ))}
           </div>
@@ -206,13 +207,13 @@ export default function SystemSettingsSection() {
               { label: 'Reply-To', key: 'replyTo' as const },
             ].map(({ label, key }) => (
               <div key={key} className="text-right">
-                <label className="block text-xs font-medium text-zinc-400 mb-1">{label}</label>
+                <label className={inputLabel}>{label}</label>
                 <input type="text" value={emailConfig[key]} onChange={(e) => setEmailConfig((c) => ({ ...c, [key]: e.target.value }))}
-                  className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500" />
+                  className={input} />
               </div>
             ))}
             <button type="button" onClick={() => alert('טסט אימייל נשלח (מוק)')}
-              className="w-full rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 transition-colors flex items-center justify-center gap-2 flex-row-reverse">
+              className={`${btn.secondary} w-full flex-row-reverse`}>
               <Mail className="h-4 w-4" />שלח אימייל בדיקה
             </button>
           </div>
@@ -227,11 +228,11 @@ export default function SystemSettingsSection() {
           </div>
           <div className="mt-4 flex gap-2 flex-row-reverse">
             <button type="button" onClick={() => alert('סיבוב מפתחות — ידרוש אישור (מוק)')}
-              className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-300 hover:bg-zinc-800 transition-colors flex-row-reverse">
+              className={`${btn.secondary} flex-row-reverse`}>
               <RefreshCw className="h-3.5 w-3.5" />סובב מפתחות
             </button>
           </div>
-          <div className="mt-3 flex items-center gap-2 text-[11px] text-zinc-500 flex-row-reverse">
+          <div className="mt-3 flex items-center gap-2 text-[11px] text-slate-500 flex-row-reverse">
             <Shield className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
             <span>המפתחות מוצגים בצורה מוסתרת ולא נשמרים בצד הלקוח</span>
           </div>

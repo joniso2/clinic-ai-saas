@@ -24,7 +24,7 @@ export function BottomDashboardNav({ activeTab, onTabChange, clinic }: Props) {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 h-[70px] backdrop-blur bg-black/80 rounded-t-2xl shadow-lg flex items-center justify-between gap-0 px-1 pb-safe"
+      className="fixed bottom-0 inset-x-0 h-[70px] backdrop-blur bg-black/80 rounded-t-2xl shadow-lg flex items-center justify-between gap-0 px-1 pb-safe"
       dir="rtl"
       aria-label="ניווט"
     >
@@ -45,7 +45,7 @@ export function BottomDashboardNav({ activeTab, onTabChange, clinic }: Props) {
         ))}
       </div>
 
-      <div className="flex-shrink-0 w-12 h-12 -mt-6 rounded-full shadow-lg border-2 border-white/20 bg-gray-800 overflow-hidden flex items-center justify-center mx-0.5">
+      <div className="flex-shrink-0 w-12 h-12 -mt-6 rounded-full shadow-lg border-2 border-white/20 bg-slate-800 overflow-hidden flex items-center justify-center mx-0.5">
         {clinic.logo_url?.trim() ? (
           <img
             src={clinic.logo_url}

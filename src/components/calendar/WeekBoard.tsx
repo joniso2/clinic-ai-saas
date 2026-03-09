@@ -59,7 +59,7 @@ export const WeekBoardCard = memo(function WeekBoardCard({ event, onClick, onCom
           type="button"
           onClick={(e) => { e.stopPropagation(); onComplete(apt); }}
           title="סמן כהושלם"
-          className="absolute top-1.5 end-1.5 opacity-0 group-hover:opacity-100 transition-opacity rounded-full bg-emerald-500 text-white p-0.5 hover:bg-emerald-600 z-10"
+          className="absolute top-1.5 end-1.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity rounded-full bg-emerald-500 text-white p-0.5 hover:bg-emerald-600 z-10"
         >
           <Check className="h-3 w-3" />
         </button>
@@ -97,7 +97,7 @@ export function WeekBoard({
       {dayColumns.map((col) => (
         <div
           key={col.dateStr}
-          className={`flex min-w-[140px] flex-1 flex-col border-s border-slate-200 dark:border-slate-700 last:border-s-0 ${col.isToday ? 'bg-indigo-50/60 dark:bg-indigo-950/25 ring-1 ring-indigo-400/40 dark:ring-indigo-500/30' : 'bg-slate-50/70 dark:bg-slate-900/40'}`}
+          className={`flex min-w-[100px] sm:min-w-[140px] flex-1 flex-col border-s border-slate-200 dark:border-slate-700 last:border-s-0 ${col.isToday ? 'bg-indigo-50/60 dark:bg-indigo-950/25 ring-1 ring-indigo-400/40 dark:ring-indigo-500/30' : 'bg-slate-50/70 dark:bg-slate-900/40'}`}
         >
           <div className={`sticky top-0 z-10 flex flex-col items-center gap-0.5 border-b border-slate-200 dark:border-slate-700 px-2 py-2 ${col.isToday ? 'bg-indigo-50 dark:bg-indigo-950/40' : 'bg-white dark:bg-slate-900'}`}>
             <p className={`text-[11px] font-semibold uppercase tracking-[0.06em] leading-tight ${col.isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400'}`}>

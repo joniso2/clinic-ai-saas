@@ -271,7 +271,7 @@ export default function PricingPage() {
           <div className="flex flex-wrap items-center gap-3">
             {/* Search */}
             <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
+              <Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
               <input
                 type="search"
                 value={search}
@@ -301,16 +301,16 @@ export default function PricingPage() {
 
             {/* Sort */}
             <div className="relative">
-              <SortAsc className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <SortAsc className="absolute end-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortKey)}
                 dir="rtl"
-                className="appearance-none rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 py-2.5 pr-9 pl-8 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
+                className="appearance-none rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 py-2.5 pe-9 ps-8 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
               >
                 {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
-              <ChevronDown className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <ChevronDown className="absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
 
             {/* Filter */}
@@ -330,7 +330,7 @@ export default function PricingPage() {
               </button>
 
               {filterOpen && (
-                <div className="absolute left-0 top-full mt-2 z-30 w-72 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-xl p-4 space-y-4" dir="rtl">
+                <div className="absolute start-0 top-full mt-2 z-30 w-72 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-xl p-4 space-y-4" dir="rtl">
                   <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">סינון מתקדם</p>
 
                   <div>
@@ -482,7 +482,7 @@ export default function PricingPage() {
 
                         {/* Row actions */}
                         <td className="py-3.5 px-4 w-28" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition">
+                          <div className="flex items-center justify-end gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition">
                             {canEdit && (
                               <>
                                 <button type="button"
@@ -646,10 +646,10 @@ function ServiceFormModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
       role="dialog" aria-modal="true" aria-labelledby="service-modal-title"
     >
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-2xl animate-in zoom-in-95 fade-in duration-200">
+      <div className="modal-enter w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex-row-reverse">
           <h2 id="service-modal-title" className="text-lg font-semibold text-slate-900 dark:text-slate-50 text-right">
             {service ? 'ערוך שירות' : 'הוסף שירות'}
