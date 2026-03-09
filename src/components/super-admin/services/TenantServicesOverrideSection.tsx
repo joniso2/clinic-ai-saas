@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { TenantSelector } from './TenantSelector';
 import { TenantServicesTable } from './TenantServicesTable';
 import { ServiceFormModal } from './ServiceFormModal';
-import { EmptyState } from './EmptyState';
+import EmptyState from '@/components/ui/EmptyState';
+import { PackageOpen } from 'lucide-react';
 import type { TenantOption, ServiceRow } from './types';
 
 interface TenantServicesOverrideSectionProps {
@@ -200,9 +201,26 @@ export default function TenantServicesOverrideSection({
         loading={loadingTenants}
       />
 
-      {!selectedTenantId && <EmptyState noTenant />}
+      {!selectedTenantId && (
+        <EmptyState
+          icon={PackageOpen}
+          title="בחר קליניקה למעלה כדי לערוך שירותים"
+        />
+      )}
       {selectedTenantId && services.length === 0 && !loadingServices && (
-        <EmptyState noServices onAdd={openAdd} />
+        <EmptyState
+          icon={PackageOpen}
+          title="אין שירותים — הוסף שירות ראשון"
+          action={
+            <button
+              type="button"
+              onClick={openAdd}
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500"
+            >
+              הוסף שירות
+            </button>
+          }
+        />
       )}
       {selectedTenantId && (services.length > 0 || loadingServices) && (
         <TenantServicesTable

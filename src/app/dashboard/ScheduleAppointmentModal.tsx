@@ -161,20 +161,21 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
       }),
     });
 
-    const json = await res.json().catch(() => ({}));
+    const json: { appointment?: Appointment; suggestions?: string[]; message?: string; error?: string } =
+      await res.json().catch(() => ({}));
 
-    if (res.status === 201 && (json as any).appointment) {
-      onScheduled((json as any).appointment as Appointment);
+    if (res.status === 201 && json.appointment) {
+      onScheduled(json.appointment);
       onClose();
-    } else if (res.status === 409 && (json as any).suggestions?.length) {
-      const alts = ((json as any).suggestions as string[])
+    } else if (res.status === 409 && json.suggestions?.length) {
+      const alts = json.suggestions
         .slice(0, 3)
         .join('\n');
       setError(`המועד תפוס. המועדים הפנויים הקרובים:\n${alts}`);
     } else {
       setError(
-        (json as any).message ??
-          (json as any).error ??
+        json.message ??
+          json.error ??
           'לא ניתן לקבוע תור',
       );
     }

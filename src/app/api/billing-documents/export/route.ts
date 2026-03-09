@@ -76,8 +76,7 @@ export async function GET(req: NextRequest) {
   ];
 
   const rows = docs.map((d) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const payments = (d as any).billing_document_payments ?? [];
+    const payments = (d as unknown as { billing_document_payments?: Array<{ payments?: { payment_method?: string } }> }).billing_document_payments ?? [];
     const method =
       payments[0]?.payments?.payment_method
         ? PAYMENT_METHOD_LABELS[payments[0].payments.payment_method as PaymentMethod]

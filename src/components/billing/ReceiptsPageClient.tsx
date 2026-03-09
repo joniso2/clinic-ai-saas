@@ -20,6 +20,7 @@ import { DOC_TYPE_LABELS } from '@/types/billing';
 import BillingSettingsForm from '@/components/billing/BillingSettingsForm';
 import { DocumentDrawer } from '@/components/billing/DocumentDrawer';
 import { CreateDocumentModal } from '@/components/billing/CreateDocumentModal';
+import { KpiCard, KPI_ACCENT } from '@/components/ui/KpiCard';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -51,37 +52,6 @@ const DOC_TYPE_FILTER_OPTIONS: { value: BillingDocType | ''; label: string }[] =
 ];
 
 const PAGE_SIZE = 20;
-
-// ── KPI card ──────────────────────────────────────────────────────────────────
-
-function KpiCard({
-  label,
-  value,
-  sub,
-  icon: Icon,
-  accent,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  icon: React.ComponentType<{ className?: string }>;
-  accent: string;
-}) {
-  return (
-    <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 flex items-start gap-4">
-      <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${accent} shrink-0`}>
-        <Icon className="h-5 w-5" />
-      </div>
-      <div className="min-w-0">
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{label}</p>
-        <p className="text-xl font-semibold text-slate-900 dark:text-slate-50 tabular-nums leading-none">
-          {value}
-        </p>
-        {sub && <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{sub}</p>}
-      </div>
-    </div>
-  );
-}
 
 // ── Main component ────────────────────────────────────────────────────────────
 
@@ -304,26 +274,30 @@ export function ReceiptsPageClient() {
             label="מסמכים שהופקו"
             value={String(kpis.total_issued)}
             icon={FileText}
-            accent="bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+            iconContainerClass={KPI_ACCENT.blue.icon}
+            borderAccentClass={KPI_ACCENT.blue.border}
           />
           <KpiCard
             label="סה״כ הכנסות"
             value={fmt(kpis.total_revenue)}
             sub="כולל מע״מ"
             icon={TrendingUp}
-            accent="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+            iconContainerClass={KPI_ACCENT.emerald.icon}
+            borderAccentClass={KPI_ACCENT.emerald.border}
           />
           <KpiCard
             label="מע״מ שנגבה"
             value={fmt(kpis.total_vat)}
             icon={ReceiptText}
-            accent="bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400"
+            iconContainerClass="bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400"
+            borderAccentClass="border-s-violet-500 dark:border-s-violet-400"
           />
           <KpiCard
             label="מסמכים שבוטלו"
             value={String(kpis.total_cancelled)}
             icon={XCircle}
-            accent="bg-red-50 text-red-500 dark:bg-red-900/30 dark:text-red-400"
+            iconContainerClass={KPI_ACCENT.red.icon}
+            borderAccentClass={KPI_ACCENT.red.border}
           />
         </div>
       )}

@@ -16,6 +16,7 @@ import {
   UsersRound,
   ReceiptText,
 } from 'lucide-react';
+import { KpiCard, KPI_ACCENT } from '@/components/ui/KpiCard';
 import {
   AreaChart,
   Area,
@@ -102,42 +103,6 @@ function TrendBadge({ pct }: { pct: number | null }) {
       <span>{Math.abs(pct)}%</span>
       {positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
     </span>
-  );
-}
-
-// ─── KPI Card ────────────────────────────────────────────────────────────────
-
-function KpiCard({
-  label,
-  value,
-  sub,
-  icon: Icon,
-  iconBg,
-  trend,
-}: {
-  label: string;
-  value: string | number;
-  sub?: string;
-  icon: React.ElementType;
-  iconBg: string;
-  trend?: React.ReactNode;
-}) {
-  return (
-    <div className="group rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-950/80 p-4 shadow-sm transition-shadow hover:shadow-md">
-      <div className="flex items-start justify-between gap-3 flex-row-reverse text-right">
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
-            {label}
-          </p>
-          <p className="mt-1.5 text-[28px] font-bold tabular-nums tracking-tight text-slate-900 dark:text-slate-50">{value}</p>
-          {sub && <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">{sub}</p>}
-          {trend && <div className="mt-1.5">{trend}</div>}
-        </div>
-        <div className={`shrink-0 h-10 w-10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform ${iconBg}`}>
-          <Icon className="h-4 w-4" strokeWidth={2} />
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -619,39 +584,40 @@ export function AnalyticsTab() {
               value={data.kpi.leadsCount.current}
               sub={data.kpi.leadsCount.previous > 0 ? `לעומת ${data.kpi.leadsCount.previous} בתקופה קודמת` : undefined}
               icon={Users}
-              iconBg="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
-              trend={<TrendBadge pct={data.kpi.leadsCount.changePct} />}
+              iconContainerClass={KPI_ACCENT.blue.icon}
+              borderAccentClass={KPI_ACCENT.blue.border}
             />
             <KpiCard
               label="אחוז סגירה"
               value={`${data.kpi.closeRate.current}%`}
               sub={data.kpi.closeRate.previous > 0 ? `לעומת ${data.kpi.closeRate.previous}% קודם` : undefined}
               icon={Percent}
-              iconBg="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400"
-              trend={<TrendBadge pct={data.kpi.closeRate.changePct} />}
+              iconContainerClass={KPI_ACCENT.indigo.icon}
+              borderAccentClass={KPI_ACCENT.indigo.border}
             />
             <KpiCard
               label="זמן תגובה ממוצע"
               value={data.kpi.efficiency.avgResponseTimeHours !== null ? fmtHours(data.kpi.efficiency.avgResponseTimeHours) : '—'}
               sub="מיצירת ליד ליצירת קשר (משוער)"
               icon={Clock}
-              iconBg="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+              iconContainerClass={KPI_ACCENT.amber.icon}
+              borderAccentClass={KPI_ACCENT.amber.border}
             />
             <KpiCard
               label="הכנסה בפועל"
               value={fmt(data.kpi.actualRevenue.current)}
               sub={data.revenueMetrics.documentCount > 0 ? `${data.revenueMetrics.documentCount} מסמכים` : 'ללא מסמכי חיוב'}
               icon={Banknote}
-              iconBg="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
-              trend={<TrendBadge pct={data.kpi.actualRevenue.changePct} />}
+              iconContainerClass={KPI_ACCENT.emerald.icon}
+              borderAccentClass={KPI_ACCENT.emerald.border}
             />
             <KpiCard
               label="תורים"
               value={data.kpi.appointmentsCount.current}
               sub={data.kpi.cancelledAppointments > 0 ? `${data.kpi.cancelledAppointments} בוטלו` : undefined}
               icon={Calendar}
-              iconBg="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
-              trend={<TrendBadge pct={data.kpi.appointmentsCount.changePct} />}
+              iconContainerClass={KPI_ACCENT.purple.icon}
+              borderAccentClass={KPI_ACCENT.purple.border}
             />
           </section>
 
@@ -702,15 +668,16 @@ export function AnalyticsTab() {
                   label="לקוחות חדשים"
                   value={data.kpi.customersCount.current}
                   icon={UsersRound}
-                  iconBg="bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400"
-                  trend={<TrendBadge pct={data.kpi.customersCount.changePct} />}
+                  iconContainerClass="bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400"
+                  borderAccentClass="border-s-teal-500 dark:border-s-teal-400"
                 />
                 <KpiCard
                   label="לקוחות חוזרים"
                   value={data.customerMetrics.returning}
                   sub={`מתוך ${data.customerMetrics.totalActive} פעילים`}
                   icon={ReceiptText}
-                  iconBg="bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400"
+                  iconContainerClass="bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400"
+                  borderAccentClass="border-s-violet-500 dark:border-s-violet-400"
                 />
               </div>
               <KpiCard
@@ -718,8 +685,8 @@ export function AnalyticsTab() {
                 value={fmt(data.kpi.discordRevenue.current)}
                 sub="מלידים שנסגרו (estimated_deal_value)"
                 icon={Target}
-                iconBg="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-                trend={<TrendBadge pct={data.kpi.discordRevenue.changePct} />}
+                iconContainerClass={KPI_ACCENT.slate.icon}
+                borderAccentClass={KPI_ACCENT.slate.border}
               />
             </div>
           </div>

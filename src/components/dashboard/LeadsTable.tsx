@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Search,
@@ -814,22 +814,22 @@ export function LeadsTable({
     return list;
   }, [leads, debouncedSearch, priorityFilter, statusFilter, sortKey, sortDesc]);
 
-  const toggleSelect = (id: string) => {
+  const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
-  };
+  }, []);
 
-  const toggleSelectAll = () => {
+  const toggleSelectAll = useCallback(() => {
     if (selectedIds.size === filteredAndSorted.length) {
       setSelectedIds(new Set());
     } else {
       setSelectedIds(new Set(filteredAndSorted.map((l) => l.id)));
     }
-  };
+  }, [selectedIds.size, filteredAndSorted]);
 
   const isUrgent = (lead: Lead) => {
     const p = getDisplayPriority(lead);
@@ -839,7 +839,7 @@ export function LeadsTable({
     return p === 'Urgent' || (p === 'High' && next);
   };
 
-  const handleAccept = async (lead: Lead) => {
+  const handleAccept = useCallback(async (lead: Lead) => {
     if (onAcceptPendingLead) {
       setAcceptingLeadId(lead.id);
       try {
@@ -852,9 +852,9 @@ export function LeadsTable({
       onStatusChange(lead.id, 'Appointment scheduled');
       setPendingReviewLead(null);
     }
-  };
+  }, [onAcceptPendingLead, onStatusChange]);
 
-  const handleReject = (lead: Lead, reason: string) => {
+  const handleReject = useCallback((lead: Lead, reason: string) => {
     setRemovingIds((prev) => new Set(prev).add(lead.id));
     setTimeout(() => {
       onStatusChange(lead.id, 'Disqualified');
@@ -867,7 +867,7 @@ export function LeadsTable({
       setToast('הליד הועבר להסרה');
     }, 300);
     setPendingReviewLead(null);
-  };
+  }, [onStatusChange, onRejectLead]);
 
   return (
     <div className="space-y-3">

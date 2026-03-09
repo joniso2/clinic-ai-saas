@@ -17,6 +17,7 @@ import type { BillingDocumentWithItems, BillingSettings } from '@/types/billing'
 import { DOC_TYPE_LABELS } from '@/types/billing';
 import { DocumentDrawer } from '@/components/billing/DocumentDrawer';
 import { CreateDocumentModal } from '@/components/billing/CreateDocumentModal';
+import { KpiCard, KPI_ACCENT } from '@/components/ui/KpiCard';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -153,35 +154,6 @@ function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }
         <X className="h-3 w-3" />
       </button>
     </span>
-  );
-}
-
-// ─── KPI Card ─────────────────────────────────────────────────────────────────
-
-type Accent = 'indigo' | 'emerald' | 'violet' | 'amber';
-
-const ACCENT: Record<Accent, { grad: string; iconBg: string; iconColor: string; border: string }> = {
-  indigo:  { grad: 'from-indigo-500/10 to-indigo-500/5 dark:from-indigo-500/20 dark:to-transparent',   iconBg: 'bg-indigo-500/15 dark:bg-indigo-500/25',  iconColor: 'text-indigo-600 dark:text-indigo-400',  border: 'border-indigo-200/60 dark:border-indigo-800/40' },
-  emerald: { grad: 'from-emerald-500/10 to-emerald-500/5 dark:from-emerald-500/20 dark:to-transparent', iconBg: 'bg-emerald-500/15 dark:bg-emerald-500/25', iconColor: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-200/60 dark:border-emerald-800/40' },
-  violet:  { grad: 'from-violet-500/10 to-violet-500/5 dark:from-violet-500/20 dark:to-transparent',   iconBg: 'bg-violet-500/15 dark:bg-violet-500/25',   iconColor: 'text-violet-600 dark:text-violet-400',  border: 'border-violet-200/60 dark:border-violet-800/40' },
-  amber:   { grad: 'from-amber-500/10 to-amber-500/5 dark:from-amber-500/20 dark:to-transparent',      iconBg: 'bg-amber-500/15 dark:bg-amber-500/25',    iconColor: 'text-amber-600 dark:text-amber-400',    border: 'border-amber-200/60 dark:border-amber-800/40' },
-};
-
-function KpiCard({ label, value, sub, icon: Icon, accent }: { label: string; value: string; sub?: string; icon: React.ComponentType<{ className?: string }>; accent: Accent }) {
-  const a = ACCENT[accent];
-  return (
-    <div className={`rounded-2xl border ${a.border} bg-gradient-to-br ${a.grad} bg-white dark:bg-slate-950/80 p-5 shadow-sm hover:shadow-md transition-all duration-200`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-[0.1em]">{label}</p>
-          <p className="mt-2.5 text-[1.75rem] font-bold text-slate-900 dark:text-slate-50 tabular-nums leading-none tracking-tight">{value}</p>
-          {sub && <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">{sub}</p>}
-        </div>
-        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${a.iconBg}`}>
-          <Icon className={`h-5 w-5 ${a.iconColor}`} />
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -1212,10 +1184,10 @@ export function CustomersTab() {
         )}
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <KpiCard label="סה״כ לקוחות"   value={String(filteredClosedLeads.length)}         icon={Users}       accent="indigo" />
-          <KpiCard label="סה״כ הכנסות"   value={formatCurrencyILS(kpiRevLeads)}              icon={DollarSign}  accent="emerald" />
-          <KpiCard label="ממוצע ללקוח"   value={filteredClosedLeads.length ? formatCurrencyILS(kpiRevLeads / filteredClosedLeads.length) : '—'} icon={TrendingUp} accent="violet" />
-          <KpiCard label="טופלו החודש"   value={String(kpiMonthLeads)}                       icon={Calendar}    accent="amber" />
+          <KpiCard label="סה״כ לקוחות"   value={String(filteredClosedLeads.length)}         icon={Users}       iconContainerClass={KPI_ACCENT.indigo.icon}  borderAccentClass={KPI_ACCENT.indigo.border} />
+          <KpiCard label="סה״כ הכנסות"   value={formatCurrencyILS(kpiRevLeads)}              icon={DollarSign}  iconContainerClass={KPI_ACCENT.emerald.icon} borderAccentClass={KPI_ACCENT.emerald.border} />
+          <KpiCard label="ממוצע ללקוח"   value={filteredClosedLeads.length ? formatCurrencyILS(kpiRevLeads / filteredClosedLeads.length) : '—'} icon={TrendingUp} iconContainerClass={KPI_ACCENT.purple.icon} borderAccentClass={KPI_ACCENT.purple.border} />
+          <KpiCard label="טופלו החודש"   value={String(kpiMonthLeads)}                       icon={Calendar}    iconContainerClass={KPI_ACCENT.amber.icon}   borderAccentClass={KPI_ACCENT.amber.border} />
         </div>
 
         <div className="w-full overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] bg-white dark:bg-slate-900">
@@ -1362,10 +1334,10 @@ export function CustomersTab() {
 
       {/* KPI cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard label="סה״כ לקוחות" value={String(filteredCustomers.length)} sub={`${customers.length} במערכת`} icon={Users}      accent="indigo" />
-        <KpiCard label="סה״כ הכנסות" value={formatCurrencyILS(kpiRevCustomers)}                                    icon={DollarSign} accent="emerald" />
-        <KpiCard label="ממוצע ללקוח" value={formatCurrencyILS(kpiAvgCustomers)}                                    icon={TrendingUp} accent="violet" />
-        <KpiCard label="ביקורים החודש" value={String(kpiMonthCustomers)}                                           icon={Calendar}   accent="amber" />
+        <KpiCard label="סה״כ לקוחות" value={String(filteredCustomers.length)} sub={`${customers.length} במערכת`} icon={Users}      iconContainerClass={KPI_ACCENT.indigo.icon}  borderAccentClass={KPI_ACCENT.indigo.border} />
+        <KpiCard label="סה״כ הכנסות" value={formatCurrencyILS(kpiRevCustomers)}                                    icon={DollarSign} iconContainerClass={KPI_ACCENT.emerald.icon} borderAccentClass={KPI_ACCENT.emerald.border} />
+        <KpiCard label="ממוצע ללקוח" value={formatCurrencyILS(kpiAvgCustomers)}                                    icon={TrendingUp} iconContainerClass={KPI_ACCENT.purple.icon} borderAccentClass={KPI_ACCENT.purple.border} />
+        <KpiCard label="ביקורים החודש" value={String(kpiMonthCustomers)}                                           icon={Calendar}   iconContainerClass={KPI_ACCENT.amber.icon}   borderAccentClass={KPI_ACCENT.amber.border} />
       </div>
 
       {/* Table */}

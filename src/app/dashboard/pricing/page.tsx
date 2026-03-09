@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { formatCurrencyILS } from '@/lib/hebrew';
 import { ConfirmDeleteModal } from '@/components/dashboard/ConfirmDeleteModal';
+import { KpiCard, KPI_ACCENT } from '@/components/ui/KpiCard';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -39,42 +40,6 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'duration_desc', label: 'משך — ארוך לקצר' },
   { value: 'name_az',       label: 'שם א–ת' },
 ];
-
-// ─── KPI Card ─────────────────────────────────────────────────────────────────
-
-function KpiCard({
-  label, value, sub,
-  icon: Icon,
-  accent,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  icon: React.ComponentType<{ className?: string }>;
-  accent: 'indigo' | 'emerald' | 'violet' | 'amber';
-}) {
-  const s = {
-    indigo:  { border: 'border-indigo-100 dark:border-indigo-900/40',  bg: 'bg-indigo-500/10 dark:bg-indigo-500/15',  icon: 'text-indigo-600 dark:text-indigo-400' },
-    emerald: { border: 'border-emerald-100 dark:border-emerald-900/40', bg: 'bg-emerald-500/10 dark:bg-emerald-500/15', icon: 'text-emerald-600 dark:text-emerald-400' },
-    violet:  { border: 'border-violet-100 dark:border-violet-900/40',  bg: 'bg-violet-500/10 dark:bg-violet-500/15',  icon: 'text-violet-600 dark:text-violet-400' },
-    amber:   { border: 'border-amber-100 dark:border-amber-900/40',    bg: 'bg-amber-500/10 dark:bg-amber-500/15',    icon: 'text-amber-600 dark:text-amber-400' },
-  }[accent];
-
-  return (
-    <div className={`rounded-2xl border ${s.border} bg-white dark:bg-slate-950/80 p-5 shadow-sm`} dir="rtl">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">{label}</p>
-          <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 tabular-nums">{value}</p>
-          {sub && <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">{sub}</p>}
-        </div>
-        <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${s.bg}`}>
-          <Icon className={`h-5 w-5 ${s.icon}`} />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ─── Inline editable cell ─────────────────────────────────────────────────────
 
@@ -522,10 +487,10 @@ export default function PricingPage() {
 
           {/* KPI cards */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <KpiCard label="סה״כ שירותים"   value={String(kpiTotal)}               icon={Layers}      accent="indigo" />
-            <KpiCard label="שירותים פעילים" value={String(kpiActive)}              sub={`${kpiTotal - kpiActive} מושבתים`} icon={Zap} accent="emerald" />
-            <KpiCard label="מחיר ממוצע"     value={formatCurrencyILS(kpiAvgPrice)} icon={DollarSign}  accent="violet" />
-            <KpiCard label="משך ממוצע"      value={`${kpiAvgDuration} דק׳`}       icon={Clock}       accent="amber" />
+            <KpiCard label="סה״כ שירותים"   value={String(kpiTotal)}               icon={Layers}      iconContainerClass={KPI_ACCENT.indigo.icon}  borderAccentClass={KPI_ACCENT.indigo.border} />
+            <KpiCard label="שירותים פעילים" value={String(kpiActive)}              sub={`${kpiTotal - kpiActive} מושבתים`} icon={Zap} iconContainerClass={KPI_ACCENT.emerald.icon} borderAccentClass={KPI_ACCENT.emerald.border} />
+            <KpiCard label="מחיר ממוצע"     value={formatCurrencyILS(kpiAvgPrice)} icon={DollarSign}  iconContainerClass="bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400" borderAccentClass="border-s-violet-500 dark:border-s-violet-400" />
+            <KpiCard label="משך ממוצע"      value={`${kpiAvgDuration} דק׳`}       icon={Clock}       iconContainerClass={KPI_ACCENT.amber.icon}   borderAccentClass={KPI_ACCENT.amber.border} />
           </div>
 
           {/* Toolbar */}
