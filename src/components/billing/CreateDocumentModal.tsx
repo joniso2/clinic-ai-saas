@@ -91,7 +91,7 @@ export function CreateDocumentModal({ settings, appointmentId, appointmentLabel,
     fetch('/api/clinic-services')
       .then((r) => r.json())
       .then((d) => setServices((d.services ?? []).filter((s: ClinicService) => s.is_active)))
-      .catch(() => {})
+      .catch((err) => console.error('Failed to load services:', err))
       .finally(() => setLoadingServices(false));
   }, [services.length]);
 

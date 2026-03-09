@@ -33,30 +33,28 @@ export function DayModal({
     fetch('/api/billing-settings')
       .then((r) => r.ok ? r.json() : null)
       .then((data) => setBillingSettings(data?.settings ?? 'none'))
-      .catch(() => setBillingSettings('none'));
+      .catch((err) => { console.error('Failed to load billing settings:', err); setBillingSettings('none'); });
   }, []);
 
-  // Check which completed appointments already have receipts
+  // Check which completed appointments already have receipts (single batch request)
   useEffect(() => {
     const completedIds = appointments
       .filter((a) => a.status === 'completed')
       .map((a) => a.id);
     if (completedIds.length === 0) return;
-    Promise.all(
-      completedIds.map((id) =>
-        fetch(`/api/billing-documents?appointment_id=${id}&limit=1`, { credentials: 'include' })
-          .then((r) => r.ok ? r.json() : null)
-          .then((d) => {
-            const issued = (d?.documents ?? []).filter((doc: { status: string }) => doc.status !== 'cancelled');
-            return [id, issued.length > 0] as [string, boolean];
-          })
-          .catch(() => [id, false] as [string, boolean])
-      )
-    ).then((results) => {
-      const map: Record<string, boolean> = {};
-      for (const [id, has] of results) map[id] = has;
-      setAppointmentReceiptMap(map);
-    });
+    fetch(`/api/billing-documents?appointment_ids=${completedIds.join(',')}&limit=100`, { credentials: 'include' })
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        const map: Record<string, boolean> = {};
+        for (const id of completedIds) map[id] = false;
+        for (const doc of (d?.documents ?? [])) {
+          if (doc.status !== 'cancelled' && doc.appointment_id) {
+            map[doc.appointment_id] = true;
+          }
+        }
+        setAppointmentReceiptMap(map);
+      })
+      .catch((err) => console.error('Failed to check receipts:', err));
   }, [appointments]);
 
   const handleIssueReceipt = (apt: Appointment) => {
@@ -78,7 +76,7 @@ export function DayModal({
         });
         setLeadCache(cache);
       })
-      .catch(() => {});
+      .catch((err) => console.error('Failed to load lead names:', err));
   }, [appointments]);
 
   const dateLabel = new Intl.DateTimeFormat('he-IL', {

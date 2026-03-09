@@ -22,9 +22,11 @@ export async function PUT(req: NextRequest) {
   if (!Array.isArray(body.items)) return NextResponse.json({ error: 'items array required' }, { status: 400 });
 
   const supabase = getSupabaseAdmin();
-  for (const it of body.items) {
-    await supabase.from('clinic_gallery_images').update({ sort_order: it.sort_order }).eq('id', it.id).eq('clinic_id', clinicId);
-  }
+  await Promise.all(
+    body.items.map((it) =>
+      supabase.from('clinic_gallery_images').update({ sort_order: it.sort_order }).eq('id', it.id).eq('clinic_id', clinicId)
+    )
+  );
   const { data } = await supabase.from('clinic_gallery_images').select('id, image_url, sort_order').eq('clinic_id', clinicId).order('sort_order');
   return NextResponse.json({ gallery: data ?? [] });
 }

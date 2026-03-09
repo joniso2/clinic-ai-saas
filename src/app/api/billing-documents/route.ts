@@ -17,12 +17,13 @@ export async function GET(req: NextRequest) {
   if (!row?.clinic_id) return NextResponse.json({ error: 'לא מאומת' }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
-  const docType       = searchParams.get('doc_type');
-  const status        = searchParams.get('status');
-  const from          = searchParams.get('from');
-  const to            = searchParams.get('to');
-  const patientId     = searchParams.get('patient_id');
-  const appointmentId = searchParams.get('appointment_id');
+  const docType        = searchParams.get('doc_type');
+  const status         = searchParams.get('status');
+  const from           = searchParams.get('from');
+  const to             = searchParams.get('to');
+  const patientId      = searchParams.get('patient_id');
+  const appointmentId  = searchParams.get('appointment_id');
+  const appointmentIds = searchParams.get('appointment_ids'); // comma-separated batch
   const page     = Math.max(1, parseInt(searchParams.get('page')  ?? '1',  10));
   const limit    = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '50', 10)));
   const offset   = (page - 1) * limit;
@@ -42,6 +43,7 @@ export async function GET(req: NextRequest) {
   if (to)        query = query.lte('issued_at', to);
   if (patientId)     query = query.eq('patient_id', patientId);
   if (appointmentId) query = query.eq('appointment_id', appointmentId);
+  if (appointmentIds) query = query.in('appointment_id', appointmentIds.split(',').map(s => s.trim()).filter(Boolean));
 
   const { data, error, count } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -238,8 +240,9 @@ export async function POST(req: NextRequest) {
     .insert(itemRows);
 
   if (itemsError) {
-    // Document row exists but items failed — log for investigation
     console.error('[POST /api/billing-documents] items insert failed:', itemsError.message, 'doc_id:', document.id);
+    // Rollback: delete the orphaned document header to prevent a doc with no items
+    await admin.from('billing_documents').delete().eq('id', document.id);
     return NextResponse.json({ error: 'שגיאה בהוספת פריטי המסמך' }, { status: 500 });
   }
 

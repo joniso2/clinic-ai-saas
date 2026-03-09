@@ -5,14 +5,19 @@
  * Payload: { channel, clinic_id, phone?, message, external_id? }
  */
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { routeIncoming, recordOutgoing } from '@/lib/message-router';
 import { generateAIResponse } from '@/lib/ai-router';
 
 const CHANNELS = ['whatsapp', 'sms', 'discord', 'webchat'] as const;
 type Channel = (typeof CHANNELS)[number];
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const authHeader = req.headers.get('authorization');
+  if (authHeader !== `Bearer ${process.env.MESSAGES_WEBHOOK_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     const channel = body.channel as string;

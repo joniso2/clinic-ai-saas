@@ -67,10 +67,12 @@ ALTER TABLE billing_settings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "billing_settings_clinic_isolation" ON billing_settings;
 CREATE POLICY "billing_settings_clinic_isolation" ON billing_settings
   FOR ALL USING (
-    clinic_id = (SELECT clinic_id FROM clinic_users WHERE user_id = auth.uid() LIMIT 1)
+    clinic_id = (SELECT cu.clinic_id FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.clinic_id IS NOT NULL LIMIT 1)
+    OR EXISTS (SELECT 1 FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.role = 'SUPER_ADMIN')
   )
   WITH CHECK (
-    clinic_id = (SELECT clinic_id FROM clinic_users WHERE user_id = auth.uid() LIMIT 1)
+    clinic_id = (SELECT cu.clinic_id FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.clinic_id IS NOT NULL LIMIT 1)
+    OR EXISTS (SELECT 1 FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.role = 'SUPER_ADMIN')
   );
 
 -- ── vat_rates ─────────────────────────────────────────────────
@@ -235,13 +237,15 @@ ALTER TABLE billing_documents ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "billing_documents_select" ON billing_documents;
 CREATE POLICY "billing_documents_select" ON billing_documents
   FOR SELECT USING (
-    clinic_id = (SELECT clinic_id FROM clinic_users WHERE user_id = auth.uid() LIMIT 1)
+    clinic_id = (SELECT cu.clinic_id FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.clinic_id IS NOT NULL LIMIT 1)
+    OR EXISTS (SELECT 1 FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.role = 'SUPER_ADMIN')
   );
 
 DROP POLICY IF EXISTS "billing_documents_insert" ON billing_documents;
 CREATE POLICY "billing_documents_insert" ON billing_documents
   FOR INSERT WITH CHECK (
-    clinic_id = (SELECT clinic_id FROM clinic_users WHERE user_id = auth.uid() LIMIT 1)
+    clinic_id = (SELECT cu.clinic_id FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.clinic_id IS NOT NULL LIMIT 1)
+    OR EXISTS (SELECT 1 FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.role = 'SUPER_ADMIN')
   );
 
 -- No UPDATE policy for clinic users. Cancellation is handled by the
@@ -267,8 +271,9 @@ CREATE POLICY "billing_document_items_select" ON billing_document_items
   FOR SELECT USING (
     document_id IN (
       SELECT id FROM billing_documents
-      WHERE clinic_id = (SELECT clinic_id FROM clinic_users WHERE user_id = auth.uid() LIMIT 1)
+      WHERE clinic_id = (SELECT cu.clinic_id FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.clinic_id IS NOT NULL LIMIT 1)
     )
+    OR EXISTS (SELECT 1 FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.role = 'SUPER_ADMIN')
   );
 
 DROP POLICY IF EXISTS "billing_document_items_insert" ON billing_document_items;
@@ -276,8 +281,9 @@ CREATE POLICY "billing_document_items_insert" ON billing_document_items
   FOR INSERT WITH CHECK (
     document_id IN (
       SELECT id FROM billing_documents
-      WHERE clinic_id = (SELECT clinic_id FROM clinic_users WHERE user_id = auth.uid() LIMIT 1)
+      WHERE clinic_id = (SELECT cu.clinic_id FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.clinic_id IS NOT NULL LIMIT 1)
     )
+    OR EXISTS (SELECT 1 FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.role = 'SUPER_ADMIN')
   );
 
 -- No UPDATE, no DELETE.
@@ -316,13 +322,15 @@ ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "payments_select" ON payments;
 CREATE POLICY "payments_select" ON payments
   FOR SELECT USING (
-    clinic_id = (SELECT clinic_id FROM clinic_users WHERE user_id = auth.uid() LIMIT 1)
+    clinic_id = (SELECT cu.clinic_id FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.clinic_id IS NOT NULL LIMIT 1)
+    OR EXISTS (SELECT 1 FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.role = 'SUPER_ADMIN')
   );
 
 DROP POLICY IF EXISTS "payments_insert" ON payments;
 CREATE POLICY "payments_insert" ON payments
   FOR INSERT WITH CHECK (
-    clinic_id = (SELECT clinic_id FROM clinic_users WHERE user_id = auth.uid() LIMIT 1)
+    clinic_id = (SELECT cu.clinic_id FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.clinic_id IS NOT NULL LIMIT 1)
+    OR EXISTS (SELECT 1 FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.role = 'SUPER_ADMIN')
   );
 
 -- No DELETE policy.
@@ -346,8 +354,9 @@ CREATE POLICY "billing_document_payments_select" ON billing_document_payments
   FOR SELECT USING (
     document_id IN (
       SELECT id FROM billing_documents
-      WHERE clinic_id = (SELECT clinic_id FROM clinic_users WHERE user_id = auth.uid() LIMIT 1)
+      WHERE clinic_id = (SELECT cu.clinic_id FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.clinic_id IS NOT NULL LIMIT 1)
     )
+    OR EXISTS (SELECT 1 FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.role = 'SUPER_ADMIN')
   );
 
 -- INSERT via service role only with explicit cross-table clinic_id validation in API.
@@ -379,7 +388,8 @@ ALTER TABLE billing_audit_log ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "billing_audit_log_select" ON billing_audit_log;
 CREATE POLICY "billing_audit_log_select" ON billing_audit_log
   FOR SELECT USING (
-    clinic_id = (SELECT clinic_id FROM clinic_users WHERE user_id = auth.uid() LIMIT 1)
+    clinic_id = (SELECT cu.clinic_id FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.clinic_id IS NOT NULL LIMIT 1)
+    OR EXISTS (SELECT 1 FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.role = 'SUPER_ADMIN')
   );
 
 -- INSERT via service role only. No UPDATE, no DELETE for any role.
@@ -412,7 +422,8 @@ ALTER TABLE idempotency_keys ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "idempotency_keys_select" ON idempotency_keys;
 CREATE POLICY "idempotency_keys_select" ON idempotency_keys
   FOR SELECT USING (
-    clinic_id = (SELECT clinic_id FROM clinic_users WHERE user_id = auth.uid() LIMIT 1)
+    clinic_id = (SELECT cu.clinic_id FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.clinic_id IS NOT NULL LIMIT 1)
+    OR EXISTS (SELECT 1 FROM clinic_users cu WHERE cu.user_id = auth.uid() AND cu.role = 'SUPER_ADMIN')
   );
 
 -- All writes via service role with explicit clinic_id scoping in server code.

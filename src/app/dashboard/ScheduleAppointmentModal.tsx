@@ -53,7 +53,7 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
           setWorkingHours(wh);
         }
       })
-      .catch(() => {});
+      .catch((err) => console.error('Failed to load working hours:', err));
   }, []);
 
   // Set default time to the opening hour of today when hours load

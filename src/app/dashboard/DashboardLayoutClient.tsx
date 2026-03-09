@@ -142,7 +142,7 @@ function LayoutInner({ children, initialRole, initialUserEmail }: DashboardLayou
               setClinicName(`כעסק: ${d.clinic_name}`);
             }
           })
-          .catch(() => {});
+          .catch((err) => console.error('Failed to load impersonation state:', err));
         return;
       }
 

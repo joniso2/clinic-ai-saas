@@ -33,22 +33,24 @@ export async function GET() {
   const { data: guildRows } = await supabase.from('discord_guilds').select('clinic_id');
   const connectedClinicIds = new Set((guildRows ?? []).map((r: { clinic_id: string }) => r.clinic_id));
 
-  const withCounts = await Promise.all(
-    list.map(async (c) => {
-      const [leadsRes, appointmentsRes] = await Promise.all([
-        supabase.from('leads').select('id', { count: 'exact', head: true }).eq('clinic_id', c.id),
-        supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('clinic_id', c.id),
-      ]);
-      return {
-        ...c,
-        plan_id: (c as { plan_id?: string }).plan_id ?? null,
-        status: (c as { status?: string }).status ?? 'active',
-        leads_count: leadsRes.count ?? 0,
-        appointments_count: appointmentsRes.count ?? 0,
-        discord_connected: connectedClinicIds.has(c.id),
-      };
-    }),
-  );
+  // Batch: 2 queries total instead of 2N (one per table, count in JS)
+  const [leadsRes, appointmentsRes] = await Promise.all([
+    supabase.from('leads').select('clinic_id'),
+    supabase.from('appointments').select('clinic_id'),
+  ]);
+  const leadCounts: Record<string, number> = {};
+  for (const r of leadsRes.data ?? []) leadCounts[r.clinic_id] = (leadCounts[r.clinic_id] ?? 0) + 1;
+  const appointmentCounts: Record<string, number> = {};
+  for (const r of appointmentsRes.data ?? []) appointmentCounts[r.clinic_id] = (appointmentCounts[r.clinic_id] ?? 0) + 1;
+
+  const withCounts = list.map((c) => ({
+    ...c,
+    plan_id: (c as { plan_id?: string }).plan_id ?? null,
+    status: (c as { status?: string }).status ?? 'active',
+    leads_count: leadCounts[c.id] ?? 0,
+    appointments_count: appointmentCounts[c.id] ?? 0,
+    discord_connected: connectedClinicIds.has(c.id),
+  }));
 
   return NextResponse.json({ clinics: withCounts });
 }

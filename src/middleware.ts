@@ -11,7 +11,37 @@ function getSupabaseAuthCookiePrefix() {
   }
 }
 
+/** Routes that use their own bearer-token auth and don't need origin-based CSRF protection. */
+const CSRF_EXEMPT_PREFIXES = ['/api/webhook/', '/api/cron/', '/api/messages/incoming', '/api/book/', '/api/public/', '/api/clinics/', '/api/availability', '/api/cancel/', '/api/health'];
+
+function isCsrfExempt(pathname: string): boolean {
+  return CSRF_EXEMPT_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
 export async function middleware(request: NextRequest) {
+  // ── CSRF: Origin check for state-changing API requests ──
+  const method = request.method;
+  if (
+    ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) &&
+    request.nextUrl.pathname.startsWith('/api/') &&
+    !isCsrfExempt(request.nextUrl.pathname)
+  ) {
+    const origin = request.headers.get('origin');
+    const host = request.headers.get('host');
+    if (origin) {
+      try {
+        const originHost = new URL(origin).host;
+        if (originHost !== host) {
+          return NextResponse.json({ error: 'CSRF origin mismatch' }, { status: 403 });
+        }
+      } catch {
+        return NextResponse.json({ error: 'Invalid origin header' }, { status: 403 });
+      }
+    }
+    // If no Origin header: could be same-origin fetch (browsers omit Origin for same-origin).
+    // We allow it — same-origin requests are safe. Cross-origin POSTs always include Origin.
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
