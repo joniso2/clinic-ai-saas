@@ -1,6 +1,4 @@
-import moment from 'moment-timezone';
-
-const TZ = 'Asia/Jerusalem';
+import { parse, getDate, getMonth } from 'date-fns';
 
 const HEBREW_MONTHS = [
   'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
@@ -15,8 +13,8 @@ interface Props {
 }
 
 function formatDateHebrew(date: string): string {
-  const m = moment.tz(date, 'YYYY-MM-DD', TZ);
-  return `${m.date()} ב${HEBREW_MONTHS[m.month()]}`;
+  const d = parse(date, 'yyyy-MM-dd', new Date());
+  return `${getDate(d)} ב${HEBREW_MONTHS[getMonth(d)]}`;
 }
 
 export function TimeGrid({ slots, onSelect, selectedTime, date }: Props) {

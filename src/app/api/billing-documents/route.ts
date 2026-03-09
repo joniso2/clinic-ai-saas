@@ -6,7 +6,7 @@ import { checkIdempotency, resolveIdempotency, hashPayload } from '@/lib/billing
 import { computeDocumentTotals } from '@/lib/billing-math';
 import { ALLOWED_DOC_TYPES, DOC_TYPE_PREFIXES } from '@/types/billing';
 import type { CreateDocumentBody, BillingDocType } from '@/types/billing';
-import moment from 'moment-timezone';
+import { toZonedTime } from 'date-fns-tz';
 
 const TZ = 'Asia/Jerusalem';
 
@@ -156,7 +156,7 @@ export async function POST(req: NextRequest) {
 
   // 9. Sequential document number (atomic upsert via SECURITY DEFINER function)
   //    Service role bypasses RLS; p_clinic_id is server-resolved, never client-provided
-  const documentYear = moment.tz(TZ).year();
+  const documentYear = toZonedTime(new Date(), TZ).getFullYear();
   const { data: seqData, error: seqError } = await admin.rpc('next_document_number', {
     p_clinic_id: clinicId,
     p_doc_type:  doc_type,

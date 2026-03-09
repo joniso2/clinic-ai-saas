@@ -1,5 +1,3 @@
-'use client';
-
 import type { Clinic } from '@/types/booking';
 
 interface Props {

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { sendSMS } from '@/lib/sms';
-import moment from 'moment-timezone';
-
-const TZ = 'Asia/Jerusalem';
+import { addMinutes } from 'date-fns';
 
 function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -33,7 +31,7 @@ export async function POST(req: NextRequest) {
     }
 
     const otpCode = generateOTP();
-    const otpExpiry = moment().tz(TZ).add(5, 'minutes').toISOString();
+    const otpExpiry = addMinutes(new Date(), 5).toISOString();
 
     await supabase.from('otp_codes').insert({
       phone,

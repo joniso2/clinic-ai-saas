@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import moment from 'moment';
-import 'moment/locale/he';
-import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Check, Trash2 } from 'lucide-react';
+import { format, addDays, subDays, startOfDay, getDay, getDate, getMonth } from 'date-fns';
+import { he } from 'date-fns/locale';
+import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import type { Appointment } from '@/types/appointments';
 import type { Lead } from '@/types/leads';
-import type { BillingSettings, BillingDocumentWithItems } from '@/types/billing';
-import { STATUS_LABELS } from '@/lib/hebrew';
-import { getLeadStatusAccentHex, APPOINTMENT_STATUS, getAppointmentStatusLabel, getAppointmentStatusBadgeClass } from '@/lib/status-colors';
+import type { BillingSettings } from '@/types/billing';
+import { WeekBoard } from './WeekBoard';
+import { ISRAEL_TZ, getEventDateStr } from './calendar-helpers';
+import type { CalendarEvent, DayColumn } from './calendar-helpers';
 
 const LeadDetailDrawer = dynamic(
   () => import('@/components/dashboard/LeadDetailDrawer').then((m) => m.LeadDetailDrawer),
@@ -31,215 +32,6 @@ const CreateDocumentModal = dynamic(
   () => import('@/components/billing/CreateDocumentModal').then((m) => m.CreateDocumentModal),
   { ssr: false },
 );
-
-moment.locale('he');
-const ISRAEL_TZ = 'Asia/Jerusalem';
-
-type CalendarEvent = {
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  resource: Appointment;
-};
-
-
-/** Service category for color + icon. Consultation → yellow, Treatment → blue, Beauty → pink, Follow-up → green, Default → gray */
-type ServiceCategory = 'consultation' | 'treatment' | 'beauty' | 'follow_up' | 'default';
-
-function getServiceCategory(apt: Appointment): ServiceCategory {
-  if (apt.status === 'cancelled') return 'default';
-  if (apt.type === 'follow_up') return 'follow_up';
-  const sn = (apt.service_name ?? '').toLowerCase();
-  const he = (apt.service_name ?? '').replace(/\s/g, '');
-  if (/\b(beauty|meeting|יופי|עיצוב|טיפוח|פגישה)\b/.test(sn) || /יופי|עיצוב|טיפוח|פגישה/.test(he)) return 'beauty';
-  if (/\b(treatment|טיפול|טיפולים)\b/.test(sn) || /טיפול/.test(he)) return 'treatment';
-  if (/\b(consultation|ייעוץ|התייעצות)\b/.test(sn) || /ייעוץ|התייעצות/.test(he)) return 'consultation';
-  return apt.type === 'new' ? 'consultation' : 'default';
-}
-
-const SERVICE_DISPLAY: Record<ServiceCategory, string> = {
-  consultation: 'ייעוץ',
-  treatment: 'טיפול',
-  beauty: 'יופי',
-  follow_up: 'מעקב',
-  default: 'תור',
-};
-
-const SERVICE_ICON: Record<ServiceCategory, string> = {
-  consultation: '💬',
-  treatment: '🦷',
-  beauty: '💅',
-  follow_up: '🔁',
-  default: '📋',
-};
-
-/** Accent bar colors by category */
-const SERVICE_ACCENT_COLOR: Record<ServiceCategory, string> = {
-  consultation: '#f59e0b',
-  treatment: '#38bdf8',
-  beauty: '#f472b6',
-  follow_up: '#34d399',
-  default: '#94a3b8',
-};
-
-/** Lead status accent colors — delegated to centralized status-colors.ts */
-
-function getServiceLabel(apt: Appointment): string {
-  return apt.service_name ?? SERVICE_DISPLAY[getServiceCategory(apt)] ?? 'תור';
-}
-
-/** Label for appointment card: lead status (Hebrew) if available, else service/category label. */
-function getAppointmentCardLabel(apt: Appointment, leadStatusByLeadId: Record<string, string>): string {
-  if (apt.lead_id && leadStatusByLeadId[apt.lead_id]) {
-    const status = leadStatusByLeadId[apt.lead_id];
-    return STATUS_LABELS[status] ?? status ?? 'תור';
-  }
-  return getServiceLabel(apt);
-}
-
-/** Get YYYY-MM-DD for an event start in Israel timezone */
-function getEventDateStr(start: Date): string {
-  return new Date(start).toLocaleDateString('en-CA', { timeZone: ISRAEL_TZ });
-}
-
-type DayColumn = {
-  dateStr: string;
-  dayLabel: string;
-  dayNum: number;
-  isToday: boolean;
-  events: CalendarEvent[];
-};
-
-/** Card-based week board: day columns with stacked appointment cards, no time grid */
-function WeekBoard({
-  dayColumns,
-  todayStr,
-  onSelectEvent,
-  onAddDay,
-  onDayClick,
-  onComplete,
-  leadStatusByLeadId,
-  onDragStart,
-  onDragEnd,
-  canDrag,
-}: {
-  dayColumns: DayColumn[];
-  todayStr: string;
-  onSelectEvent: (event: CalendarEvent) => void;
-  onAddDay: (dateStr: string) => void;
-  onDayClick: (dateStr: string) => void;
-  onComplete: (apt: Appointment) => void;
-  leadStatusByLeadId: Record<string, string>;
-  onDragStart?: (apt: Appointment) => void;
-  onDragEnd?: () => void;
-  canDrag?: boolean;
-}) {
-  return (
-    <div className="flex w-full flex-1 min-h-0 flex-row-reverse overflow-x-auto overflow-y-hidden" dir="ltr">
-      {dayColumns.map((col) => (
-        <div
-          key={col.dateStr}
-          className={`flex min-w-[140px] flex-1 flex-col border-s border-slate-200 dark:border-slate-700 last:border-s-0 ${col.isToday ? 'bg-indigo-50/60 dark:bg-indigo-950/25 ring-1 ring-indigo-400/40 dark:ring-indigo-500/30' : 'bg-slate-50/70 dark:bg-slate-900/40'}`}
-        >
-          <div className={`sticky top-0 z-10 flex flex-col items-center gap-0.5 border-b border-slate-200 dark:border-slate-700 px-2 py-2 ${col.isToday ? 'bg-indigo-50 dark:bg-indigo-950/40' : 'bg-white dark:bg-slate-900'}`}>
-            <p className={`text-[11px] font-semibold uppercase tracking-[0.06em] leading-tight ${col.isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400'}`}>
-              {col.dayLabel}
-            </p>
-            {col.isToday ? (
-              <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-[15px] font-bold">
-                {col.dayNum}
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => onDayClick(col.dateStr)}
-                className="h-8 w-8 rounded-full flex items-center justify-center text-[15px] font-bold text-slate-900 dark:text-slate-50 tabular-nums hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer bg-transparent border-0 transition-colors"
-              >
-                {col.dayNum}
-              </button>
-            )}
-            <p className={`text-[10px] tabular-nums ${col.isToday ? 'text-indigo-500 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}`}>
-              {col.events.length > 0 ? `${col.events.length} תורים` : ''}
-            </p>
-          </div>
-          <div className="flex-1 overflow-y-auto space-y-1.5 p-2 min-h-[180px]">
-            {col.events.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full min-h-[120px] opacity-40">
-                <CalendarIcon className="h-6 w-6 text-slate-300 dark:text-slate-600" />
-                <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">אין תורים</p>
-              </div>
-            ) : (
-              col.events.map((ev) => (
-                <WeekBoardCard key={ev.id} event={ev} onClick={() => onSelectEvent(ev)} onComplete={onComplete} leadStatusByLeadId={leadStatusByLeadId} onDragStart={onDragStart} onDragEnd={onDragEnd} canDrag={canDrag} />
-              ))
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/** Appointment block for the week board: accent-bar approach with clean white card. Click opens LeadDetailDrawer. */
-const WeekBoardCard = memo(function WeekBoardCard({ event, onClick, onComplete, leadStatusByLeadId, onDragStart, onDragEnd, canDrag }: { event: CalendarEvent; onClick: () => void; onComplete?: (apt: Appointment) => void; leadStatusByLeadId: Record<string, string>; onDragStart?: (apt: Appointment) => void; onDragEnd?: () => void; canDrag?: boolean }) {
-  const apt = event.resource;
-  const category = getServiceCategory(apt);
-  const cardLabel = getAppointmentCardLabel(apt, leadStatusByLeadId);
-  const leadStatus = apt.lead_id ? leadStatusByLeadId[apt.lead_id] : null;
-  const accentColor = leadStatus
-    ? getLeadStatusAccentHex(leadStatus)
-    : SERVICE_ACCENT_COLOR[category];
-  const startStr = moment(event.start).format('HH:mm');
-  const endStr = moment(event.end).format('HH:mm');
-  const canComplete = apt.status !== 'completed' && apt.status !== 'cancelled';
-
-  const statusBadge = getAppointmentStatusBadgeClass(apt.status);
-  const statusLbl = getAppointmentStatusLabel(apt.status);
-
-  return (
-    <div
-      className="relative overflow-hidden rounded-lg group hover:shadow-md hover:-translate-y-px transition-all duration-150"
-      draggable={canDrag}
-      onDragStart={(e) => {
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', apt.id);
-        onDragStart?.(apt);
-      }}
-      onDragEnd={() => onDragEnd?.()}
-    >
-      <div
-        className="absolute start-0 top-0 bottom-0 w-1 rounded-s-lg"
-        style={{ background: accentColor }}
-      />
-      <button
-        type="button"
-        onClick={onClick}
-        className="w-full min-w-0 text-right bg-white dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/60 rounded-lg px-3 py-2 ps-4 cursor-pointer flex flex-col gap-0.5"
-        dir="rtl"
-      >
-        <div className="flex items-center justify-between gap-1 min-w-0">
-          <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 tabular-nums leading-tight">{startStr} – {endStr}</p>
-          {apt.status && apt.status !== 'scheduled' && (
-            <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold leading-tight ${statusBadge}`}>{statusLbl}</span>
-          )}
-        </div>
-        <p className="text-[13px] font-semibold text-slate-900 dark:text-slate-100 truncate leading-tight">{apt.patient_name}</p>
-        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate leading-tight">{cardLabel}</p>
-      </button>
-      {canComplete && onComplete && (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onComplete(apt); }}
-          title="סמן כהושלם"
-          className="absolute top-1.5 end-1.5 opacity-0 group-hover:opacity-100 transition-opacity rounded-full bg-emerald-500 text-white p-0.5 hover:bg-emerald-600 z-10"
-        >
-          <Check className="h-3 w-3" />
-        </button>
-      )}
-    </div>
-  );
-});
 
 export function CalendarView({ initialDate, clinicId }: { initialDate?: string; clinicId?: string | null } = {}) {
   const today = useMemo(() => new Date(), []);
@@ -405,20 +197,20 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
   const dayColumns = useMemo<DayColumn[]>(() => {
     // Israeli week: Sunday (יום א') first, Saturday (יום ש') last
     const start = currentView === 'day'
-      ? moment(currentDate).startOf('day')
-      : moment(currentDate).subtract(moment(currentDate).day(), 'days').startOf('day');
+      ? startOfDay(currentDate)
+      : startOfDay(subDays(currentDate, getDay(currentDate)));
     const count = currentView === 'day' ? 1 : 7;
     const cols: DayColumn[] = [];
     for (let i = 0; i < count; i++) {
-      const m = moment(start).add(i, 'days');
-      const dateStr = m.format('YYYY-MM-DD');
+      const d = addDays(start, i);
+      const dateStr = format(d, 'yyyy-MM-dd');
       const eventsForDay = events
         .filter((ev) => getEventDateStr(ev.start) === dateStr)
         .sort((a, b) => a.start.getTime() - b.start.getTime());
       cols.push({
         dateStr,
-        dayLabel: m.locale('he').format('ddd'),
-        dayNum: m.date(),
+        dayLabel: format(d, 'EEEEEE', { locale: he }),
+        dayNum: getDate(d),
         isToday: dateStr === todayStr,
         events: eventsForDay,
       });
@@ -559,14 +351,14 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
 
   const headerTitle = useMemo(() => {
     if (currentView === 'day') {
-      return moment(currentDate).locale('he').format('dddd, D MMMM YYYY');
+      return format(currentDate, 'EEEE, d MMMM yyyy', { locale: he });
     }
-    const weekStart = moment(currentDate).subtract(moment(currentDate).day(), 'days').startOf('day');
-    const weekEnd = moment(weekStart).add(6, 'days');
-    if (weekStart.month() === weekEnd.month()) {
-      return `${weekStart.format('D')}–${weekEnd.format('D MMMM YYYY')}`;
+    const weekStart = startOfDay(subDays(currentDate, getDay(currentDate)));
+    const weekEnd = addDays(weekStart, 6);
+    if (getMonth(weekStart) === getMonth(weekEnd)) {
+      return `${getDate(weekStart)}–${format(weekEnd, 'd MMMM yyyy', { locale: he })}`;
     }
-    return `${weekStart.format('D MMM')} – ${weekEnd.format('D MMM YYYY')}`;
+    return `${format(weekStart, 'd MMM', { locale: he })} – ${format(weekEnd, 'd MMM yyyy', { locale: he })}`;
   }, [currentDate, currentView]);
 
   return (
@@ -729,7 +521,7 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
       {/* Appointment completion receipt prompt */}
       {receiptPromptApt && (
         <AppointmentReceiptPrompt
-          appointmentLabel={`${receiptPromptApt.patient_name} — ${moment(receiptPromptApt.datetime).format('HH:mm')}`}
+          appointmentLabel={`${receiptPromptApt.patient_name} — ${format(new Date(receiptPromptApt.datetime), 'HH:mm')}`}
           onIssue={() => handleIssueReceiptFromPrompt(receiptPromptApt)}
           onDismiss={() => setReceiptPromptApt(null)}
         />
@@ -740,7 +532,7 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
         <CreateDocumentModal
           settings={billingSettings}
           appointmentId={receiptModalApt.id}
-          appointmentLabel={`${receiptModalApt.patient_name} — ${moment(receiptModalApt.datetime).format('HH:mm')}`}
+          appointmentLabel={`${receiptModalApt.patient_name} — ${format(new Date(receiptModalApt.datetime), 'HH:mm')}`}
           prefillCustomerName={receiptModalApt.patient_name}
           prefillServiceName={receiptModalApt.service_name ?? undefined}
           prefillPrice={receiptModalApt.revenue ?? undefined}
@@ -775,7 +567,7 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
               <div className="min-w-0">
                 <p className="text-[15px] font-semibold text-slate-900 dark:text-slate-50">מחיקת תור</p>
                 <p className="text-[13px] text-slate-500 dark:text-slate-400 truncate">
-                  {pendingDeleteApt.patient_name} · {moment(pendingDeleteApt.datetime).format('HH:mm')}
+                  {pendingDeleteApt.patient_name} · {format(new Date(pendingDeleteApt.datetime), 'HH:mm')}
                 </p>
               </div>
             </div>

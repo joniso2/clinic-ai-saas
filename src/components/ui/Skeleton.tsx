@@ -1,5 +1,3 @@
-'use client';
-
 /**
  * Lightweight skeleton / shimmer placeholder for loading states.
  *

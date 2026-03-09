@@ -7,129 +7,10 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Trash2, CheckCircle2, XCircle, AlertCircle, Bot, Webhook, RefreshCw, Send } from 'lucide-react';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface DiscordMapping {
-  id: string;
-  guild_id: string;
-  clinic_id: string;
-  clinic_name: string;
-}
-
-interface TenantOption {
-  id: string;
-  name: string | null;
-}
-
-interface ClinicIntegration {
-  id: string;
-  clinic_id: string;
-  type: string;
-  provider: string;
-  status: 'connected' | 'disconnected' | 'error';
-  config: Record<string, unknown>;
-  created_at: string;
-  updated_at: string;
-}
-
-interface ClinicMetrics {
-  messages_today: number;
-  messages_this_month: number;
-  last_message_at: string | null;
-}
-
-// ─── Mock webhook log (replace with real API) ─────────────────────────────────
-interface WebhookLogEntry {
-  readonly id: string;
-  readonly tenantName: string;
-  readonly event: string;
-  readonly status: 'success' | 'failed' | 'pending';
-  readonly timestamp: string;
-  readonly responseMs: number;
-}
-
-const MOCK_WEBHOOK_LOGS: WebhookLogEntry[] = [
-  { id: '1', tenantName: 'קליניקת ד"ר לוי', event: 'lead.created', status: 'success', timestamp: new Date(Date.now() - 60_000).toISOString(), responseMs: 145 },
-  { id: '2', tenantName: 'מרפאת שלום', event: 'appointment.booked', status: 'success', timestamp: new Date(Date.now() - 180_000).toISOString(), responseMs: 212 },
-  { id: '3', tenantName: 'קליניקת חיוך', event: 'lead.created', status: 'failed', timestamp: new Date(Date.now() - 320_000).toISOString(), responseMs: 3010 },
-  { id: '4', tenantName: 'מרפאת השיניים', event: 'appointment.cancelled', status: 'success', timestamp: new Date(Date.now() - 600_000).toISOString(), responseMs: 98 },
-  { id: '5', tenantName: 'קליניקת ד"ר לוי', event: 'lead.updated', status: 'pending', timestamp: new Date(Date.now() - 30_000).toISOString(), responseMs: 0 },
-];
-
-function useToast() {
-  const [toast, setToast] = useState<string | null>(null);
-  const show = useCallback((msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); }, []);
-  return { toast, show };
-}
-
-function StatusIcon({ status }: { status: 'healthy' | 'warning' | 'critical' | 'coming_soon' }) {
-  if (status === 'healthy') return <CheckCircle2 className="h-5 w-5 text-emerald-400" />;
-  if (status === 'warning') return <AlertCircle className="h-5 w-5 text-amber-400" />;
-  if (status === 'coming_soon') return <AlertCircle className="h-5 w-5 text-zinc-500" />;
-  return <XCircle className="h-5 w-5 text-red-400" />;
-}
-
-const CHANNEL_LABELS: Record<string, string> = { whatsapp: 'WhatsApp', sms: 'SMS', discord: 'Discord', webhook: 'Webhook' };
-const PROVIDERS: Record<string, string[]> = { whatsapp: ['twilio', '360dialog', 'vonage'], sms: ['twilio', 'vonage'], discord: ['discord'], webhook: ['generic'] };
-
-function ConnectModal({
-  type,
-  providerOptions,
-  config,
-  setConfig,
-  saving,
-  onSave,
-  onClose,
-}: {
-  type: string;
-  providerOptions: string[];
-  config: Record<string, string>;
-  setConfig: (c: Record<string, string>) => void;
-  saving: boolean;
-  onSave: (provider: string, config: Record<string, unknown>) => void;
-  onClose: () => void;
-}) {
-  const [provider, setProvider] = useState(providerOptions[0] ?? '');
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
-      <div className="rounded-2xl bg-zinc-900 border border-zinc-700 shadow-2xl max-w-sm w-full p-6 text-right" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-base font-bold text-zinc-100 mb-4">חבר {CHANNEL_LABELS[type] ?? type}</h3>
-        <div className="space-y-3">
-          <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1">ספק</label>
-            <select value={provider} onChange={(e) => setProvider(e.target.value)} className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100">
-              {providerOptions.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
-          </div>
-          {(type === 'whatsapp' || type === 'sms') && (
-            <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1">מס׳ טלפון</label>
-              <input type="text" value={config.phone_number ?? ''} onChange={(e) => setConfig({ ...config, phone_number: e.target.value })} placeholder="+972..."
-                className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100" />
-            </div>
-          )}
-          {type === 'webhook' && (
-            <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1">כתובת Webhook</label>
-              <input type="text" value={config.webhook_url ?? ''} onChange={(e) => setConfig({ ...config, webhook_url: e.target.value })} placeholder="https://..."
-                className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100" />
-            </div>
-          )}
-          <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1">API Key (אופציונלי)</label>
-            <input type="password" value={config.api_key ?? ''} onChange={(e) => setConfig({ ...config, api_key: e.target.value })} placeholder="••••••••"
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-100" />
-          </div>
-        </div>
-        <div className="flex gap-2 mt-5 justify-end">
-          <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl bg-zinc-800 text-zinc-200 text-sm">ביטול</button>
-          <button type="button" onClick={() => onSave(provider, config)} disabled={saving} className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold disabled:opacity-50">{saving ? 'שומר…' : 'חבר'}</button>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { Plus, Trash2, CheckCircle2, XCircle, Bot, Webhook, RefreshCw, Send } from 'lucide-react';
+import type { DiscordMapping, TenantOption, ClinicIntegration, ClinicMetrics } from './integrations-types';
+import { MOCK_WEBHOOK_LOGS, CHANNEL_LABELS, PROVIDERS } from './integrations-types';
+import { useToast, StatusIcon, ConnectModal } from './integrations-shared';
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function IntegrationsSection() {
@@ -245,7 +126,6 @@ export default function IntegrationsSection() {
   const discordTotal = tenants.length;
   const discordStatus = discordConnected === discordTotal && discordTotal > 0 ? 'healthy' : discordConnected > 0 ? 'warning' : 'critical';
 
-  const selectedClinic = tenants.find((t) => t.id === selectedClinicId);
   const getIntegration = (type: string) => integrations.find((i) => i.type === type);
 
   return (

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { calculateAvailability } from '@/lib/availability';
 import { sendSMS } from '@/lib/sms';
-import moment from 'moment-timezone';
+import { parse, addMinutes, startOfDay, endOfDay, format } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 
 const TZ = 'Asia/Jerusalem';
 
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
       .eq('id', clinic_id)
       .single();
 
-    const dayOfWeek = moment.tz(date, 'YYYY-MM-DD', TZ).day();
+    const dayOfWeek = parse(date, 'yyyy-MM-dd', new Date()).getDay();
     let workingHours = null;
 
     if (worker_id) {
@@ -67,16 +68,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No working hours for this day' }, { status: 400 });
     }
 
-    const startOfDay = moment.tz(date, 'YYYY-MM-DD', TZ).startOf('day').toISOString();
-    const endOfDay = moment.tz(date, 'YYYY-MM-DD', TZ).endOf('day').toISOString();
+    const parsedDate = parse(date, 'yyyy-MM-dd', new Date());
+    const dayStart = startOfDay(parsedDate).toISOString();
+    const dayEnd = endOfDay(parsedDate).toISOString();
 
     let existingQuery = supabase
       .from('appointments')
       .select('start_time, end_time, status, locked_until')
       .eq('clinic_id', clinic_id)
       .neq('status', 'cancelled')
-      .gte('start_time', startOfDay)
-      .lte('start_time', endOfDay);
+      .gte('start_time', dayStart)
+      .lte('start_time', dayEnd);
 
     if (worker_id) existingQuery = existingQuery.eq('worker_id', worker_id);
 
@@ -93,12 +95,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Slot no longer available' }, { status: 409 });
     }
 
-    const startTime = moment.tz(`${date} ${time}`, 'YYYY-MM-DD HH:mm', TZ).toISOString();
-    const endTime = moment
-      .tz(`${date} ${time}`, 'YYYY-MM-DD HH:mm', TZ)
-      .add(service.duration_minutes, 'minutes')
-      .toISOString();
-    const lockedUntil = moment().tz(TZ).add(3, 'minutes').toISOString();
+    const slotDate = parse(`${date} ${time}`, 'yyyy-MM-dd HH:mm', new Date());
+    const startTime = slotDate.toISOString();
+    const endTime = addMinutes(slotDate, service.duration_minutes).toISOString();
+    const lockedUntil = addMinutes(new Date(), 3).toISOString();
 
     const { data: appointment, error: apptError } = await supabase
       .from('appointments')
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
     }
 
     const otpCode = generateOTP();
-    const otpExpiry = moment().tz(TZ).add(5, 'minutes').toISOString();
+    const otpExpiry = addMinutes(new Date(), 5).toISOString();
 
     await supabase.from('otp_codes').insert({
       phone,

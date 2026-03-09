@@ -1,5 +1,3 @@
-'use client';
-
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import type { KPIMetric } from '@/types/analytics';
 

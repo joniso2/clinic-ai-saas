@@ -1,5 +1,3 @@
-'use client';
-
 export type DaySummaryHeaderProps = {
   todayCount: number;
   weekCount: number;

@@ -30,40 +30,9 @@ import {
   type ConversationStrategy,
 } from '@/prompts/discord.prompt';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type AiTone           = 'formal' | 'friendly' | 'professional';
-type AiResponseLength = 'brief' | 'standard' | 'detailed';
-
-interface AIPersonaForm {
-  ai_tone: AiTone;
-  ai_response_length: AiResponseLength;
-  strict_hours_enforcement: boolean;
-  business_description: string;
-  industry_type: IndustryType;
-  conversation_strategy: ConversationStrategy;
-  custom_prompt_override: string;
-}
-
-const DEFAULT_FORM: AIPersonaForm = {
-  ai_tone: 'professional',
-  ai_response_length: 'standard',
-  strict_hours_enforcement: true,
-  business_description: '',
-  industry_type: 'general_business',
-  conversation_strategy: 'consultative',
-  custom_prompt_override: '',
-};
-
-// ─── Preview segment ─────────────────────────────────────────────────────────
-
-interface PreviewSegment {
-  key: string;
-  label: string;
-  content: string;
-  colorClass: string;
-  bgClass: string;
-}
+import type { AIPersonaForm, PreviewSegment } from './ai-persona-types';
+import { DEFAULT_FORM } from './ai-persona-types';
+export type { AiTone, AiResponseLength } from './ai-persona-types';
 
 function buildPreviewSegments(form: AIPersonaForm, clinicName: string): PreviewSegment[] {
   const label = clinicName ? `"${clinicName}"` : '"המרפאה"';

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { calculateAvailability } from '@/lib/availability';
-import moment from 'moment-timezone';
+import { parse, startOfDay, endOfDay } from 'date-fns';
 
 const TZ = 'Asia/Jerusalem';
 
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Service not found' }, { status: 404 });
   }
 
-  const dayOfWeek = moment.tz(date, 'YYYY-MM-DD', TZ).day();
+  const dayOfWeek = parse(date, 'yyyy-MM-dd', new Date()).getDay();
 
   // Debug: list services and workers for this clinic
   const { data: servicesForClinic } = await supabase
@@ -95,16 +95,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ slots: [] });
   }
 
-  const startOfDay = moment.tz(date, 'YYYY-MM-DD', TZ).startOf('day').toISOString();
-  const endOfDay = moment.tz(date, 'YYYY-MM-DD', TZ).endOf('day').toISOString();
+  const parsedDate = parse(date, 'yyyy-MM-dd', new Date());
+  const dayStartIso = startOfDay(parsedDate).toISOString();
+  const dayEndIso = endOfDay(parsedDate).toISOString();
 
   let query = supabase
     .from('appointments')
     .select('start_time, end_time, status, locked_until')
     .eq('clinic_id', clinic_id)
     .neq('status', 'cancelled')
-    .gte('start_time', startOfDay)
-    .lte('start_time', endOfDay);
+    .gte('start_time', dayStartIso)
+    .lte('start_time', dayEndIso);
 
   if (worker_id) {
     query = query.eq('worker_id', worker_id);

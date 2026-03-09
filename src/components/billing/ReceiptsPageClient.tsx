@@ -21,37 +21,8 @@ import BillingSettingsForm from '@/components/billing/BillingSettingsForm';
 import { DocumentDrawer } from '@/components/billing/DocumentDrawer';
 import { CreateDocumentModal } from '@/components/billing/CreateDocumentModal';
 import { KpiCard, KPI_ACCENT } from '@/components/ui/KpiCard';
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-type KPIs = {
-  total_issued: number;
-  total_revenue: number;
-  total_cancelled: number;
-  total_vat: number;
-};
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-const fmt = (n: number) =>
-  `₪${Number(n).toLocaleString('he-IL', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-
-const fmtFull = (n: number) =>
-  `₪${Number(n).toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' });
-
-const DOC_TYPE_FILTER_OPTIONS: { value: BillingDocType | ''; label: string }[] = [
-  { value: '',                    label: 'כל הסוגים' },
-  { value: 'receipt',             label: 'קבלות' },
-  { value: 'transaction_invoice', label: 'חשבוניות עסקה' },
-  { value: 'tax_invoice',         label: 'חשבוניות מס' },
-  { value: 'tax_invoice_receipt', label: 'חשבוניות מס קבלה' },
-  { value: 'cancellation_document', label: 'ביטולים' },
-];
-
-const PAGE_SIZE = 20;
+import type { KPIs } from './receipts-helpers';
+import { fmt, fmtFull, fmtDate, DOC_TYPE_FILTER_OPTIONS, PAGE_SIZE } from './receipts-helpers';
 
 // ── Main component ────────────────────────────────────────────────────────────
 

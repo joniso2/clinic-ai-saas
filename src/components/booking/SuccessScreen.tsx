@@ -1,5 +1,6 @@
 import { CheckCircle, Calendar, Clock, User, Navigation } from 'lucide-react';
-import moment from 'moment-timezone';
+import { format, getDay, getDate, getMonth, getYear } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import type { Appointment, ClinicService, ClinicWorker, Clinic } from '@/types/booking';
 
 const TZ = 'Asia/Jerusalem';
@@ -20,10 +21,10 @@ interface Props {
 }
 
 function formatDateTime(iso: string) {
-  const m = moment(iso).tz(TZ);
-  const day = HEBREW_DAYS_FULL[m.day()];
-  const date = `${m.date()} ב${HEBREW_MONTHS_FULL[m.month()]} ${m.year()}`;
-  const time = m.format('HH:mm');
+  const d = toZonedTime(new Date(iso), TZ);
+  const day = HEBREW_DAYS_FULL[getDay(d)];
+  const date = `${getDate(d)} ב${HEBREW_MONTHS_FULL[getMonth(d)]} ${getYear(d)}`;
+  const time = format(d, 'HH:mm');
   return { day, date, time };
 }
 
@@ -42,7 +43,7 @@ function googleMapsUrl(lat: number | null, lng: number | null, address: string |
 export function SuccessScreen({ appointment, service, worker, clinic }: Props) {
   const { day, date, time } = formatDateTime(appointment.start_time);
 
-  const endTime = moment(appointment.end_time).tz(TZ).format('HH:mm');
+  const endTime = format(toZonedTime(new Date(appointment.end_time), TZ), 'HH:mm');
   const hasLocation = clinic.lat || clinic.address;
 
   return (

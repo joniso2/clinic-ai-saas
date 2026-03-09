@@ -1,5 +1,3 @@
-'use client';
-
 import type { BookingProduct } from '@/types/booking';
 
 interface Props {

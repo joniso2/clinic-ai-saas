@@ -12,72 +12,8 @@ import {
   Trash2, Pencil, X, Copy, Building2, ChevronDown,
   ShieldOff, Shield, Users, AlertTriangle, UserCheck,
 } from 'lucide-react';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface TenantRow {
-  id: string;
-  name: string | null;
-  plan_id: string | null;
-  status: string;
-  leads_count: number;
-  appointments_count: number;
-  discord_connected: boolean;
-}
-
-interface PlanOption {
-  id: string;
-  name: string;
-  price_monthly: number | null;
-}
-
-interface TenantUser {
-  user_id: string;
-  email: string;
-  full_name: string | null;
-  role: string;
-  last_sign_in_at: string | null;
-  banned_until?: string;
-}
-
-interface ServiceRow {
-  id: string;
-  service_name: string;
-  price: number;
-  aliases: string[];
-  is_active: boolean;
-}
-
-// ─── Status badge ─────────────────────────────────────────────────────────────
-function StatusBadge({ status }: { status: string }) {
-  const isActive = status !== 'inactive';
-  return (
-    <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold ${
-      isActive
-        ? 'bg-emerald-400/10 text-emerald-400'
-        : 'bg-zinc-700 text-zinc-400'
-    }`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-emerald-400' : 'bg-zinc-500'}`} />
-      {isActive ? 'פעיל' : 'מושבת'}
-    </span>
-  );
-}
-
-// ─── Health dot ───────────────────────────────────────────────────────────────
-function HealthDot({ status, discord }: { status: string; discord: boolean }) {
-  const color = status === 'inactive' ? 'bg-red-500' : discord ? 'bg-emerald-500' : 'bg-amber-500';
-  const label = status === 'inactive' ? 'מושבת' : discord ? 'תקין' : 'חלקי';
-  return <span className={`inline-flex h-2.5 w-2.5 rounded-full ${color}`} title={label} />;
-}
-
-// ─── Shared toast ─────────────────────────────────────────────────────────────
-function useToast() {
-  const [toast, setToast] = useState<string | null>(null);
-  const show = useCallback((msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3000);
-  }, []);
-  return { toast, show };
-}
+import type { TenantRow, PlanOption, TenantUser, ServiceRow } from './tenant-types';
+import { StatusBadge, HealthDot, useToast } from './tenant-shared';
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function TenantManagementSection() {

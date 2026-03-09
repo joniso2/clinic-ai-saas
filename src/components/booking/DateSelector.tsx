@@ -1,12 +1,23 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import moment from 'moment-timezone';
-import 'moment/locale/he';
+import {
+  addDays,
+  addMonths,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+  getDay,
+  getDate,
+  getMonth,
+  getYear,
+  getDaysInMonth,
+  format,
+  setDate,
+} from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import type { WorkingHours } from '@/types/booking';
-
-moment.locale('he');
 
 const TZ = 'Asia/Jerusalem';
 
@@ -44,45 +55,49 @@ export function DateSelector({
       }
     });
     const set = new Set<string>();
-    const today = moment().tz(TZ).startOf('day');
+    const today = toZonedTime(new Date(), TZ);
+    today.setHours(0, 0, 0, 0);
     for (let i = 0; i < 60; i++) {
-      const day = today.clone().add(i, 'days');
-      if (activeDays.has(day.day())) set.add(day.format('YYYY-MM-DD'));
+      const day = addDays(today, i);
+      if (activeDays.has(getDay(day))) set.add(format(day, 'yyyy-MM-dd'));
     }
     return set;
   }, [workingHours, workerId]);
 
-  const [viewMonth, setViewMonth] = useState(() => moment().tz(TZ).startOf('month'));
+  const [viewMonth, setViewMonth] = useState(() => {
+    const now = toZonedTime(new Date(), TZ);
+    return startOfMonth(now);
+  });
 
   const calendarGrid = useMemo(() => {
-    const start = viewMonth.clone().startOf('month');
-    const end = viewMonth.clone().endOf('month');
-    const startDayOfWeek = start.day();
-    const daysInMonth = end.date();
+    const start = startOfMonth(viewMonth);
+    const end = endOfMonth(viewMonth);
+    const startDayOfWeek = getDay(start);
+    const daysInMonth = getDate(end);
     const cells: { date: string; isCurrentMonth: boolean; dayNum: number }[] = [];
     const padStart = startDayOfWeek;
-    const prevMonth = start.clone().subtract(1, 'month');
-    const prevDays = prevMonth.daysInMonth();
+    const prevMonth = subMonths(start, 1);
+    const prevDays = getDaysInMonth(prevMonth);
     for (let i = 0; i < padStart; i++) {
       const d = prevDays - padStart + 1 + i;
       cells.push({
-        date: prevMonth.date(d).format('YYYY-MM-DD'),
+        date: format(setDate(prevMonth, d), 'yyyy-MM-dd'),
         isCurrentMonth: false,
         dayNum: d,
       });
     }
     for (let d = 1; d <= daysInMonth; d++) {
       cells.push({
-        date: viewMonth.date(d).format('YYYY-MM-DD'),
+        date: format(setDate(viewMonth, d), 'yyyy-MM-dd'),
         isCurrentMonth: true,
         dayNum: d,
       });
     }
     const remaining = 42 - cells.length;
-    const nextMonth = viewMonth.clone().add(1, 'month');
+    const nextMonth = addMonths(viewMonth, 1);
     for (let d = 1; d <= remaining; d++) {
       cells.push({
-        date: nextMonth.date(d).format('YYYY-MM-DD'),
+        date: format(setDate(nextMonth, d), 'yyyy-MM-dd'),
         isCurrentMonth: false,
         dayNum: d,
       });
@@ -106,18 +121,18 @@ export function DateSelector({
         <div className="bg-black text-white flex items-center justify-between px-4 py-3">
           <button
             type="button"
-            onClick={() => setViewMonth((m) => m.clone().subtract(1, 'month'))}
+            onClick={() => setViewMonth((m) => subMonths(m, 1))}
             className="p-1 rounded-lg hover:bg-white/10"
             aria-label="חודש קודם"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
           <span className="font-bold text-lg">
-            {HEBREW_MONTHS_FULL[viewMonth.month()]} {viewMonth.year()}
+            {HEBREW_MONTHS_FULL[getMonth(viewMonth)]} {getYear(viewMonth)}
           </span>
           <button
             type="button"
-            onClick={() => setViewMonth((m) => m.clone().add(1, 'month'))}
+            onClick={() => setViewMonth((m) => addMonths(m, 1))}
             className="p-1 rounded-lg hover:bg-white/10"
             aria-label="חודש הבא"
           >

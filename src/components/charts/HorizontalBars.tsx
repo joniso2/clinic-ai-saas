@@ -1,5 +1,3 @@
-'use client';
-
 export interface HorizontalBarItem {
   readonly label: string;
   readonly value: number;
