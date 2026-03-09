@@ -470,15 +470,29 @@ export function LeadsTable({
                             <ChevronDown className="h-3 w-3 shrink-0 opacity-70" />
                           </button>
                           {statusDropdownId === lead.id && (
-                            <div className="absolute top-full end-0 mt-1 z-50 w-40 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-lg overflow-hidden py-1">
-                              {STATUS_OPTIONS.map(s => (
-                                <button key={s} type="button"
-                                  onClick={() => { onStatusChange(lead.id, s); setStatusDropdownId(null); }}
-                                  className={`w-full text-right px-3 py-2 text-[13px] transition-colors hover:bg-slate-50 dark:hover:bg-slate-800
-                                    ${(lead.status ?? 'Pending') === s ? 'font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/30' : 'text-slate-700 dark:text-slate-300'}`}>
-                                  {STATUS_LABELS[s] ?? s}
-                                </button>
-                              ))}
+                            <div className="absolute top-full end-0 mt-1 z-50 w-44 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-lg overflow-hidden py-1">
+                              {STATUS_OPTIONS.map(s => {
+                                const isActive = (lead.status ?? 'Pending') === s;
+                                const dotColors: Record<string, string> = {
+                                  Pending: 'bg-amber-400',
+                                  Contacted: 'bg-sky-400',
+                                  'Appointment scheduled': 'bg-blue-500',
+                                  Closed: 'bg-emerald-500',
+                                  Disqualified: 'bg-red-400',
+                                };
+                                return (
+                                  <button key={s} type="button"
+                                    onClick={() => { onStatusChange(lead.id, s); setStatusDropdownId(null); }}
+                                    className={`w-full flex items-center gap-2.5 text-right px-3 py-2.5 text-[13px] transition-all duration-150
+                                      ${isActive
+                                        ? 'font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30'
+                                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:ps-4'
+                                      }`}>
+                                    <span className={`h-2 w-2 rounded-full shrink-0 ${dotColors[s] ?? 'bg-slate-300'}`} />
+                                    {STATUS_LABELS[s] ?? s}
+                                  </button>
+                                );
+                              })}
                             </div>
                           )}
                         </div>
@@ -637,7 +651,7 @@ export function LeadsTable({
 
       {/* Deal Value Modal */}
       {dealValueLeadId && onUpdateDealValue && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" dir="rtl" role="dialog" aria-modal="true" aria-labelledby="deal-value-title">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40" dir="rtl" role="dialog" aria-modal="true" aria-labelledby="deal-value-title">
           <div className="w-full max-w-sm rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-xl p-5">
             <h2 id="deal-value-title" className="text-base font-semibold text-slate-900 dark:text-slate-50 text-right mb-3">הוסף שווי (₪)</h2>
             <input

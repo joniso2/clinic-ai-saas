@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Phone, X, Mail, Sparkles, MessageSquare,
-  Calendar as CalendarIcon, ChevronDown, CheckCircle,
+  Calendar as CalendarIcon, ChevronDown, CheckCircle, Clock,
 } from 'lucide-react';
 import type { Lead } from '@/types/leads';
 import { getDisplayPriority, type Priority } from '@/types/leads';
@@ -219,10 +219,27 @@ export function PendingReviewModal({
 }) {
   const [mode, setMode] = useState<'review' | 'book' | 'reject'>('review');
   const [rejectReason, setRejectReason] = useState<RejectReason | ''>('');
-  const [bookDate, setBookDate] = useState('');
+  const [bookDate, setBookDate] = useState(() => {
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    return `${dd}/${mm}/${now.getFullYear()}`;
+  });
   const [bookTime, setBookTime] = useState('');
   const [bookLoading, setBookLoading] = useState(false);
   const [bookError, setBookError] = useState('');
+  const bookDateRef = useRef<HTMLInputElement>(null);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const timePickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showTimePicker) return;
+    const handler = (e: MouseEvent) => {
+      if (timePickerRef.current && !timePickerRef.current.contains(e.target as Node)) setShowTimePicker(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showTimePicker]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -393,24 +410,91 @@ export function PendingReviewModal({
             )}
 
             <div className="space-y-3">
+              {/* Date — native picker like ScheduleAppointmentModal */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300 text-right block">תאריך (DD/MM/YYYY)</label>
-                <input
-                  type="text"
-                  value={bookDate}
-                  onChange={(e) => setBookDate(e.target.value)}
-                  placeholder="DD/MM/YYYY"
-                  className="block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/50 focus:border-indigo-400 transition"
-                />
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300 text-right block">תאריך</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = bookDateRef.current;
+                    if (el) { try { el.showPicker(); } catch { el.focus(); el.click(); } }
+                  }}
+                  className="relative flex w-full items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-sm text-right hover:border-slate-300 dark:hover:border-slate-500 transition-colors"
+                >
+                  <CalendarIcon className="h-4 w-4 text-slate-400 shrink-0" />
+                  <span className={`flex-1 tabular-nums ${bookDate ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400'}`}>
+                    {bookDate || 'בחר תאריך'}
+                  </span>
+                  <input
+                    ref={bookDateRef}
+                    type="date"
+                    value={(() => {
+                      const parts = bookDate.split('/');
+                      if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                      return '';
+                    })()}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val) {
+                        const [y, m, d] = val.split('-');
+                        setBookDate(`${d}/${m}/${y}`);
+                      }
+                    }}
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    tabIndex={-1}
+                  />
+                </button>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300 text-right block">שעה (HH:MM)</label>
-                <input
-                  type="time"
-                  value={bookTime}
-                  onChange={(e) => setBookTime(e.target.value)}
-                  className="block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/50 focus:border-indigo-400 transition"
-                />
+
+              {/* Time — slot picker */}
+              <div className="space-y-1.5" ref={timePickerRef}>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300 text-right block">
+                  שעה
+                  <span className="text-slate-400 dark:text-slate-500 font-normal mr-1">(08:00–16:00)</span>
+                </label>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowTimePicker(!showTimePicker)}
+                    className={`relative flex w-full items-center gap-2 rounded-xl border px-3.5 py-2.5 text-sm transition-colors text-right cursor-pointer
+                      ${showTimePicker
+                        ? 'border-slate-400 dark:border-slate-500 ring-2 ring-slate-900/10 bg-white dark:bg-slate-800'
+                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-500'
+                      }`}
+                  >
+                    <Clock className="h-4 w-4 text-slate-400 shrink-0" />
+                    <span className={`flex-1 tabular-nums ${bookTime ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'}`}>
+                      {bookTime || 'בחר שעה'}
+                    </span>
+                    <ChevronDown className={`h-3.5 w-3.5 text-slate-400 shrink-0 transition-transform ${showTimePicker ? 'rotate-180' : ''}`} />
+                  </button>
+                  {showTimePicker && (
+                    <div className="absolute top-full start-0 end-0 mt-1 z-50 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg p-3 max-h-[200px] overflow-y-auto">
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {Array.from({ length: 9 }, (_, i) => i + 8).map((h) =>
+                          [0, 15, 30, 45].map((m) => {
+                            const slot = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                            const isSelected = bookTime === slot;
+                            return (
+                              <button
+                                key={slot}
+                                type="button"
+                                onClick={() => { setBookTime(slot); setShowTimePicker(false); }}
+                                className={`rounded-lg px-2 py-1.5 text-xs font-medium tabular-nums transition-colors
+                                  ${isSelected
+                                    ? 'bg-indigo-600 text-white'
+                                    : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-700 dark:hover:text-indigo-400'
+                                  }`}
+                              >
+                                {slot}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 

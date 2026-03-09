@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { X, Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { X, Calendar as CalendarIcon, Clock, ChevronDown } from 'lucide-react';
 import type { Lead } from '@/types/leads';
 import type { Appointment, AppointmentType } from '@/types/appointments';
 
@@ -26,6 +26,115 @@ const DEFAULT_HOURS: WorkingHoursDay[] = Array.from({ length: 7 }, (_, i) => ({
   open: '08:00',
   close: '16:00',
 }));
+
+// ─── Time Slot Picker ─────────────────────────────────────────────────────────
+
+function TimeSlotPicker({
+  value,
+  onChange,
+  openHour,
+  closeHour,
+  disabled,
+  error,
+}: {
+  value: string;
+  onChange: (t: string) => void;
+  openHour: string;
+  closeHour: string;
+  disabled?: boolean;
+  error?: string | null;
+}) {
+  const [showPicker, setShowPicker] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showPicker) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setShowPicker(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showPicker]);
+
+  const startH = parseInt(openHour.split(':')[0], 10);
+  const endH = parseInt(closeHour.split(':')[0], 10);
+  const hours = useMemo(() => {
+    const arr: number[] = [];
+    for (let h = startH; h <= endH; h++) arr.push(h);
+    return arr;
+  }, [startH, endH]);
+
+  const minutes = [0, 15, 30, 45];
+
+  const selectedH = value ? parseInt(value.split(':')[0], 10) : null;
+  const selectedM = value ? parseInt(value.split(':')[1], 10) : null;
+
+  const pickSlot = (h: number, m: number) => {
+    onChange(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+    setShowPicker(false);
+  };
+
+  return (
+    <div className="space-y-1.5" ref={ref}>
+      <label className="text-xs font-medium text-slate-600 block">
+        שעה
+        <span className="text-slate-400 font-normal mr-1">
+          ({openHour}–{closeHour})
+        </span>
+      </label>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => !disabled && setShowPicker(!showPicker)}
+          disabled={disabled}
+          className={`relative flex w-full items-center gap-2 rounded-xl border px-3.5 py-3 text-sm transition-colors text-right
+            ${error
+              ? 'border-red-300 bg-red-50'
+              : showPicker
+                ? 'border-slate-400 ring-2 ring-slate-900/10 bg-white'
+                : 'border-slate-200 bg-white hover:border-slate-300'
+            }
+            ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+          `}
+        >
+          <Clock className="h-4 w-4 text-slate-400 shrink-0" />
+          <span className={`flex-1 tabular-nums ${value ? 'text-slate-900' : 'text-slate-400'}`}>
+            {value || 'בחר שעה'}
+          </span>
+          <ChevronDown className={`h-3.5 w-3.5 text-slate-400 shrink-0 transition-transform ${showPicker ? 'rotate-180' : ''}`} />
+        </button>
+
+        {showPicker && (
+          <div className="absolute top-full start-0 end-0 mt-1 z-50 rounded-xl border border-slate-200 bg-white shadow-lg p-3 max-h-[240px] overflow-y-auto">
+            <div className="grid grid-cols-4 gap-1.5">
+              {hours.map((h) =>
+                minutes.map((m) => {
+                  const slot = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                  const isSelected = selectedH === h && selectedM === m;
+                  return (
+                    <button
+                      key={slot}
+                      type="button"
+                      onClick={() => pickSlot(h, m)}
+                      className={`rounded-lg px-2 py-2 text-xs font-medium tabular-nums transition-colors
+                        ${isSelected
+                          ? 'bg-slate-900 text-white'
+                          : 'bg-slate-50 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700'
+                        }`}
+                    >
+                      {slot}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+      {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+    </div>
+  );
+}
 
 export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) {
   const [patientName] = useState(lead.full_name ?? '');
@@ -184,7 +293,7 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden"
@@ -266,38 +375,15 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
             )}
           </div>
 
-          {/* Time field */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-600 block">
-              שעה
-              {dayConfig?.enabled && (
-                <span className="text-slate-400 font-normal mr-1">
-                  ({dayConfig.open}–{dayConfig.close})
-                </span>
-              )}
-            </label>
-            <div className={`relative flex items-center gap-2 rounded-xl border px-3.5 py-3 text-sm transition-colors
-              ${timeError
-                ? 'border-red-300 bg-red-50'
-                : 'border-slate-200 bg-white hover:border-slate-300 focus-within:ring-2 focus-within:ring-slate-900/10 focus-within:border-slate-400'
-              }`}
-            >
-              <Clock className="h-4 w-4 text-slate-400 shrink-0" />
-              <input
-                type="time"
-                value={time}
-                min={dayConfig?.enabled ? dayConfig.open : '08:00'}
-                max={dayConfig?.enabled ? dayConfig.close : '16:00'}
-                onChange={(e) => setTime(e.target.value)}
-                required
-                disabled={isDayClosed}
-                className="flex-1 bg-transparent text-slate-900 focus:outline-none disabled:text-slate-400 disabled:cursor-not-allowed"
-              />
-            </div>
-            {timeError && (
-              <p className="text-xs text-red-600 mt-1">{timeError}</p>
-            )}
-          </div>
+          {/* Time field — slot picker */}
+          <TimeSlotPicker
+            value={time}
+            onChange={setTime}
+            openHour={dayConfig?.enabled ? dayConfig.open : '08:00'}
+            closeHour={dayConfig?.enabled ? dayConfig.close : '16:00'}
+            disabled={isDayClosed}
+            error={timeError}
+          />
         </div>
 
         {/* Footer */}
