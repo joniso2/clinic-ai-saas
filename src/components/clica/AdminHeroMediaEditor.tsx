@@ -99,26 +99,26 @@ export function AdminHeroMediaEditor() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center rounded-2xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800/50 py-12">
+      <div className="flex items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 py-12">
         <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden">
-      <div className="border-b border-slate-100 dark:border-zinc-700 bg-slate-50/60 dark:bg-zinc-700/60 px-5 py-4 flex items-center gap-3">
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden">
+      <div className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-700/60 px-5 py-4 flex items-center gap-3">
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400">
           <Video className="h-4 w-4" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Landing hero media</h3>
-          <p className="text-xs text-slate-500 dark:text-zinc-400">Video or image URL for your booking / Clica-style landing hero.</p>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">Landing hero media</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Video or image URL for your booking / Clica-style landing hero.</p>
         </div>
       </div>
       <div className="p-5 space-y-5">
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
             Hero video URL
           </label>
           <input
@@ -126,11 +126,11 @@ export function AdminHeroMediaEditor() {
             value={heroVideoUrl}
             onChange={(e) => setHeroVideoUrl(e.target.value)}
             placeholder="https://…/video.mp4"
-            className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-700/50 px-3.5 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100 dark:focus:ring-amber-900/40"
+            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-700/50 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-50 placeholder:text-slate-400 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100 dark:focus:ring-amber-900/40"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
             Hero image URL (fallback)
           </label>
           <input
@@ -138,11 +138,11 @@ export function AdminHeroMediaEditor() {
             value={heroImageUrl}
             onChange={(e) => setHeroImageUrl(e.target.value)}
             placeholder="https://…/image.jpg"
-            className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-700/50 px-3.5 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100 dark:focus:ring-amber-900/40"
+            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-700/50 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-50 placeholder:text-slate-400 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100 dark:focus:ring-amber-900/40"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
             תמונה בפינה (אופציונלי)
           </label>
           <input
@@ -150,9 +150,9 @@ export function AdminHeroMediaEditor() {
             value={hero3DSlotImageUrl}
             onChange={(e) => setHero3DSlotImageUrl(e.target.value)}
             placeholder="https://…/logo-or-image.png"
-            className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-700/50 px-3.5 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100 dark:focus:ring-amber-900/40"
+            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-700/50 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-50 placeholder:text-slate-400 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100 dark:focus:ring-amber-900/40"
           />
-          <p className="mt-1 text-xs text-slate-400 dark:text-zinc-500">קישור לתמונה או לוגו שיופיעו בפינה השמאלית של העמוד. להשאיר ריק = בלי תמונה בפינה.</p>
+          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">קישור לתמונה או לוגו שיופיעו בפינה השמאלית של העמוד. להשאיר ריק = בלי תמונה בפינה.</p>
         </div>
         <div
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -162,12 +162,12 @@ export function AdminHeroMediaEditor() {
           className={`rounded-xl border-2 border-dashed px-6 py-8 text-center transition-colors ${
             dragOver
               ? 'border-amber-400 bg-amber-50/50 dark:bg-amber-900/20'
-              : 'border-slate-200 dark:border-zinc-600 bg-slate-50/50 dark:bg-zinc-700/30'
+              : 'border-slate-200 dark:border-slate-600 bg-slate-50/50 dark:bg-slate-700/30'
           }`}
         >
-          <Upload className="mx-auto h-8 w-8 text-slate-400 dark:text-zinc-500" />
-          <p className="mt-2 text-sm font-medium text-slate-600 dark:text-zinc-400">Paste URL here or drag a link</p>
-          <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">Simulated upload: paste a direct .mp4 or image URL above</p>
+          <Upload className="mx-auto h-8 w-8 text-slate-400 dark:text-slate-500" />
+          <p className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-400">Paste URL here or drag a link</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Simulated upload: paste a direct .mp4 or image URL above</p>
         </div>
         <div className="flex items-center gap-3">
           <button

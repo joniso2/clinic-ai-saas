@@ -140,20 +140,20 @@ export function BookingSitePageClient({
       <div className="flex flex-wrap items-center gap-3">
         <Link
           href="/dashboard/super-admin"
-          className="text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200 text-sm font-medium flex items-center gap-1"
+          className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-sm font-medium flex items-center gap-1"
         >
           <ChevronRight className="h-4 w-4" />
           חזרה למנהל מערכת
         </Link>
-        <h1 className="text-xl font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
+        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
           <Globe className="h-6 w-6" />
           אתר טלפוני
         </h1>
       </div>
 
       {/* Clinic Selector */}
-      <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 mb-3">בחירת קליניקה</h2>
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50 mb-3">בחירת קליניקה</h2>
         {initialServicesMeta.totalServices === 0 && (
           <div className="text-xs text-amber-600 dark:text-amber-400 mb-2 space-y-1">
             <p>לא נטענו שירותים מהשרת. ודא שבטבלת clinic_services יש שורות (למשל עבור קליניקת LULU).</p>
@@ -169,13 +169,13 @@ export function BookingSitePageClient({
             placeholder="חיפוש קליניקה..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 dark:border-zinc-600 bg-slate-50 dark:bg-zinc-900 pl-4 pr-10 py-2 text-sm text-right placeholder:text-slate-400"
+            className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 pl-4 pr-10 py-2 text-sm text-right placeholder:text-slate-400"
           />
         </div>
         {loadingClinics ? (
           <div className="flex gap-2 flex-wrap">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-12 w-40 rounded-xl bg-slate-200 dark:bg-zinc-700 animate-pulse" />
+              <div key={i} className="h-12 w-40 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
             ))}
           </div>
         ) : (
@@ -188,14 +188,14 @@ export function BookingSitePageClient({
                 className={`flex items-center gap-2 rounded-xl px-4 py-2.5 border text-right transition-all ${
                   clinicId === c.id
                     ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-200'
-                    : 'border-slate-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700'
+                    : 'border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700'
                 }`}
               >
                 <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${COLORS[i % COLORS.length]}`} />
                 {c.logo_url ? (
                   <img src={c.logo_url} alt="" className="h-7 w-7 rounded-lg object-cover shrink-0" />
                 ) : null}
-                <span className="text-sm font-medium text-slate-900 dark:text-zinc-100 truncate max-w-[140px]">{c.name || c.id}</span>
+                <span className="text-sm font-medium text-slate-900 dark:text-slate-50 truncate max-w-[140px]">{c.name || c.id}</span>
               </button>
             ))}
           </div>
@@ -203,15 +203,15 @@ export function BookingSitePageClient({
       </div>
 
       {!clinicId && (
-        <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-8 text-center text-slate-500 dark:text-zinc-400">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-8 text-center text-slate-500 dark:text-slate-400">
           בחר קליניקה כדי לנהל את עמוד ההזמנה שלה.
         </div>
       )}
 
       {clinicId && loadingData && (
-        <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-8 flex items-center justify-center gap-2">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-8 flex items-center justify-center gap-2">
           <Loader2 className="h-5 w-5 animate-spin text-indigo-500" />
-          <span className="text-slate-600 dark:text-zinc-300">טוען...</span>
+          <span className="text-slate-600 dark:text-slate-300">טוען...</span>
         </div>
       )}
 
@@ -257,8 +257,8 @@ export function BookingSitePageClient({
           />
 
           {/* 7. Preview */}
-          <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden shadow-sm">
-            <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 p-4 border-b border-slate-200 dark:border-zinc-700 flex items-center gap-2">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50 p-4 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2">
               <Eye className="h-4 w-4" />
               תצוגה מקדימה
             </h2>
@@ -268,11 +268,11 @@ export function BookingSitePageClient({
                   פתח בעמוד חדש
                 </a>
               ) : null}
-              <div className="rounded-xl border border-slate-200 dark:border-zinc-600 bg-slate-50 dark:bg-zinc-900 overflow-hidden aspect-[9/16] max-h-[560px]">
+              <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 overflow-hidden aspect-[9/16] max-h-[560px]">
                 {previewUrl ? (
                   <iframe src={previewUrl} title="תצוגה מקדימה" className="w-full h-full scale-[0.4] origin-top-right" style={{ width: '250%', height: '250%' }} />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-400 dark:text-zinc-500 text-sm">אין תצוגה מקדימה</div>
+                  <div className="w-full h-full flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm">אין תצוגה מקדימה</div>
                 )}
               </div>
             </div>
@@ -384,16 +384,16 @@ function HeroVideoCard({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-      <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 p-4 border-b border-slate-200 dark:border-zinc-700 flex items-center gap-2">
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+      <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50 p-4 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2">
         <Video className="h-4 w-4 text-indigo-500" />
         וידאו רקע לדף הבית (Hero)
       </h2>
       <div className="p-5 space-y-5">
         {heroVideo && (
           <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-2">תצוגה מקדימה</p>
-            <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-600 bg-neutral-900 aspect-video max-h-44 shadow-inner">
+            <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">תצוגה מקדימה</p>
+            <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-600 bg-neutral-900 aspect-video max-h-44 shadow-inner">
               <video src={heroVideo} controls className="w-full h-full object-contain" playsInline />
             </div>
             <button type="button" onClick={clear} disabled={saving} className="mt-3 text-sm font-medium text-red-600 dark:text-red-400 hover:underline disabled:opacity-50">
@@ -402,12 +402,12 @@ function HeroVideoCard({
           </div>
         )}
         <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-2">העלאת וידאו חדש</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">העלאת וידאו חדש</p>
           <div
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
             onDrop={onDrop}
-            className={`rounded-xl border-2 border-dashed p-8 text-center transition-all duration-200 ${dragOver ? 'border-indigo-500 bg-indigo-50/60 dark:bg-indigo-900/25' : 'border-slate-200 dark:border-zinc-600 hover:border-slate-300 dark:hover:border-zinc-500'}`}
+            className={`rounded-xl border-2 border-dashed p-8 text-center transition-all duration-200 ${dragOver ? 'border-indigo-500 bg-indigo-50/60 dark:bg-indigo-900/25' : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'}`}
           >
             <input
               type="file"
@@ -417,17 +417,17 @@ function HeroVideoCard({
               id="hero-video-upload"
             />
             <label htmlFor="hero-video-upload" className="cursor-pointer block">
-              <Upload className="h-10 w-10 mx-auto text-slate-400 dark:text-zinc-500 mb-3" />
-              <p className="text-sm font-medium text-slate-600 dark:text-zinc-300">גרור קובץ לכאן או לחץ לבחירה</p>
-              <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">MP4, WebM או MOV — עד {HERO_VIDEO_MAX_MB}MB</p>
+              <Upload className="h-10 w-10 mx-auto text-slate-400 dark:text-slate-500 mb-3" />
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-300">גרור קובץ לכאן או לחץ לבחירה</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">MP4, WebM או MOV — עד {HERO_VIDEO_MAX_MB}MB</p>
             </label>
           </div>
         </div>
         {file && (
-          <div className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-700 px-4 py-3">
-            <span className="text-sm font-medium text-slate-700 dark:text-zinc-300 truncate">{file.name}</span>
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-700 px-4 py-3">
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">{file.name}</span>
             <div className="flex gap-2 shrink-0">
-              <button type="button" onClick={() => setFile(null)} className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300">ביטול</button>
+              <button type="button" onClick={() => setFile(null)} className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">ביטול</button>
               <button type="button" onClick={save} disabled={saving || !!error} className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 disabled:opacity-50 shadow-sm">
                 {saving ? 'שומר...' : 'שמור'}
               </button>
@@ -478,8 +478,8 @@ function MediaLibraryCard({
   const filtered = searchMedia.trim() ? media.filter((m) => (m.filename ?? m.url).toLowerCase().includes(searchMedia.toLowerCase())) : media;
 
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden shadow-sm">
-      <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 p-4 border-b border-slate-200 dark:border-zinc-700 flex items-center gap-2">
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
+      <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50 p-4 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2">
         <ImageIcon className="h-4 w-4" />
         ספריית מדיה
       </h2>
@@ -495,12 +495,12 @@ function MediaLibraryCard({
             placeholder="חיפוש מדיה..."
             value={searchMedia}
             onChange={(e) => setSearchMedia(e.target.value)}
-            className="rounded-xl border border-slate-200 dark:border-zinc-600 bg-slate-50 dark:bg-zinc-900 px-3 py-2 text-sm w-40"
+            className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm w-40"
           />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
           {filtered.map((m) => (
-            <div key={m.id} className="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-600 aspect-square bg-slate-100 dark:bg-zinc-900">
+            <div key={m.id} className="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-600 aspect-square bg-slate-100 dark:bg-slate-950">
               {m.type === 'video' ? (
                 <video src={m.url} className="w-full h-full object-cover" muted playsInline />
               ) : (
@@ -543,8 +543,8 @@ function PageBuilderCard({
   const sorted = [...sections].sort((a, b) => a.position - b.position);
 
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden shadow-sm">
-      <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 p-4 border-b border-slate-200 dark:border-zinc-700 flex items-center gap-2">
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
+      <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50 p-4 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2">
         <Layout className="h-4 w-4" />
         Page Builder
       </h2>
@@ -557,13 +557,13 @@ function PageBuilderCard({
               onDragStart={() => setDragged(s.id)}
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => {}}
-              className={`flex items-center gap-3 rounded-xl border p-3 ${dragged === s.id ? 'opacity-50' : ''} ${s.is_enabled ? 'border-slate-200 dark:border-zinc-600' : 'border-slate-100 dark:border-zinc-800 opacity-70'}`}
+              className={`flex items-center gap-3 rounded-xl border p-3 ${dragged === s.id ? 'opacity-50' : ''} ${s.is_enabled ? 'border-slate-200 dark:border-slate-600' : 'border-slate-100 dark:border-slate-800 opacity-70'}`}
             >
               <GripVertical className="h-4 w-4 text-slate-400 shrink-0" />
-              <span className="text-sm font-medium text-slate-900 dark:text-zinc-100 flex-1">{SECTION_LABELS[s.section_type] ?? s.section_type}</span>
+              <span className="text-sm font-medium text-slate-900 dark:text-slate-50 flex-1">{SECTION_LABELS[s.section_type] ?? s.section_type}</span>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={s.is_enabled} onChange={(e) => toggle(s.id, e.target.checked)} className="rounded border-slate-300" />
-                <span className="text-xs text-slate-500 dark:text-zinc-400">מוצג</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">מוצג</span>
               </label>
             </div>
           ))}
@@ -645,15 +645,15 @@ function GalleryCard({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden shadow-sm">
-      <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 p-4 border-b border-slate-200 dark:border-zinc-700 flex items-center gap-2">
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
+      <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50 p-4 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2">
         <Images className="h-4 w-4" />
         גלריה
       </h2>
       <div className="p-4">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {gallery.map((g) => (
-            <div key={g.id} className="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-600 aspect-square">
+            <div key={g.id} className="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-600 aspect-square">
               {isVideoUrl(g.image_url) ? (
                 <video src={g.image_url} className="w-full h-full object-cover" muted playsInline />
               ) : (
@@ -664,16 +664,16 @@ function GalleryCard({
               </button>
             </div>
           ))}
-          <button type="button" onClick={openPicker} className="aspect-square rounded-xl border-2 border-dashed border-slate-300 dark:border-zinc-600 flex items-center justify-center text-slate-500 dark:text-zinc-400 hover:border-indigo-400 hover:text-indigo-600">
+          <button type="button" onClick={openPicker} className="aspect-square rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:border-indigo-400 hover:text-indigo-600">
             <Plus className="h-8 w-8" />
           </button>
         </div>
       </div>
       {pickerOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => !adding && setPickerOpen(false)}>
-          <div className="rounded-2xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 p-6 max-w-lg w-full max-h-[80vh] overflow-auto text-right" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-zinc-100 mb-3">בחר תמונות או סרטונים מספריית המדיה</h3>
-            <p className="text-sm text-slate-500 dark:text-zinc-400 mb-3">לחיצה על פריט תסמן אותו. בחר כמה שתרצה ולחץ &quot;הוסף לגלריה&quot;.</p>
+          <div className="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 max-w-lg w-full max-h-[80vh] overflow-auto text-right" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-3">בחר תמונות או סרטונים מספריית המדיה</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">לחיצה על פריט תסמן אותו. בחר כמה שתרצה ולחץ &quot;הוסף לגלריה&quot;.</p>
             <div className="grid grid-cols-3 gap-2">
               {allMedia.map((m) => (
                 <button
@@ -681,7 +681,7 @@ function GalleryCard({
                   type="button"
                   onClick={() => toggleSelected(m.id)}
                   disabled={adding}
-                  className={`relative aspect-square rounded-xl overflow-hidden border-2 touch-manipulation ${selectedIds.has(m.id) ? 'border-indigo-500 ring-2 ring-indigo-500/50' : 'border-slate-200 dark:border-zinc-600 hover:border-indigo-400'}`}
+                  className={`relative aspect-square rounded-xl overflow-hidden border-2 touch-manipulation ${selectedIds.has(m.id) ? 'border-indigo-500 ring-2 ring-indigo-500/50' : 'border-slate-200 dark:border-slate-600 hover:border-indigo-400'}`}
                 >
                   {m.type === 'video' ? (
                     <video src={m.url} className="w-full h-full object-cover" muted playsInline />
@@ -694,7 +694,7 @@ function GalleryCard({
                 </button>
               ))}
             </div>
-            {allMedia.length === 0 && <p className="text-sm text-slate-500 dark:text-zinc-400">אין מדיה. העלה תמונות או סרטונים בספריית המדיה.</p>}
+            {allMedia.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400">אין מדיה. העלה תמונות או סרטונים בספריית המדיה.</p>}
             {addError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{addError}</p>}
             <div className="mt-4 flex gap-2 flex-wrap">
               <button
@@ -705,7 +705,7 @@ function GalleryCard({
               >
                 {adding ? 'מוסיף...' : `הוסף לגלריה (${selectedIds.size})`}
               </button>
-              <button type="button" onClick={() => setPickerOpen(false)} disabled={adding} className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-600 text-sm font-medium disabled:opacity-50">
+              <button type="button" onClick={() => setPickerOpen(false)} disabled={adding} className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 text-sm font-medium disabled:opacity-50">
                 ביטול
               </button>
             </div>
@@ -753,8 +753,8 @@ function ServicesCard({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden shadow-sm">
-      <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 p-4 border-b border-slate-200 dark:border-zinc-700 flex items-center gap-2">
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
+      <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50 p-4 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2">
         <Package className="h-4 w-4" />
         שירותים / תמחור
       </h2>
@@ -762,16 +762,16 @@ function ServicesCard({
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-right">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-zinc-600">
-                <th className="py-2 px-2 font-semibold text-slate-700 dark:text-zinc-300">שם</th>
-                <th className="py-2 px-2 font-semibold text-slate-700 dark:text-zinc-300">מחיר</th>
-                <th className="py-2 px-2 font-semibold text-slate-700 dark:text-zinc-300">משך (דק׳)</th>
-                <th className="py-2 px-2 font-semibold text-slate-700 dark:text-zinc-300">פעולות</th>
+              <tr className="border-b border-slate-200 dark:border-slate-600">
+                <th className="py-2 px-2 font-semibold text-slate-700 dark:text-slate-300">שם</th>
+                <th className="py-2 px-2 font-semibold text-slate-700 dark:text-slate-300">מחיר</th>
+                <th className="py-2 px-2 font-semibold text-slate-700 dark:text-slate-300">משך (דק׳)</th>
+                <th className="py-2 px-2 font-semibold text-slate-700 dark:text-slate-300">פעולות</th>
               </tr>
             </thead>
             <tbody>
               {services.map((s) => (
-                <tr key={s.id} className="border-b border-slate-100 dark:border-zinc-700">
+                <tr key={s.id} className="border-b border-slate-100 dark:border-slate-700">
                   <td className="py-2 px-2">{s.service_name}</td>
                   <td className="py-2 px-2">{s.price}</td>
                   <td className="py-2 px-2">{s.duration_minutes}</td>
@@ -808,16 +808,16 @@ function ServiceModal({ initial, onSave, onClose }: { initial: Service | null; o
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
-      <div className="rounded-2xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 p-6 max-w-md w-full shadow-xl text-right" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-zinc-100 mb-4">{initial ? 'עריכת שירות' : 'שירות חדש'}</h3>
+      <div className="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 max-w-md w-full shadow-xl text-right" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">{initial ? 'עריכת שירות' : 'שירות חדש'}</h3>
         <div className="space-y-3">
-          <input type="text" placeholder="שם שירות" value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-zinc-600 bg-slate-50 dark:bg-zinc-900 px-3 py-2 text-sm" />
-          <input type="number" placeholder="מחיר" value={price || ''} onChange={(e) => setPrice(Number(e.target.value))} className="w-full rounded-xl border border-slate-200 dark:border-zinc-600 bg-slate-50 dark:bg-zinc-900 px-3 py-2 text-sm" />
-          <input type="number" placeholder="משך (דק׳)" value={duration || ''} onChange={(e) => setDuration(Number(e.target.value) || 30)} className="w-full rounded-xl border border-slate-200 dark:border-zinc-600 bg-slate-50 dark:bg-zinc-900 px-3 py-2 text-sm" />
-          <textarea placeholder="תיאור" value={description} onChange={(e) => setDescription(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-zinc-600 bg-slate-50 dark:bg-zinc-900 px-3 py-2 text-sm min-h-[80px]" />
+          <input type="text" placeholder="שם שירות" value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm" />
+          <input type="number" placeholder="מחיר" value={price || ''} onChange={(e) => setPrice(Number(e.target.value))} className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm" />
+          <input type="number" placeholder="משך (דק׳)" value={duration || ''} onChange={(e) => setDuration(Number(e.target.value) || 30)} className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm" />
+          <textarea placeholder="תיאור" value={description} onChange={(e) => setDescription(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm min-h-[80px]" />
         </div>
         <div className="flex gap-2 mt-4 justify-end">
-          <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-600 text-sm font-medium">ביטול</button>
+          <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 text-sm font-medium">ביטול</button>
           <button type="button" onClick={() => onSave({ service_name: name.trim(), price, duration_minutes: duration, description: description.trim() || null })} className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500">שמור</button>
         </div>
       </div>
@@ -871,23 +871,23 @@ function ProductsCard({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden shadow-sm">
-      <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 p-4 border-b border-slate-200 dark:border-zinc-700 flex items-center gap-2">
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden shadow-sm">
+      <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50 p-4 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2">
         <ShoppingBag className="h-4 w-4" />
         מוצרים
       </h2>
       <div className="p-4">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           {products.map((p) => (
-            <div key={p.id} className="rounded-xl border border-slate-200 dark:border-zinc-600 overflow-hidden bg-slate-50 dark:bg-zinc-900">
-              <div className="aspect-square bg-slate-200 dark:bg-zinc-700">
+            <div key={p.id} className="rounded-xl border border-slate-200 dark:border-slate-600 overflow-hidden bg-slate-50 dark:bg-slate-950">
+              <div className="aspect-square bg-slate-200 dark:bg-slate-700">
                 {p.image_url ? <img src={p.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-400"><ImageIcon className="h-10 w-10" /></div>}
               </div>
               <div className="p-2">
-                <p className="text-sm font-medium text-slate-900 dark:text-zinc-100 truncate">{p.name}</p>
-                <p className="text-xs text-slate-500 dark:text-zinc-400">{p.price != null ? `₪${p.price}` : '—'}</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-slate-50 truncate">{p.name}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{p.price != null ? `₪${p.price}` : '—'}</p>
               </div>
-              <div className="flex gap-1 p-2 border-t border-slate-200 dark:border-zinc-700">
+              <div className="flex gap-1 p-2 border-t border-slate-200 dark:border-slate-700">
                 <button type="button" onClick={() => { setEditingProduct(p); setProductModalOpen(true); }} className="p-1.5 text-slate-500 hover:text-indigo-600"><Pencil className="h-3.5 w-3.5" /></button>
                 <button type="button" onClick={() => del(p.id)} className="p-1.5 text-slate-500 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
               </div>
@@ -948,13 +948,13 @@ function ProductModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
-      <div className="rounded-2xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 p-6 max-w-md w-full shadow-xl text-right" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-zinc-100 mb-4">{initial ? 'עריכת מוצר' : 'מוצר חדש'}</h3>
+      <div className="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 max-w-md w-full shadow-xl text-right" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">{initial ? 'עריכת מוצר' : 'מוצר חדש'}</h3>
         <div className="space-y-3">
-          <input type="text" placeholder="שם מוצר" value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-zinc-600 bg-slate-50 dark:bg-zinc-900 px-3 py-2 text-sm" />
-          <input type="number" placeholder="מחיר" value={price} onChange={(e) => setPrice(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-zinc-600 bg-slate-50 dark:bg-zinc-900 px-3 py-2 text-sm" />
+          <input type="text" placeholder="שם מוצר" value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm" />
+          <input type="number" placeholder="מחיר" value={price} onChange={(e) => setPrice(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm" />
           <div>
-            <p className="text-xs font-medium text-slate-500 dark:text-zinc-400 mb-1">תמונה</p>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">תמונה</p>
             <input
               type="file"
               accept="image/*"
@@ -968,22 +968,22 @@ function ProductModal({
                 type="button"
                 onClick={() => imageInputRef.current?.click()}
                 disabled={uploading}
-                className="rounded-xl border border-slate-200 dark:border-zinc-600 bg-slate-50 dark:bg-zinc-900 px-3 py-2 text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 {uploading ? 'מעלה...' : 'העלה תמונה'}
               </button>
               {imageUrl ? (
-                <div className="relative w-14 h-14 rounded-lg overflow-hidden border border-slate-200 dark:border-zinc-600 shrink-0">
+                <div className="relative w-14 h-14 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-600 shrink-0">
                   <img src={imageUrl} alt="" className="w-full h-full object-cover" />
                   <button type="button" onClick={() => setImageUrl('')} className="absolute top-0 left-0 w-full h-full bg-black/50 flex items-center justify-center text-white text-xs">הסר</button>
                 </div>
               ) : null}
             </div>
           </div>
-          <textarea placeholder="תיאור" value={description} onChange={(e) => setDescription(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-zinc-600 bg-slate-50 dark:bg-zinc-900 px-3 py-2 text-sm min-h-[80px]" />
+          <textarea placeholder="תיאור" value={description} onChange={(e) => setDescription(e.target.value)} className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm min-h-[80px]" />
         </div>
         <div className="flex gap-2 mt-4 justify-end">
-          <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-600 text-sm font-medium">ביטול</button>
+          <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 text-sm font-medium">ביטול</button>
           <button type="button" onClick={() => onSave({ name: name.trim(), price: price === '' ? null : Number(price), image_url: imageUrl.trim() || null, description: description.trim() || null })} className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500">שמור</button>
         </div>
       </div>

@@ -187,8 +187,8 @@ export default function TenantServicesOverrideSection({
   return (
     <div dir="rtl" className="space-y-6">
       <div className="text-right">
-        <h2 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100 text-right">ניהול שירותים לקליניקות</h2>
-        <p className="mt-0.5 text-sm text-slate-500 dark:text-zinc-400 text-right">
+        <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50 text-right">ניהול שירותים לקליניקות</h2>
+        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400 text-right">
           עריכת שירותי הקליניקה — אותם נתונים מוצגים בלוח הקליניקה ובבוט.
         </p>
       </div>
@@ -235,7 +235,7 @@ export default function TenantServicesOverrideSection({
       )}
 
       {toast && (
-        <div className="fixed bottom-6 start-1/2 -translate-x-1/2 z-50 rounded-xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-900 dark:text-zinc-100 px-4 py-2.5 text-sm font-medium shadow-xl">
+        <div className="fixed bottom-6 start-1/2 -translate-x-1/2 z-50 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 px-4 py-2.5 text-sm font-medium shadow-xl">
           {toast}
         </div>
       )}

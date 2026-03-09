@@ -29,10 +29,10 @@ export function CalendarPageClient() {
 
   return (
     <>
-      <div className="mb-6 text-right">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-zinc-500">לוח בקרה</p>
-        <h1 className="mt-1 text-2xl font-semibold text-slate-900 dark:text-zinc-100 sm:text-3xl">תורים</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">צפייה וניהול תורים במרפאה.</p>
+      <div className="mb-6 text-right" dir="rtl">
+        <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">לוח בקרה</p>
+        <h1 className="mt-1 text-[28px] font-bold text-slate-900 dark:text-slate-50 leading-tight tracking-tight">תורים</h1>
+        <p className="mt-1.5 text-[15px] text-slate-500 dark:text-slate-400">צפייה וניהול תורים.</p>
       </div>
       <CalendarView initialDate={dateParam ?? undefined} clinicId={clinicId} />
     </>

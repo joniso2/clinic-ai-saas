@@ -38,12 +38,12 @@ function OptionCard<T extends string>({
       onClick={() => onSelect(value)}
       className={`flex-1 rounded-xl border px-4 py-3.5 text-left transition-all focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-1 ${
         selected
-          ? 'border-slate-900 dark:border-zinc-100 bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm'
-          : 'border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:border-slate-300 dark:hover:border-zinc-600 hover:bg-slate-50 dark:hover:bg-zinc-700'
+          ? 'border-slate-900 dark:border-slate-100 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm'
+          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
       }`}
     >
       <p className="text-sm font-semibold">{label}</p>
-      <p className={`mt-0.5 text-xs ${selected ? 'opacity-70' : 'text-slate-400 dark:text-zinc-500'}`}>{description}</p>
+      <p className={`mt-0.5 text-xs ${selected ? 'opacity-70' : 'text-slate-400 dark:text-slate-500'}`}>{description}</p>
     </button>
   );
 }
@@ -53,10 +53,10 @@ function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean
     <button
       type="button"
       onClick={() => onChange(!enabled)}
-      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-1 ${enabled ? 'bg-slate-900 dark:bg-zinc-100' : 'bg-slate-200 dark:bg-zinc-600'}`}
+      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-1 ${enabled ? 'bg-slate-900 dark:bg-slate-100' : 'bg-slate-200 dark:bg-slate-600'}`}
       aria-pressed={enabled}
     >
-      <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white dark:bg-zinc-900 shadow transition-transform ${enabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
+      <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white dark:bg-slate-950 shadow transition-transform ${enabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
     </button>
   );
 }
@@ -97,14 +97,14 @@ export function AITab({ settings }: { settings: ClinicSettings }) {
   return (
     <div className="space-y-5">
       {/* Tone */}
-      <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden">
-        <div className="border-b border-slate-100 dark:border-zinc-700 bg-slate-50/60 dark:bg-zinc-700/60 px-5 py-4 flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900">
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden">
+        <div className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-700/60 px-5 py-4 flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900">
             <MessageSquare className="h-4 w-4" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Conversation tone</h3>
-            <p className="text-xs text-slate-500 dark:text-zinc-400">Controls the personality of the AI receptionist.</p>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">Conversation tone</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Controls the personality of the AI receptionist.</p>
           </div>
         </div>
         <div className="px-5 py-5">
@@ -117,14 +117,14 @@ export function AITab({ settings }: { settings: ClinicSettings }) {
       </div>
 
       {/* Response length */}
-      <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden">
-        <div className="border-b border-slate-100 dark:border-zinc-700 bg-slate-50/60 dark:bg-zinc-700/60 px-5 py-4 flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900">
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden">
+        <div className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-700/60 px-5 py-4 flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900">
             <Ruler className="h-4 w-4" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Response length</h3>
-            <p className="text-xs text-slate-500 dark:text-zinc-400">How verbose the AI should be in patient conversations.</p>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">Response length</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">How verbose the AI should be in patient conversations.</p>
           </div>
         </div>
         <div className="px-5 py-5">
@@ -137,21 +137,21 @@ export function AITab({ settings }: { settings: ClinicSettings }) {
       </div>
 
       {/* Strict hours */}
-      <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden">
-        <div className="border-b border-slate-100 dark:border-zinc-700 bg-slate-50/60 dark:bg-zinc-700/60 px-5 py-4 flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900">
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden">
+        <div className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-700/60 px-5 py-4 flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900">
             <Clock className="h-4 w-4" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Clinic hours enforcement</h3>
-            <p className="text-xs text-slate-500 dark:text-zinc-400">When enabled, the AI strictly refuses bookings outside working hours.</p>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">Clinic hours enforcement</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">When enabled, the AI strictly refuses bookings outside working hours.</p>
           </div>
         </div>
         <div className="px-5 py-5">
-          <div className="flex items-start justify-between gap-4 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50/60 dark:bg-zinc-700/20 px-4 py-4">
+          <div className="flex items-start justify-between gap-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-700/20 px-4 py-4">
             <div>
-              <p className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Strict hours mode</p>
-              <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400">
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">Strict hours mode</p>
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                 {strictHours
                   ? 'AI will automatically decline requests outside clinic hours.'
                   : 'AI will acknowledge requests outside hours and suggest staff follow-up.'}
@@ -182,7 +182,7 @@ export function AITab({ settings }: { settings: ClinicSettings }) {
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="inline-flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-zinc-100 px-5 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-sm hover:bg-slate-800 dark:hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-slate-100 px-5 py-2.5 text-sm font-semibold text-white dark:text-slate-900 shadow-sm hover:bg-slate-800 dark:hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           {saving ? 'Saving…' : 'Save changes'}

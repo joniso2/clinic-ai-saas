@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const clinicId = searchParams.get('clinic_id')?.trim();
   if (!clinicId) {
-    return NextResponse.json({ error: 'חסר מזהה קליניקה' }, { status: 400 });
+    return NextResponse.json({ error: 'חסר מזהה העסק' }, { status: 400 });
   }
 
   const supabase = getSupabaseAdmin();

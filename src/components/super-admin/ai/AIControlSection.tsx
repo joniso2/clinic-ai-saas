@@ -133,19 +133,19 @@ export default function AIControlSection() {
     <div dir="rtl" className="space-y-6">
       {/* Header */}
       <div className="text-right">
-        <h2 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100 text-right">מרכז שליטה AI</h2>
-        <p className="mt-0.5 text-sm text-slate-500 dark:text-zinc-400 text-right">מודל לפי קליניקה (OpenAI, Google, Anthropic), פרמטרים, test console.</p>
+        <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50 text-right">מרכז שליטה AI</h2>
+        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400 text-right">מודל לפי קליניקה (OpenAI, Google, Anthropic), פרמטרים, test console.</p>
       </div>
 
       {/* Clinic → LLM status (which clinic uses which model, and if API key is set) */}
-      <div className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5">
+      <div className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5">
         <div className="flex items-center justify-between flex-row-reverse mb-4">
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-zinc-200 text-right">סטטוס LLM לפי קליניקה (בוט דיסקורד)</h3>
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 text-right">סטטוס LLM לפי קליניקה (בוט דיסקורד)</h3>
           <button type="button" onClick={fetchClinicStatuses} disabled={statusLoading} className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 disabled:opacity-50" title="רענן">
             <RefreshCw className={`h-4 w-4 ${statusLoading ? 'animate-spin' : ''}`} />
           </button>
         </div>
-        <p className="text-xs text-slate-500 dark:text-zinc-400 mb-4 text-right">איזה קליניקה על איזה מודל כרגע, והאם המפתח של הספק מוגדר (ירוק = הבוט יעבוד, אדום = חסר API key ב-Railway / .env).</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 text-right">איזה קליניקה על איזה מודל כרגע, והאם המפתח של הספק מוגדר (ירוק = הבוט יעבוד, אדום = חסר API key ב-Railway / .env).</p>
         {statusLoading ? (
           <p className="text-sm text-zinc-500 text-right py-4">טוען…</p>
         ) : clinicStatuses.length === 0 ? (
@@ -188,8 +188,8 @@ export default function AIControlSection() {
 
       {/* Per-clinic AI (ai_models) */}
       {clinics.length > 0 && (
-        <div className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5">
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-zinc-200 mb-4 text-right">מודל AI לפי קליניקה</h3>
+        <div className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5">
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-4 text-right">מודל AI לפי קליניקה</h3>
           <div className="grid sm:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-xs font-medium text-zinc-400 mb-1 text-right">קליניקה</label>
@@ -234,8 +234,8 @@ export default function AIControlSection() {
           { label: 'שיחות', value: String(history.length), icon: Brain, color: 'text-violet-400' },
           { label: 'זמן תגובה ממוצע', value: `${avgLatency}ms`, icon: Clock, color: 'text-amber-400' },
         ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-4 text-right">
-            <p className="text-[11px] text-slate-500 dark:text-zinc-400 mb-1">{label}</p>
+          <div key={label} className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-4 text-right">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-1">{label}</p>
             <p className={`text-xl font-bold tabular-nums ${color}`}>{value}</p>
           </div>
         ))}
@@ -244,8 +244,8 @@ export default function AIControlSection() {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Config panel */}
         <div className="space-y-5">
-          <div className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5">
-            <h3 className="text-sm font-semibold text-slate-800 dark:text-zinc-200 mb-4 text-right">הגדרות מודל גלובלי</h3>
+          <div className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5">
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-4 text-right">הגדרות מודל גלובלי</h3>
 
             {/* Model selector */}
             <div className="mb-4 text-right">
@@ -283,8 +283,8 @@ export default function AIControlSection() {
           </div>
 
           {/* System prompt */}
-          <div className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5">
-            <h3 className="text-sm font-semibold text-slate-800 dark:text-zinc-200 mb-3 text-right">System Prompt גלובלי</h3>
+          <div className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5">
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3 text-right">System Prompt גלובלי</h3>
             <textarea
               value={config.systemPrompt}
               onChange={(e) => setConfig((c) => ({ ...c, systemPrompt: e.target.value }))}
@@ -303,9 +303,9 @@ export default function AIControlSection() {
 
         {/* Test console */}
         <div className="space-y-5">
-          <div className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5 flex flex-col">
-            <h3 className="text-sm font-semibold text-slate-800 dark:text-zinc-200 mb-4 text-right">Test Console</h3>
-            <div className="flex-1 min-h-[140px] rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 p-4 mb-3 text-sm text-right overflow-y-auto">
+          <div className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5 flex flex-col">
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-4 text-right">Test Console</h3>
+            <div className="flex-1 min-h-[140px] rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 mb-3 text-sm text-right overflow-y-auto">
               {testOutput ? (
                 <div className="space-y-3">
                   <div className="text-right">

@@ -61,7 +61,7 @@ export function buildPricingBlock(services: ClinicServiceForPrompt[]): string {
     const price = Number(s.price);
     return `${name}: ${price} ₪`;
   });
-  return 'שירותי המרפאה והמחירים:\n\n' + lines.join('\n\n');
+  return 'השירותים והמחירים:\n\n' + lines.join('\n\n');
 }
 
 /**

@@ -251,15 +251,15 @@ export default function IntegrationsSection() {
   return (
     <div className="space-y-8">
       {/* Header + Clinic selector */}
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-8">
-        <h2 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100 text-right mb-2">מרכז אינטגרציות</h2>
-        <p className="text-sm text-slate-500 dark:text-zinc-400 text-right mb-4">אינטגרציות לפי קליניקה — בחר קליניקה להצגת חיבורים ומדדים.</p>
+      <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-8">
+        <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50 text-right mb-2">מרכז אינטגרציות</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 text-right mb-4">אינטגרציות לפי קליניקה — בחר קליניקה להצגת חיבורים ומדדים.</p>
         <div className="flex items-center gap-2 flex-row-reverse justify-end">
-          <label className="text-sm font-medium text-slate-600 dark:text-zinc-400">בחר קליניקה:</label>
+          <label className="text-sm font-medium text-slate-600 dark:text-slate-400">בחר קליניקה:</label>
           <select
             value={selectedClinicId ?? ''}
             onChange={(e) => setSelectedClinicId(e.target.value || null)}
-            className="rounded-xl border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-4 py-2 text-sm text-slate-900 dark:text-zinc-100 min-w-[200px]"
+            className="rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2 text-sm text-slate-900 dark:text-slate-50 min-w-[200px]"
           >
             {tenants.map((t) => (
               <option key={t.id} value={t.id}>{t.name ?? t.id}</option>
@@ -273,15 +273,15 @@ export default function IntegrationsSection() {
         <div className="space-y-4">
           {metrics && (
             <div className="grid grid-cols-3 gap-4">
-              <div className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-4">
+              <div className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-4">
                 <p className="text-xs text-zinc-500 mb-1">הודעות היום</p>
                 <p className="text-xl font-bold text-zinc-100">{metrics.messages_today}</p>
               </div>
-              <div className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-4">
+              <div className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-4">
                 <p className="text-xs text-zinc-500 mb-1">הודעות החודש</p>
                 <p className="text-xl font-bold text-zinc-100">{metrics.messages_this_month}</p>
               </div>
-              <div className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-4">
+              <div className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-4">
                 <p className="text-xs text-zinc-500 mb-1">הודעה אחרונה</p>
                 <p className="text-sm font-medium text-zinc-300">
                   {metrics.last_message_at ? new Date(metrics.last_message_at).toLocaleString('he-IL') : '—'}
@@ -294,9 +294,9 @@ export default function IntegrationsSection() {
               const int = getIntegration(type);
               const isConnected = int?.status === 'connected';
               return (
-                <div key={type} className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-6">
+                <div key={type} className="rounded-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-6">
                   <div className="flex items-center justify-between flex-row-reverse mb-3">
-                    <span className="font-semibold text-slate-900 dark:text-zinc-100">{CHANNEL_LABELS[type] ?? type}</span>
+                    <span className="font-semibold text-slate-900 dark:text-slate-50">{CHANNEL_LABELS[type] ?? type}</span>
                     {isConnected ? <CheckCircle2 className="h-5 w-5 text-emerald-400" /> : <XCircle className="h-5 w-5 text-zinc-500" />}
                   </div>
                   <p className="text-xs text-zinc-500 mb-3">{isConnected ? `${int?.provider}` : 'לא מחובר'}</p>
@@ -328,56 +328,56 @@ export default function IntegrationsSection() {
       {/* Platform status cards (global summary) */}
       <div className="grid sm:grid-cols-3 gap-4">
         {/* Discord */}
-        <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-6 hover:border-slate-300 dark:hover:border-zinc-600 transition-all duration-200">
+        <div className="rounded-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-6 hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-200">
           <div className="flex items-center justify-between flex-row-reverse mb-3">
             <div className="flex items-center gap-2.5 flex-row-reverse">
               <Bot className="h-6 w-6 text-indigo-400" />
-              <span className="font-semibold text-slate-900 dark:text-zinc-100">Discord</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-50">Discord</span>
             </div>
             <StatusIcon status={discordStatus} />
           </div>
           <div className="space-y-1">
-            <p className="text-2xl font-bold text-slate-900 dark:text-zinc-100 tabular-nums tracking-tight">{discordConnected}/{discordTotal}</p>
-            <p className="text-xs text-slate-500 dark:text-zinc-500">לקוחות מחוברים</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-50 tabular-nums tracking-tight">{discordConnected}/{discordTotal}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-500">לקוחות מחוברים</p>
           </div>
-          <div className="mt-3 bg-slate-200 dark:bg-zinc-800 rounded-full h-1.5 overflow-hidden border border-slate-200 dark:border-zinc-700">
+          <div className="mt-3 bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden border border-slate-200 dark:border-slate-700">
             <div className="h-full rounded-full bg-indigo-500 transition-all duration-700"
               style={{ width: discordTotal > 0 ? `${(discordConnected / discordTotal) * 100}%` : '0%' }} />
           </div>
         </div>
 
         {/* WhatsApp */}
-        <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-6 hover:border-slate-300 dark:hover:border-zinc-600 transition-all duration-200">
+        <div className="rounded-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-6 hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-200">
           <div className="flex items-center justify-between flex-row-reverse mb-3">
             <div className="flex items-center gap-2.5 flex-row-reverse">
               <div className="h-6 w-6 rounded-md bg-emerald-600 flex items-center justify-center shrink-0">
                 <span className="text-white text-xs font-bold">W</span>
               </div>
-              <span className="font-semibold text-slate-900 dark:text-zinc-100">WhatsApp</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-50">WhatsApp</span>
             </div>
             <StatusIcon status="coming_soon" />
           </div>
           <div className="space-y-1">
-            <p className="text-2xl font-bold text-slate-500 dark:text-zinc-500 tabular-nums tracking-tight">0/{discordTotal}</p>
-            <p className="text-xs text-slate-500 dark:text-zinc-500">לא מוגדר עדיין</p>
+            <p className="text-2xl font-bold text-slate-500 dark:text-slate-500 tabular-nums tracking-tight">0/{discordTotal}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-500">לא מוגדר עדיין</p>
           </div>
-          <div className="mt-3 rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 px-3 py-2 text-[11px] text-slate-500 dark:text-zinc-500">
+          <div className="mt-3 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 text-[11px] text-slate-500 dark:text-slate-500">
             יוגדר בגרסה הבאה
           </div>
         </div>
 
         {/* Webhooks */}
-        <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-6 hover:border-slate-300 dark:hover:border-zinc-600 transition-all duration-200">
+        <div className="rounded-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-6 hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-200">
           <div className="flex items-center justify-between flex-row-reverse mb-3">
             <div className="flex items-center gap-2.5 flex-row-reverse">
               <Webhook className="h-6 w-6 text-violet-400" />
-              <span className="font-semibold text-slate-900 dark:text-zinc-100">Webhooks</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-50">Webhooks</span>
             </div>
             <StatusIcon status="warning" />
           </div>
           <div className="space-y-1">
-            <p className="text-2xl font-bold text-slate-900 dark:text-zinc-100 tabular-nums tracking-tight">{MOCK_WEBHOOK_LOGS.filter((l) => l.status === 'success').length}/{MOCK_WEBHOOK_LOGS.length}</p>
-            <p className="text-xs text-slate-500 dark:text-zinc-500">הצלחות ב-24 שעות</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-50 tabular-nums tracking-tight">{MOCK_WEBHOOK_LOGS.filter((l) => l.status === 'success').length}/{MOCK_WEBHOOK_LOGS.length}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-500">הצלחות ב-24 שעות</p>
           </div>
           <p className="mt-2 text-[11px] text-amber-400">
             {MOCK_WEBHOOK_LOGS.filter((l) => l.status === 'failed').length} כשלונות
@@ -388,9 +388,9 @@ export default function IntegrationsSection() {
       {/* Discord mappings */}
       <div>
         <div className="flex items-center justify-between flex-row-reverse mb-4">
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-zinc-300">מיפויי Discord</h3>
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">מיפויי Discord</h3>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={fetchAll} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300 transition-colors" title="רענן">
+            <button type="button" onClick={fetchAll} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors" title="רענן">
               <RefreshCw className="h-4 w-4" />
             </button>
             <button type="button" onClick={() => { setModalOpen(true); setFClinicId(tenants[0]?.id ?? ''); setFGuildId(''); }}
@@ -400,9 +400,9 @@ export default function IntegrationsSection() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 overflow-hidden bg-white dark:bg-zinc-900">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-950">
           {loading ? (
-            <div className="py-10 text-center text-slate-500 dark:text-zinc-500 text-sm">טוען…</div>
+            <div className="py-10 text-center text-slate-500 dark:text-slate-500 text-sm">טוען…</div>
           ) : (
             <table className="w-full text-sm" dir="rtl">
               <thead>

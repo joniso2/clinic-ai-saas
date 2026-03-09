@@ -24,18 +24,18 @@ function BookingLinkCard({ slug }: { slug: string }) {
           <Link2 className="h-4 w-4" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">קישור עמוד הזמנה</h3>
-          <p className="text-xs text-slate-500 dark:text-zinc-400">שלח ללקוחות לקביעת תור ישירה</p>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">קישור עמוד הזמנה</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">שלח ללקוחות לקביעת תור ישירה</p>
         </div>
       </div>
       <div className="px-5 py-4 flex items-center gap-2">
-        <code className="flex-1 truncate rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-zinc-800 px-3.5 py-2.5 text-sm font-mono text-indigo-700 dark:text-indigo-300 select-all">
+        <code className="flex-1 truncate rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-sm font-mono text-indigo-700 dark:text-indigo-300 select-all">
           {url}
         </code>
         <button
           onClick={handleCopy}
           title="העתק קישור"
-          className="flex-shrink-0 flex items-center gap-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-zinc-800 px-3.5 py-2.5 text-sm font-medium text-slate-700 dark:text-zinc-200 hover:bg-indigo-50 dark:hover:bg-zinc-700 transition-colors"
+          className="flex-shrink-0 flex items-center gap-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-700 transition-colors"
         >
           {copied ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
           {copied ? 'הועתק' : 'העתק'}
@@ -76,7 +76,7 @@ const CURRENCIES = [
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">{label}</label>
+      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</label>
       {children}
     </div>
   );
@@ -89,7 +89,7 @@ function Input({ value, onChange, placeholder, type = 'text' }: { value: string;
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-700/50 px-3.5 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 transition-colors"
+      className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-700/50 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-50 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 transition-colors"
     />
   );
 }
@@ -101,7 +101,7 @@ function Textarea({ value, onChange, placeholder, rows = 3 }: { value: string; o
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       rows={rows}
-      className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-700/50 px-3.5 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 transition-colors resize-none"
+      className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-700/50 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-50 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 transition-colors resize-none"
     />
   );
 }
@@ -111,7 +111,7 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-700/50 px-3.5 py-2.5 text-sm text-slate-900 dark:text-zinc-100 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 transition-colors"
+      className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-700/50 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-50 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 transition-colors"
     >
       {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
@@ -175,24 +175,24 @@ export function GeneralTab({
   return (
     <div className="space-y-5">
       {/* Read-only profile */}
-      <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden">
-        <div className="border-b border-slate-100 dark:border-zinc-700 bg-slate-50/60 dark:bg-zinc-700/60 px-5 py-4 flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900">
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden">
+        <div className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-700/60 px-5 py-4 flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900">
             <Building2 className="h-4 w-4" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Clinic profile</h3>
-            <p className="text-xs text-slate-500 dark:text-zinc-400">Account-level information. Contact support to change.</p>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">Clinic profile</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Account-level information. Contact support to change.</p>
           </div>
         </div>
         <div className="px-5 py-5 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-xl border border-slate-100 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-700/50 px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Clinic name</p>
-            <p className="mt-1.5 text-sm font-medium text-slate-900 dark:text-zinc-100">{clinicName ?? 'Not set'}</p>
+          <div className="rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Clinic name</p>
+            <p className="mt-1.5 text-sm font-medium text-slate-900 dark:text-slate-50">{clinicName ?? 'Not set'}</p>
           </div>
-          <div className="rounded-xl border border-slate-100 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-700/50 px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Account email</p>
-            <p className="mt-1.5 text-sm font-medium text-slate-900 dark:text-zinc-100">{userEmail ?? '—'}</p>
+          <div className="rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Account email</p>
+            <p className="mt-1.5 text-sm font-medium text-slate-900 dark:text-slate-50">{userEmail ?? '—'}</p>
           </div>
         </div>
       </div>
@@ -206,14 +206,14 @@ export function GeneralTab({
       <AdminHeroMediaEditor />
 
       {/* Editable contact + locale */}
-      <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden">
-        <div className="border-b border-slate-100 dark:border-zinc-700 bg-slate-50/60 dark:bg-zinc-700/60 px-5 py-4 flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900">
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden">
+        <div className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-700/60 px-5 py-4 flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900">
             <Phone className="h-4 w-4" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Contact & locale</h3>
-            <p className="text-xs text-slate-500 dark:text-zinc-400">How patients reach you and regional defaults.</p>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">Contact & locale</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">How patients reach you and regional defaults.</p>
           </div>
         </div>
         <div className="px-5 py-5 grid gap-4 sm:grid-cols-2">
@@ -238,14 +238,14 @@ export function GeneralTab({
       </div>
 
       {/* Brand / AI context */}
-      <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden">
-        <div className="border-b border-slate-100 dark:border-zinc-700 bg-slate-50/60 dark:bg-zinc-700/60 px-5 py-4 flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900">
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden">
+        <div className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-700/60 px-5 py-4 flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900">
             <FileText className="h-4 w-4" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Business description</h3>
-            <p className="text-xs text-slate-500 dark:text-zinc-400">Used by the AI assistant to personalize responses.</p>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">Business description</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Used by the AI assistant to personalize responses.</p>
           </div>
         </div>
         <div className="px-5 py-5">
@@ -257,7 +257,7 @@ export function GeneralTab({
               rows={4}
             />
           </Field>
-          <p className="mt-2 text-xs text-slate-400 dark:text-zinc-500">
+          <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
             This context is injected into the AI receptionist prompt automatically.
           </p>
         </div>
@@ -279,7 +279,7 @@ export function GeneralTab({
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="inline-flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-zinc-100 px-5 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-sm hover:bg-slate-800 dark:hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-slate-100 px-5 py-2.5 text-sm font-semibold text-white dark:text-slate-900 shadow-sm hover:bg-slate-800 dark:hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           {saving ? 'Saving…' : 'Save changes'}

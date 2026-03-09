@@ -38,47 +38,48 @@ export function ConfirmDeleteModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="delete-modal-title"
+      onClick={onCancel}
     >
       <div
-        className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
-        onClick={onCancel}
-      />
-      <div className="relative w-full max-w-md rounded-2xl border border-red-200/50 dark:border-red-900/40 bg-white dark:bg-zinc-900 p-6 shadow-2xl">
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/50">
+        className="modal-enter max-w-sm w-full rounded-2xl bg-white dark:bg-slate-900 shadow-[0_10px_30px_rgba(0,0,0,0.12),0_4px_8px_rgba(0,0,0,0.06)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Body */}
+        <div className="px-6 py-6 text-center">
+          <div className="h-12 w-12 rounded-full bg-red-50 dark:bg-red-950/40 flex items-center justify-center mx-auto mb-4">
             <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
           </div>
-          <div className="min-w-0 flex-1">
-            <h2
-              id="delete-modal-title"
-              className="text-lg font-semibold text-slate-900 dark:text-zinc-100"
-            >
-              {title}
-            </h2>
-            <p className="mt-2 text-sm text-slate-600 dark:text-zinc-400">{message}</p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={onCancel}
-                disabled={loading}
-                className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-zinc-300 shadow-sm transition hover:bg-slate-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60"
-              >
-                ביטול
-              </button>
-              <button
-                type="button"
-                onClick={onConfirm}
-                disabled={loading}
-                className="rounded-xl bg-red-600 dark:bg-red-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-60"
-              >
-                {loading ? 'מוחק…' : confirmLabel}
-              </button>
-            </div>
-          </div>
+          <h2
+            id="delete-modal-title"
+            className="text-[18px] font-semibold text-slate-900 dark:text-slate-50 mb-2"
+          >
+            {title}
+          </h2>
+          <p className="text-[14px] text-slate-500 dark:text-slate-400">{message}</p>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-center gap-3 border-t border-slate-100 dark:border-slate-800 px-6 py-4">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={loading}
+            className="inline-flex items-center justify-center h-10 px-5 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-[14px] font-semibold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-all duration-150"
+          >
+            ביטול
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={loading}
+            className="inline-flex items-center justify-center h-10 px-5 rounded-lg bg-red-600 text-white text-[14px] font-semibold hover:bg-red-700 transition-all duration-150 disabled:opacity-50"
+          >
+            {loading ? 'מוחק…' : confirmLabel}
+          </button>
         </div>
       </div>
     </div>

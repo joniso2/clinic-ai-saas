@@ -27,11 +27,11 @@ function ChartCard({
   className?: string;
 }) {
   return (
-    <div className={`rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-8 ${className}`}>
+    <div className={`rounded-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-8 ${className}`}>
       <div className="mb-6 text-right">
-        <h3 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100 mb-2">{title}</h3>
+        <h3 className="text-2xl font-semibold text-slate-900 dark:text-slate-50 mb-2">{title}</h3>
         {subtitle && (
-          <p className="text-sm text-slate-500 dark:text-zinc-400">{subtitle}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
         )}
       </div>
       {children}
@@ -57,14 +57,14 @@ function IntegrationRow({ record }: { record: IntegrationStatusRecord }) {
     : 0;
 
   return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-slate-200 dark:border-zinc-800 last:border-0">
+    <div className="flex items-center gap-3 py-2.5 border-b border-slate-200 dark:border-slate-800 last:border-0">
       <span
         className={`shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-md ${statusStyles[record.status]}`}
       >
         {statusLabels[record.status]}
       </span>
 
-      <div className="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden h-1.5">
+      <div className="flex-1 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden h-1.5">
         <div
           className="h-full rounded-full transition-all duration-700"
           style={{
@@ -80,8 +80,8 @@ function IntegrationRow({ record }: { record: IntegrationStatusRecord }) {
       </div>
 
       <div className="flex items-center gap-1.5 shrink-0">
-        <span className="text-xs font-medium text-slate-700 dark:text-zinc-300">{record.label}</span>
-        <span className="text-[11px] text-slate-500 dark:text-zinc-500 tabular-nums">
+        <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{record.label}</span>
+        <span className="text-[11px] text-slate-500 dark:text-slate-500 tabular-nums">
           {record.connected}/{record.total}
         </span>
       </div>
@@ -182,13 +182,13 @@ export default function OverviewChartsSection({
             const avgRate = totLeads > 0 ? Math.round((totAppts / totLeads) * 100) : 0;
             return (
               <div className="mt-3 flex justify-end gap-4 text-right">
-                <span className="text-[11px] text-slate-500 dark:text-zinc-500">
-                  לידים: <span className="text-slate-700 dark:text-zinc-300 font-medium">{totLeads.toLocaleString('he-IL')}</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-500">
+                  לידים: <span className="text-slate-700 dark:text-slate-300 font-medium">{totLeads.toLocaleString('he-IL')}</span>
                 </span>
-                <span className="text-[11px] text-slate-500 dark:text-zinc-500">
-                  תורים: <span className="text-slate-700 dark:text-zinc-300 font-medium">{totAppts.toLocaleString('he-IL')}</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-500">
+                  תורים: <span className="text-slate-700 dark:text-slate-300 font-medium">{totAppts.toLocaleString('he-IL')}</span>
                 </span>
-                <span className="text-[11px] text-slate-500 dark:text-zinc-500">
+                <span className="text-[11px] text-slate-500 dark:text-slate-500">
                   ממוצע: <span className="text-emerald-400 font-semibold">{avgRate}%</span>
                 </span>
               </div>

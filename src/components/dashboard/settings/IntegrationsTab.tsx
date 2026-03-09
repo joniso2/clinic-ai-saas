@@ -42,15 +42,15 @@ export function IntegrationsTab() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-hidden">
-        <div className="border-b border-slate-100 dark:border-zinc-700 bg-slate-50/60 dark:bg-zinc-700/60 px-5 py-4 flex items-center justify-between gap-3">
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden">
+        <div className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-700/60 px-5 py-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#5865F2] text-white">
               <BotMessageSquare className="h-4 w-4" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100">Discord integration</h3>
-              <p className="text-xs text-slate-500 dark:text-zinc-400">AI receptionist deployed on your Discord server.</p>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">Discord integration</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">AI receptionist deployed on your Discord server.</p>
             </div>
           </div>
           {!loading && (
@@ -63,7 +63,7 @@ export function IntegrationsTab() {
 
         <div className="px-5 py-5 space-y-4">
           {loading ? (
-            <div className="flex items-center gap-2 text-sm text-slate-400 dark:text-zinc-500">
+            <div className="flex items-center gap-2 text-sm text-slate-400 dark:text-slate-500">
               <RefreshCw className="h-4 w-4 animate-spin" />
               Checking connection…
             </div>
@@ -71,32 +71,32 @@ export function IntegrationsTab() {
             <>
               {/* Status cards */}
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className={`rounded-xl border px-4 py-3 ${connected ? 'border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/30' : 'border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-700/50'}`}>
+                <div className={`rounded-xl border px-4 py-3 ${connected ? 'border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/30' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50'}`}>
                   <div className="flex items-center gap-1.5 mb-1">
-                    {connected ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <AlertCircle className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />}
-                    <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Bot token</span>
+                    {connected ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <AlertCircle className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />}
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Bot token</span>
                   </div>
-                  <p className={`text-sm font-semibold ${connected ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400 dark:text-zinc-500'}`}>
+                  <p className={`text-sm font-semibold ${connected ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`}>
                     {connected ? 'Configured' : 'Missing'}
                   </p>
                 </div>
 
-                <div className={`rounded-xl border px-4 py-3 ${connected ? 'border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/30' : 'border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-700/50'}`}>
+                <div className={`rounded-xl border px-4 py-3 ${connected ? 'border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/30' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50'}`}>
                   <div className="flex items-center gap-1.5 mb-1">
-                    <Webhook className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
-                    <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Webhook</span>
+                    <Webhook className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Webhook</span>
                   </div>
-                  <p className={`text-sm font-semibold ${connected ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400 dark:text-zinc-500'}`}>
+                  <p className={`text-sm font-semibold ${connected ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`}>
                     {connected ? 'Active' : 'Inactive'}
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-700/50 px-4 py-3">
+                <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 px-4 py-3">
                   <div className="flex items-center gap-1.5 mb-1">
-                    <Activity className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
-                    <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Last checked</span>
+                    <Activity className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Last checked</span>
                   </div>
-                  <p className="text-sm font-semibold text-slate-700 dark:text-zinc-300">{discord?.lastChecked ?? '—'}</p>
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{discord?.lastChecked ?? '—'}</p>
                 </div>
               </div>
 
@@ -110,7 +110,7 @@ export function IntegrationsTab() {
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/60 px-3 py-1 text-xs font-medium text-blue-700 dark:text-blue-400">
                     Lead notifications on
                   </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-zinc-700 border border-slate-200 dark:border-zinc-600 px-3 py-1 text-xs font-medium text-slate-600 dark:text-zinc-300">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-300">
                     Deployed on Railway
                   </span>
                 </div>
@@ -128,7 +128,7 @@ export function IntegrationsTab() {
                   type="button"
                   onClick={handleReconnect}
                   disabled={reconnecting}
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-700/50 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-1 transition-colors disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-700/50 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-1 transition-colors disabled:opacity-50"
                 >
                   <RefreshCw className={`h-3.5 w-3.5 ${reconnecting ? 'animate-spin' : ''}`} />
                   {reconnecting ? 'Checking…' : 'Refresh status'}
@@ -137,7 +137,7 @@ export function IntegrationsTab() {
                   href="https://discord.com/developers/applications"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-700/50 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 focus:outline-none transition-colors"
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-700/50 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none transition-colors"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                   Discord Developer Portal
@@ -149,9 +149,9 @@ export function IntegrationsTab() {
       </div>
 
       {/* Future integrations placeholder */}
-      <div className="rounded-2xl border border-dashed border-slate-200 dark:border-zinc-700 bg-slate-50/40 dark:bg-zinc-800/40 px-5 py-8 text-center">
-        <p className="text-sm font-semibold text-slate-400 dark:text-zinc-500">More integrations coming soon</p>
-        <p className="mt-1 text-xs text-slate-300 dark:text-zinc-600">WhatsApp, SMS, Email, Google Calendar…</p>
+      <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/40 dark:bg-slate-800/40 px-5 py-8 text-center">
+        <p className="text-sm font-semibold text-slate-400 dark:text-slate-500">More integrations coming soon</p>
+        <p className="mt-1 text-xs text-slate-300 dark:text-slate-600">WhatsApp, SMS, Email, Google Calendar…</p>
       </div>
     </div>
   );

@@ -102,9 +102,9 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
           parseInt(parts[0], 10),
         );
         const dayName = DAY_LABELS_HE[d.getDay()] ?? '';
-        return `הקליניקה סגורה ביום ${dayName}`;
+        return `העסק סגור ביום ${dayName}`;
       }
-      return 'הקליניקה סגורה ביום זה';
+      return 'העסק סגור ביום זה';
     }
     return null;
   }

@@ -154,14 +154,14 @@ export default function PricingSection() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-8">
-        <h2 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100 text-right mb-2">תמחור גלובלי</h2>
-        <p className="text-sm text-slate-500 dark:text-zinc-400 text-right mb-6">ניהול תכניות מנוי, בניית Tiers ושיוך שירותים לפי לקוח.</p>
+      <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-8">
+        <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50 text-right mb-2">תמחור גלובלי</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 text-right mb-6">ניהול תכניות מנוי, בניית Tiers ושיוך שירותים לפי לקוח.</p>
       </div>
 
       {/* Tier cards */}
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-8">
-        <h3 className="text-sm font-semibold text-slate-500 dark:text-zinc-400 mb-6">תכניות מנוי</h3>
+      <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-8">
+        <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-6">תכניות מנוי</h3>
         <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {PLAN_TIERS.map((tier) => {
             const colors = COLOR_MAP[tier.color];

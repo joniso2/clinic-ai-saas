@@ -8,7 +8,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const row = await getClinicUser();
-  if (!row?.clinic_id) return NextResponse.json({ error: 'לא מאומת או ללא קליניקה' }, { status: 401 });
+  if (!row?.clinic_id) return NextResponse.json({ error: 'לא מאומת או ללא גישה' }, { status: 401 });
   if (row.role !== 'CLINIC_ADMIN') return NextResponse.json({ error: 'אין הרשאה לערוך תמחור' }, { status: 403 });
 
   const { id } = await params;
@@ -63,7 +63,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const row = await getClinicUser();
-  if (!row?.clinic_id) return NextResponse.json({ error: 'לא מאומת או ללא קליניקה' }, { status: 401 });
+  if (!row?.clinic_id) return NextResponse.json({ error: 'לא מאומת או ללא גישה' }, { status: 401 });
   if (row.role !== 'CLINIC_ADMIN') return NextResponse.json({ error: 'אין הרשאה לערוך תמחור' }, { status: 403 });
 
   const { id } = await params;

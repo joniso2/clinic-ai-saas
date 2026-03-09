@@ -7,9 +7,11 @@ import {
   getStatusCardClass,
   getStatusAccentClass,
   getServiceLabel,
-  STATUS_BADGE_CLASS,
-  STATUS_LABEL,
 } from '@/lib/calendar/calendar.utils';
+import {
+  getAppointmentStatusBadgeClass,
+  getAppointmentStatusLabel,
+} from '@/lib/status-colors';
 
 export type AppointmentBlockProps = {
   apt: Appointment;
@@ -37,7 +39,7 @@ export function AppointmentBlock({
   const accentClass = getStatusAccentClass(apt);
   const serviceLabel = getServiceLabel(apt);
   const status = apt.status ?? 'scheduled';
-  const badgeClass = STATUS_BADGE_CLASS[status] ?? STATUS_BADGE_CLASS.scheduled;
+  const badgeClass = getAppointmentStatusBadgeClass(status);
   const duration = apt.duration_minutes ?? 30;
 
   const isWeek = variant === 'week';
@@ -65,9 +67,11 @@ export function AppointmentBlock({
       )}
       <div className="flex items-start justify-between gap-1 min-w-0">
         <span className="text-xs font-medium text-slate-600 dark:text-slate-400 opacity-90">{formatTimeRange(apt.datetime, duration)}</span>
-        <span className={`shrink-0 text-xs ${isWeek ? 'px-2 py-0.5' : 'px-1.5 py-0.5'} rounded-full font-medium ${badgeClass}`}>{STATUS_LABEL[status] ?? status}</span>
+        {isWeek && status !== 'scheduled' && (
+          <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${badgeClass}`}>{getAppointmentStatusLabel(status)}</span>
+        )}
       </div>
-      <p className={`${isWeek ? 'text-sm' : 'text-sm'} font-semibold text-slate-900 dark:text-white truncate mt-0.5`}>{apt.patient_name}</p>
+      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate mt-0.5">{apt.patient_name}</p>
       <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">{serviceLabel}</p>
       {variant === 'month' && apt.revenue != null && apt.revenue > 0 && (
         <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">₪{apt.revenue}</p>

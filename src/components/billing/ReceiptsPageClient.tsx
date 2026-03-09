@@ -68,16 +68,16 @@ function KpiCard({
   accent: string;
 }) {
   return (
-    <div className="rounded-xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 flex items-start gap-4">
+    <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 p-5 flex items-start gap-4">
       <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${accent} shrink-0`}>
         <Icon className="h-5 w-5" />
       </div>
       <div className="min-w-0">
-        <p className="text-xs text-slate-500 dark:text-zinc-400 mb-1">{label}</p>
-        <p className="text-xl font-semibold text-slate-900 dark:text-zinc-100 tabular-nums leading-none">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{label}</p>
+        <p className="text-xl font-semibold text-slate-900 dark:text-slate-50 tabular-nums leading-none">
           {value}
         </p>
-        {sub && <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">{sub}</p>}
+        {sub && <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{sub}</p>}
       </div>
     </div>
   );
@@ -230,10 +230,10 @@ export function ReceiptsPageClient() {
       {/* ── Page header ──────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100">
+          <h1 className="text-[28px] font-bold text-slate-900 dark:text-slate-50 leading-tight tracking-tight">
             קבלות ומסמכים
           </h1>
-          <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             ניהול קבלות, חשבוניות ומסמכי ביטול
           </p>
         </div>
@@ -241,8 +241,8 @@ export function ReceiptsPageClient() {
           <button
             onClick={handleExport}
             disabled={exporting}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-zinc-700
-              px-3 py-2 text-sm text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700
+              px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800
               transition-colors disabled:opacity-40"
           >
             <Download className="h-4 w-4" />
@@ -250,8 +250,8 @@ export function ReceiptsPageClient() {
           </button>
           <button
             onClick={() => setSettingsOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-zinc-700
-              px-3 py-2 text-sm text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700
+              px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800
               transition-colors"
           >
             <Settings2 className="h-4 w-4" />
@@ -261,9 +261,9 @@ export function ReceiptsPageClient() {
             onClick={() => setCreateOpen(true)}
             disabled={!settings}
             title={!settings ? 'נא להגדיר פרטי עסק תחילה' : undefined}
-            className="inline-flex items-center gap-2 rounded-lg bg-slate-900 dark:bg-zinc-100
-              px-4 py-2 text-sm font-medium text-white dark:text-zinc-900
-              hover:bg-slate-700 dark:hover:bg-zinc-300 transition-colors
+            className="inline-flex items-center gap-2 rounded-lg bg-indigo-600
+              px-4 py-2 text-sm font-medium text-white
+              hover:bg-indigo-700 transition-colors
               disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Plus className="h-4 w-4" />
@@ -331,25 +331,25 @@ export function ReceiptsPageClient() {
       {/* ── Toolbar ───────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-zinc-500 pointer-events-none" />
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
           <input
             type="text"
             placeholder="חיפוש לפי שם, מספר מסמך, טלפון..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900
-              pr-9 pl-3 py-2 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400
-              dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-slate-300
-              dark:focus:ring-zinc-600"
+            className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950
+              pr-9 pl-3 py-2 text-sm text-slate-900 dark:text-slate-50 placeholder:text-slate-400
+              dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300
+              dark:focus:ring-slate-600"
           />
         </div>
 
         <select
           value={docType}
           onChange={(e) => { setDocType(e.target.value as BillingDocType | ''); setPage(0); }}
-          className="rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900
-            px-3 py-2 text-sm text-slate-700 dark:text-zinc-300 focus:outline-none
-            focus:ring-2 focus:ring-slate-300 dark:focus:ring-zinc-600"
+          className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950
+            px-3 py-2 text-sm text-slate-700 dark:text-slate-300 focus:outline-none
+            focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600"
         >
           {DOC_TYPE_FILTER_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>{o.label}</option>
@@ -359,9 +359,9 @@ export function ReceiptsPageClient() {
         <select
           value={status}
           onChange={(e) => { setStatus(e.target.value as 'issued' | 'cancelled' | ''); setPage(0); }}
-          className="rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900
-            px-3 py-2 text-sm text-slate-700 dark:text-zinc-300 focus:outline-none
-            focus:ring-2 focus:ring-slate-300 dark:focus:ring-zinc-600"
+          className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950
+            px-3 py-2 text-sm text-slate-700 dark:text-slate-300 focus:outline-none
+            focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600"
         >
           <option value="">כל הסטטוסים</option>
           <option value="issued">הופק</option>
@@ -370,28 +370,28 @@ export function ReceiptsPageClient() {
 
         <button
           onClick={applyFilters}
-          className="rounded-lg bg-slate-100 dark:bg-zinc-800 px-4 py-2 text-sm font-medium
-            text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors"
+          className="rounded-lg bg-slate-100 dark:bg-slate-800 px-4 py-2 text-sm font-medium
+            text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
         >
           חפש
         </button>
       </div>
 
       {/* ── Table ─────────────────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+      <div className="w-full overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.06)] bg-white dark:bg-slate-900">
         {loading ? (
           <div className="p-12 text-center">
-            <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600 dark:border-zinc-600 dark:border-t-zinc-200 mb-3" />
-            <p className="text-sm text-slate-400 dark:text-zinc-500">טוען מסמכים...</p>
+            <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600 dark:border-slate-600 dark:border-t-slate-200 mb-3" />
+            <p className="text-sm text-slate-400 dark:text-slate-500">טוען מסמכים...</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="p-12 text-center">
-            <Receipt className="mx-auto h-10 w-10 text-slate-300 dark:text-zinc-600 mb-3" />
-            <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">
+            <Receipt className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600 mb-3" />
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
               {search || docType || status ? 'לא נמצאו מסמכים התואמים לחיפוש' : 'אין מסמכים עדיין'}
             </p>
             {!search && !docType && !status && (
-              <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                 הפק מסמך ראשון מכאן או מתוך תור שהושלם
               </p>
             )}
@@ -400,29 +400,29 @@ export function ReceiptsPageClient() {
           <>
             <table className="w-full text-sm" dir="rtl">
               <thead>
-                <tr className="border-b border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800/50">
-                  <th className="py-3 px-4 text-right text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
+                <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50">
+                  <th className="py-3 px-4 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
                     מס׳ מסמך
                   </th>
-                  <th className="py-3 px-4 text-right text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
+                  <th className="py-3 px-4 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
                     סוג
                   </th>
-                  <th className="py-3 px-4 text-right text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
+                  <th className="py-3 px-4 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
                     לקוח
                   </th>
-                  <th className="py-3 px-4 text-right text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide hidden sm:table-cell">
+                  <th className="py-3 px-4 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 hidden sm:table-cell">
                     טלפון
                   </th>
-                  <th className="py-3 px-4 text-right text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
+                  <th className="py-3 px-4 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
                     תאריך
                   </th>
-                  <th className="py-3 px-4 text-right text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
+                  <th className="py-3 px-4 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
                     סה״כ
                   </th>
-                  <th className="py-3 px-4 text-right text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide hidden md:table-cell">
+                  <th className="py-3 px-4 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 hidden md:table-cell">
                     מע״מ
                   </th>
-                  <th className="py-3 px-4 text-right text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
+                  <th className="py-3 px-4 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
                     סטטוס
                   </th>
                 </tr>
@@ -432,28 +432,28 @@ export function ReceiptsPageClient() {
                   <tr
                     key={doc.id}
                     onClick={() => openDrawer(doc)}
-                    className="border-b border-slate-50 dark:border-zinc-800/60 hover:bg-slate-50
-                      dark:hover:bg-zinc-800/30 transition-colors cursor-pointer"
+                    className="border-b border-slate-50 dark:border-slate-800/60 hover:bg-slate-50
+                      dark:hover:bg-slate-800/30 transition-colors cursor-pointer"
                   >
-                    <td className="py-3 px-4 font-mono text-xs font-medium text-slate-700 dark:text-zinc-300">
+                    <td className="py-3 px-4 font-mono text-xs font-medium text-slate-700 dark:text-slate-300">
                       {doc.doc_number}
                     </td>
-                    <td className="py-3 px-4 text-slate-600 dark:text-zinc-400 text-xs">
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400 text-xs">
                       {DOC_TYPE_LABELS[doc.doc_type]}
                     </td>
-                    <td className="py-3 px-4 text-slate-800 dark:text-zinc-200 font-medium">
+                    <td className="py-3 px-4 text-slate-800 dark:text-slate-200 font-medium">
                       {doc.customer_name}
                     </td>
-                    <td className="py-3 px-4 text-slate-500 dark:text-zinc-400 text-xs hidden sm:table-cell tabular-nums dir-ltr">
+                    <td className="py-3 px-4 text-slate-500 dark:text-slate-400 text-xs hidden sm:table-cell tabular-nums dir-ltr">
                       {doc.customer_phone ?? '—'}
                     </td>
-                    <td className="py-3 px-4 text-slate-500 dark:text-zinc-400 text-xs tabular-nums">
+                    <td className="py-3 px-4 text-slate-500 dark:text-slate-400 text-xs tabular-nums">
                       {fmtDate(doc.issued_at)}
                     </td>
-                    <td className="py-3 px-4 text-slate-900 dark:text-zinc-100 font-semibold tabular-nums">
+                    <td className="py-3 px-4 text-slate-900 dark:text-slate-50 font-semibold tabular-nums">
                       {fmtFull(doc.total)}
                     </td>
-                    <td className="py-3 px-4 text-slate-500 dark:text-zinc-400 text-xs tabular-nums hidden md:table-cell">
+                    <td className="py-3 px-4 text-slate-500 dark:text-slate-400 text-xs tabular-nums hidden md:table-cell">
                       {fmtFull(doc.vat_amount)}
                     </td>
                     <td className="py-3 px-4">
@@ -472,27 +472,27 @@ export function ReceiptsPageClient() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between border-t border-slate-100 dark:border-zinc-800 px-4 py-3">
-                <p className="text-xs text-slate-500 dark:text-zinc-400">
+              <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 px-4 py-3">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   מציג {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} מתוך {total}
                 </p>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => setPage((p) => Math.max(0, p - 1))}
                     disabled={page === 0}
-                    className="rounded-lg p-1.5 text-slate-500 dark:text-zinc-400 hover:bg-slate-100
-                      dark:hover:bg-zinc-800 disabled:opacity-30 transition-colors"
+                    className="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100
+                      dark:hover:bg-slate-800 disabled:opacity-30 transition-colors"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </button>
-                  <span className="text-xs text-slate-500 dark:text-zinc-400 px-2 tabular-nums">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 px-2 tabular-nums">
                     {page + 1} / {totalPages}
                   </span>
                   <button
                     onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                     disabled={page >= totalPages - 1}
-                    className="rounded-lg p-1.5 text-slate-500 dark:text-zinc-400 hover:bg-slate-100
-                      dark:hover:bg-zinc-800 disabled:opacity-30 transition-colors"
+                    className="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100
+                      dark:hover:bg-slate-800 disabled:opacity-30 transition-colors"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>

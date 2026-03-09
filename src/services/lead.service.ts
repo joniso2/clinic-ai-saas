@@ -15,7 +15,7 @@ import type { AppointmentType } from '@/types/appointments';
 import type { WorkingHoursDay } from '@/repositories/settings.repository';
 import logger from '@/lib/logger';
 
-const DISCORD_GUILD_UNMAPPED_REPLY = 'אנא פנה לשרת הרשמי של המרפאה לצורך המשך טיפול.';
+const DISCORD_GUILD_UNMAPPED_REPLY = 'אנא פנה לשרת הרשמי של העסק לצורך המשך טיפול.';
 
 const DEFAULT_OPEN_TIME  = '08:00';
 const DEFAULT_CLOSE_TIME = '16:00';
@@ -299,10 +299,10 @@ export async function processDiscordMessage(params: {
     if (!hoursCheck.within) {
       console.log('[Discord] Appointment outside business hours — rejecting before schedule');
       if (hoursCheck.dayClosed) {
-        return logPipelineAndReturn('הקליניקה סגורה ביום זה. באיזה יום אחר יהיה לך נוח להגיע?');
+        return logPipelineAndReturn('העסק סגור ביום זה. באיזה יום אחר יהיה לך נוח להגיע?');
       }
       return logPipelineAndReturn(
-        `הקליניקה פתוחה בין ${hoursCheck.openTime} ל-${hoursCheck.closeTime}. באיזו שעה יהיה לך נוח להגיע?`,
+        `אנחנו פתוחים בין ${hoursCheck.openTime} ל-${hoursCheck.closeTime}. באיזו שעה יהיה לך נוח להגיע?`,
       );
     }
 
@@ -395,7 +395,7 @@ export async function processDiscordMessage(params: {
         if (updateErr) console.error('[Discord] Failed to update new lead:', updateErr);
       }
       const time = appointmentService.formatAppointmentTime(result.appointment.datetime);
-      return logPipelineAndReturn(`מעולה! ${patientName}, קבענו לך תור ל${time}. נתראה בקליניקה!`);
+      return logPipelineAndReturn(`מעולה! ${patientName}, קבענו לך תור ל${time}. נתראה!`);
     }
 
     if (result.status === 'unavailable') {
@@ -422,7 +422,7 @@ export async function processDiscordMessage(params: {
 
     if (result.status === 'outside_hours') {
       return logPipelineAndReturn(
-        `שעות הקליניקה הן ${result.openHour}:00–${result.closeHour}:00. באיזו שעה תרצה לקבוע?`,
+        `שעות הפעילות הן ${result.openHour}:00–${result.closeHour}:00. באיזו שעה תרצה לקבוע?`,
       );
     }
 
@@ -465,5 +465,5 @@ export async function processDiscordMessage(params: {
   }
 
   const reply = (analysis.reply && analysis.reply.trim()) ? analysis.reply.trim() : null;
-  return logPipelineAndReturn(reply ?? 'מצטערים, לא הצלחתי להבין. נסה לשאול שוב או להתקשר למרפאה.');
+  return logPipelineAndReturn(reply ?? 'מצטערים, לא הצלחתי להבין. נסה לשאול שוב או ליצור קשר ישירות.');
 }

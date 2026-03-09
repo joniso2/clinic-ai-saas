@@ -15,7 +15,7 @@ export async function DELETE(req: NextRequest) {
   const deleteAuth = searchParams.get('delete_auth') === 'true';
 
   if (!userId || !clinicId) {
-    return NextResponse.json({ error: 'משתמש וקליניקה חובה' }, { status: 400 });
+    return NextResponse.json({ error: 'משתמש ועסק חובה' }, { status: 400 });
   }
 
   const supabase = getSupabaseAdmin();

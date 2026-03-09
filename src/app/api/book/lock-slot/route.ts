@@ -138,7 +138,7 @@ export async function POST(req: NextRequest) {
       is_used: false,
     });
 
-    const clinicName = clinic?.name ?? 'הקליניקה';
+    const clinicName = clinic?.name ?? 'העסק';
     const serviceName = service.service_name;
     await sendSMS(
       phone,

@@ -42,7 +42,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const row = await getClinicUser();
     if (!row?.clinic_id) return NextResponse.json({ error: 'לא מאומת' }, { status: 401 });
     if (row.role !== 'CLINIC_ADMIN') {
-      return NextResponse.json({ error: 'רק מנהל קליניקה יכול להנפיק זיכוי' }, { status: 403 });
+      return NextResponse.json({ error: 'אין לך הרשאה להנפיק זיכוי' }, { status: 403 });
     }
 
     const { id } = await params;

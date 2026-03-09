@@ -17,9 +17,9 @@ import type { ClinicSettings } from '@/services/settings.service';
 function TabSkeleton() {
   return (
     <div className="animate-pulse space-y-4 py-4">
-      <div className="h-5 w-32 rounded bg-slate-200 dark:bg-zinc-700" />
-      <div className="h-4 w-48 rounded bg-slate-100 dark:bg-zinc-800" />
-      <div className="h-40 rounded-xl bg-slate-100 dark:bg-zinc-800" />
+      <div className="h-5 w-32 rounded bg-slate-200 dark:bg-slate-700" />
+      <div className="h-4 w-48 rounded bg-slate-100 dark:bg-slate-800" />
+      <div className="h-40 rounded-xl bg-slate-100 dark:bg-slate-800" />
     </div>
   );
 }
@@ -95,8 +95,8 @@ export function SettingsTab({
                 onClick={() => setActiveTab(tab.id)}
                 className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-colors focus:outline-none ${
                   active
-                    ? 'bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm'
-                    : 'bg-slate-100 dark:bg-zinc-700/60 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700'
+                    ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm'
+                    : 'bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -107,7 +107,7 @@ export function SettingsTab({
         </div>
 
         {/* Desktop: vertical list */}
-        <div className="hidden lg:flex lg:flex-col lg:gap-0.5 lg:rounded-2xl lg:border lg:border-slate-200 lg:dark:border-zinc-700 lg:bg-white lg:dark:bg-zinc-800 lg:overflow-hidden lg:p-1.5">
+        <div className="hidden lg:flex lg:flex-col lg:gap-0.5 lg:rounded-2xl lg:border lg:border-slate-200 lg:dark:border-slate-700 lg:bg-white lg:dark:bg-slate-800 lg:overflow-hidden lg:p-1.5">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
@@ -118,8 +118,8 @@ export function SettingsTab({
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-right transition-colors focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-inset flex-row-reverse justify-end ${
                   active
-                    ? 'bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 shadow-sm'
-                    : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700/60'
+                    ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60'
                 }`}
               >
                 <Icon className="h-4 w-4 shrink-0" />

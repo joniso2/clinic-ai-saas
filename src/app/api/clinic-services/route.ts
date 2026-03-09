@@ -5,7 +5,7 @@ import { getClinicUser } from '@/lib/auth-server';
 /** GET /api/clinic-services — list services for current user's clinic. STAFF + CLINIC_ADMIN. Returns role for UI. */
 export async function GET() {
   const row = await getClinicUser();
-  if (!row?.clinic_id) return NextResponse.json({ error: 'לא מאומת או ללא גישה לקליניקה' }, { status: 401 });
+  if (!row?.clinic_id) return NextResponse.json({ error: 'לא מאומת או ללא גישה' }, { status: 401 });
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -44,7 +44,7 @@ export async function GET() {
 /** POST /api/clinic-services — add service. CLINIC_ADMIN only. */
 export async function POST(req: NextRequest) {
   const row = await getClinicUser();
-  if (!row?.clinic_id) return NextResponse.json({ error: 'לא מאומת או ללא קליניקה' }, { status: 401 });
+  if (!row?.clinic_id) return NextResponse.json({ error: 'לא מאומת או ללא גישה' }, { status: 401 });
   if (row.role !== 'CLINIC_ADMIN') return NextResponse.json({ error: 'אין הרשאה לערוך תמחור' }, { status: 403 });
 
   let body: { service_name?: string; price?: number; duration_minutes?: number; aliases?: string[]; is_active?: boolean; description?: string | null; category?: string | null };

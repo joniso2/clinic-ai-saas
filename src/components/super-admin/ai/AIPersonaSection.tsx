@@ -316,8 +316,8 @@ export default function AIPersonaSection() {
       {/* Header */}
       <div className="flex items-start justify-between flex-row-reverse gap-4 flex-wrap">
         <div className="text-right">
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100">AI Persona &amp; Behavior</h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">AI Persona &amp; Behavior</h2>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             התאם את אישיות ה-AI, הסגנון, האסטרטגיה והוראות מותאמות אישית לכל קליניקה.
           </p>
         </div>
@@ -328,7 +328,7 @@ export default function AIPersonaSection() {
 
       {/* Clinic selector */}
       {clinics.length > 0 && (
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-4">
+        <div className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 p-4">
           <div className="flex items-center gap-4 flex-row-reverse flex-wrap">
             <label className="text-xs font-medium text-zinc-400 shrink-0">קליניקה</label>
             <select
@@ -354,7 +354,7 @@ export default function AIPersonaSection() {
         <div className="xl:col-span-3 space-y-5">
 
           {/* Industry type */}
-          <section className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-5">
+          <section className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
             <div className="mb-4 text-right">
               <h3 className="text-sm font-semibold text-zinc-100">סוג עסק / תעשייה</h3>
               <p className="text-xs text-zinc-500 mt-0.5">בחר את ההקשר שבו פועלת הקליניקה — ה-AI יתאים את ההתנהגות בהתאם.</p>
@@ -388,7 +388,7 @@ export default function AIPersonaSection() {
           </section>
 
           {/* Conversation strategy */}
-          <section className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-5">
+          <section className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
             <div className="mb-4 text-right">
               <h3 className="text-sm font-semibold text-zinc-100">אסטרטגיית שיחה</h3>
               <p className="text-xs text-zinc-500 mt-0.5">כיצד ה-AI מוביל את השיחה לפעולה הבאה.</p>
@@ -424,7 +424,7 @@ export default function AIPersonaSection() {
           </section>
 
           {/* Tone & length */}
-          <section className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-5">
+          <section className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
             <h3 className="text-sm font-semibold text-zinc-100 mb-4 text-right">טון ואורך תגובה</h3>
             <div className="grid sm:grid-cols-2 gap-4">
               <FieldSelect
@@ -472,7 +472,7 @@ export default function AIPersonaSection() {
           </section>
 
           {/* Business description */}
-          <section className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-5">
+          <section className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
             <h3 className="text-sm font-semibold text-zinc-100 mb-1 text-right">תיאור העסק</h3>
             <p className="text-xs text-zinc-500 mb-3 text-right">תיאור קצר של הקליניקה, מומחיות ייחודית, ושירותים מרכזיים — ה-AI ישתמש בזה כהקשר.</p>
             <textarea
@@ -487,7 +487,7 @@ export default function AIPersonaSection() {
           </section>
 
           {/* Custom prompt override */}
-          <section className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-5">
+          <section className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
             <div className="flex items-start justify-between flex-row-reverse mb-1 gap-2">
               <h3 className="text-sm font-semibold text-zinc-100 text-right">הוראות מותאמות אישית</h3>
               <span className="shrink-0 rounded-md bg-indigo-500/10 text-indigo-300 text-[10px] font-semibold px-2 py-0.5 border border-indigo-500/20">Advanced</span>

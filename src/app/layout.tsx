@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Heebo } from 'next/font/google';
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 
 // Railway 1GB: avoid static generation at build time
 export const dynamic = "force-dynamic";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const heebo = Heebo({
+  weight: ['400', '500', '600', '700'],
+  subsets: ['hebrew', 'latin'],
+  variable: '--font-heebo',
 });
 
 export const metadata: Metadata = {
@@ -44,7 +40,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased transition-colors duration-300`}
+        className={`${heebo.variable} antialiased transition-colors duration-300`}
       >
         <ThemeProvider>
           {children}

@@ -22,7 +22,7 @@ export async function PATCH(req: NextRequest) {
   const r = role === 'CLINIC_ADMIN' ? 'CLINIC_ADMIN' : role === 'STAFF' ? 'STAFF' : null;
 
   if (!userId || !clinicId || !r) {
-    return NextResponse.json({ error: 'משתמש, קליניקה ותפקיד חובה' }, { status: 400 });
+    return NextResponse.json({ error: 'משתמש, עסק ותפקיד חובה' }, { status: 400 });
   }
 
   const supabase = getSupabaseAdmin();

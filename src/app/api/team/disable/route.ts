@@ -5,7 +5,7 @@ import * as settingsRepo from '@/repositories/settings.repository';
 /** POST /api/team/disable — set member active/inactive (CLINIC_ADMIN only). */
 export async function POST(req: NextRequest) {
   const row = await getClinicUser();
-  if (!row?.clinic_id) return NextResponse.json({ error: 'לא מאומת או ללא גישה לקליניקה' }, { status: 401 });
+  if (!row?.clinic_id) return NextResponse.json({ error: 'לא מאומת או ללא גישה' }, { status: 401 });
   if (row.role !== 'CLINIC_ADMIN') return NextResponse.json({ error: 'אין הרשאה' }, { status: 403 });
 
   let body: { user_id?: string; disable?: boolean };

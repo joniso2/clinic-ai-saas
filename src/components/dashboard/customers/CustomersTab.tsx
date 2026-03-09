@@ -43,23 +43,23 @@ const SOURCE_BADGE_STYLES: Record<string, { label: string; cls: string }> = {
   Organic:     { label: 'אורגני',    cls: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400' },
   discord:     { label: 'דיסקורד',   cls: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400' },
   Discord:     { label: 'דיסקורד',   cls: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400' },
-  Other:       { label: 'אחר',       cls: 'bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400' },
+  Other:       { label: 'אחר',       cls: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400' },
 };
 
 function getSourceBadgeStyle(source: string | null | undefined) {
   if (!source) return null;
   return SOURCE_BADGE_STYLES[source] ?? {
     label: SOURCE_LABELS[source] ?? source,
-    cls: 'bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400',
+    cls: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
   };
 }
 
 function getStatusBadgeStyle(status: string) {
   if (status === 'active')   return { label: 'פעיל',    cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' };
   if (status === 'dormant')  return { label: 'רדום',    cls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' };
-  if (status === 'inactive') return { label: 'לא פעיל', cls: 'bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400' };
+  if (status === 'inactive') return { label: 'לא פעיל', cls: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400' };
   if (status === 'Closed')   return { label: 'הושלם',   cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' };
-  return { label: status, cls: 'bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400' };
+  return { label: status, cls: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400' };
 }
 
 const AVATAR_COLORS = [
@@ -141,7 +141,7 @@ function computeSuggestions(customer: Patient | null, allCustomers: Patient[]): 
 
 function SourceBadge({ source }: { source: string | null | undefined }) {
   const s = getSourceBadgeStyle(source);
-  if (!s) return <span className="text-slate-400 dark:text-zinc-500 text-sm">—</span>;
+  if (!s) return <span className="text-slate-400 dark:text-slate-500 text-sm">—</span>;
   return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${s.cls}`}>{s.label}</span>;
 }
 
@@ -170,12 +170,12 @@ const ACCENT: Record<Accent, { grad: string; iconBg: string; iconColor: string; 
 function KpiCard({ label, value, sub, icon: Icon, accent }: { label: string; value: string; sub?: string; icon: React.ComponentType<{ className?: string }>; accent: Accent }) {
   const a = ACCENT[accent];
   return (
-    <div className={`rounded-2xl border ${a.border} bg-gradient-to-br ${a.grad} bg-white dark:bg-zinc-900/80 p-5 shadow-sm hover:shadow-md transition-all duration-200`}>
+    <div className={`rounded-2xl border ${a.border} bg-gradient-to-br ${a.grad} bg-white dark:bg-slate-950/80 p-5 shadow-sm hover:shadow-md transition-all duration-200`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-[0.1em]">{label}</p>
-          <p className="mt-2.5 text-[1.75rem] font-bold text-slate-900 dark:text-zinc-50 tabular-nums leading-none tracking-tight">{value}</p>
-          {sub && <p className="mt-1.5 text-xs text-slate-400 dark:text-zinc-500">{sub}</p>}
+          <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-[0.1em]">{label}</p>
+          <p className="mt-2.5 text-[1.75rem] font-bold text-slate-900 dark:text-slate-50 tabular-nums leading-none tracking-tight">{value}</p>
+          {sub && <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">{sub}</p>}
         </div>
         <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${a.iconBg}`}>
           <Icon className={`h-5 w-5 ${a.iconColor}`} />
@@ -282,25 +282,25 @@ function CustomerDrawer({
     amber:   'bg-amber-50 border-amber-200/70 text-amber-700 dark:bg-amber-900/20 dark:border-amber-800/40 dark:text-amber-300',
     indigo:  'bg-indigo-50 border-indigo-200/70 text-indigo-700 dark:bg-indigo-900/20 dark:border-indigo-800/40 dark:text-indigo-300',
     emerald: 'bg-emerald-50 border-emerald-200/70 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800/40 dark:text-emerald-300',
-    slate:   'bg-slate-50 border-slate-200/70 text-slate-600 dark:bg-zinc-800/60 dark:border-zinc-700/60 dark:text-zinc-300',
+    slate:   'bg-slate-50 border-slate-200/70 text-slate-600 dark:bg-slate-800/60 dark:border-slate-700/60 dark:text-slate-300',
   };
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true">
-      <div className="absolute inset-0 bg-slate-900/40 dark:bg-zinc-950/60 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
       <div
-        className="relative w-full max-w-[420px] bg-white dark:bg-zinc-900 border-s border-slate-200 dark:border-zinc-800 shadow-2xl overflow-y-auto flex flex-col"
+        className="relative w-full max-w-[420px] bg-white dark:bg-slate-950 border-s border-slate-200 dark:border-slate-800 shadow-2xl overflow-y-auto flex flex-col"
         dir="rtl"
         style={{ animation: 'slideInFromRight 220ms ease-out forwards' }}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-slate-100 dark:border-zinc-800 px-5 py-4 flex items-center justify-between">
+        <div className="sticky top-0 z-10 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${avatarColor} text-white text-sm font-bold shrink-0`}>
               {initials}
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 leading-tight">{customer?.full_name ?? '...'}</h2>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50 leading-tight">{customer?.full_name ?? '...'}</h2>
               {statusBadge && (
                 <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium mt-0.5 ${statusBadge.cls}`}>
                   {statusBadge.label}
@@ -308,7 +308,7 @@ function CustomerDrawer({
               )}
             </div>
           </div>
-          <button type="button" onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-zinc-800 transition" aria-label="סגור">
+          <button type="button" onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition" aria-label="סגור">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -317,24 +317,24 @@ function CustomerDrawer({
         <div className="flex-1 p-5 space-y-5">
           {loading && !customer ? (
             <div className="flex justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-indigo-500" />
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 dark:border-slate-700 border-t-indigo-500" />
             </div>
           ) : customer ? (
             <>
               {/* Contact info */}
               <section>
-                <p className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-[0.1em] mb-2">פרטי קשר</p>
-                <div className="rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200/80 dark:border-zinc-700/60 divide-y divide-slate-100 dark:divide-zinc-800">
+                <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] mb-2">פרטי קשר</p>
+                <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 divide-y divide-slate-100 dark:divide-slate-800">
                   <div className="flex items-center gap-3 px-4 py-3">
-                    <Phone className="h-4 w-4 text-slate-400 dark:text-zinc-500 shrink-0" />
+                    <Phone className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
                     <a href={`tel:${customer.phone}`} dir="ltr" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
                       {formatPhoneILS(customer.phone)}
                     </a>
                   </div>
                   {daysAgo !== null && (
                     <div className="flex items-center gap-3 px-4 py-3">
-                      <Clock className="h-4 w-4 text-slate-400 dark:text-zinc-500 shrink-0" />
-                      <span className="text-sm text-slate-600 dark:text-zinc-300">
+                      <Clock className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
+                      <span className="text-sm text-slate-600 dark:text-slate-300">
                         ביקור אחרון לפני <span className="font-semibold">{daysAgo}</span> ימים
                       </span>
                     </div>
@@ -344,12 +344,12 @@ function CustomerDrawer({
 
               {/* Revenue summary */}
               <section>
-                <p className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-[0.1em] mb-2">סיכום פיננסי</p>
+                <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] mb-2">סיכום פיננסי</p>
                 <div className="rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/5 dark:from-emerald-500/20 dark:to-transparent border border-emerald-200/60 dark:border-emerald-800/30 p-4">
-                  <p className="text-[2rem] font-bold text-slate-900 dark:text-zinc-50 tabular-nums leading-none">
+                  <p className="text-[2rem] font-bold text-slate-900 dark:text-slate-50 tabular-nums leading-none">
                     {formatCurrencyILS(billingDocsTotal ?? Number(customer.total_revenue))}
                   </p>
-                  <p className="mt-1.5 text-xs text-slate-500 dark:text-zinc-400">
+                  <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
                     {customer.visits_count} ביקורים · ביקור אחרון {formatDate(customer.last_visit_date)}
                     {billingDocsTotal !== null && (
                       <span className="mr-1.5 text-emerald-600 dark:text-emerald-400">· לפי קבלות</span>
@@ -361,7 +361,7 @@ function CustomerDrawer({
               {/* Billing: קבלות וחשבוניות */}
               <section>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-[0.1em]">קבלות וחשבוניות</p>
+                  <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em]">קבלות וחשבוניות</p>
                   <button
                     type="button"
                     onClick={() => handleOpenCreateModal()}
@@ -375,7 +375,7 @@ function CustomerDrawer({
 
                 {billingLoading && (
                   <div className="flex justify-center py-5">
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-indigo-500" />
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-200 dark:border-slate-700 border-t-indigo-500" />
                   </div>
                 )}
                 {billingError && (
@@ -383,9 +383,9 @@ function CustomerDrawer({
                 )}
 
                 {!billingLoading && !billingError && billingDocs.length === 0 && (
-                  <div className="py-6 text-center rounded-xl border border-dashed border-slate-200 dark:border-zinc-700">
-                    <FileText className="mx-auto h-7 w-7 text-slate-300 dark:text-zinc-600 mb-2" />
-                    <p className="text-sm text-slate-400 dark:text-zinc-500">אין קבלות עדיין ללקוח זה</p>
+                  <div className="py-6 text-center rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                    <FileText className="mx-auto h-7 w-7 text-slate-300 dark:text-slate-600 mb-2" />
+                    <p className="text-sm text-slate-400 dark:text-slate-500">אין קבלות עדיין ללקוח זה</p>
                     <button
                       type="button"
                       onClick={() => handleOpenCreateModal()}
@@ -398,31 +398,31 @@ function CustomerDrawer({
                 )}
 
                 {billingDocs.length > 0 && (
-                  <div className="rounded-xl border border-slate-100 dark:border-zinc-800 overflow-hidden">
-                    <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 bg-slate-50 dark:bg-zinc-800/60 px-3 py-2 border-b border-slate-100 dark:border-zinc-800">
-                      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500">תאריך</span>
-                      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500">סוג</span>
-                      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500 text-left">שירות</span>
-                      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-zinc-500 text-left">סכום</span>
+                  <div className="rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+                    <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 bg-slate-50 dark:bg-slate-800/60 px-3 py-2 border-b border-slate-100 dark:border-slate-800">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">תאריך</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">סוג</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 text-left">שירות</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500 text-left">סכום</span>
                     </div>
-                    <div className="divide-y divide-slate-50 dark:divide-zinc-800/60">
+                    <div className="divide-y divide-slate-50 dark:divide-slate-800/60">
                       {billingDocs.map((doc) => (
                         <button
                           key={doc.id}
                           type="button"
                           onClick={() => { setSelectedBillingDoc(doc); setBillingDrawerOpen(true); }}
-                          className="w-full grid grid-cols-[1fr_auto_auto_auto] gap-2 items-center px-3 py-2.5 text-right hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors"
+                          className="w-full grid grid-cols-[1fr_auto_auto_auto] gap-2 items-center px-3 py-2.5 text-right hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                         >
-                          <span className="text-xs text-slate-600 dark:text-zinc-300 tabular-nums">
+                          <span className="text-xs text-slate-600 dark:text-slate-300 tabular-nums">
                             {new Date(doc.issued_at).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' })}
                           </span>
-                          <span className="text-xs font-medium text-slate-700 dark:text-zinc-200 whitespace-nowrap">
+                          <span className="text-xs font-medium text-slate-700 dark:text-slate-200 whitespace-nowrap">
                             {DOC_TYPE_LABELS[doc.doc_type]}
                           </span>
-                          <span className="text-xs text-slate-500 dark:text-zinc-400 truncate max-w-[72px] text-left">
+                          <span className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[72px] text-left">
                             {doc.billing_document_items?.[0]?.description ?? '—'}
                           </span>
-                          <span className="text-xs font-semibold text-slate-900 dark:text-zinc-100 tabular-nums whitespace-nowrap text-left">
+                          <span className="text-xs font-semibold text-slate-900 dark:text-slate-50 tabular-nums whitespace-nowrap text-left">
                             ₪{Number(doc.total).toLocaleString('he-IL', { minimumFractionDigits: 0 })}
                           </span>
                         </button>
@@ -465,7 +465,7 @@ function CustomerDrawer({
                 <section>
                   <div className="flex items-center gap-1.5 mb-2">
                     <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
-                    <p className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-[0.1em]">פעולות מוצעות</p>
+                    <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em]">פעולות מוצעות</p>
                   </div>
                   <div className="space-y-2">
                     {suggestions.map((s, i) => (
@@ -480,19 +480,19 @@ function CustomerDrawer({
 
               {/* Recall / follow-up */}
               <section>
-                <p className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-[0.1em] mb-2">מעקב וחזרה</p>
-                <div className="rounded-xl border border-slate-200/80 dark:border-zinc-700/60 bg-slate-50/50 dark:bg-zinc-800/40 p-4 space-y-3">
+                <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] mb-2">מעקב וחזרה</p>
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/40 p-4 space-y-3">
                   <label className="flex items-center justify-between cursor-pointer">
                     <div className="flex items-center gap-2.5">
                       {recall.active
                         ? <BellRing className="h-4 w-4 text-indigo-500" />
-                        : <Bell className="h-4 w-4 text-slate-400 dark:text-zinc-500" />}
-                      <span className="text-sm font-medium text-slate-700 dark:text-zinc-300">מסומן לפולואפ</span>
+                        : <Bell className="h-4 w-4 text-slate-400 dark:text-slate-500" />}
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">מסומן לפולואפ</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => onRecallChange({ ...recall, active: !recall.active })}
-                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${recall.active ? 'bg-indigo-500' : 'bg-slate-200 dark:bg-zinc-700'}`}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${recall.active ? 'bg-indigo-500' : 'bg-slate-200 dark:bg-slate-700'}`}
                       aria-checked={recall.active}
                       role="switch"
                     >
@@ -504,12 +504,12 @@ function CustomerDrawer({
                   </label>
                   {recall.active && (
                     <div>
-                      <label className="text-xs text-slate-500 dark:text-zinc-400 mb-1 block">תאריך תזכורת</label>
+                      <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">תאריך תזכורת</label>
                       <input
                         type="date"
                         value={recall.reminderDate}
                         onChange={(e) => onRecallChange({ ...recall, reminderDate: e.target.value })}
-                        className="w-full rounded-lg border border-slate-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-slate-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                        className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                         dir="rtl"
                       />
                     </div>
@@ -520,21 +520,21 @@ function CustomerDrawer({
               {/* Appointment history */}
               {appointments.length > 0 && (
                 <section>
-                  <p className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-[0.1em] mb-2">
+                  <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] mb-2">
                     היסטוריית תורים ({appointments.length})
                   </p>
                   <div className="space-y-2">
                     {appointments.map((apt) => {
                       const existingDoc = appointmentDocMap.get(apt.id);
                       return (
-                        <div key={apt.id} className="rounded-xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-800/40 px-3 py-2.5">
+                        <div key={apt.id} className="rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800/40 px-3 py-2.5">
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-slate-800 dark:text-zinc-200">{formatDate(apt.datetime)}</p>
-                              {apt.service_name && <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">{apt.service_name}</p>}
-                              {apt.notes && <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5 truncate">{apt.notes}</p>}
+                              <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{formatDate(apt.datetime)}</p>
+                              {apt.service_name && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{apt.service_name}</p>}
+                              {apt.notes && <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate">{apt.notes}</p>}
                             </div>
-                            <span className="text-sm font-semibold text-slate-700 dark:text-zinc-200 tabular-nums whitespace-nowrap shrink-0">
+                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 tabular-nums whitespace-nowrap shrink-0">
                               {apt.revenue != null ? formatCurrencyILS(apt.revenue) : '—'}
                             </span>
                           </div>
@@ -575,13 +575,13 @@ function CustomerDrawer({
 
               {/* Action buttons */}
               <section className="pt-1">
-                <p className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-[0.1em] mb-2">פעולות</p>
+                <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] mb-2">פעולות</p>
                 <div className="grid grid-cols-3 gap-2 mb-2">
                   <a
                     href={`tel:${customer.phone}`}
-                    className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2 py-3 text-xs font-medium text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 transition"
+                    className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-3 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                   >
-                    <Phone className="h-4 w-4 text-slate-500 dark:text-zinc-400" />
+                    <Phone className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                     התקשר
                   </a>
                   <button
@@ -604,7 +604,7 @@ function CustomerDrawer({
                 <button
                   type="button"
                   onClick={onDelete}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-zinc-700 px-4 py-2.5 text-sm font-medium text-slate-400 dark:text-zinc-500 hover:border-red-200 dark:hover:border-red-800/50 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 dark:hover:text-red-400 transition"
+                  className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-400 dark:text-slate-500 hover:border-red-200 dark:hover:border-red-800/50 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 dark:hover:text-red-400 transition"
                 >
                   <Archive className="h-4 w-4" /> ארכוב לקוח
                 </button>
@@ -640,40 +640,40 @@ function LeadDrawer({ lead, onClose, onWhatsApp, onBackToLeads, onDelete }: {
   return (
     <>
     <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true">
-      <div className="absolute inset-0 bg-slate-900/40 dark:bg-zinc-950/60 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-[2px]" onClick={onClose} aria-hidden="true" />
       <div
-        className="relative w-full max-w-[420px] bg-white dark:bg-zinc-900 border-s border-slate-200 dark:border-zinc-800 shadow-2xl overflow-y-auto flex flex-col"
+        className="relative w-full max-w-[420px] bg-white dark:bg-slate-950 border-s border-slate-200 dark:border-slate-800 shadow-2xl overflow-y-auto flex flex-col"
         dir="rtl"
         style={{ animation: 'slideInFromRight 220ms ease-out forwards' }}
       >
-        <div className="sticky top-0 z-10 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-slate-100 dark:border-zinc-800 px-5 py-4 flex items-center justify-between">
+        <div className="sticky top-0 z-10 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${avatarColor} text-white text-sm font-bold shrink-0`}>
               {getInitials(lead.full_name)}
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 leading-tight">{lead.full_name || '—'}</h2>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50 leading-tight">{lead.full_name || '—'}</h2>
               <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium mt-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">הושלם</span>
             </div>
           </div>
-          <button type="button" onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition" aria-label="סגור">
+          <button type="button" onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition" aria-label="סגור">
             <X className="h-5 w-5" />
           </button>
         </div>
 
         <div className="flex-1 p-5 space-y-5">
           <section>
-            <p className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-[0.1em] mb-2">פרטי קשר</p>
-            <div className="rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200/80 dark:border-zinc-700/60 divide-y divide-slate-100 dark:divide-zinc-800">
+            <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] mb-2">פרטי קשר</p>
+            <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 divide-y divide-slate-100 dark:divide-slate-800">
               <div className="flex items-center gap-3 px-4 py-3">
-                <Phone className="h-4 w-4 text-slate-400 dark:text-zinc-500 shrink-0" />
+                <Phone className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
                 <a href={lead.phone ? `tel:${lead.phone}` : '#'} dir="ltr" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
                   {formatPhoneILS(lead.phone)}
                 </a>
               </div>
               {lead.source && (
                 <div className="flex items-center gap-3 px-4 py-3">
-                  <span className="text-xs text-slate-400 dark:text-zinc-500 shrink-0">מקור</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 shrink-0">מקור</span>
                   <SourceBadge source={lead.source} />
                 </div>
               )}
@@ -682,24 +682,24 @@ function LeadDrawer({ lead, onClose, onWhatsApp, onBackToLeads, onDelete }: {
 
           {value > 0 && (
             <section>
-              <p className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-[0.1em] mb-2">שווי</p>
+              <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] mb-2">שווי</p>
               <div className="rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/5 dark:from-emerald-500/20 dark:to-transparent border border-emerald-200/60 dark:border-emerald-800/30 p-4">
-                <p className="text-[2rem] font-bold text-slate-900 dark:text-zinc-50 tabular-nums leading-none">{formatCurrencyILS(value)}</p>
-                <p className="mt-1.5 text-xs text-slate-500 dark:text-zinc-400">תאריך: {formatDate(lead.created_at)}</p>
+                <p className="text-[2rem] font-bold text-slate-900 dark:text-slate-50 tabular-nums leading-none">{formatCurrencyILS(value)}</p>
+                <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">תאריך: {formatDate(lead.created_at)}</p>
               </div>
             </section>
           )}
 
           {/* Billing: only for customers (patients), not for leads */}
           <section>
-            <p className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-[0.1em] mb-2">קבלות וחשבוניות</p>
-            <div className="py-6 text-center rounded-xl border border-dashed border-slate-200 dark:border-zinc-700 bg-slate-50/50 dark:bg-zinc-800/30">
-              <p className="text-sm text-slate-500 dark:text-zinc-400">חיוב זמין רק לאחר שהליד הופך ללקוח</p>
+            <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] mb-2">קבלות וחשבוניות</p>
+            <div className="py-6 text-center rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
+              <p className="text-sm text-slate-500 dark:text-slate-400">חיוב זמין רק לאחר שהליד הופך ללקוח</p>
             </div>
           </section>
 
           <section className="pt-1">
-            <p className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-[0.1em] mb-2">פעולות</p>
+            <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] mb-2">פעולות</p>
             <div className="grid grid-cols-2 gap-2 mb-2">
               <button
                 type="button"
@@ -711,7 +711,7 @@ function LeadDrawer({ lead, onClose, onWhatsApp, onBackToLeads, onDelete }: {
               <button
                 type="button"
                 onClick={onBackToLeads}
-                className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 dark:bg-zinc-100 px-4 py-3 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-slate-800 dark:hover:bg-white transition"
+                className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 dark:bg-slate-100 px-4 py-3 text-sm font-semibold text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-white transition"
               >
                 <ArrowRight className="h-4 w-4" /> ללידים
               </button>
@@ -719,7 +719,7 @@ function LeadDrawer({ lead, onClose, onWhatsApp, onBackToLeads, onDelete }: {
             <button
               type="button"
               onClick={onDelete}
-              className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-zinc-700 px-4 py-2.5 text-sm font-medium text-slate-400 dark:text-zinc-500 hover:border-red-200 dark:hover:border-red-800/50 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 dark:hover:text-red-400 transition"
+              className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-400 dark:text-slate-500 hover:border-red-200 dark:hover:border-red-800/50 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 dark:hover:text-red-400 transition"
             >
               <Trash2 className="h-4 w-4" /> מחק ליד
             </button>
@@ -749,13 +749,13 @@ function Toolbar({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" dir="rtl">
       <div className="relative flex-1 max-w-sm">
-        <Search className="absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-zinc-500 pointer-events-none" />
+        <Search className="absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
         <input
           type="search"
           value={searchInput}
           onChange={(e) => onSearch(e.target.value)}
           placeholder="חיפוש לפי שם או טלפון..."
-          className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 pr-11 pl-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 text-right shadow-sm transition"
+          className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 pr-11 pl-3 py-2.5 text-sm text-slate-900 dark:text-slate-50 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 text-right shadow-sm transition"
           dir="rtl"
         />
       </div>
@@ -767,7 +767,7 @@ function Toolbar({
             className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2.5 text-xs font-medium shadow-sm transition ${
               hasActiveFilters
                 ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                : 'border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700'
+                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
             }`}
           >
             <Filter className="h-3.5 w-3.5" />
@@ -784,7 +784,7 @@ function Toolbar({
           type="button"
           onClick={onDownload}
           disabled={downloadingTemplate}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-xs font-medium text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-sm transition disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition disabled:opacity-60"
         >
           {downloadingTemplate
             ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
@@ -795,7 +795,7 @@ function Toolbar({
         <button
           type="button"
           onClick={onImport}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-xs font-medium text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition"
         >
           <Upload className="h-3.5 w-3.5" /> ייבוא לקוחות
         </button>
@@ -803,7 +803,7 @@ function Toolbar({
         <button
           type="button"
           onClick={onBackToLeads}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-xs font-medium text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 shadow-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition"
         >
           חזרה ללידים <ArrowRight className="h-3.5 w-3.5" />
         </button>
@@ -821,12 +821,12 @@ function DeleteConfirm({ title, body, onCancel, onConfirm, loading, confirmLabel
 }) {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/50 dark:bg-zinc-950/70" onClick={onCancel} aria-hidden="true" />
-      <div className="relative rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 shadow-xl text-right max-w-sm w-full" dir="rtl">
-        <h3 className="font-semibold text-slate-900 dark:text-zinc-100">{title}</h3>
-        <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">{body}</p>
+      <div className="absolute inset-0 bg-slate-900/50 dark:bg-slate-950/70" onClick={onCancel} aria-hidden="true" />
+      <div className="relative rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-6 shadow-xl text-right max-w-sm w-full" dir="rtl">
+        <h3 className="font-semibold text-slate-900 dark:text-slate-50">{title}</h3>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{body}</p>
         <div className="mt-5 flex gap-2 justify-start">
-          <button type="button" onClick={onCancel} className="rounded-xl border border-slate-200 dark:border-zinc-600 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800">ביטול</button>
+          <button type="button" onClick={onCancel} className="rounded-xl border border-slate-200 dark:border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">ביטול</button>
           <button type="button" onClick={onConfirm} disabled={loading} className="rounded-xl bg-red-600 hover:bg-red-500 text-white px-4 py-2.5 text-sm font-medium disabled:opacity-60 flex items-center gap-2">
             {loading ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : confirmIcon}
             {confirmLabel}
@@ -1073,7 +1073,7 @@ export function CustomersTab() {
   // ── Filter panel (shared) ────────────────────────────────────────────────────
 
   const filterPanel = (
-    <div className="absolute left-0 top-full mt-2 z-30 w-80 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xl p-4 space-y-4" dir="rtl">
+    <div className="absolute left-0 top-full mt-2 z-30 w-80 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-2xl p-4 space-y-4" dir="rtl">
       <div className="grid grid-cols-2 gap-3">
         {[
           { label: 'תאריך מ-', type: 'date', value: dateFrom, onChange: setDateFrom },
@@ -1082,13 +1082,13 @@ export function CustomersTab() {
           { label: 'הכנסה מקס׳ (₪)', type: 'number', value: revenueMaxFilter, onChange: setRevenueMaxFilter, placeholder: '—' },
         ].map(({ label, type, value, onChange, placeholder }) => (
           <div key={label}>
-            <label className="block text-[11px] font-medium text-slate-500 dark:text-zinc-400 mb-1">{label}</label>
+            <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">{label}</label>
             <input
               type={type}
               value={value}
               onChange={(e) => onChange(e.target.value)}
               placeholder={placeholder}
-              className="w-full rounded-lg border border-slate-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-xs text-slate-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-900 dark:text-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
               dir="rtl"
             />
           </div>
@@ -1097,15 +1097,15 @@ export function CustomersTab() {
 
       <div className="space-y-3">
         <div>
-          <label className="block text-[11px] font-medium text-slate-500 dark:text-zinc-400 mb-1">סטטוס</label>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-full rounded-lg border border-slate-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-xs text-slate-700 dark:text-zinc-300 focus:outline-none" dir="rtl">
+          <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">סטטוס</label>
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 focus:outline-none" dir="rtl">
             <option value="">הכל</option>
             {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{PATIENT_STATUS_LABELS[s] ?? s}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-[11px] font-medium text-slate-500 dark:text-zinc-400 mb-1">מיון לפי</label>
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} className="w-full rounded-lg border border-slate-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-xs text-slate-700 dark:text-zinc-300 focus:outline-none" dir="rtl">
+          <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">מיון לפי</label>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 focus:outline-none" dir="rtl">
             {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </div>
@@ -1117,8 +1117,8 @@ export function CustomersTab() {
           { label: 'ביקור אחרון 6+ חודשים', checked: lastVisitOver6, onChange: setLastVisitOver6 },
         ].map(({ label, checked, onChange }) => (
           <label key={label} className="inline-flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="rounded border-slate-300 dark:border-zinc-600 text-indigo-500 focus:ring-indigo-500/30" />
-            <span className="text-xs text-slate-600 dark:text-zinc-300">{label}</span>
+            <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="rounded border-slate-300 dark:border-slate-600 text-indigo-500 focus:ring-indigo-500/30" />
+            <span className="text-xs text-slate-600 dark:text-slate-300">{label}</span>
           </label>
         ))}
       </div>
@@ -1135,9 +1135,30 @@ export function CustomersTab() {
 
   if (loading && customers.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 gap-4" dir="rtl">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-indigo-500" />
-        <p className="text-sm text-slate-500 dark:text-zinc-400">טוען לקוחות...</p>
+      <div className="space-y-6 py-4" dir="rtl">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-3">
+              <div className="h-10 w-10 rounded-full animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />
+              <div className="h-7 w-20 rounded-lg animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />
+              <div className="h-4 w-28 rounded-lg animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />
+            </div>
+          ))}
+        </div>
+        <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
+          <div className="flex gap-4 px-4 py-3 bg-slate-50/70 dark:bg-slate-800/50">
+            {['w-28','w-20','w-24','w-16'].map((w, i) => (
+              <div key={i} className={`h-3 rounded-lg animate-pulse bg-slate-200/70 dark:bg-slate-800/60 ${w}`} />
+            ))}
+          </div>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex gap-4 px-4 py-3.5 border-t border-slate-100 dark:border-slate-800">
+              {['w-32','w-24','w-28','w-20'].map((w, j) => (
+                <div key={j} className={`h-4 rounded-lg animate-pulse bg-slate-200/70 dark:bg-slate-800/60 ${w}`} />
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -1148,21 +1169,21 @@ export function CustomersTab() {
     if (closedLeadsLoading) {
       return (
         <div className="flex justify-center py-24">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-indigo-500" />
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-slate-200 dark:border-slate-700 border-t-indigo-500" />
         </div>
       );
     }
 
     if (closedLeads.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 dark:border-zinc-700/80 bg-white dark:bg-zinc-900/50 px-8 py-20 text-center" dir="rtl">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-zinc-800">
-            <Users className="h-8 w-8 text-slate-400 dark:text-zinc-500" />
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-950/50 px-8 py-20 text-center" dir="rtl">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
+            <Users className="h-8 w-8 text-slate-400 dark:text-slate-500" />
           </div>
-          <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-zinc-100">עדיין אין לקוחות</h3>
-          <p className="mt-2 max-w-sm text-sm text-slate-500 dark:text-zinc-400">סגור ליד ראשון כדי להתחיל לבנות את רשימת הלקוחות שלך.</p>
+          <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-50">עדיין אין לקוחות</h3>
+          <p className="mt-2 max-w-sm text-sm text-slate-500 dark:text-slate-400">סגור ליד ראשון כדי להתחיל לבנות את רשימת הלקוחות שלך.</p>
           <button type="button" onClick={() => router.push('/dashboard')}
-            className="mt-8 inline-flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-zinc-100 px-6 py-3 text-sm font-semibold text-white dark:text-zinc-900 shadow-sm hover:bg-slate-800 dark:hover:bg-white transition">
+            className="mt-8 inline-flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-slate-100 px-6 py-3 text-sm font-semibold text-white dark:text-slate-900 shadow-sm hover:bg-slate-800 dark:hover:bg-white transition">
             <ArrowRight className="h-4 w-4" /> חזרה ללידים
           </button>
         </div>
@@ -1197,24 +1218,24 @@ export function CustomersTab() {
           <KpiCard label="טופלו החודש"   value={String(kpiMonthLeads)}                       icon={Calendar}    accent="amber" />
         </div>
 
-        <div className="rounded-2xl border border-slate-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900/80 shadow-sm overflow-hidden">
-          <div className="border-b border-slate-100 dark:border-zinc-800 px-5 py-3.5 flex items-center justify-between bg-slate-50/60 dark:bg-zinc-800/40">
+        <div className="w-full overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] bg-white dark:bg-slate-900">
+          <div className="border-b border-slate-100 dark:border-slate-800 px-5 py-3.5 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40">
             <div className="flex items-center gap-2.5">
-              <UserCheck className="h-4 w-4 text-slate-400 dark:text-zinc-500" />
-              <span className="text-sm font-semibold text-slate-700 dark:text-zinc-200">לידים שטופלו</span>
-              <span className="rounded-full bg-slate-100 dark:bg-zinc-700/80 px-2 py-0.5 text-xs font-medium text-slate-500 dark:text-zinc-400 tabular-nums">{filteredClosedLeads.length}</span>
+              <UserCheck className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">לידים שטופלו</span>
+              <span className="rounded-full bg-slate-100 dark:bg-slate-700/80 px-2 py-0.5 text-xs font-medium text-slate-500 dark:text-slate-400 tabular-nums">{filteredClosedLeads.length}</span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setMessagingOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700 transition shadow-sm"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-sm"
               >
                 <Send className="h-3.5 w-3.5" />
                 שלח הודעה
               </button>
-              <SortAsc className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} className="rounded-lg border border-slate-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-xs text-slate-600 dark:text-zinc-300 focus:outline-none" dir="rtl">
+              <SortAsc className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} className="rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-300 focus:outline-none" dir="rtl">
                 {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
@@ -1222,40 +1243,40 @@ export function CustomersTab() {
 
           <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
             <table className="w-full text-right table-fixed" dir="rtl">
-              <thead className="sticky top-0 z-10 bg-slate-50/95 dark:bg-zinc-800/95 backdrop-blur-sm text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
-                <tr className="border-b border-slate-100 dark:border-zinc-800">
+              <thead className="sticky top-0 z-10 bg-slate-50/70 dark:bg-slate-800/50 backdrop-blur-sm text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-[0.08em]">
+                <tr className="border-b border-slate-100 dark:border-slate-800">
                   <th className="py-3 px-3 w-[5%] text-center">
                     <input
                       type="checkbox"
                       checked={filteredClosedLeads.length > 0 && filteredClosedLeads.every((l) => selectedIds.has(l.id))}
                       onChange={(e) => e.target.checked ? selectAll(filteredClosedLeads.map((l) => l.id)) : clearSelected()}
-                      className="rounded border-slate-300 dark:border-zinc-600 text-indigo-500 focus:ring-indigo-500/30"
+                      className="rounded border-slate-300 dark:border-slate-600 text-indigo-500 focus:ring-indigo-500/30"
                     />
                   </th>
-                  <th className="py-3 pl-2 pr-3 w-[22%]">לקוח</th>
-                  <th className="py-3 pr-2 pl-3 w-[16%]">טלפון</th>
-                  <th className="py-3 px-3 w-[11%]">מקור</th>
-                  <th className="py-3 px-3 w-[14%]">תאריך</th>
-                  <th className="py-3 px-3 w-[14%]">ביקור אחרון</th>
-                  <th className="py-3 px-3 w-[12%]">שווי</th>
+                  <th className="py-3 pl-2 pr-3 w-[22%] text-right">לקוח</th>
+                  <th className="py-3 pr-2 pl-3 w-[16%] text-right">טלפון</th>
+                  <th className="py-3 px-3 w-[11%] text-right">מקור</th>
+                  <th className="py-3 px-3 w-[14%] text-right">תאריך</th>
+                  <th className="py-3 px-3 w-[14%] text-right">ביקור אחרון</th>
+                  <th className="py-3 px-3 w-[12%] text-right">שווי</th>
                   <th className="py-3 px-2 w-[6%]">פעולות</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredClosedLeads.length === 0 ? (
-                  <tr><td colSpan={8} className="py-16 text-center text-sm text-slate-400 dark:text-zinc-500">אין תוצאות</td></tr>
+                  <tr><td colSpan={8} className="py-16 text-center text-sm text-slate-400 dark:text-slate-500">אין תוצאות</td></tr>
                 ) : filteredClosedLeads.map((l) => {
                   const recall = getRecall(l.id);
                   const isSelected = selectedIds.has(l.id);
                   return (
                   <tr key={l.id} onClick={() => { setDetailLead(l); }}
-                    className={`border-b border-slate-50 dark:border-zinc-800/60 last:border-0 cursor-pointer transition-colors group ${isSelected ? 'bg-indigo-50/60 dark:bg-indigo-900/15' : 'hover:bg-indigo-50/40 dark:hover:bg-indigo-900/10'}`}>
+                    className={`border-b border-slate-100 dark:border-slate-800/60 last:border-0 cursor-pointer transition-colors group ${isSelected ? 'bg-indigo-50/60 dark:bg-indigo-900/15' : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/40'}`}>
                     <td className="py-3.5 px-3 text-center" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleSelected(l.id)}
-                        className="rounded border-slate-300 dark:border-zinc-600 text-indigo-500 focus:ring-indigo-500/30"
+                        className="rounded border-slate-300 dark:border-slate-600 text-indigo-500 focus:ring-indigo-500/30"
                       />
                     </td>
                     <td className="py-3.5 pl-2 pr-3 min-w-0">
@@ -1263,24 +1284,24 @@ export function CustomersTab() {
                         <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getAvatarColor(l.id)} text-white text-xs font-bold`}>
                           {getInitials(l.full_name)}
                           {recall.active && (
-                            <span className="absolute -top-1 -left-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 border-2 border-white dark:border-zinc-900">
+                            <span className="absolute -top-1 -left-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 border-2 border-white dark:border-slate-900">
                               <BellRing className="h-2 w-2 text-white" />
                             </span>
                           )}
                         </div>
-                        <span className="font-medium text-slate-800 dark:text-zinc-100 truncate">{l.full_name || '—'}</span>
+                        <span className="font-medium text-slate-800 dark:text-slate-50 truncate">{l.full_name || '—'}</span>
                       </div>
                     </td>
                     <td className="py-3.5 pr-2 pl-3 min-w-0">
                       <a href={l.phone ? `tel:${l.phone}` : '#'} onClick={(e) => e.stopPropagation()} dir="ltr" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline truncate block">{formatPhoneILS(l.phone)}</a>
                     </td>
                     <td className="py-3.5 px-3"><SourceBadge source={l.source} /></td>
-                    <td className="py-3.5 px-3 text-sm text-slate-500 dark:text-zinc-400 whitespace-nowrap">{formatDate(getCloseDateLead(l))}</td>
-                    <td className="py-3.5 px-3 text-sm text-slate-500 dark:text-zinc-400">—</td>
-                    <td className="py-3.5 px-3 text-sm font-semibold text-slate-800 dark:text-zinc-200 tabular-nums">{getValueLead(l) > 0 ? formatCurrencyILS(getValueLead(l)) : '—'}</td>
+                    <td className="py-3.5 px-3 text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">{formatDate(getCloseDateLead(l))}</td>
+                    <td className="py-3.5 px-3 text-sm text-slate-500 dark:text-slate-400">—</td>
+                    <td className="py-3.5 px-3 text-sm font-semibold text-slate-800 dark:text-slate-200 tabular-nums">{getValueLead(l) > 0 ? formatCurrencyILS(getValueLead(l)) : '—'}</td>
                     <td className="py-3.5 px-2 text-center" onClick={(e) => e.stopPropagation()}>
                       <button type="button" onClick={() => setDeleteLeadId(l.id)}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 dark:text-zinc-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition opacity-0 group-hover:opacity-100">
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition opacity-0 group-hover:opacity-100">
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </td>
@@ -1308,7 +1329,7 @@ export function CustomersTab() {
           <MessagingPanel customers={[]} selectedIds={new Set()} onClose={() => setMessagingOpen(false)} />
         )}
         {importModalOpen && <CustomersImportModal onClose={() => setImportModalOpen(false)} onSuccess={() => { setToast('ייבוא הושלם בהצלחה'); fetchCustomers(); }} />}
-        {toast && <div className="fixed bottom-6 left-1/2 z-[70] -translate-x-1/2 rounded-xl bg-zinc-800 dark:bg-zinc-700 border border-zinc-700 px-4 py-2.5 text-sm text-zinc-100 shadow-xl">{toast}</div>}
+        {toast && <div className="fixed bottom-6 left-1/2 z-[70] -translate-x-1/2 rounded-xl bg-slate-800 dark:bg-slate-700 border border-slate-700 px-4 py-2.5 text-sm text-slate-100 shadow-xl">{toast}</div>}
       </div>
     );
   }
@@ -1348,12 +1369,12 @@ export function CustomersTab() {
       </div>
 
       {/* Table */}
-      <div className="rounded-2xl border border-slate-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900/80 shadow-sm overflow-hidden">
-        <div className="border-b border-slate-100 dark:border-zinc-800 px-5 py-3.5 flex items-center justify-between bg-slate-50/60 dark:bg-zinc-800/40">
+      <div className="w-full overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] bg-white dark:bg-slate-900">
+        <div className="border-b border-slate-100 dark:border-slate-800 px-5 py-3.5 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40">
           <div className="flex items-center gap-2.5">
-            <UserCheck className="h-4 w-4 text-slate-400 dark:text-zinc-500" />
-            <span className="text-sm font-semibold text-slate-700 dark:text-zinc-200">רשימת לקוחות</span>
-            <span className="rounded-full bg-slate-100 dark:bg-zinc-700/80 px-2 py-0.5 text-xs font-medium text-slate-500 dark:text-zinc-400 tabular-nums">{filteredCustomers.length}</span>
+            <UserCheck className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">רשימת לקוחות</span>
+            <span className="rounded-full bg-slate-100 dark:bg-slate-700/80 px-2 py-0.5 text-xs font-medium text-slate-500 dark:text-slate-400 tabular-nums">{filteredCustomers.length}</span>
             {selectedIds.size > 0 && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-800/50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:text-indigo-300">
                 {selectedIds.size} נבחרו
@@ -1370,14 +1391,14 @@ export function CustomersTab() {
               className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition shadow-sm ${
                 selectedIds.size > 0
                   ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-500 text-white hover:bg-indigo-600'
-                  : 'border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700'
+                  : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
               }`}
             >
               <Send className="h-3.5 w-3.5" />
               {selectedIds.size > 0 ? `שלח ל-${selectedIds.size}` : 'שלח הודעה'}
             </button>
-            <SortAsc className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} className="rounded-lg border border-slate-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-xs text-slate-600 dark:text-zinc-300 focus:outline-none" dir="rtl">
+            <SortAsc className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} className="rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-300 focus:outline-none" dir="rtl">
               {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </div>
@@ -1385,22 +1406,22 @@ export function CustomersTab() {
 
         <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
           <table className="w-full text-right" style={{ minWidth: '860px' }} dir="rtl">
-            <thead className="sticky top-0 z-10 bg-slate-50/95 dark:bg-zinc-800/95 backdrop-blur-sm text-[11px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
-              <tr className="border-b border-slate-100 dark:border-zinc-800">
+            <thead className="sticky top-0 z-10 bg-slate-50/70 dark:bg-slate-800/50 backdrop-blur-sm text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-[0.08em]">
+              <tr className="border-b border-slate-100 dark:border-slate-800">
                 <th className="py-3 pr-4 pl-3 w-10" onClick={(e) => e.stopPropagation()}>
                   <input
                     type="checkbox"
                     checked={filteredCustomers.length > 0 && filteredCustomers.every((c) => selectedIds.has(c.id))}
                     onChange={(e) => e.target.checked ? selectAll(filteredCustomers.map((c) => c.id)) : clearSelected()}
-                    className="rounded border-slate-300 dark:border-zinc-600 text-indigo-500 focus:ring-indigo-500/30"
+                    className="rounded border-slate-300 dark:border-slate-600 text-indigo-500 focus:ring-indigo-500/30"
                   />
                 </th>
-                <th className="py-3 px-4 min-w-[180px]">לקוח</th>
-                <th className="py-3 px-4 w-36">טלפון</th>
-                <th className="py-3 px-4 w-32">ביקור אחרון</th>
-                <th className="py-3 px-4 w-28">הכנסה</th>
-                <th className="py-3 px-4 w-24">ביקורים</th>
-                <th className="py-3 px-4 w-24">סטטוס</th>
+                <th className="py-3 px-4 min-w-[180px] text-right">לקוח</th>
+                <th className="py-3 px-4 w-36 text-right">טלפון</th>
+                <th className="py-3 px-4 w-32 text-right">ביקור אחרון</th>
+                <th className="py-3 px-4 w-28 text-right">הכנסה</th>
+                <th className="py-3 px-4 w-24 text-right">ביקורים</th>
+                <th className="py-3 px-4 w-24 text-right">סטטוס</th>
                 <th className="py-3 px-4 w-10" />
               </tr>
             </thead>
@@ -1408,8 +1429,8 @@ export function CustomersTab() {
               {filteredCustomers.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-16 text-center">
-                    <div className="flex flex-col items-center gap-3 text-slate-400 dark:text-zinc-500">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800">
+                    <div className="flex flex-col items-center gap-3 text-slate-400 dark:text-slate-500">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
                         <FileText className="h-6 w-6" />
                       </div>
                       <p className="text-sm font-medium">אין תוצאות</p>
@@ -1423,13 +1444,13 @@ export function CustomersTab() {
                 const isSelected = selectedIds.has(c.id);
                 return (
                   <tr key={c.id} onClick={() => { setDetailLead(null); setDetailId(c.id); }}
-                    className={`border-b border-slate-50 dark:border-zinc-800/60 last:border-0 cursor-pointer transition-colors group ${isSelected ? 'bg-indigo-50/60 dark:bg-indigo-900/15' : 'hover:bg-indigo-50/40 dark:hover:bg-indigo-900/10'}`}>
+                    className={`border-b border-slate-100 dark:border-slate-800/60 last:border-0 cursor-pointer transition-colors group ${isSelected ? 'bg-indigo-50/60 dark:bg-indigo-900/15' : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/40'}`}>
                     <td className="py-3.5 pr-4 pl-3 w-10" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleSelected(c.id)}
-                        className="rounded border-slate-300 dark:border-zinc-600 text-indigo-500 focus:ring-indigo-500/30"
+                        className="rounded border-slate-300 dark:border-slate-600 text-indigo-500 focus:ring-indigo-500/30"
                       />
                     </td>
                     <td className="py-3.5 px-4">
@@ -1437,26 +1458,26 @@ export function CustomersTab() {
                         <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getAvatarColor(c.id)} text-white text-xs font-bold`}>
                           {getInitials(c.full_name)}
                           {recall.active && (
-                            <span className="absolute -top-1 -left-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 border-2 border-white dark:border-zinc-900">
+                            <span className="absolute -top-1 -left-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 border-2 border-white dark:border-slate-900">
                               <BellRing className="h-2 w-2 text-white" />
                             </span>
                           )}
                         </div>
-                        <span className="font-medium text-slate-800 dark:text-zinc-100 truncate max-w-[160px]">{c.full_name}</span>
+                        <span className="font-medium text-slate-800 dark:text-slate-50 truncate max-w-[160px]">{c.full_name}</span>
                       </div>
                     </td>
                     <td className="py-3.5 px-4 w-36">
                       <a href={`tel:${c.phone}`} onClick={(e) => e.stopPropagation()} dir="ltr" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">{formatPhoneILS(c.phone)}</a>
                     </td>
-                    <td className="py-3.5 px-4 w-32 text-sm text-slate-500 dark:text-zinc-400 whitespace-nowrap">{formatDate(c.last_visit_date)}</td>
-                    <td className="py-3.5 px-4 w-28 text-sm font-semibold text-slate-800 dark:text-zinc-200 tabular-nums whitespace-nowrap">{formatCurrencyILS(Number(c.total_revenue))}</td>
-                    <td className="py-3.5 px-4 w-24 text-sm text-slate-500 dark:text-zinc-400 tabular-nums">{c.visits_count}</td>
+                    <td className="py-3.5 px-4 w-32 text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">{formatDate(c.last_visit_date)}</td>
+                    <td className="py-3.5 px-4 w-28 text-sm font-semibold text-slate-800 dark:text-slate-200 tabular-nums whitespace-nowrap">{formatCurrencyILS(Number(c.total_revenue))}</td>
+                    <td className="py-3.5 px-4 w-24 text-sm text-slate-500 dark:text-slate-400 tabular-nums">{c.visits_count}</td>
                     <td className="py-3.5 px-4 w-24">
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusBadge.cls}`}>{statusBadge.label}</span>
                     </td>
                     <td className="py-3.5 px-4 w-10" onClick={(e) => e.stopPropagation()}>
                       <button type="button" onClick={() => setDeleteId(c.id)}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 dark:text-zinc-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition opacity-0 group-hover:opacity-100">
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition opacity-0 group-hover:opacity-100">
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </td>
@@ -1501,7 +1522,7 @@ export function CustomersTab() {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 z-[70] -translate-x-1/2 rounded-xl bg-zinc-800 dark:bg-zinc-700 border border-zinc-700 px-4 py-2.5 text-sm text-zinc-100 shadow-xl">
+        <div className="fixed bottom-6 left-1/2 z-[70] -translate-x-1/2 rounded-xl bg-slate-800 dark:bg-slate-700 border border-slate-700 px-4 py-2.5 text-sm text-slate-100 shadow-xl">
           {toast}
         </div>
       )}

@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   const clinicName = typeof name === 'string' ? name.trim() : '';
   const email = typeof admin_email === 'string' ? admin_email.trim().toLowerCase() : '';
   if (!clinicName) {
-    return NextResponse.json({ error: 'שם קליניקה חובה' }, { status: 400 });
+    return NextResponse.json({ error: 'שם העסק חובה' }, { status: 400 });
   }
   if (!email) {
     return NextResponse.json({ error: 'אימייל מנהל ראשי חובה' }, { status: 400 });
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
 
   if (clinicError) {
     await supabase.auth.admin.deleteUser(authUser.user.id);
-    return NextResponse.json({ error: clinicError.message || 'יצירת קליניקה נכשלה' }, { status: 500 });
+    return NextResponse.json({ error: clinicError.message || 'יצירת העסק נכשלה' }, { status: 500 });
   }
 
   // 3) Link user to clinic as CLINIC_ADMIN
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
   if (linkError) {
     await supabase.from('clinics').delete().eq('id', clinic.id);
     await supabase.auth.admin.deleteUser(authUser.user.id);
-    return NextResponse.json({ error: linkError.message || 'קישור משתמש לקליניקה נכשל' }, { status: 500 });
+    return NextResponse.json({ error: linkError.message || 'קישור משתמש לעסק נכשל' }, { status: 500 });
   }
 
   return NextResponse.json({

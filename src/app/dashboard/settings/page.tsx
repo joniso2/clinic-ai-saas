@@ -47,9 +47,9 @@ export default function SettingsPage() {
   return (
     <>
       <div className="mb-6 text-right">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500">לוח בקרה</p>
-        <h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-zinc-100 sm:text-3xl">הגדרות</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">מרכז שליטה למרפאה.</p>
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">לוח בקרה</p>
+        <h1 className="mt-1 text-[28px] font-bold text-slate-900 dark:text-slate-50">הגדרות</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">מרכז שליטה לעסק.</p>
       </div>
       <SettingsTab clinicName={clinicName} clinicSlug={clinicSlug} userEmail={userEmail} settings={settings} />
     </>

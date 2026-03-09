@@ -57,95 +57,133 @@ export function EditLeadModal({
     // Parent closes modal on success via setEditLead(null)
   };
 
+  const inputCls =
+    'h-11 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-[14px] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/40 transition-all duration-150';
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4"
       role="dialog"
       aria-modal="true"
       aria-label="ערוך ליד"
+      onClick={onClose}
     >
       <div
-        className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="relative w-full max-w-lg rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 shadow-2xl text-right" dir="rtl">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-4">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-zinc-100">ערוך ליד</h2>
+        className="modal-enter max-w-lg w-full rounded-2xl bg-white dark:bg-slate-900 shadow-[0_10px_30px_rgba(0,0,0,0.12),0_4px_8px_rgba(0,0,0,0.06)]"
+        dir="rtl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl p-2 text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-700 dark:hover:text-zinc-200"
+            className="rounded-lg p-1.5 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition-all duration-150"
             aria-label="סגור"
           >
             <X className="h-5 w-5" />
           </button>
+          <h2 className="text-[18px] font-semibold text-slate-900 dark:text-slate-50">ערוך ליד</h2>
         </div>
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300">שם</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/70 px-3 py-2 text-sm text-slate-900 dark:text-zinc-100 text-right focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
-            />
+
+        {/* Body */}
+        <form onSubmit={handleSubmit}>
+          <div className="px-6 py-5 space-y-5">
+            {/* Section: פרטי קשר */}
+            <div>
+              <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.12em] mb-3">
+                פרטי קשר
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[13px] font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                    שם
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[13px] font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                    טלפון
+                  </label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    dir="ltr"
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[13px] font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                    אימייל
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Section: פרטי ליד */}
+            <div>
+              <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.12em] mb-3">
+                פרטי ליד
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[13px] font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                    עניין
+                  </label>
+                  <input
+                    type="text"
+                    value={interest}
+                    onChange={(e) => setInterest(e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[13px] font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                    סטטוס
+                  </label>
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value as LeadStatus)}
+                    className={`${inputCls} appearance-none`}
+                  >
+                    <option value="Pending">ממתין</option>
+                    <option value="Contacted">נוצר קשר</option>
+                    <option value="Appointment scheduled">תור נקבע</option>
+                    <option value="Closed">נסגר</option>
+                    <option value="Disqualified">הוסר</option>
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300">אימייל</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/70 px-3 py-2 text-sm text-slate-900 dark:text-zinc-100 text-right focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300">טלפון</label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              dir="ltr"
-              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/70 px-3 py-2 text-sm text-slate-900 dark:text-zinc-100 text-right focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300">עניין</label>
-            <input
-              type="text"
-              value={interest}
-              onChange={(e) => setInterest(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/70 px-3 py-2 text-sm text-slate-900 dark:text-zinc-100 text-right focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300">סטטוס</label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value as LeadStatus)}
-              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/70 px-3 py-2 text-sm text-slate-900 dark:text-zinc-100 text-right focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500"
-            >
-              <option value="Pending">ממתין</option>
-              <option value="Contacted">נוצר קשר</option>
-              <option value="Appointment scheduled">תור נקבע</option>
-              <option value="Closed">נסגר</option>
-              <option value="Disqualified">הוסר</option>
-            </select>
-          </div>
-          <div className="flex justify-start gap-3 pt-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="rounded-xl bg-slate-900 dark:bg-zinc-100 px-4 py-2 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-slate-800 dark:hover:bg-white disabled:opacity-60"
-            >
-              {loading ? 'שומר…' : 'שמור שינויים'}
-            </button>
+
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800 px-6 py-4">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2 text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-700"
+              className="inline-flex items-center justify-center h-10 px-5 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-[14px] font-semibold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-all duration-150"
             >
               ביטול
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex items-center justify-center h-10 px-5 rounded-lg bg-indigo-600 text-white text-[14px] font-semibold hover:bg-indigo-700 transition-all duration-150 disabled:opacity-50"
+            >
+              {loading ? 'שומר…' : 'שמור שינויים'}
             </button>
           </div>
         </form>

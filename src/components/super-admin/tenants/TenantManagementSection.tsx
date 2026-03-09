@@ -346,11 +346,11 @@ export default function TenantManagementSection() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-8">
+      <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-8">
         <div className="flex justify-between items-start gap-4 flex-wrap">
           <div className="min-w-0 flex-1 text-right">
-            <h2 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100 mb-2">מרכז ניהול לקוחות</h2>
-            <p className="text-sm text-slate-500 dark:text-zinc-400 mb-6">ניהול מלא של כל הלקוחות — סטטוס, תכנית, משתמשים ופעולות.</p>
+            <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50 mb-2">מרכז ניהול לקוחות</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">ניהול מלא של כל הלקוחות — סטטוס, תכנית, משתמשים ופעולות.</p>
           </div>
           <button
             type="button"
@@ -372,11 +372,11 @@ export default function TenantManagementSection() {
             placeholder="חיפוש לפי שם..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-2.5 pe-10 ps-4 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500 text-right"
+            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 py-2.5 pe-10 ps-4 text-sm text-slate-900 dark:text-slate-50 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 text-right"
           />
         </div>
         <select
-          className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-2.5 ps-4 pe-4 text-sm text-slate-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 text-right"
+          className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 py-2.5 ps-4 pe-4 text-sm text-slate-900 dark:text-slate-50 focus:outline-none focus:border-indigo-500 text-right"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
         >
@@ -390,13 +390,13 @@ export default function TenantManagementSection() {
       </div>
 
       {/* Table */}
-      <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 overflow-hidden bg-white dark:bg-zinc-900">
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-950">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-right" dir="rtl">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800">
+              <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
                 {['שם לקוח','סטטוס','תכנית','לידים','תורים','Discord','פעולות'].map((h) => (
-                  <th key={h} className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">{h}</th>
+                  <th key={h} className="text-right py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -420,8 +420,8 @@ export default function TenantManagementSection() {
                   </td>
                 </tr>
               ) : filtered.map((t) => (
-                <tr key={t.id} className="border-b border-slate-100 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
-                  <td className="py-3 px-4 font-medium text-slate-900 dark:text-zinc-100 text-right">{t.name ?? t.id}</td>
+                <tr key={t.id} className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                  <td className="py-3 px-4 font-medium text-slate-900 dark:text-slate-50 text-right">{t.name ?? t.id}</td>
                   <td className="py-3 px-4 text-right"><StatusBadge status={t.status} /></td>
                   <td className="py-3 px-4 text-right">
                     <div className="flex items-center gap-1.5 flex-row-reverse justify-end">

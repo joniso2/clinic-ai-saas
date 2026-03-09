@@ -12,7 +12,7 @@ async function getClinicIdAndRole(): Promise<{ clinicId: string; role: string } 
 export async function GET() {
   try {
     const ctx = await getClinicIdAndRole();
-    if (!ctx) return NextResponse.json({ error: 'לא מאומת או ללא גישה לקליניקה' }, { status: 401 });
+    if (!ctx) return NextResponse.json({ error: 'לא מאומת או ללא גישה' }, { status: 401 });
 
     const members = await settingsRepo.getTeamMembers(ctx.clinicId);
     return NextResponse.json({ members, role: ctx.role });
@@ -26,7 +26,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const ctx = await getClinicIdAndRole();
-    if (!ctx) return NextResponse.json({ error: 'לא מאומת או ללא גישה לקליניקה' }, { status: 401 });
+    if (!ctx) return NextResponse.json({ error: 'לא מאומת או ללא גישה' }, { status: 401 });
     if (ctx.role !== 'CLINIC_ADMIN') return NextResponse.json({ error: 'אין הרשאה להוסיף אנשי צוות' }, { status: 403 });
 
     let body: { full_name?: string; email?: string; password?: string; role_display?: string };
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const ctx = await getClinicIdAndRole();
-    if (!ctx) return NextResponse.json({ error: 'לא מאומת או ללא גישה לקליניקה' }, { status: 401 });
+    if (!ctx) return NextResponse.json({ error: 'לא מאומת או ללא גישה' }, { status: 401 });
     if (ctx.role !== 'CLINIC_ADMIN') return NextResponse.json({ error: 'אין הרשאה לעדכן תפקידים' }, { status: 403 });
 
     let body: { user_id?: string; role_display?: string };
@@ -101,7 +101,7 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const ctx = await getClinicIdAndRole();
-    if (!ctx) return NextResponse.json({ error: 'לא מאומת או ללא גישה לקליניקה' }, { status: 401 });
+    if (!ctx) return NextResponse.json({ error: 'לא מאומת או ללא גישה' }, { status: 401 });
     if (ctx.role !== 'CLINIC_ADMIN') return NextResponse.json({ error: 'אין הרשאה להסיר אנשי צוות' }, { status: 403 });
 
     let body: { user_id?: string };

@@ -24,11 +24,11 @@ interface StatCardProps {
 function StatCard({ label, value, icon: Icon, trend = 'neutral', sub }: StatCardProps) {
   const trendColor = trend === 'good' ? 'text-emerald-400' : trend === 'bad' ? 'text-red-400' : 'text-zinc-400';
   return (
-    <div className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-4 text-right">
+    <div className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-4 text-right">
       <div className="flex items-center justify-between flex-row-reverse mb-2">
-        <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">{label}</p>
-        <div className="rounded-lg bg-slate-100 dark:bg-zinc-800 p-2">
-          <Icon className="h-4 w-4 text-slate-500 dark:text-zinc-400" />
+        <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{label}</p>
+        <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-2">
+          <Icon className="h-4 w-4 text-slate-500 dark:text-slate-400" />
         </div>
       </div>
       <p className={`text-2xl font-bold tabular-nums leading-none ${trendColor}`}>{value}</p>
@@ -40,10 +40,10 @@ function StatCard({ label, value, icon: Icon, trend = 'neutral', sub }: StatCard
 // ─── Chart card ───────────────────────────────────────────────────────────────
 function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5" dir="rtl">
+    <div className="rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5" dir="rtl">
       <div className="mb-3 text-right">
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-zinc-200">{title}</h3>
-        {subtitle && <p className="text-[11px] text-slate-500 dark:text-zinc-500 mt-0.5">{subtitle}</p>}
+        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">{title}</h3>
+        {subtitle && <p className="text-[11px] text-slate-500 dark:text-slate-500 mt-0.5">{subtitle}</p>}
       </div>
       {children}
     </div>
@@ -61,11 +61,11 @@ export default function TrafficSection() {
   return (
     <div dir="rtl" className="space-y-6">
       {/* Header */}
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-8">
+      <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-8">
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div className="min-w-0 flex-1 text-right">
-            <h2 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100 text-right">תעבורה וביצועים</h2>
-            <p className="mt-0.5 text-sm text-slate-500 dark:text-zinc-400 text-right">מדדי מערכת בזמן אמת — קריאות, זמן תגובה, שגיאות, טוקנים ועלות (מוק).</p>
+            <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50 text-right">תעבורה וביצועים</h2>
+            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400 text-right">מדדי מערכת בזמן אמת — קריאות, זמן תגובה, שגיאות, טוקנים ועלות (מוק).</p>
           </div>
           <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
         </div>

@@ -27,7 +27,7 @@ export async function PATCH(req: NextRequest) {
   const row = await getClinicUser();
   if (!row?.clinic_id) return NextResponse.json({ error: 'לא מאומת' }, { status: 401 });
   if (row.role !== 'CLINIC_ADMIN') {
-    return NextResponse.json({ error: 'רק מנהל קליניקה יכול לערוך פרטי עסק' }, { status: 403 });
+    return NextResponse.json({ error: 'אין לך הרשאה לערוך פרטי עסק' }, { status: 403 });
   }
 
   let body: UpdateBillingSettingsBody;

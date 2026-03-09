@@ -4,11 +4,12 @@ import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import moment from 'moment';
 import 'moment/locale/he';
-import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Check, Trash2 } from 'lucide-react';
 import type { Appointment } from '@/types/appointments';
 import type { Lead } from '@/types/leads';
 import type { BillingSettings, BillingDocumentWithItems } from '@/types/billing';
 import { STATUS_LABELS } from '@/lib/hebrew';
+import { getLeadStatusAccentHex, APPOINTMENT_STATUS, getAppointmentStatusLabel, getAppointmentStatusBadgeClass } from '@/lib/status-colors';
 
 const LeadDetailDrawer = dynamic(
   () => import('@/components/dashboard/LeadDetailDrawer').then((m) => m.LeadDetailDrawer),
@@ -73,25 +74,16 @@ const SERVICE_ICON: Record<ServiceCategory, string> = {
   default: '📋',
 };
 
-/** Solid block colors by type. Consultation=amber, Treatment=sky, Meeting/Beauty=pink, Follow-up=emerald, Default=slate */
-const SERVICE_CARD_CLASS: Record<ServiceCategory, string> = {
-  consultation: 'bg-amber-200/90 dark:bg-amber-600/35 text-amber-900 dark:text-amber-100 border-0 shadow-sm',
-  treatment: 'bg-sky-200/90 dark:bg-sky-600/35 text-sky-900 dark:text-sky-100 border-0 shadow-sm',
-  beauty: 'bg-pink-200/90 dark:bg-pink-600/35 text-pink-900 dark:text-pink-100 border-0 shadow-sm',
-  follow_up: 'bg-emerald-200/90 dark:bg-emerald-600/35 text-emerald-900 dark:text-emerald-100 border-0 shadow-sm',
-  default: 'bg-slate-200/90 dark:bg-slate-600/35 text-slate-800 dark:text-slate-200 border-0 shadow-sm',
+/** Accent bar colors by category */
+const SERVICE_ACCENT_COLOR: Record<ServiceCategory, string> = {
+  consultation: '#f59e0b',
+  treatment: '#38bdf8',
+  beauty: '#f472b6',
+  follow_up: '#34d399',
+  default: '#94a3b8',
 };
 
-/** Calendar card colors by lead status – match STATUS_BADGE in LeadsTable (Pending=amber, Contacted=sky, תור נקבע=blue, Closed=emerald, Disqualified=slate) */
-const LEAD_STATUS_CARD_CLASS: Record<string, string> = {
-  Pending: 'bg-amber-200/90 dark:bg-amber-600/35 text-amber-900 dark:text-amber-100 border-0 shadow-sm',
-  Contacted: 'bg-sky-200/90 dark:bg-sky-600/35 text-sky-900 dark:text-sky-100 border-0 shadow-sm',
-  'Appointment scheduled': 'bg-blue-200/90 dark:bg-blue-600/35 text-blue-900 dark:text-blue-100 border-0 shadow-sm',
-  Closed: 'bg-emerald-200/90 dark:bg-emerald-600/35 text-emerald-900 dark:text-emerald-100 border-0 shadow-sm',
-  Converted: 'bg-emerald-200/90 dark:bg-emerald-600/35 text-emerald-900 dark:text-emerald-100 border-0 shadow-sm',
-  Disqualified: 'bg-slate-200/90 dark:bg-slate-600/35 text-slate-800 dark:text-slate-200 border-0 shadow-sm',
-  'AI Failed': 'bg-red-200/90 dark:bg-red-600/35 text-red-900 dark:text-red-100 border-0 shadow-sm',
-};
+/** Lead status accent colors — delegated to centralized status-colors.ts */
 
 function getServiceLabel(apt: Appointment): string {
   return apt.service_name ?? SERVICE_DISPLAY[getServiceCategory(apt)] ?? 'תור';
@@ -128,6 +120,9 @@ function WeekBoard({
   onDayClick,
   onComplete,
   leadStatusByLeadId,
+  onDragStart,
+  onDragEnd,
+  canDrag,
 }: {
   dayColumns: DayColumn[];
   todayStr: string;
@@ -136,37 +131,49 @@ function WeekBoard({
   onDayClick: (dateStr: string) => void;
   onComplete: (apt: Appointment) => void;
   leadStatusByLeadId: Record<string, string>;
+  onDragStart?: (apt: Appointment) => void;
+  onDragEnd?: () => void;
+  canDrag?: boolean;
 }) {
   return (
     <div className="flex w-full flex-1 min-h-0 flex-row-reverse overflow-x-auto overflow-y-hidden" dir="ltr">
       {dayColumns.map((col) => (
         <div
           key={col.dateStr}
-          className={`flex min-w-[112px] flex-1 flex-col border-s border-slate-200 dark:border-slate-700 last:border-s-0 ${col.isToday ? 'bg-indigo-50/60 dark:bg-indigo-950/25' : 'bg-slate-50/70 dark:bg-slate-900/40'}`}
+          className={`flex min-w-[140px] flex-1 flex-col border-s border-slate-200 dark:border-slate-700 last:border-s-0 ${col.isToday ? 'bg-indigo-50/60 dark:bg-indigo-950/25 ring-1 ring-indigo-400/40 dark:ring-indigo-500/30' : 'bg-slate-50/70 dark:bg-slate-900/40'}`}
         >
-          <div className={`sticky top-0 z-10 flex flex-col border-b border-slate-200 dark:border-slate-700 px-2 py-1.5 ${col.isToday ? 'bg-indigo-50 dark:bg-indigo-950/40' : 'bg-white dark:bg-slate-900'}`}>
-            <p className={`text-xs font-semibold text-right leading-tight ${col.isToday ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400'}`}>
+          <div className={`sticky top-0 z-10 flex flex-col items-center gap-0.5 border-b border-slate-200 dark:border-slate-700 px-2 py-2 ${col.isToday ? 'bg-indigo-50 dark:bg-indigo-950/40' : 'bg-white dark:bg-slate-900'}`}>
+            <p className={`text-[11px] font-semibold uppercase tracking-[0.06em] leading-tight ${col.isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400'}`}>
               {col.dayLabel}
             </p>
-            <button
-              type="button"
-              onClick={() => onDayClick(col.dateStr)}
-              className={`text-sm font-bold text-right tabular-nums leading-tight transition-colors hover:underline cursor-pointer bg-transparent border-0 p-0 ${col.isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-900 dark:text-white'}`}
-            >
-              {col.dayNum}
-            </button>
-            <button
-              type="button"
-              onClick={() => onAddDay(col.dateStr)}
-              className="mt-1 flex items-center justify-center gap-1 rounded-md border border-dashed border-slate-300 dark:border-slate-600 py-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-400 dark:hover:border-slate-500 transition-colors"
-            >
-              <Plus className="h-3 w-3" /> הוסף
-            </button>
+            {col.isToday ? (
+              <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-[15px] font-bold">
+                {col.dayNum}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onDayClick(col.dateStr)}
+                className="h-8 w-8 rounded-full flex items-center justify-center text-[15px] font-bold text-slate-900 dark:text-slate-50 tabular-nums hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer bg-transparent border-0 transition-colors"
+              >
+                {col.dayNum}
+              </button>
+            )}
+            <p className={`text-[10px] tabular-nums ${col.isToday ? 'text-indigo-500 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}`}>
+              {col.events.length > 0 ? `${col.events.length} תורים` : ''}
+            </p>
           </div>
           <div className="flex-1 overflow-y-auto space-y-1.5 p-2 min-h-[180px]">
-            {col.events.map((ev) => (
-                <WeekBoardCard key={ev.id} event={ev} onClick={() => onSelectEvent(ev)} onComplete={onComplete} leadStatusByLeadId={leadStatusByLeadId} />
-              ))}
+            {col.events.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full min-h-[120px] opacity-40">
+                <CalendarIcon className="h-6 w-6 text-slate-300 dark:text-slate-600" />
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">אין תורים</p>
+              </div>
+            ) : (
+              col.events.map((ev) => (
+                <WeekBoardCard key={ev.id} event={ev} onClick={() => onSelectEvent(ev)} onComplete={onComplete} leadStatusByLeadId={leadStatusByLeadId} onDragStart={onDragStart} onDragEnd={onDragEnd} canDrag={canDrag} />
+              ))
+            )}
           </div>
         </div>
       ))}
@@ -174,41 +181,58 @@ function WeekBoard({
   );
 }
 
-/** Appointment block for the week board: solid colored block, clear hierarchy. Click opens LeadDetailDrawer. */
-const WeekBoardCard = memo(function WeekBoardCard({ event, onClick, onComplete, leadStatusByLeadId }: { event: CalendarEvent; onClick: () => void; onComplete?: (apt: Appointment) => void; leadStatusByLeadId: Record<string, string> }) {
+/** Appointment block for the week board: accent-bar approach with clean white card. Click opens LeadDetailDrawer. */
+const WeekBoardCard = memo(function WeekBoardCard({ event, onClick, onComplete, leadStatusByLeadId, onDragStart, onDragEnd, canDrag }: { event: CalendarEvent; onClick: () => void; onComplete?: (apt: Appointment) => void; leadStatusByLeadId: Record<string, string>; onDragStart?: (apt: Appointment) => void; onDragEnd?: () => void; canDrag?: boolean }) {
   const apt = event.resource;
   const category = getServiceCategory(apt);
   const cardLabel = getAppointmentCardLabel(apt, leadStatusByLeadId);
   const leadStatus = apt.lead_id ? leadStatusByLeadId[apt.lead_id] : null;
-  const cardClass = leadStatus && LEAD_STATUS_CARD_CLASS[leadStatus]
-    ? LEAD_STATUS_CARD_CLASS[leadStatus]
-    : SERVICE_CARD_CLASS[category];
+  const accentColor = leadStatus
+    ? getLeadStatusAccentHex(leadStatus)
+    : SERVICE_ACCENT_COLOR[category];
   const startStr = moment(event.start).format('HH:mm');
   const endStr = moment(event.end).format('HH:mm');
-  const icon = SERVICE_ICON[category];
-  const canComplete = apt.status !== 'completed' && apt.status !== 'cancelled' && apt.status !== 'נסגר';
+  const canComplete = apt.status !== 'completed' && apt.status !== 'cancelled';
+
+  const statusBadge = getAppointmentStatusBadgeClass(apt.status);
+  const statusLbl = getAppointmentStatusLabel(apt.status);
 
   return (
-    <div className="relative group">
+    <div
+      className="relative overflow-hidden rounded-lg group hover:shadow-md hover:-translate-y-px transition-all duration-150"
+      draggable={canDrag}
+      onDragStart={(e) => {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', apt.id);
+        onDragStart?.(apt);
+      }}
+      onDragEnd={() => onDragEnd?.()}
+    >
+      <div
+        className="absolute start-0 top-0 bottom-0 w-1 rounded-s-lg"
+        style={{ background: accentColor }}
+      />
       <button
         type="button"
         onClick={onClick}
-        className={`w-full min-w-0 text-right rounded-md px-2.5 py-2 cursor-pointer transition-all duration-150 hover:brightness-95 hover:shadow-md flex flex-col gap-0.5 ${cardClass}`}
+        className="w-full min-w-0 text-right bg-white dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/60 rounded-lg px-3 py-2 ps-4 cursor-pointer flex flex-col gap-0.5"
         dir="rtl"
       >
-        <p className="text-xs font-bold truncate leading-tight opacity-95">{cardLabel}</p>
-        <p className="text-[11px] font-medium tabular-nums leading-tight opacity-90">{startStr} – {endStr}</p>
-        <p className="text-xs font-medium truncate leading-tight opacity-95">{apt.patient_name}</p>
-        <div className="flex items-center justify-end mt-0.5">
-          <span className="text-sm leading-none select-none opacity-80" aria-hidden>{icon}</span>
+        <div className="flex items-center justify-between gap-1 min-w-0">
+          <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 tabular-nums leading-tight">{startStr} – {endStr}</p>
+          {apt.status && apt.status !== 'scheduled' && (
+            <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold leading-tight ${statusBadge}`}>{statusLbl}</span>
+          )}
         </div>
+        <p className="text-[13px] font-semibold text-slate-900 dark:text-slate-100 truncate leading-tight">{apt.patient_name}</p>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate leading-tight">{cardLabel}</p>
       </button>
       {canComplete && onComplete && (
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onComplete(apt); }}
           title="סמן כהושלם"
-          className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity rounded-full bg-emerald-500 text-white p-0.5 hover:bg-emerald-600 z-10"
+          className="absolute top-1.5 end-1.5 opacity-0 group-hover:opacity-100 transition-opacity rounded-full bg-emerald-500 text-white p-0.5 hover:bg-emerald-600 z-10"
         >
           <Check className="h-3 w-3" />
         </button>
@@ -244,6 +268,13 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
   const [receiptPromptApt, setReceiptPromptApt] = useState<Appointment | null>(null);
   const [receiptModalApt, setReceiptModalApt] = useState<Appointment | null>(null);
   const [billingSettings, setBillingSettings] = useState<BillingSettings | null | 'loading' | 'none'>(null);
+
+  // On mobile, default to day view
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      setCurrentView('day');
+    }
+  }, []);
 
   useEffect(() => {
     setFetchedMonths((prev) => (prev.size === 0 ? prev : new Set()));
@@ -486,11 +517,45 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
   const noopHandler = useCallback(() => {}, []);
   const handleCloseDrawer = useCallback(() => setDrawerOpen(false), []);
   const handleCloseDayModal = useCallback(() => setSelectedDay(null), []);
-  const handleDeleteAppointment = useCallback(
-    (id: string) => setAppointments((prev) => prev.filter((a) => a.id !== id)),
-    [],
-  );
   const handleCloseReceiptModal = useCallback(() => setReceiptModalApt(null), []);
+
+  // ── Drag-to-trash ──
+  const [draggingApt, setDraggingApt] = useState<Appointment | null>(null);
+  const [pendingDeleteApt, setPendingDeleteApt] = useState<Appointment | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [hasFinePointer, setHasFinePointer] = useState(false);
+
+  useEffect(() => {
+    setHasFinePointer(window.matchMedia('(pointer: fine)').matches);
+  }, []);
+
+  const handleDragStart = useCallback((apt: Appointment) => setDraggingApt(apt), []);
+  const handleDragEnd = useCallback(() => setDraggingApt(null), []);
+
+  const handleTrashDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    if (draggingApt) setPendingDeleteApt(draggingApt);
+    setDraggingApt(null);
+  }, [draggingApt]);
+
+  const handleDeleteAppointment = useCallback(async (id: string) => {
+    setDeleteLoading(true);
+    try {
+      const res = await fetch(`/api/appointments?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        setAppointments((prev) => prev.filter((a) => a.id !== id));
+      }
+    } catch { /* swallow — appointment stays in list */ }
+    setDeleteLoading(false);
+    setPendingDeleteApt(null);
+  }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (pendingDeleteApt) handleDeleteAppointment(pendingDeleteApt.id);
+  }, [pendingDeleteApt, handleDeleteAppointment]);
 
   const headerTitle = useMemo(() => {
     if (currentView === 'day') {
@@ -519,7 +584,7 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
         <div className="flex items-center gap-2 flex-row-reverse shrink-0">
           <button
             onClick={() => { setPrefillDate(undefined); setPrefillTime(undefined); setShowNewForm(true); }}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
           >
             <Plus className="h-3.5 w-3.5" /> חדש
           </button>
@@ -571,8 +636,17 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
 
       {/* Loading / Error */}
       {loading && (
-        <div className="flex justify-center py-16 shrink-0">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-slate-900 dark:border-t-zinc-300" />
+        <div className="px-4 py-6 space-y-3 shrink-0">
+          <div className="grid grid-cols-7 gap-2">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <div key={i} className="space-y-2">
+                <div className="h-3 w-10 mx-auto rounded animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />
+                {Array.from({ length: 2 + (i % 3) }).map((_, j) => (
+                  <div key={j} className="h-14 rounded-lg animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       )}
       {error && (
@@ -581,7 +655,7 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
 
       {/* Card-based week board: show only after lead statuses are ready to avoid "ייעוץ" flash */}
       {!loading && (leadStatusFetched || !appointments.some((a) => a.lead_id)) && (
-        <div className="flex-1 min-h-0 flex flex-col" style={{ minHeight: 480 }}>
+        <div className="relative flex-1 min-h-0 flex flex-col" style={{ minHeight: 480 }}>
           <WeekBoard
             dayColumns={dayColumns}
             todayStr={todayStr}
@@ -590,12 +664,29 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
             onDayClick={handleDayClick}
             onComplete={handleCompleteAppointment}
             leadStatusByLeadId={leadStatusByLeadId}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            canDrag={hasFinePointer}
           />
+
+          {/* Trash drop zone — visible only while dragging */}
+          <div
+            className={`absolute inset-x-0 bottom-0 z-20 flex items-center justify-center gap-2 py-3 border-t-2 border-dashed transition-all duration-200 ${
+              draggingApt
+                ? 'opacity-100 translate-y-0 border-red-400 dark:border-red-500 bg-red-50/90 dark:bg-red-950/60'
+                : 'opacity-0 translate-y-2 pointer-events-none border-transparent bg-transparent'
+            }`}
+            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
+            onDrop={handleTrashDrop}
+          >
+            <Trash2 className="h-4 w-4 text-red-500 dark:text-red-400" />
+            <span className="text-[13px] font-semibold text-red-600 dark:text-red-400">גרור לכאן למחיקה</span>
+          </div>
         </div>
       )}
       {!loading && !leadStatusFetched && appointments.some((a) => a.lead_id) && (
         <div className="flex flex-1 min-h-0 items-center justify-center" style={{ minHeight: 480 }}>
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-slate-900 dark:border-t-zinc-300" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 dark:border-slate-700 border-t-slate-900 dark:border-t-slate-300" />
         </div>
       )}
 
@@ -618,7 +709,10 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
           year={selectedDay.year}
           appointments={selectedDayAppointments}
           onClose={handleCloseDayModal}
-          onDelete={handleDeleteAppointment}
+          onDelete={(id) => {
+            const apt = appointments.find((a) => a.id === id);
+            if (apt) setPendingDeleteApt(apt);
+          }}
           onAdd={(day) => {
             const dateStr = `${selectedDay.year}-${String(selectedDay.month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             setSelectedDay(null);
@@ -667,6 +761,45 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
             setShowNewForm(false);
           }}
         />
+      )}
+
+      {/* Delete confirmation dialog */}
+      {pendingDeleteApt && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setPendingDeleteApt(null)} aria-hidden="true" />
+          <div className="modal-enter relative w-full max-w-xs rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-5 shadow-xl text-right" dir="rtl">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+                <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[15px] font-semibold text-slate-900 dark:text-slate-50">מחיקת תור</p>
+                <p className="text-[13px] text-slate-500 dark:text-slate-400 truncate">
+                  {pendingDeleteApt.patient_name} · {moment(pendingDeleteApt.datetime).format('HH:mm')}
+                </p>
+              </div>
+            </div>
+            <p className="text-[13px] text-slate-600 dark:text-slate-400 mb-4">
+              התור יימחק לצמיתות. פעולה זו אינה ניתנת לביטול.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={handleConfirmDelete}
+                disabled={deleteLoading}
+                className="flex-1 h-9 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[13px] font-semibold transition-colors disabled:opacity-60"
+              >
+                {deleteLoading ? 'מוחק…' : 'מחק תור'}
+              </button>
+              <button
+                onClick={() => setPendingDeleteApt(null)}
+                disabled={deleteLoading}
+                className="flex-1 h-9 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-[13px] font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                ביטול
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -84,7 +84,7 @@ export async function PUT(req: NextRequest) {
   const updates: Record<string, unknown> = {};
   const nameVal = body.name !== undefined ? String(body.name).trim() : undefined;
   const currentName = existing && 'name' in existing ? (existing as { name?: string }).name : undefined;
-  if (nameVal !== undefined) updates.name = nameVal || currentName || 'מרפאה';
+  if (nameVal !== undefined) updates.name = nameVal || currentName || 'העסק';
   if (body.hero_image !== undefined) updates.hero_image = body.hero_image === '' || body.hero_image === null ? null : body.hero_image;
   if (body.hero_video !== undefined) updates.hero_video = body.hero_video === '' || body.hero_video === null ? null : body.hero_video;
   if (body.hero_3d_slot_image_url !== undefined) updates.hero_3d_slot_image_url = body.hero_3d_slot_image_url === '' || body.hero_3d_slot_image_url === null ? null : body.hero_3d_slot_image_url;
@@ -118,7 +118,7 @@ export async function PUT(req: NextRequest) {
     .upsert(
       {
         id: clinicId,
-        name: name || 'מרפאה',
+        name: name || 'העסק',
         hero_image: body.hero_image === '' || body.hero_image === null ? null : body.hero_image,
         hero_video: body.hero_video === '' || body.hero_video === null ? null : body.hero_video,
         hero_3d_slot_image_url: body.hero_3d_slot_image_url === '' || body.hero_3d_slot_image_url === null ? null : body.hero_3d_slot_image_url,

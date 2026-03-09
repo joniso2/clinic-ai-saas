@@ -10,6 +10,9 @@ import { LeadsKpiCards } from '../../components/dashboard/LeadsKpiCards';
 import { LeadsTable } from '../../components/dashboard/LeadsTable';
 import { ConfirmDeleteModal } from '../../components/dashboard/ConfirmDeleteModal';
 import { LeadsEmptyState } from '../../components/dashboard/LeadsEmptyState';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useCommandPalette } from '@/contexts/CommandPaletteContext';
+import NewLeadDrawer from '@/components/dashboard/NewLeadDrawer';
 
 const LeadDetailDrawer = dynamic(
   () => import('../../components/dashboard/LeadDetailDrawer').then((m) => m.LeadDetailDrawer),
@@ -32,12 +35,8 @@ export default function DashboardClient() {
   const [clinicId, setClinicId] = useState<string | null>(null);
 
   const [showNewLeadForm, setShowNewLeadForm] = useState(false);
-  const [newLeadName, setNewLeadName] = useState('');
-  const [newLeadPhone, setNewLeadPhone] = useState('');
-  const [newLeadEmail, setNewLeadEmail] = useState('');
-  const [newLeadInterest, setNewLeadInterest] = useState('');
-  const [newLeadStatus, setNewLeadStatus] = useState<LeadStatus>('Pending');
-  const [submittingLead, setSubmittingLead] = useState(false);
+  const isLargeScreen = useMediaQuery('(min-width: 1024px)');
+  const { registerLeads, registerOnNewLead } = useCommandPalette();
 
   const [drawerLead, setDrawerLead] = useState<Lead | null>(null);
   const [deleteLead, setDeleteLead] = useState<Lead | null>(null);
@@ -59,7 +58,7 @@ export default function DashboardClient() {
     } else {
       setLeads(json.leads ?? []);
       if (json.error === 'Clinic not set for user') {
-        setError('אין קליניקה מקושרת לחשבון. פנה למנהל לשיוך למרפאה.');
+        setError('אין עסק מקושר לחשבון. פנה למנהל לשיוך.');
       } else {
         setError(null);
       }
@@ -196,40 +195,9 @@ export default function DashboardClient() {
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, [clinicId]);
 
-  const handleCreateLead = async () => {
-    if (!clinicId) return;
-    setSubmittingLead(true);
-    setError(null);
-
-    const res = await fetch('/api/leads', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        full_name: newLeadName || '',
-        email: newLeadEmail || null,
-        phone: newLeadPhone || null,
-        interest: newLeadInterest || null,
-        status: newLeadStatus,
-      }),
-    });
-
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setError((json as { error?: string }).error ?? 'Failed to create lead');
-    } else if ((json as { lead?: Lead }).lead) {
-      const data = (json as { lead: Lead }).lead;
-      setLeads((current) => [data, ...current]);
-      setShowNewLeadForm(false);
-      setNewLeadName('');
-      setNewLeadPhone('');
-      setNewLeadEmail('');
-      setNewLeadInterest('');
-      setNewLeadStatus('Pending');
-    }
-
-    setSubmittingLead(false);
-  };
+  // Register leads in CommandPalette context
+  useEffect(() => { registerLeads(leads); }, [leads, registerLeads]);
+  useEffect(() => { registerOnNewLead(() => setShowNewLeadForm(true)); }, [registerOnNewLead]);
 
   const handleUpdateLeadStatus = useCallback(async (leadId: string, status: LeadStatus) => {
     const res = await fetch(`/api/leads/${leadId}`, {
@@ -532,152 +500,97 @@ export default function DashboardClient() {
 
   return (
     <>
-      <div className="mb-6 text-right">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500">לוח בקרה</p>
-        <h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-zinc-100 sm:text-3xl">לידים</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">צפייה וניהול לידים במרפאה.</p>
-      </div>
-
-      {!loading && !error && leads.length > 0 && (
-        <div className="mb-8">
-          <LeadsKpiCards leads={leads} />
-        </div>
-      )}
-
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between flex-row-reverse sm:justify-end">
-        <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 px-3 py-2 text-sm text-slate-600 dark:text-zinc-300 card-shadow flex-row-reverse">
-          <span className="h-2 w-2 rounded-full bg-emerald-500" />
-          {leads.length} לידים במעקב
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowNewLeadForm(true)}
-          className="inline-flex items-center justify-center rounded-xl bg-slate-900 dark:bg-zinc-100 px-5 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 dark:hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-zinc-400 focus:ring-offset-2"
-        >
-          הוסף ליד
-        </button>
-      </div>
-
-      {showNewLeadForm && (
-        <div className="mb-8 rounded-2xl border border-slate-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 p-6 card-shadow">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100 text-right">ליד חדש</h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400 text-right">הוסף איש קשר לצינור המכירות.</p>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300 text-right block">שם</label>
-              <input
-                type="text"
-                value={newLeadName}
-                onChange={(e) => setNewLeadName(e.target.value)}
-                className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500 text-right"
-                placeholder="שם מלא"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300 text-right block">אימייל</label>
-              <input
-                type="email"
-                value={newLeadEmail}
-                onChange={(e) => setNewLeadEmail(e.target.value)}
-                className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500 text-right"
-                placeholder="דוגמה@example.com"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300 text-right block">טלפון</label>
-              <input
-                type="tel"
-                value={newLeadPhone}
-                onChange={(e) => setNewLeadPhone(e.target.value)}
-                className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500 text-right"
-                placeholder="05X-XXX-XXXX"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300 text-right block">עניין</label>
-              <input
-                type="text"
-                value={newLeadInterest}
-                onChange={(e) => setNewLeadInterest(e.target.value)}
-                className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500 text-right"
-                placeholder="טיפול או שירות"
-              />
-            </div>
-            <div className="space-y-1.5 sm:col-span-2">
-              <label className="text-xs font-medium text-slate-700 dark:text-zinc-300 text-right block">סטטוס</label>
-              <select
-                value={newLeadStatus}
-                onChange={(e) => setNewLeadStatus(e.target.value as LeadStatus)}
-                className="block w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 focus:border-slate-900 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-zinc-500 text-right"
-              >
-                <option value="Pending">ממתין</option>
-                <option value="Contacted">נוצר קשר</option>
-                <option value="Appointment scheduled">תור נקבע</option>
-                <option value="Closed">נסגר</option>
-                <option value="Disqualified">הוסר</option>
-              </select>
-            </div>
+      <div dir="rtl">
+        {/* Table panel */}
+        <div>
+          <div className="mb-6 text-right">
+            <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">CRM</p>
+            <h1 className="mt-1 text-[28px] font-bold text-slate-900 dark:text-slate-50 leading-tight tracking-tight">לידים</h1>
+            <p className="mt-1.5 text-[15px] text-slate-500 dark:text-slate-400">ניהול וטיפול בלידים נכנסים</p>
           </div>
-          <div className="mt-6 flex justify-start gap-3 flex-row-reverse">
+
+          {!loading && !error && leads.length > 0 && (
+            <div className="mb-8">
+              <LeadsKpiCards leads={leads} />
+            </div>
+          )}
+
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between flex-row-reverse sm:justify-end">
+            <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 card-shadow flex-row-reverse">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              {leads.length} לידים במעקב
+            </div>
             <button
               type="button"
-              onClick={() => {
-                if (submittingLead) return;
-                setShowNewLeadForm(false);
-                setNewLeadEmail('');
-              }}
-              disabled={submittingLead}
-              className="rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-zinc-300 shadow-sm transition hover:bg-slate-50 dark:hover:bg-zinc-700 disabled:opacity-60"
+              onClick={() => setShowNewLeadForm(true)}
+              className="inline-flex items-center justify-center rounded-xl bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 active:scale-[0.98]"
             >
-              ביטול
-            </button>
-            <button
-              type="button"
-              disabled={submittingLead || !clinicId}
-              onClick={handleCreateLead}
-              className="rounded-xl bg-slate-900 dark:bg-zinc-100 px-4 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-sm transition hover:bg-slate-800 dark:hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-zinc-400 focus:ring-offset-2 disabled:opacity-60"
-            >
-              {submittingLead ? 'שומר…' : 'שמור ליד'}
+              ליד חדש +
             </button>
           </div>
+
+          {error && (
+            <div className="mb-6 rounded-2xl border border-red-200/80 dark:border-red-900/60 bg-red-50/90 dark:bg-red-950/40 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+              {error}
+            </div>
+          )}
+
+          {loading && (
+            <div className="space-y-6 py-4">
+              {/* KPI skeletons */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-3">
+                    <div className="h-10 w-10 rounded-full animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />
+                    <div className="h-7 w-20 rounded-lg animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />
+                    <div className="h-4 w-28 rounded-lg animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />
+                  </div>
+                ))}
+              </div>
+              {/* Table skeleton */}
+              <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
+                <div className="flex gap-4 px-4 py-3 bg-slate-50/70 dark:bg-slate-800/50">
+                  {['w-28','w-20','w-24','w-16'].map((w, i) => (
+                    <div key={i} className={`h-3 rounded-lg animate-pulse bg-slate-200/70 dark:bg-slate-800/60 ${w}`} />
+                  ))}
+                </div>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="flex gap-4 px-4 py-3.5 border-t border-slate-100 dark:border-slate-800">
+                    {['w-32','w-24','w-28','w-20'].map((w, j) => (
+                      <div key={j} className={`h-4 rounded-lg animate-pulse bg-slate-200/70 dark:bg-slate-800/60 ${w}`} />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {!loading && !error && leads.length === 0 && (
+            <LeadsEmptyState onAddLead={() => setShowNewLeadForm(true)} />
+          )}
+
+          {!loading && !error && leads.length > 0 && (
+            <LeadsTable
+              leads={leads}
+              onView={handleViewLead}
+              onEdit={handleOpenEdit}
+              onDelete={handleOpenDelete}
+              onStatusChange={handleUpdateLeadStatus}
+              onAcceptPendingLead={handleAcceptPendingLead}
+              onMarkContacted={handleMarkContacted}
+              onScheduleFollowUp={handleScheduleFollowUp}
+              onScheduleAppointment={handleOpenAppointment}
+              onUpdateDealValue={handleUpdateDealValue}
+              onCompleteLead={handleCompleteLead}
+              pricingServices={pricingServices}
+              nextAppointmentsByLeadId={nextAppointmentsByLeadId}
+              onRejectLead={handleRejectLead}
+            />
+          )}
         </div>
-      )}
+      </div>
 
-      {error && (
-        <div className="mb-6 rounded-2xl border border-red-200/80 dark:border-red-900/60 bg-red-50/90 dark:bg-red-950/40 px-4 py-3 text-sm text-red-700 dark:text-red-400">
-          {error}
-        </div>
-      )}
-
-      {loading && (
-        <div className="flex justify-center py-16">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-slate-900 dark:border-t-zinc-300" />
-        </div>
-      )}
-
-      {!loading && !error && leads.length === 0 && (
-        <LeadsEmptyState onAddLead={() => setShowNewLeadForm(true)} />
-      )}
-
-      {!loading && !error && leads.length > 0 && (
-        <LeadsTable
-          leads={leads}
-          onView={handleViewLead}
-          onEdit={handleOpenEdit}
-          onDelete={handleOpenDelete}
-          onStatusChange={handleUpdateLeadStatus}
-          onAcceptPendingLead={handleAcceptPendingLead}
-          onMarkContacted={handleMarkContacted}
-          onScheduleFollowUp={handleScheduleFollowUp}
-          onScheduleAppointment={handleOpenAppointment}
-          onUpdateDealValue={handleUpdateDealValue}
-          onCompleteLead={handleCompleteLead}
-          pricingServices={pricingServices}
-          nextAppointmentsByLeadId={nextAppointmentsByLeadId}
-          onRejectLead={handleRejectLead}
-        />
-      )}
-
+      {/* Lead detail overlay drawer */}
       <LeadDetailDrawer
         lead={drawerLead}
         open={!!drawerLead}
@@ -686,6 +599,19 @@ export default function DashboardClient() {
         onMarkContacted={handleMarkContacted}
         onScheduleFollowUp={handleScheduleFollowUp}
         onEdit={handleEditFromDrawer}
+        mode="overlay"
+      />
+
+      {/* New lead drawer */}
+      <NewLeadDrawer
+        open={showNewLeadForm}
+        clinicId={clinicId}
+        onClose={() => setShowNewLeadForm(false)}
+        onCreated={(lead) => {
+          setLeads((prev) => [lead, ...prev]);
+          setShowNewLeadForm(false);
+          setDrawerLead(lead);
+        }}
       />
 
       <ConfirmDeleteModal
@@ -713,29 +639,29 @@ export default function DashboardClient() {
       {existingPatientPending && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="לקוח קיים">
           <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setExistingPatientPending(null)} aria-hidden="true" />
-          <div className="relative w-full max-w-sm rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 shadow-xl text-right" dir="rtl">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">לקוח קיים נמצא</h2>
-            <p className="mt-2 text-sm text-slate-500 dark:text-zinc-400">לעדכן לקוח קיים או ליצור רשומה חדשה?</p>
-            <p className="mt-1 text-xs text-slate-400 dark:text-zinc-500">{existingPatientPending.patient.full_name} · {existingPatientPending.patient.phone}</p>
+          <div className="relative w-full max-w-sm rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-5 shadow-xl text-right" dir="rtl">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-50">לקוח קיים נמצא</h2>
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">לעדכן לקוח קיים או ליצור רשומה חדשה?</p>
+            <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">{existingPatientPending.patient.full_name} · {existingPatientPending.patient.phone}</p>
             <div className="mt-4 flex gap-2 justify-start">
               <button
                 type="button"
                 onClick={() => resolveExistingPatient(true)}
-                className="rounded-xl bg-slate-900 dark:bg-zinc-100 px-4 py-2 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-slate-800 dark:hover:bg-white"
+                className="rounded-xl bg-slate-900 dark:bg-slate-100 px-4 py-2 text-sm font-semibold text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-white"
               >
                 עדכן לקוח קיים
               </button>
               <button
                 type="button"
                 onClick={() => resolveExistingPatient(false)}
-                className="rounded-xl border border-slate-200 dark:border-zinc-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800"
+                className="rounded-xl border border-slate-200 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
                 צור רשומה חדשה
               </button>
               <button
                 type="button"
                 onClick={() => setExistingPatientPending(null)}
-                className="rounded-xl border border-slate-200 dark:border-zinc-600 px-4 py-2 text-sm text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-zinc-800"
+                className="rounded-xl border border-slate-200 dark:border-slate-600 px-4 py-2 text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
                 ביטול
               </button>

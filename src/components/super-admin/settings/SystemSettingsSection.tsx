@@ -123,8 +123,8 @@ export default function SystemSettingsSection() {
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div className="min-w-0 flex-1 text-right">
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100 text-right">הגדרות מערכת</h2>
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-zinc-400 text-right">דגלי פיצ׳רים, מצב תחזוקה, מגבלות קצב, הגדרות אימייל ומפתחות API.</p>
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50 text-right">הגדרות מערכת</h2>
+          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400 text-right">דגלי פיצ׳רים, מצב תחזוקה, מגבלות קצב, הגדרות אימייל ומפתחות API.</p>
         </div>
         <button type="button" onClick={handleSave}
           className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition-colors ${saved ? 'bg-emerald-600 text-white' : 'bg-indigo-600 hover:bg-indigo-500 text-white'}`}>

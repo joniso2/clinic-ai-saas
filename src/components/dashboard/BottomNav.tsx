@@ -22,8 +22,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 md:hidden
-        bottom-nav-light dark:bottom-nav-dark"
+      className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 dark:bg-slate-950/95 border-t border-slate-200/80 dark:border-slate-800/80"
       style={{
         backdropFilter: 'blur(20px) saturate(180%)',
         WebkitBackdropFilter: 'blur(20px) saturate(180%)',
@@ -43,17 +42,16 @@ export default function BottomNav() {
               className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full rounded-xl
                 transition-all duration-200 ease-out active:scale-[0.92]
                 ${active
-                  ? 'text-slate-900 dark:text-zinc-100'
-                  : 'text-slate-400 dark:text-zinc-500'
+                  ? 'text-indigo-600 dark:text-indigo-400'
+                  : 'text-slate-400 dark:text-slate-500'
                 }`}
               style={{ touchAction: 'manipulation' }}
             >
-              <div className={`relative flex items-center justify-center transition-all duration-200
-                ${active ? 'scale-110' : 'scale-100'}`}>
+              <div className="relative flex flex-col items-center gap-0.5">
                 {active && (
-                  <span className="absolute inset-0 rounded-lg bg-slate-100 dark:bg-zinc-700 scale-150 opacity-60" />
+                  <span className="absolute -top-1 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-indigo-500" />
                 )}
-                <Icon className={`h-5 w-5 relative z-10 transition-all duration-200 ${active ? 'stroke-[2.5]' : 'stroke-[1.75]'}`} />
+                <Icon className={`h-5 w-5 transition-all duration-200 ${active ? 'stroke-[2.5]' : 'stroke-[1.75]'}`} />
               </div>
               <span className={`text-[10px] font-semibold tracking-tight transition-all duration-200
                 ${active ? 'opacity-100' : 'opacity-60'}`}>

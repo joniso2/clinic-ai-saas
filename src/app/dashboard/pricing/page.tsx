@@ -61,12 +61,12 @@ function KpiCard({
   }[accent];
 
   return (
-    <div className={`rounded-2xl border ${s.border} bg-white dark:bg-zinc-900/80 p-5 shadow-sm`} dir="rtl">
+    <div className={`rounded-2xl border ${s.border} bg-white dark:bg-slate-950/80 p-5 shadow-sm`} dir="rtl">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 dark:text-zinc-500">{label}</p>
-          <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-zinc-100 tabular-nums">{value}</p>
-          {sub && <p className="mt-1 text-xs text-slate-400 dark:text-zinc-500">{sub}</p>}
+          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">{label}</p>
+          <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-50 tabular-nums">{value}</p>
+          {sub && <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">{sub}</p>}
         </div>
         <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${s.bg}`}>
           <Icon className={`h-5 w-5 ${s.icon}`} />
@@ -111,7 +111,7 @@ function InlineEdit({
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false); }}
-        className="w-24 rounded-lg border border-indigo-300 dark:border-indigo-600 bg-white dark:bg-zinc-800 px-2 py-1 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+        className="w-24 rounded-lg border border-indigo-300 dark:border-indigo-600 bg-white dark:bg-slate-800 px-2 py-1 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
         onClick={(e) => e.stopPropagation()}
       />
     );
@@ -121,11 +121,11 @@ function InlineEdit({
     <button
       type="button"
       onClick={(e) => { e.stopPropagation(); setEditing(true); }}
-      className="group/ie inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-zinc-800 transition"
+      className="group/ie inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition"
       title="לחץ לעריכה מהירה"
     >
-      <span className="tabular-nums text-slate-700 dark:text-zinc-300">{display}</span>
-      <Pencil className="h-3 w-3 text-slate-300 dark:text-zinc-600 opacity-0 group-hover/ie:opacity-100 transition" />
+      <span className="tabular-nums text-slate-700 dark:text-slate-300">{display}</span>
+      <Pencil className="h-3 w-3 text-slate-300 dark:text-slate-600 opacity-0 group-hover/ie:opacity-100 transition" />
     </button>
   );
 }
@@ -152,13 +152,13 @@ function ServiceDrawer({
 
   return (
     <div className="fixed inset-0 z-40 flex" dir="rtl">
-      <div className="absolute inset-0 bg-slate-900/40 dark:bg-zinc-950/60 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-[2px]" onClick={onClose} />
       <div
-        className="relative mr-auto w-full max-w-sm bg-white dark:bg-zinc-900 border-l border-slate-200 dark:border-zinc-700 shadow-2xl flex flex-col"
+        className="relative mr-auto w-full max-w-sm bg-white dark:bg-slate-950 border-l border-slate-200 dark:border-slate-700 shadow-2xl flex flex-col"
         style={{ animation: 'slideInDrawer 200ms ease-out forwards' }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 px-5 py-4 shrink-0">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-5 py-4 shrink-0">
           <div className="flex items-center gap-2 flex-wrap">
             {isPopular && (
               <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800/40 px-2 py-0.5 text-[11px] font-semibold text-orange-700 dark:text-orange-400">
@@ -168,13 +168,13 @@ function ServiceDrawer({
             <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
               service.is_active
                 ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                : 'bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
             }`}>
               {service.is_active ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
               {service.is_active ? 'פעיל' : 'מושבת'}
             </span>
           </div>
-          <button type="button" onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-zinc-800 transition">
+          <button type="button" onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -187,9 +187,9 @@ function ServiceDrawer({
               <Package className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-zinc-100 leading-tight">{service.service_name}</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-50 leading-tight">{service.service_name}</h2>
               {service.description && (
-                <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">{service.description}</p>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{service.description}</p>
               )}
             </div>
           </div>
@@ -197,8 +197,8 @@ function ServiceDrawer({
           {/* Category */}
           {service.category && (
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1.5">קטגוריה</p>
-              <span className="inline-flex items-center rounded-lg bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-zinc-300">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">קטגוריה</p>
+              <span className="inline-flex items-center rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-300">
                 {service.category}
               </span>
             </div>
@@ -206,28 +206,28 @@ function ServiceDrawer({
 
           {/* Stats grid */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800 p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1">מחיר</p>
-              <p className="text-xl font-bold text-slate-900 dark:text-zinc-100 tabular-nums">{formatCurrencyILS(service.price)}</p>
+            <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">מחיר</p>
+              <p className="text-xl font-bold text-slate-900 dark:text-slate-50 tabular-nums">{formatCurrencyILS(service.price)}</p>
             </div>
-            <div className="rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800 p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1">משך טיפול</p>
-              <p className="text-xl font-bold text-slate-900 dark:text-zinc-100 tabular-nums">{service.duration_minutes} דק׳</p>
+            <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">משך טיפול</p>
+              <p className="text-xl font-bold text-slate-900 dark:text-slate-50 tabular-nums">{service.duration_minutes} דק׳</p>
             </div>
-            <div className="rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800 p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1">תורים</p>
-              <p className="text-xl font-bold text-slate-900 dark:text-zinc-100 tabular-nums">{service.bookings_count ?? 0}</p>
+            <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">תורים</p>
+              <p className="text-xl font-bold text-slate-900 dark:text-slate-50 tabular-nums">{service.bookings_count ?? 0}</p>
             </div>
-            <div className="rounded-xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800 p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-1">הכנסות</p>
-              <p className="text-xl font-bold text-slate-900 dark:text-zinc-100 tabular-nums">{formatCurrencyILS(service.total_revenue ?? 0)}</p>
+            <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">הכנסות</p>
+              <p className="text-xl font-bold text-slate-900 dark:text-slate-50 tabular-nums">{formatCurrencyILS(service.total_revenue ?? 0)}</p>
             </div>
           </div>
 
           {/* Aliases */}
           {Array.isArray(service.aliases) && service.aliases.length > 0 && (
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">כינויים לבוט</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">כינויים לבוט</p>
               <div className="flex flex-wrap gap-1.5">
                 {service.aliases.map((a) => (
                   <span key={a} className="rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:text-indigo-300">
@@ -240,7 +240,7 @@ function ServiceDrawer({
 
           {/* Meta */}
           {service.created_at && (
-            <p className="text-xs text-slate-400 dark:text-zinc-500">
+            <p className="text-xs text-slate-400 dark:text-slate-500">
               נוסף: {new Date(service.created_at).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
             </p>
           )}
@@ -248,13 +248,13 @@ function ServiceDrawer({
 
         {/* Actions */}
         {canEdit && (
-          <div className="border-t border-slate-100 dark:border-zinc-800 p-4 space-y-2 shrink-0">
+          <div className="border-t border-slate-100 dark:border-slate-800 p-4 space-y-2 shrink-0">
             <button type="button" onClick={onEdit}
               className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition">
               <Pencil className="h-4 w-4" /> ערוך שירות
             </button>
             <button type="button" onClick={onToggle}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-zinc-700 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition">
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
               {service.is_active
                 ? <><PowerOff className="h-4 w-4" /> השבת שירות</>
                 : <><Power className="h-4 w-4" /> הפעל שירות</>}
@@ -456,9 +456,9 @@ export default function PricingPage() {
       {/* Page header */}
       <div className="mb-8 flex items-end justify-between" dir="rtl">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500">ניהול</p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-zinc-100 sm:text-3xl">שירותים ותמחור</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-zinc-400">הגדרת שירותים, מחירים וכינויים לבוט.</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">ניהול</p>
+          <h1 className="mt-1 text-[28px] font-bold leading-tight tracking-tight text-slate-900 dark:text-slate-50">שירותים ותמחור</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">הגדרת שירותים, מחירים וכינויים לבוט.</p>
         </div>
         {canEdit && (
           <button
@@ -481,18 +481,31 @@ export default function PricingPage() {
 
       {/* Loading */}
       {loading ? (
-        <div className="flex justify-center py-24">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-slate-200 dark:border-zinc-700 border-t-indigo-500" />
+        <div className="space-y-4 py-4">
+          <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
+            <div className="flex gap-4 px-4 py-3 bg-slate-50/70 dark:bg-slate-800/50">
+              {['w-32','w-20','w-24','w-16','w-20'].map((w, i) => (
+                <div key={i} className={`h-3 rounded-lg animate-pulse bg-slate-200/70 dark:bg-slate-800/60 ${w}`} />
+              ))}
+            </div>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex gap-4 px-4 py-3.5 border-t border-slate-100 dark:border-slate-800">
+                {['w-36','w-24','w-28','w-20','w-24'].map((w, j) => (
+                  <div key={j} className={`h-4 rounded-lg animate-pulse bg-slate-200/70 dark:bg-slate-800/60 ${w}`} />
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
 
       ) : error ? null : services.length === 0 ? (
         /* Empty state */
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 dark:border-zinc-700/80 bg-white dark:bg-zinc-900/50 px-8 py-24 text-center" dir="rtl">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-zinc-800">
-            <Package className="h-8 w-8 text-slate-400 dark:text-zinc-500" />
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-950/50 px-8 py-24 text-center" dir="rtl">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
+            <Package className="h-8 w-8 text-slate-400 dark:text-slate-500" />
           </div>
-          <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-zinc-100">טרם הוגדרו שירותים</h3>
-          <p className="mt-2 max-w-sm text-sm text-slate-500 dark:text-zinc-400">הוסף שירות ראשון כדי להתחיל בניהול תמחור ובוט.</p>
+          <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-50">טרם הוגדרו שירותים</h3>
+          <p className="mt-2 max-w-sm text-sm text-slate-500 dark:text-slate-400">הוסף שירות ראשון כדי להתחיל בניהול תמחור ובוט.</p>
           {canEdit && (
             <button
               type="button"
@@ -519,18 +532,18 @@ export default function PricingPage() {
           <div className="flex flex-wrap items-center gap-3">
             {/* Search */}
             <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-zinc-500 pointer-events-none" />
+              <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
               <input
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="חיפוש לפי שם או כינוי..."
-                className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-2.5 pe-10 ps-4 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 dark:focus:border-indigo-600 transition"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 py-2.5 pe-10 ps-4 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 dark:focus:border-indigo-600 transition"
               />
             </div>
 
             {/* Status pills */}
-            <div className="flex rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-0.5 gap-0.5">
+            <div className="flex rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-0.5 gap-0.5">
               {(['all', 'active', 'inactive'] as StatusFilter[]).map((f) => (
                 <button
                   key={f}
@@ -538,8 +551,8 @@ export default function PricingPage() {
                   onClick={() => setStatusFilter(f)}
                   className={`rounded-lg px-3 py-2 text-xs font-medium transition ${
                     statusFilter === f
-                      ? 'bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900'
-                      : 'text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-100'
+                      ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-50'
                   }`}
                 >
                   {f === 'all' ? 'הכל' : f === 'active' ? 'פעיל' : 'מושבת'}
@@ -554,7 +567,7 @@ export default function PricingPage() {
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortKey)}
                 dir="rtl"
-                className="appearance-none rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 py-2.5 pr-9 pl-8 text-sm text-slate-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
+                className="appearance-none rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 py-2.5 pr-9 pl-8 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
               >
                 {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
@@ -569,7 +582,7 @@ export default function PricingPage() {
                 className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
                   hasActiveFilters
                     ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300'
-                    : 'border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800'
+                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                 }`}
               >
                 <Filter className="h-3.5 w-3.5" />
@@ -578,28 +591,28 @@ export default function PricingPage() {
               </button>
 
               {filterOpen && (
-                <div className="absolute left-0 top-full mt-2 z-30 w-72 rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl p-4 space-y-4" dir="rtl">
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-zinc-500">סינון מתקדם</p>
+                <div className="absolute left-0 top-full mt-2 z-30 w-72 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-xl p-4 space-y-4" dir="rtl">
+                  <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">סינון מתקדם</p>
 
                   <div>
-                    <p className="text-xs font-medium text-slate-600 dark:text-zinc-400 mb-2">טווח מחיר (₪)</p>
+                    <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">טווח מחיר (₪)</p>
                     <div className="flex items-center gap-2">
                       <input type="number" placeholder="מינ׳" value={priceMin} onChange={(e) => setPriceMin(e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                        className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
                       <span className="text-slate-400 text-xs shrink-0">–</span>
                       <input type="number" placeholder="מקס׳" value={priceMax} onChange={(e) => setPriceMax(e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                        className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
                     </div>
                   </div>
 
                   <div>
-                    <p className="text-xs font-medium text-slate-600 dark:text-zinc-400 mb-2">טווח משך (דק׳)</p>
+                    <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">טווח משך (דק׳)</p>
                     <div className="flex items-center gap-2">
                       <input type="number" placeholder="מינ׳" value={durMin} onChange={(e) => setDurMin(e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                        className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
                       <span className="text-slate-400 text-xs shrink-0">–</span>
                       <input type="number" placeholder="מקס׳" value={durMax} onChange={(e) => setDurMax(e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                        className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
                     </div>
                   </div>
 
@@ -616,23 +629,23 @@ export default function PricingPage() {
           </div>
 
           {/* Table */}
-          <div className="rounded-2xl border border-slate-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900/80 shadow-sm overflow-hidden">
+          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-950/80 shadow-sm overflow-hidden">
             {/* Table header bar */}
-            <div className="border-b border-slate-100 dark:border-zinc-800 px-5 py-3.5 flex items-center justify-between bg-slate-50/60 dark:bg-zinc-800/40">
+            <div className="border-b border-slate-100 dark:border-slate-800 px-5 py-3.5 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40">
               <div className="flex items-center gap-2.5">
-                <Package className="h-4 w-4 text-slate-400 dark:text-zinc-500" />
-                <span className="text-sm font-semibold text-slate-700 dark:text-zinc-200">רשימת שירותים</span>
-                <span className="rounded-full bg-slate-100 dark:bg-zinc-700/80 px-2 py-0.5 text-xs font-medium text-slate-500 dark:text-zinc-400 tabular-nums">{filteredServices.length}</span>
+                <Package className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">רשימת שירותים</span>
+                <span className="rounded-full bg-slate-100 dark:bg-slate-700/80 px-2 py-0.5 text-xs font-medium text-slate-500 dark:text-slate-400 tabular-nums">{filteredServices.length}</span>
               </div>
               {filteredServices.length !== services.length && (
-                <span className="text-xs text-slate-400 dark:text-zinc-500">מתוך {services.length}</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">מתוך {services.length}</span>
               )}
             </div>
 
             <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
               <table className="w-full text-right" dir="rtl">
-                <thead className="sticky top-0 z-10 bg-slate-50/95 dark:bg-zinc-800/95 backdrop-blur-sm text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                  <tr className="border-b border-slate-100 dark:border-zinc-800">
+                <thead className="sticky top-0 z-10 bg-slate-50/95 dark:bg-slate-800/95 backdrop-blur-sm text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  <tr className="border-b border-slate-100 dark:border-slate-800">
                     <th className="py-3 px-5">שם שירות</th>
                     <th className="py-3 px-4 w-36">מחיר</th>
                     <th className="py-3 px-4 w-36">משך</th>
@@ -644,8 +657,8 @@ export default function PricingPage() {
                   {filteredServices.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="py-16 text-center">
-                        <div className="flex flex-col items-center gap-3 text-slate-400 dark:text-zinc-500">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800">
+                        <div className="flex flex-col items-center gap-3 text-slate-400 dark:text-slate-500">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
                             <Package className="h-6 w-6" />
                           </div>
                           <p className="text-sm font-medium">אין תוצאות</p>
@@ -658,7 +671,7 @@ export default function PricingPage() {
                       <tr
                         key={s.id}
                         onClick={() => setDrawerService(s)}
-                        className="border-b border-slate-50 dark:border-zinc-800/60 last:border-0 hover:bg-indigo-50/40 dark:hover:bg-indigo-900/10 cursor-pointer transition-colors group"
+                        className="border-b border-slate-50 dark:border-slate-800/60 last:border-0 hover:bg-indigo-50/40 dark:hover:bg-indigo-900/10 cursor-pointer transition-colors group"
                       >
                         {/* Name */}
                         <td className="py-3.5 px-5">
@@ -666,13 +679,13 @@ export default function PricingPage() {
                             <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
                               s.is_active
                                 ? 'bg-indigo-500/10 dark:bg-indigo-500/20'
-                                : 'bg-slate-100 dark:bg-zinc-800'
+                                : 'bg-slate-100 dark:bg-slate-800'
                             }`}>
-                              <Package className={`h-4 w-4 ${s.is_active ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-zinc-500'}`} />
+                              <Package className={`h-4 w-4 ${s.is_active ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}`} />
                             </div>
                             <div>
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-semibold text-slate-900 dark:text-zinc-100">{s.service_name}</span>
+                                <span className="font-semibold text-slate-900 dark:text-slate-50">{s.service_name}</span>
                                 {isPopular && (
                                   <span className="inline-flex items-center gap-0.5 rounded-full bg-orange-100 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800/40 px-1.5 py-0.5 text-[10px] font-semibold text-orange-700 dark:text-orange-400">
                                     🔥 פופולרי
@@ -680,7 +693,7 @@ export default function PricingPage() {
                                 )}
                               </div>
                               {Array.isArray(s.aliases) && s.aliases.length > 0 && (
-                                <p className="mt-0.5 text-xs text-slate-400 dark:text-zinc-500 truncate max-w-[280px]">
+                                <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500 truncate max-w-[280px]">
                                   {s.aliases.join(' · ')}
                                 </p>
                               )}
@@ -697,7 +710,7 @@ export default function PricingPage() {
                               onSave={(v) => handleInlineSave(s, 'price', v)}
                             />
                           ) : (
-                            <span className="text-sm tabular-nums text-slate-700 dark:text-zinc-300 px-2">{formatCurrencyILS(s.price)}</span>
+                            <span className="text-sm tabular-nums text-slate-700 dark:text-slate-300 px-2">{formatCurrencyILS(s.price)}</span>
                           )}
                         </td>
 
@@ -710,7 +723,7 @@ export default function PricingPage() {
                               onSave={(v) => handleInlineSave(s, 'duration_minutes', Math.max(1, Math.min(480, Math.round(v))))}
                             />
                           ) : (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-zinc-800 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:text-zinc-300">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-300">
                               ⏱ {s.duration_minutes} דק׳
                             </span>
                           )}
@@ -721,7 +734,7 @@ export default function PricingPage() {
                           <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                             s.is_active
                               ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                              : 'bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                           }`}>
                             {s.is_active ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
                             {s.is_active ? 'פעיל' : 'מושבת'}
@@ -735,21 +748,21 @@ export default function PricingPage() {
                               <>
                                 <button type="button"
                                   onClick={() => { setEditService(s); setModal('edit'); }}
-                                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition"
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                                   title="ערוך">
                                   <Pencil className="h-3.5 w-3.5" />
                                 </button>
                                 <button type="button"
                                   onClick={() => handleDuplicate(s)}
                                   disabled={submitting}
-                                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition disabled:opacity-50"
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition disabled:opacity-50"
                                   title="שכפל">
                                   <Copy className="h-3.5 w-3.5" />
                                 </button>
                                 <button type="button"
                                   onClick={() => handleToggleActive(s)}
                                   disabled={submitting}
-                                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition disabled:opacity-50"
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition disabled:opacity-50"
                                   title={s.is_active ? 'השבת' : 'הפעל'}>
                                   {s.is_active ? <PowerOff className="h-3.5 w-3.5" /> : <Power className="h-3.5 w-3.5" />}
                                 </button>
@@ -822,7 +835,7 @@ export default function PricingPage() {
           className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-xl px-4 py-2.5 text-sm font-medium shadow-lg ${
             toastType === 'error'
               ? 'bg-red-600 text-white dark:bg-red-700'
-              : 'bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900'
+              : 'bg-indigo-600 text-white dark:bg-indigo-700'
           }`}
           role="status"
         >
@@ -897,84 +910,84 @@ function ServiceFormModal({
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
       role="dialog" aria-modal="true" aria-labelledby="service-modal-title"
     >
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xl animate-in zoom-in-95 fade-in duration-200">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 px-5 py-4 flex-row-reverse">
-          <h2 id="service-modal-title" className="text-lg font-semibold text-slate-900 dark:text-zinc-100 text-right">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-2xl animate-in zoom-in-95 fade-in duration-200">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex-row-reverse">
+          <h2 id="service-modal-title" className="text-lg font-semibold text-slate-900 dark:text-slate-50 text-right">
             {service ? 'ערוך שירות' : 'הוסף שירות'}
           </h2>
           <button type="button" onClick={onClose}
-            className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-slate-400/30 ms-auto"
+            className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400/30 ms-auto"
             aria-label="סגור">
             <X className="h-4 w-4" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 text-right mb-1.5">
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 text-right mb-1.5">
               שם שירות <span className="text-red-500">*</span>
             </label>
             <input type="text" value={name}
               onChange={(e) => { setName(e.target.value); setFieldErrors((p) => ({ ...p, name: undefined })); }}
-              className={`w-full rounded-xl border bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 text-right placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-zinc-500/50 transition-colors ${fieldErrors.name ? 'border-red-400 dark:border-red-600' : 'border-slate-200 dark:border-zinc-700'}`}
+              className={`w-full h-11 rounded-lg border bg-white dark:bg-slate-800 px-3 text-sm text-slate-900 dark:text-slate-50 text-right placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30 transition-colors ${fieldErrors.name ? 'border-red-400 dark:border-red-600' : 'border-slate-200 dark:border-slate-700'}`}
               placeholder="לדוגמה: טיפול שורש" />
             {fieldErrors.name && <p className="mt-1 text-xs text-red-600 dark:text-red-400 text-right">{fieldErrors.name}</p>}
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 text-right mb-1.5">
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 text-right mb-1.5">
               מחיר (₪) <span className="text-red-500">*</span>
             </label>
             <input type="number" min={0} step={1} value={price || ''}
               onChange={(e) => { setPrice(e.target.value === '' ? 0 : Number(e.target.value)); setFieldErrors((p) => ({ ...p, price: undefined })); }}
-              className={`w-full rounded-xl border bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 text-right tabular-nums placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-zinc-500/50 transition-colors ${fieldErrors.price ? 'border-red-400 dark:border-red-600' : 'border-slate-200 dark:border-zinc-700'}`}
+              className={`w-full h-11 rounded-lg border bg-white dark:bg-slate-800 px-3 text-sm text-slate-900 dark:text-slate-50 text-right tabular-nums placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30 transition-colors ${fieldErrors.price ? 'border-red-400 dark:border-red-600' : 'border-slate-200 dark:border-slate-700'}`}
               placeholder="0" />
             {fieldErrors.price && <p className="mt-1 text-xs text-red-600 dark:text-red-400 text-right">{fieldErrors.price}</p>}
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 text-right mb-1.5">
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 text-right mb-1.5">
               משך הטיפול (דקות) <span className="text-red-500">*</span>
             </label>
             <input type="number" min={1} max={480} step={1} value={durationMinutes}
               onChange={(e) => setDurationMinutes(e.target.value === '' ? 30 : Number(e.target.value))}
-              className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 text-right tabular-nums placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-zinc-500/50 transition-colors"
+              className="w-full h-11 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm text-slate-900 dark:text-slate-50 text-right tabular-nums placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30 transition-colors"
               placeholder="30" />
-            <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400 text-right">1–480 דקות</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 text-right">1–480 דקות</p>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 text-right mb-1.5">
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 text-right mb-1.5">
               כינויים לחיפוש (מופרדים בפסיק)
             </label>
             <input type="text" value={aliasesStr} onChange={(e) => setAliasesStr(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 text-right placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-zinc-500/50 transition-colors"
+              className="w-full h-11 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm text-slate-900 dark:text-slate-50 text-right placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30 transition-colors"
               placeholder="טיפול שורש, שורש, רוט" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 text-right mb-1.5">
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 text-right mb-1.5">
               קטגוריה (אופציונלי)
             </label>
             <input type="text" value={category} onChange={(e) => setCategory(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 text-right placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-zinc-500/50 transition-colors"
+              className="w-full h-11 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm text-slate-900 dark:text-slate-50 text-right placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30 transition-colors"
               placeholder="לדוגמה: שיניים, עיניים, כירורגיה" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 text-right mb-1.5">
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 text-right mb-1.5">
               תיאור (אופציונלי)
             </label>
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2}
-              className="w-full rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 text-right placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:focus:ring-zinc-500/50 transition-colors resize-none"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-50 text-right placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30 transition-colors resize-none"
               placeholder="תיאור קצר לשירות" />
           </div>
           <div className="flex items-center gap-2 flex-row-reverse justify-end pt-1">
-            <label className="text-sm font-medium text-slate-700 dark:text-zinc-300">פעיל</label>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">פעיל</label>
             <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)}
-              className="rounded border-slate-300 dark:border-zinc-600 text-slate-900 focus:ring-slate-400" />
+              className="rounded border-slate-300 dark:border-slate-600 text-slate-900 focus:ring-slate-400" />
           </div>
           <div className="flex gap-3 pt-2 flex-row-reverse justify-start">
             <button type="button" onClick={onClose}
-              className="rounded-xl border border-slate-200 dark:border-zinc-700 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-slate-400/30">
+              className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400/30">
               ביטול
             </button>
             <button type="submit" disabled={submitting}
-              className="rounded-xl bg-slate-900 dark:bg-zinc-100 px-4 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 hover:bg-slate-800 dark:hover:bg-white disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2">
+              className="rounded-xl bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 transition-colors">
               {submitting ? 'שומר…' : service ? 'שמור שינויים' : 'הוסף שירות'}
             </button>
           </div>

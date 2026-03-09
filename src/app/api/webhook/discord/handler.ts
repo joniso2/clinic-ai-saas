@@ -13,7 +13,7 @@ export type DiscordWebhookBody = {
   conversation_history?: Array<{ role: 'user' | 'assistant'; content: string }>;
 };
 
-const FALLBACK_REPLY = 'שגיאה זמנית. נסה שוב או פנה למרפאה ישירות.';
+const FALLBACK_REPLY = 'שגיאה זמנית. נסה שוב או פנה אלינו ישירות.';
 
 /**
  * Transport layer: parse Discord webhook payload and delegate to LeadService.

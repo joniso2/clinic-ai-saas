@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   const emailStr = typeof email === 'string' ? email.trim().toLowerCase() : '';
   const r = role === 'CLINIC_ADMIN' ? 'CLINIC_ADMIN' : 'STAFF';
   if (!clinicId || !emailStr) {
-    return NextResponse.json({ error: 'קליניקה ואימייל חובה' }, { status: 400 });
+    return NextResponse.json({ error: 'עסק ואימייל חובה' }, { status: 400 });
   }
 
   const pwd = typeof password === 'string' && password.length >= 8 ? password : undefined;
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
 
   if (linkError) {
     await supabase.auth.admin.deleteUser(authUser.user.id);
-    return NextResponse.json({ error: linkError.message || 'קישור לקליניקה נכשל' }, { status: 500 });
+    return NextResponse.json({ error: linkError.message || 'קישור לעסק נכשל' }, { status: 500 });
   }
 
   return NextResponse.json({

@@ -13,8 +13,23 @@ import {
   Target,
   Percent,
   Banknote,
-  CalendarX2,
+  UsersRound,
+  ReceiptText,
 } from 'lucide-react';
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts';
 import type {
   AnalyticsData,
   FunnelStage,
@@ -71,45 +86,6 @@ function fmtHours(h: number): string {
   return fixed === 1 ? 'שעה' : `${fixed} שעות`;
 }
 
-function fmtDays(d: number): string {
-  if (d < 1) return `${Math.round(d * 24)} שעות`;
-  const fixed = Math.round(d * 10) / 10;
-  return fixed === 1 ? 'יום' : `${fixed} ימים`;
-}
-
-// ─── Sparkline ──────────────────────────────────────────────────────────────
-
-function Sparkline({ data, color = '#6366f1', invert }: { data: number[]; color?: string; invert?: boolean }) {
-  if (!data || data.length < 2) return <div className="w-full h-10 min-w-[80px]" />;
-  const max = Math.max(...data, 0.01);
-  const W = 120;
-  const H = 36;
-  const points = data.map((v, i) => ({
-    x: (i / (data.length - 1)) * W,
-    y: H - Math.max((v / max) * H * (invert ? -1 : 1), 0),
-  }));
-  let d = `M ${points[0].x} ${points[0].y}`;
-  for (let i = 1; i < points.length; i++) {
-    const prev = points[i - 1];
-    const curr = points[i];
-    const cpx = (prev.x + curr.x) / 2;
-    d += ` C ${cpx} ${prev.y}, ${cpx} ${curr.y}, ${curr.x} ${curr.y}`;
-  }
-  const area = d + ` L ${points[points.length - 1].x} ${H} L ${points[0].x} ${H} Z`;
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-10 min-w-[80px] shrink-0" aria-hidden="true">
-      <defs>
-        <linearGradient id={`sg-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity={0.2} />
-          <stop offset="100%" stopColor={color} stopOpacity={0} />
-        </linearGradient>
-      </defs>
-      <path d={area} fill={`url(#sg-${color.replace('#', '')})`} />
-      <path d={d} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 // ─── Trend badge (RTL: arrow on right) ───────────────────────────────────────
 
 function TrendBadge({ pct }: { pct: number | null }) {
@@ -129,9 +105,9 @@ function TrendBadge({ pct }: { pct: number | null }) {
   );
 }
 
-// ─── KPI Strip Card (Executive Summary) ───────────────────────────────────────
+// ─── KPI Card ────────────────────────────────────────────────────────────────
 
-function KpiStripCard({
+function KpiCard({
   label,
   value,
   sub,
@@ -147,25 +123,25 @@ function KpiStripCard({
   trend?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900/80 p-4 shadow-sm transition-shadow hover:shadow-md">
+    <div className="group rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-950/80 p-4 shadow-sm transition-shadow hover:shadow-md">
       <div className="flex items-start justify-between gap-3 flex-row-reverse text-right">
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
             {label}
           </p>
-          <p className="mt-1.5 text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">{value}</p>
-          {sub && <p className="mt-0.5 text-[11px] text-slate-400 dark:text-zinc-500">{sub}</p>}
+          <p className="mt-1.5 text-[28px] font-bold tabular-nums tracking-tight text-slate-900 dark:text-slate-50">{value}</p>
+          {sub && <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">{sub}</p>}
           {trend && <div className="mt-1.5">{trend}</div>}
         </div>
-        <div className={`shrink-0 rounded-lg p-2 ${iconBg}`}>
-          <Icon className="h-4 w-4 text-slate-600 dark:text-zinc-300" strokeWidth={2} />
+        <div className={`shrink-0 h-10 w-10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform ${iconBg}`}>
+          <Icon className="h-4 w-4" strokeWidth={2} />
         </div>
       </div>
     </div>
   );
 }
 
-// ─── Date Range Control (Segmented, RTL) ─────────────────────────────────────
+// ─── Date Range Control ─────────────────────────────────────────────────────
 
 const PRESETS: { label: string; value: Preset }[] = [
   { label: '7 ימים', value: '7d' },
@@ -189,15 +165,15 @@ function DateRangeControl({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-3 flex-row-reverse justify-end">
-      <div className="flex rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50/80 dark:bg-zinc-800/80 p-1 gap-0.5">
+      <div className="inline-flex items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-0.5">
         {PRESETS.map((p) => (
           <button
             key={p.value}
             onClick={() => onPreset(p.value)}
-            className={`rounded-lg px-3 py-2 text-xs font-medium transition-all duration-150 ${
+            className={`transition-all duration-150 ${
               preset === p.value
-                ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-zinc-100 shadow-sm ring-1 ring-slate-200/80 dark:ring-zinc-600'
-                : 'text-slate-500 dark:text-zinc-400 hover:text-slate-700 dark:hover:text-zinc-200'
+                ? 'rounded-md bg-white dark:bg-slate-700 shadow-sm px-3 py-1.5 text-[13px] font-semibold text-slate-900 dark:text-slate-100'
+                : 'px-3 py-1.5 text-[13px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
             }`}
           >
             {p.label}
@@ -210,14 +186,14 @@ function DateRangeControl({
             type="date"
             value={customTo}
             onChange={(e) => onCustomChange(customFrom, e.target.value)}
-            className="rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-2 text-xs text-slate-700 dark:text-zinc-300 text-right focus:outline-none focus:ring-2 focus:ring-slate-400/50 dark:focus:ring-zinc-500/50"
+            className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-2 text-xs text-slate-700 dark:text-slate-300 text-right focus:outline-none focus:ring-2 focus:ring-slate-400/50 dark:focus:ring-slate-500/50"
           />
-          <span className="text-xs text-slate-400 dark:text-zinc-500">–</span>
+          <span className="text-xs text-slate-400 dark:text-slate-500">–</span>
           <input
             type="date"
             value={customFrom}
             onChange={(e) => onCustomChange(e.target.value, customTo)}
-            className="rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-2 text-xs text-slate-700 dark:text-zinc-300 text-right focus:outline-none focus:ring-2 focus:ring-slate-400/50 dark:focus:ring-zinc-500/50"
+            className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-2 text-xs text-slate-700 dark:text-slate-300 text-right focus:outline-none focus:ring-2 focus:ring-slate-400/50 dark:focus:ring-slate-500/50"
           />
         </div>
       )}
@@ -225,33 +201,92 @@ function DateRangeControl({
   );
 }
 
-// ─── Funnel (ליד → קשר → תור → סגור) ───────────────────────────────────────
+// ─── Chart Section Wrapper ──────────────────────────────────────────────────
+
+function ChartSection({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-950/80 p-6 shadow-sm">
+      <div className="mb-5 text-right">
+        <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-[0.12em]">{title}</h3>
+        {subtitle && <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ─── Actual Revenue Area Chart ───────────────────────────────────────────────
+
+function ActualRevenueChart({ data }: { data: { label: string; revenue: number }[] }) {
+  const hasRevenue = data.some((d) => d.revenue > 0);
+  if (data.length < 2 || !hasRevenue) {
+    return <p className="text-center text-sm text-slate-400 py-8">אין נתוני הכנסה בפועל לתקופה זו</p>;
+  }
+  return (
+    <ResponsiveContainer width="100%" height={240}>
+      <AreaChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+        <defs>
+          <linearGradient id="actualRevGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#10b981" stopOpacity={0.2} />
+            <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+        <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} reversed />
+        <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={50} tickFormatter={(v: number) => v >= 1000 ? `${Math.round(v / 1000)}k` : String(v)} />
+        <Tooltip
+          contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 12, direction: 'rtl' }}
+          formatter={(value) => [fmt(Number(value)), 'הכנסה בפועל']}
+        />
+        <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} fill="url(#actualRevGrad)" name="revenue" />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+}
+
+// ─── Leads Per Day Bar Chart ────────────────────────────────────────────────
+
+function LeadsPerDayChart({ data }: { data: { label: string; leads: number }[] }) {
+  if (data.length < 2) {
+    return <p className="text-center text-sm text-slate-400 py-8">אין מספיק נתונים לתרשים</p>;
+  }
+  return (
+    <ResponsiveContainer width="100%" height={240}>
+      <BarChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+        <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} reversed />
+        <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={30} allowDecimals={false} />
+        <Tooltip
+          contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 12, direction: 'rtl' }}
+          formatter={(value) => [Number(value), 'לידים חדשים']}
+        />
+        <Bar dataKey="leads" fill="#6366f1" radius={[3, 3, 0, 0]} barSize={12} />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+// ─── Funnel ─────────────────────────────────────────────────────────────────
 
 const FUNNEL_LABELS: Record<string, string> = { Leads: 'ליד', Contacted: 'קשר', Appointments: 'תור', Closed: 'סגור' };
-const FUNNEL_BAR_GRADIENTS = [
-  'bg-gradient-to-l from-slate-400 to-slate-300 dark:from-slate-500 dark:to-slate-400',
-  'bg-gradient-to-l from-indigo-400 to-indigo-300 dark:from-indigo-500 dark:to-indigo-400',
-  'bg-gradient-to-l from-indigo-500 to-indigo-400 dark:from-indigo-600 dark:to-indigo-500',
-  'bg-gradient-to-l from-emerald-500 to-emerald-400 dark:from-emerald-500 dark:to-emerald-400',
-];
+const FUNNEL_COLORS = ['#94a3b8', '#818cf8', '#6366f1', '#10b981'];
 
-function FunnelSection({ stages }: { stages: FunnelStage[] }) {
+function FunnelChart({ stages }: { stages: FunnelStage[] }) {
   const max = stages[0]?.count ?? 1;
   return (
     <div className="space-y-0">
       {stages.map((stage, i) => {
-        const pct = max > 0 ? Math.round((stage.count / max) * 100) : 0;
+        const pctVal = max > 0 ? Math.round((stage.count / max) * 100) : 0;
         const isHighDrop = stage.dropOffPct >= 50;
         const isLast = i === stages.length - 1;
-        const isZero = stage.count === 0;
         return (
           <div
             key={stage.name}
-            className={`space-y-2 ${i > 0 ? 'border-t border-slate-100/60 dark:border-zinc-800/60' : ''} ${!isLast ? 'pb-5' : ''}`}
+            className={`space-y-2 ${i > 0 ? 'border-t border-slate-100/60 dark:border-slate-800/60' : ''} ${!isLast ? 'pb-5' : ''}`}
           >
             <div className="flex items-center justify-between flex-row-reverse text-right gap-2">
               <div className="flex items-center gap-2 flex-row-reverse">
-                <span className="text-sm font-medium text-slate-700 dark:text-zinc-200">
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
                   {FUNNEL_LABELS[stage.name] ?? stage.name}
                 </span>
                 {stage.isWorstDropOff && (
@@ -259,7 +294,7 @@ function FunnelSection({ stages }: { stages: FunnelStage[] }) {
                     className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${
                       isHighDrop
                         ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-700/40'
-                        : 'bg-slate-50 dark:bg-zinc-800/60 border-slate-200/60 dark:border-zinc-700/50 text-slate-600 dark:text-zinc-400'
+                        : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200/60 dark:border-slate-700/50 text-slate-600 dark:text-slate-400'
                     }`}
                   >
                     <AlertTriangle className="h-2.5 w-2.5 opacity-60" aria-hidden />
@@ -272,20 +307,20 @@ function FunnelSection({ stages }: { stages: FunnelStage[] }) {
                   {stage.count}
                 </span>
                 {i > 0 && (
-                  <span className={`text-xs text-slate-400 dark:text-zinc-500 ${isZero ? 'opacity-70' : ''}`}>
+                  <span className={`text-xs text-slate-400 dark:text-slate-500 ${stage.count === 0 ? 'opacity-70' : ''}`}>
                     {stage.fromPreviousPct}% מהשלב הקודם
                   </span>
                 )}
               </div>
             </div>
-            <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-zinc-800">
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
               <div
-                className={`h-full rounded-full transition-all duration-700 ease-out shadow-[0_0_6px_rgba(99,102,241,0.18)] ${FUNNEL_BAR_GRADIENTS[i] ?? 'bg-slate-400 dark:bg-slate-500'} ${isHighDrop && stage.isWorstDropOff ? 'ring-2 ring-amber-400/50' : ''}`}
-                style={{ width: `${pct}%` }}
+                className={`h-full rounded-full transition-all duration-700 ease-out ${isHighDrop && stage.isWorstDropOff ? 'ring-2 ring-amber-400/50' : ''}`}
+                style={{ width: `${pctVal}%`, background: FUNNEL_COLORS[i] ?? '#94a3b8' }}
               />
             </div>
             {i < stages.length - 1 && (
-              <p className={`text-xs text-slate-400 dark:text-zinc-500 text-right ${stages[i + 1].count === 0 ? 'opacity-70' : ''}`}>
+              <p className={`text-xs text-slate-400 dark:text-slate-500 text-right ${stages[i + 1].count === 0 ? 'opacity-70' : ''}`}>
                 {stages[i + 1].dropOffPct}% נשירה לשלב הבא
               </p>
             )}
@@ -296,71 +331,158 @@ function FunnelSection({ stages }: { stages: FunnelStage[] }) {
   );
 }
 
-// ─── Response Time & Performance Card ────────────────────────────────────────
+// ─── Top Services Bar Chart ─────────────────────────────────────────────────
 
-function ResponseTimeCard({
-  efficiency,
-  sparkline,
-}: {
-  efficiency: AnalyticsData['kpi']['efficiency'];
-  sparkline: number[];
-}) {
+const SERVICE_COLORS = ['#6366f1', '#818cf8', '#a5b4fc', '#c7d2fe', '#e0e7ff'];
+
+function TopServicesChart({ data }: { data: { serviceName: string; total: number; count: number }[] }) {
+  if (data.length === 0) {
+    return <p className="text-center text-sm text-slate-400 py-8">אין נתוני שירותים לתקופה זו</p>;
+  }
+  const top = data.slice(0, 5);
+  return (
+    <ResponsiveContainer width="100%" height={Math.max(top.length * 48, 120)}>
+      <BarChart data={top} layout="vertical" margin={{ top: 0, right: 10, left: 10, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
+        <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={(v: number) => fmt(v)} />
+        <YAxis type="category" dataKey="serviceName" tick={{ fontSize: 12, fill: '#64748b' }} tickLine={false} axisLine={false} width={120} />
+        <Tooltip
+          contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 12, direction: 'rtl' }}
+          formatter={(value) => [fmt(Number(value)), 'הכנסה']}
+        />
+        <Bar dataKey="total" radius={[0, 4, 4, 0]} barSize={24}>
+          {top.map((_, idx) => (
+            <Cell key={idx} fill={SERVICE_COLORS[idx] ?? '#e0e7ff'} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+// ─── Appointment Status Breakdown ───────────────────────────────────────────
+
+function AppointmentBreakdown({ metrics }: { metrics: AnalyticsData['appointmentMetrics'] }) {
+  const segments = [
+    { label: 'הושלמו', count: metrics.completed, color: 'bg-emerald-500' },
+    { label: 'מתוכננים', count: metrics.scheduled, color: 'bg-indigo-500' },
+    { label: 'בוטלו', count: metrics.cancelled, color: 'bg-red-400' },
+    { label: 'לא הופיעו', count: metrics.noShow, color: 'bg-amber-400' },
+  ];
+  const total = metrics.total || 1;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex h-3 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+        {segments.map((seg) => (
+          seg.count > 0 && (
+            <div
+              key={seg.label}
+              className={`${seg.color} transition-all duration-500`}
+              style={{ width: `${(seg.count / total) * 100}%` }}
+            />
+          )
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        {segments.map((seg) => (
+          <div key={seg.label} className="flex items-center gap-2 flex-row-reverse text-right">
+            <div className={`h-2.5 w-2.5 rounded-full ${seg.color}`} />
+            <span className="text-[13px] text-slate-600 dark:text-slate-400">{seg.label}</span>
+            <span className="text-[13px] font-semibold tabular-nums text-slate-900 dark:text-slate-100 mr-auto">
+              {seg.count}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Response Time Card + Trend ──────────────────────────────────────────────
+
+function ResponseTimeSection({ efficiency }: { efficiency: AnalyticsData['kpi']['efficiency'] }) {
   const avg = efficiency.avgResponseTimeHours;
   const med = efficiency.medianResponseTimeHours;
   const p30 = efficiency.pctWithin30Min;
   const p60 = efficiency.pctWithin1Hour;
+
+  const stats = [
+    { label: 'זמן תגובה ממוצע', value: avg !== null ? fmtHours(avg) : '—' },
+    { label: 'זמן תגובה חציוני', value: med !== null ? fmtHours(med) : '—' },
+    { label: 'מענה תוך 30 דקות', value: p30 !== null ? `${p30}%` : '—' },
+    { label: 'מענה תוך שעה', value: p60 !== null ? `${p60}%` : '—' },
+  ];
+
+  // Convert sparkline (7 values) to chart data
+  const sparkline = efficiency.responseTimeSparkline;
+  const trendData = sparkline.length >= 2
+    ? sparkline.map((v, i) => ({ day: `יום ${i + 1}`, hours: Math.round(v * 10) / 10 }))
+    : null;
+
   return (
-    <div className="rounded-2xl border border-slate-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900/80 p-6 shadow-sm">
-      <div className="mb-5 flex items-center justify-end gap-3 flex-row-reverse text-right">
-        <div className="w-full min-w-0">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 text-right">זמן תגובה וביצועים</h3>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400 text-right">ממוצע וחציון, אחוז מענה מהיר</p>
-        </div>
-        <div className="rounded-lg bg-slate-50 dark:bg-zinc-800 p-2.5 shrink-0">
-          <Clock className="h-4 w-4 text-slate-600 dark:text-zinc-400" />
-        </div>
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {stats.map((s) => (
+          <div key={s.label} className="rounded-xl bg-slate-50/80 dark:bg-slate-800/60 px-3 py-3 text-right">
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{s.label}</p>
+            <p className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-50">{s.value}</p>
+          </div>
+        ))}
       </div>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="rounded-xl bg-slate-50/80 dark:bg-zinc-800/60 px-3 py-3 text-right">
-          <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">זמן תגובה ממוצע</p>
-          <p className="mt-1 text-lg font-bold text-slate-900 dark:text-zinc-100">
-            {avg !== null ? fmtHours(avg) : '—'}
-          </p>
-        </div>
-        <div className="rounded-xl bg-slate-50/80 dark:bg-zinc-800/60 px-3 py-3 text-right">
-          <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">זמן תגובה חציוני</p>
-          <p className="mt-1 text-lg font-bold text-slate-900 dark:text-zinc-100">
-            {med !== null ? fmtHours(med) : '—'}
-          </p>
-        </div>
-        <div className="rounded-xl bg-slate-50/80 dark:bg-zinc-800/60 px-3 py-3 text-right">
-          <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">מענה תוך 30 דקות</p>
-          <p className="mt-1 text-lg font-bold text-slate-900 dark:text-zinc-100">
-            {p30 !== null ? `${p30}%` : '—'}
-          </p>
-        </div>
-        <div className="rounded-xl bg-slate-50/80 dark:bg-zinc-800/60 px-3 py-3 text-right">
-          <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">מענה תוך שעה</p>
-          <p className="mt-1 text-lg font-bold text-slate-900 dark:text-zinc-100">
-            {p60 !== null ? `${p60}%` : '—'}
-          </p>
-        </div>
-      </div>
-      {sparkline.length >= 2 && (
-        <div className="mt-5 pt-5 border-t border-slate-100 dark:border-zinc-800">
-          <p className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 text-right mb-2">מגמת זמן תגובה (7 ימים)</p>
-          <Sparkline data={sparkline} color="#64748b" />
+      {trendData && (
+        <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+          <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 text-right mb-3">מגמת זמן תגובה (7 ימים אחרונים)</p>
+          <ResponsiveContainer width="100%" height={120}>
+            <LineChart data={trendData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+              <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} reversed />
+              <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={30} />
+              <Tooltip
+                contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 12, direction: 'rtl' }}
+                formatter={(value) => [`${Number(value)} שעות`, 'זמן תגובה ממוצע']}
+              />
+              <Line type="monotone" dataKey="hours" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3, fill: '#f59e0b' }} />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       )}
     </div>
   );
 }
 
-// ─── Insights (תובנות מערכת) ──────────────────────────────────────────────────
+// ─── Appointments Utilization Chart ─────────────────────────────────────────
+
+function AppointmentsUtilizationChart({ data }: { data: { label: string; total: number; completed: number; cancelled: number }[] }) {
+  if (data.length < 2) {
+    return <p className="text-center text-sm text-slate-400 py-8">אין מספיק נתונים לתרשים</p>;
+  }
+  return (
+    <ResponsiveContainer width="100%" height={200}>
+      <BarChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+        <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} reversed />
+        <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={25} allowDecimals={false} />
+        <Tooltip
+          contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 12, direction: 'rtl' }}
+          formatter={(value, name) => [
+            Number(value),
+            name === 'completed' ? 'הושלמו' : name === 'cancelled' ? 'בוטלו' : 'סה״כ',
+          ]}
+        />
+        <Bar dataKey="total" fill="#c7d2fe" radius={[3, 3, 0, 0]} barSize={10} name="total" />
+        <Bar dataKey="completed" fill="#10b981" radius={[3, 3, 0, 0]} barSize={10} name="completed" />
+        <Bar dataKey="cancelled" fill="#f87171" radius={[3, 3, 0, 0]} barSize={10} name="cancelled" />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+// ─── Insights ───────────────────────────────────────────────────────────────
 
 const INSIGHT_STYLES = {
   warning: { wrap: 'bg-amber-50/80 dark:bg-amber-900/20 border-amber-200/80 dark:border-amber-800/40', icon: 'text-amber-600 dark:text-amber-400' },
-  info:    { wrap: 'bg-slate-50/80 dark:bg-zinc-800/50 border-slate-200/80 dark:border-zinc-700/50', icon: 'text-slate-600 dark:text-zinc-400' },
+  info:    { wrap: 'bg-slate-50/80 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-700/50', icon: 'text-slate-600 dark:text-slate-400' },
   success: { wrap: 'bg-emerald-50/80 dark:bg-emerald-900/20 border-emerald-200/80 dark:border-emerald-800/40', icon: 'text-emerald-600 dark:text-emerald-400' },
 };
 
@@ -370,7 +492,7 @@ function InsightRow({ insight }: { insight: Insight }) {
   return (
     <div dir="rtl" className={`flex items-start gap-3 rounded-xl border p-4 text-right ${s.wrap}`}>
       <Icon className={`h-4 w-4 shrink-0 mt-0.5 ${s.icon}`} aria-hidden />
-      <p className="text-sm leading-relaxed text-slate-700 dark:text-zinc-300 flex-1 min-w-0 text-right">{insight.message}</p>
+      <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-300 flex-1 min-w-0 text-right">{insight.message}</p>
     </div>
   );
 }
@@ -378,14 +500,18 @@ function InsightRow({ insight }: { insight: Insight }) {
 // ─── Skeleton & Empty ────────────────────────────────────────────────────────
 
 function Skeleton({ className }: { className?: string }) {
-  return <div className={`animate-pulse rounded-xl bg-slate-100 dark:bg-zinc-800/60 ${className ?? ''}`} />;
+  return <div className={`animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800/60 ${className ?? ''}`} />;
 }
 
 function AnalyticsSkeleton() {
   return (
     <div className="space-y-8">
-      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
-        {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-28" />)}
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-28" />)}
+      </div>
+      <div className="grid gap-6 lg:grid-cols-5">
+        <Skeleton className="lg:col-span-3 h-80" />
+        <Skeleton className="lg:col-span-2 h-80" />
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <Skeleton className="h-64" />
@@ -399,11 +525,11 @@ function AnalyticsSkeleton() {
 function AnalyticsEmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
-      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-zinc-800">
-        <TrendingUp className="h-8 w-8 text-slate-400 dark:text-zinc-500" />
+      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
+        <TrendingUp className="h-8 w-8 text-slate-400 dark:text-slate-500" />
       </div>
-      <h3 className="text-lg font-semibold text-slate-800 dark:text-zinc-200">אין מספיק נתונים להצגת אנליטיקה</h3>
-      <p className="mt-2 max-w-sm text-sm text-slate-500 dark:text-zinc-400 leading-relaxed">
+      <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">אין מספיק נתונים להצגת אנליטיקה</h3>
+      <p className="mt-2 max-w-sm text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
         לאחר קבלת לידים ותורים, יוצגו נתונים כאן.
       </p>
     </div>
@@ -479,87 +605,134 @@ export function AnalyticsTab() {
       )}
 
       {!loading && !error && data?.totalLeads === 0 && (
-        <div className="rounded-2xl border border-slate-200 dark:border-zinc-700/80 bg-white dark:bg-zinc-900/80 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-950/80 shadow-sm">
           <AnalyticsEmptyState />
         </div>
       )}
 
       {!loading && !error && data && data.totalLeads > 0 && (
         <>
-          {/* 1️⃣ KPI Strip — 6 cards */}
-          <section className="rounded-2xl bg-slate-50/50 dark:bg-zinc-900/30 p-6 border border-slate-200/60 dark:border-zinc-800/60">
-            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
-              <KpiStripCard
-                label={`לידים חדשים (${periodLabel})`}
-                value={data.kpi.leadsCount.current}
-                sub={data.kpi.leadsCount.previous > 0 ? `לעומת ${data.kpi.leadsCount.previous} בתקופה קודמת` : undefined}
-                icon={Users}
-                iconBg="bg-slate-100 dark:bg-zinc-800"
-                trend={<TrendBadge pct={data.kpi.leadsCount.changePct} />}
-              />
-              <KpiStripCard
-                label="אחוז סגירה"
-                value={`${data.kpi.closeRate.current}%`}
-                sub={data.kpi.closeRate.previous > 0 ? `לעומת ${data.kpi.closeRate.previous}% קודם` : undefined}
-                icon={Percent}
-                iconBg="bg-indigo-100 dark:bg-indigo-900/40"
-                trend={<TrendBadge pct={data.kpi.closeRate.changePct} />}
-              />
-              <KpiStripCard
-                label="זמן תגובה ממוצע"
-                value={data.kpi.efficiency.avgResponseTimeHours !== null ? fmtHours(data.kpi.efficiency.avgResponseTimeHours) : '—'}
-                sub="מיצירת ליד ליצירת קשר"
-                icon={Clock}
-                iconBg="bg-amber-100 dark:bg-amber-900/30"
-              />
-              <KpiStripCard
-                label="הכנסה פוטנציאלית"
-                value={fmt(data.kpi.discordRevenue.current)}
-                sub={data.kpi.discordRevenue.previous > 0 ? `לעומת ${fmt(data.kpi.discordRevenue.previous)} קודם` : undefined}
-                icon={Banknote}
-                iconBg="bg-emerald-100 dark:bg-emerald-900/30"
-                trend={<TrendBadge pct={data.kpi.discordRevenue.changePct} />}
-              />
-              <KpiStripCard
-                label="תורים שנקבעו"
-                value={data.kpi.appointmentsCount.current}
-                sub={data.kpi.appointmentsCount.previous > 0 ? `לעומת ${data.kpi.appointmentsCount.previous} קודם` : undefined}
-                icon={Calendar}
-                iconBg="bg-blue-100 dark:bg-blue-900/30"
-                trend={<TrendBadge pct={data.kpi.appointmentsCount.changePct} />}
-              />
-              <KpiStripCard
-                label="תורים שבוטלו"
-                value={data.kpi.cancelledAppointments}
-                sub="לא מדוד במערכת"
-                icon={CalendarX2}
-                iconBg="bg-slate-100 dark:bg-zinc-800"
-              />
-            </div>
+          {/* Row 1: 5 KPI Cards */}
+          <section className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+            <KpiCard
+              label={`לידים חדשים (${periodLabel})`}
+              value={data.kpi.leadsCount.current}
+              sub={data.kpi.leadsCount.previous > 0 ? `לעומת ${data.kpi.leadsCount.previous} בתקופה קודמת` : undefined}
+              icon={Users}
+              iconBg="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
+              trend={<TrendBadge pct={data.kpi.leadsCount.changePct} />}
+            />
+            <KpiCard
+              label="אחוז סגירה"
+              value={`${data.kpi.closeRate.current}%`}
+              sub={data.kpi.closeRate.previous > 0 ? `לעומת ${data.kpi.closeRate.previous}% קודם` : undefined}
+              icon={Percent}
+              iconBg="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400"
+              trend={<TrendBadge pct={data.kpi.closeRate.changePct} />}
+            />
+            <KpiCard
+              label="זמן תגובה ממוצע"
+              value={data.kpi.efficiency.avgResponseTimeHours !== null ? fmtHours(data.kpi.efficiency.avgResponseTimeHours) : '—'}
+              sub="מיצירת ליד ליצירת קשר (משוער)"
+              icon={Clock}
+              iconBg="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+            />
+            <KpiCard
+              label="הכנסה בפועל"
+              value={fmt(data.kpi.actualRevenue.current)}
+              sub={data.revenueMetrics.documentCount > 0 ? `${data.revenueMetrics.documentCount} מסמכים` : 'ללא מסמכי חיוב'}
+              icon={Banknote}
+              iconBg="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+              trend={<TrendBadge pct={data.kpi.actualRevenue.changePct} />}
+            />
+            <KpiCard
+              label="תורים"
+              value={data.kpi.appointmentsCount.current}
+              sub={data.kpi.cancelledAppointments > 0 ? `${data.kpi.cancelledAppointments} בוטלו` : undefined}
+              icon={Calendar}
+              iconBg="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+              trend={<TrendBadge pct={data.kpi.appointmentsCount.changePct} />}
+            />
           </section>
 
-          {/* 2️⃣ Funnel + 3️⃣ Response Time — two columns */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            <section className="rounded-2xl border border-slate-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900/80 p-6 shadow-sm">
-              <div className="mb-5 flex items-center justify-end text-right">
-                <div className="w-full min-w-0">
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 text-right">משפך המרות</h3>
-                </div>
-              </div>
-              <FunnelSection stages={data.funnel} />
-            </section>
-            <ResponseTimeCard efficiency={data.kpi.efficiency} sparkline={data.kpi.efficiency.responseTimeSparkline} />
+          {/* Row 2: Actual Revenue (wide) + Funnel (narrow) */}
+          <div className="grid gap-6 lg:grid-cols-5">
+            <div className="lg:col-span-3">
+              <ChartSection title="הכנסה בפועל לאורך זמן" subtitle="מבוסס על מסמכי חיוב שהופקו">
+                <ActualRevenueChart data={data.leadsPerDay} />
+              </ChartSection>
+            </div>
+            <div className="lg:col-span-2">
+              <ChartSection title="משפך המרות" subtitle="ליד → קשר → תור → סגור">
+                <FunnelChart stages={data.funnel} />
+              </ChartSection>
+            </div>
           </div>
 
-          {/* 4️⃣ תובנות מערכת */}
-          <section className="rounded-2xl border border-slate-200/80 dark:border-zinc-700/80 bg-white dark:bg-zinc-900/80 p-6 shadow-sm">
+          {/* Row 3: Leads Per Day + Top Services */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            <ChartSection title="לידים חדשים לאורך זמן">
+              <LeadsPerDayChart data={data.leadsPerDay} />
+            </ChartSection>
+            <ChartSection title="הכנסה לפי שירות" subtitle="מבוסס על מסמכי חיוב שהופקו">
+              <TopServicesChart data={data.revenueByService} />
+            </ChartSection>
+          </div>
+
+          {/* Row 4: Appointment Status + Utilization */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            <ChartSection title="תורים — פילוח סטטוס">
+              <AppointmentBreakdown metrics={data.appointmentMetrics} />
+            </ChartSection>
+            <ChartSection title="ניצולת תורים לאורך זמן" subtitle="תורים ליום — סה״כ, הושלמו, בוטלו">
+              <AppointmentsUtilizationChart data={data.appointmentsPerDay} />
+            </ChartSection>
+          </div>
+
+          {/* Row 5: Response Time (with trend) + Customer KPIs */}
+          <div className="grid gap-6 lg:grid-cols-5">
+            <div className="lg:col-span-3">
+              <ChartSection title="זמן תגובה וביצועים" subtitle="ממוצע וחציון, אחוז מענה מהיר (משוער)">
+                <ResponseTimeSection efficiency={data.kpi.efficiency} />
+              </ChartSection>
+            </div>
+            <div className="lg:col-span-2 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <KpiCard
+                  label="לקוחות חדשים"
+                  value={data.kpi.customersCount.current}
+                  icon={UsersRound}
+                  iconBg="bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400"
+                  trend={<TrendBadge pct={data.kpi.customersCount.changePct} />}
+                />
+                <KpiCard
+                  label="לקוחות חוזרים"
+                  value={data.customerMetrics.returning}
+                  sub={`מתוך ${data.customerMetrics.totalActive} פעילים`}
+                  icon={ReceiptText}
+                  iconBg="bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400"
+                />
+              </div>
+              <KpiCard
+                label="הכנסה פוטנציאלית"
+                value={fmt(data.kpi.discordRevenue.current)}
+                sub="מלידים שנסגרו (estimated_deal_value)"
+                icon={Target}
+                iconBg="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                trend={<TrendBadge pct={data.kpi.discordRevenue.changePct} />}
+              />
+            </div>
+          </div>
+
+          {/* Row 5: AI Insights */}
+          <section className="border border-purple-200/60 dark:border-purple-800/40 bg-gradient-to-br from-purple-50 to-indigo-50/40 dark:from-purple-950/30 dark:to-indigo-950/30 rounded-xl p-4">
             <div className="mb-5 flex items-center justify-end gap-3 flex-row-reverse text-right">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-zinc-800 shrink-0">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-100 dark:bg-purple-900/40 shrink-0">
                 <Target className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
               </div>
               <div className="w-full min-w-0">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 text-right">תובנות מערכת</h3>
-                <p className="text-xs text-slate-500 dark:text-zinc-400 text-right">נוצרו אוטומטית מנתוני הצינור</p>
+                <h3 className="text-[11px] font-semibold text-slate-400 uppercase tracking-[0.12em] text-right">תובנות מערכת</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 text-right mt-0.5">נוצרו אוטומטית מנתוני הצינור</p>
               </div>
             </div>
             <div className="space-y-3">

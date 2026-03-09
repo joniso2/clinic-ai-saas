@@ -88,13 +88,13 @@ export default function MessagingSection() {
 
   return (
     <div className="space-y-8" dir="rtl">
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-8">
-        <h2 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100 text-right mb-2">מסרים</h2>
-        <p className="text-sm text-slate-500 dark:text-zinc-400 text-right">קונסולת בדיקה ולוג שיחות.</p>
+      <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-8">
+        <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50 text-right mb-2">מסרים</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 text-right">קונסולת בדיקה ולוג שיחות.</p>
       </div>
 
       {/* Test Console */}
-      <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-6">
+      <div className="rounded-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-6">
         <h3 className="text-lg font-semibold text-zinc-100 mb-4 flex items-center gap-2 flex-row-reverse">
           <Send className="h-5 w-5" /> Messaging Test Console
         </h3>
@@ -129,7 +129,7 @@ export default function MessagingSection() {
       </div>
 
       {/* Conversation Logs */}
-      <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 overflow-hidden">
+      <div className="rounded-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 overflow-hidden">
         <div className="p-4 border-b border-zinc-700 flex flex-wrap items-center gap-2 flex-row-reverse justify-between">
           <h3 className="text-lg font-semibold text-zinc-100 flex items-center gap-2 flex-row-reverse">
             <MessageSquare className="h-5 w-5" /> Conversation Logs

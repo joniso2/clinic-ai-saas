@@ -281,7 +281,7 @@ export async function setTeamMemberBanned(clinicId: string, userId: string, bann
     .eq('clinic_id', clinicId)
     .eq('user_id', userId)
     .maybeSingle();
-  if (!row) return { error: new Error('משתמש לא נמצא בקליניקה זו') };
+  if (!row) return { error: new Error('משתמש לא נמצא בעסק זה') };
 
   const { error } = await supabase.auth.admin.updateUserById(userId, {
     ban_duration: banned ? '876000h' : 'none',

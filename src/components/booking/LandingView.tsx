@@ -25,7 +25,7 @@ export function LandingView({ clinic, products, slug }: Props) {
   const hasHeroVideo = Boolean(clinic.hero_video?.trim());
   const hasHeroImage = Boolean(clinic.hero_image?.trim());
   const hasLogo = Boolean(clinic.logo_url?.trim());
-  const clinicName = clinic.name?.trim() || 'LULU';
+  const clinicName = clinic.name?.trim() || 'העסק שלנו';
   const hasAddress = Boolean(clinic.address?.trim());
   const hasPhone = Boolean(clinic.phone?.trim());
 
@@ -124,7 +124,7 @@ export function LandingView({ clinic, products, slug }: Props) {
         <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">אודות</h2>
         <h3 className="text-xl font-bold text-gray-900 tracking-tight">{clinicName}</h3>
         <p className="mt-2 text-gray-600 text-sm leading-relaxed">
-          {hasAddress ? clinic.address : 'קליניקת יופי וטיפוח. הזמינו תור בנוחות מהבית.'}
+          {hasAddress ? clinic.address : 'הזמינו תור בנוחות מהבית.'}
         </p>
       </motion.section>
 

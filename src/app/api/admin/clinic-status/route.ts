@@ -21,7 +21,7 @@ export async function PATCH(req: NextRequest) {
   const s = status === 'inactive' ? 'inactive' : status === 'suspended' ? 'suspended' : 'active';
 
   if (!clinicId) {
-    return NextResponse.json({ error: 'מזהה קליניקה חובה' }, { status: 400 });
+    return NextResponse.json({ error: 'מזהה העסק חובה' }, { status: 400 });
   }
 
   const supabase = getSupabaseAdmin();

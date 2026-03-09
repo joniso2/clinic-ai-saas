@@ -163,7 +163,7 @@ export default function LoginForm() {
           </form>
 
           <p className="mt-6 text-center text-xs text-slate-600">
-            בהמשך הכניסה אתה מאשר את תנאי השימוש והמדיניות של המרפאה.
+            בהמשך הכניסה אתה מאשר את תנאי השימוש ומדיניות הפרטיות.
           </p>
         </div>
 

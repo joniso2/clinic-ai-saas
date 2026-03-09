@@ -268,7 +268,7 @@ export function getCustomOverrideSection(customOverride?: string | null): string
  * Backward-compatible: all parameters from the old signature still work.
  */
 export function buildDiscordSystemPrompt(settings?: AISettings): string {
-  const clinicLabel = settings?.clinicName ? `"${settings.clinicName}"` : '"המרפאה"';
+  const clinicLabel = settings?.clinicName ? `"${settings.clinicName}"` : '"העסק"';
 
   return (
     buildBasePrompt(clinicLabel) +

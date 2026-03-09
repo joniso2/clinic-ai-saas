@@ -40,7 +40,7 @@ export const DEFAULT_AI_CONFIG: GlobalAIConfig = {
   globalModel: 'gpt-4o-mini',
   temperature: 0.7,
   maxTokens: 800,
-  systemPrompt: 'אתה עוזר AI לקליניקה רפואית. ענה בעברית בצורה ידידותית, קצרה ומקצועית. סייע בתיאום תורים, מענה על שאלות בנושא שירותי הקליניקה ומחיריהם. אל תספק מידע רפואי.',
+  systemPrompt: 'אתה עוזר AI לעסק שירותי. ענה בעברית בצורה ידידותית, קצרה ומקצועית. סייע בתיאום תורים, מענה על שאלות בנושא שירותי העסק ומחיריהם.',
   safetyFilter: true,
   streamingEnabled: true,
 };

@@ -16,7 +16,7 @@ export function ThemeToggle() {
       aria-label="Toggle dark mode"
       className="relative flex shrink-0 cursor-pointer items-center justify-center p-1.5 rounded-full
         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2
-        focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900
+        focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900
         active:scale-95 transition-transform duration-150"
       style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
     >
@@ -28,7 +28,7 @@ export function ThemeToggle() {
           shadow-inner
           ${isDark
             ? 'bg-emerald-500'
-            : 'bg-zinc-300 dark:bg-zinc-600'
+            : 'bg-zinc-300 dark:bg-slate-600'
           }
         `}
       >

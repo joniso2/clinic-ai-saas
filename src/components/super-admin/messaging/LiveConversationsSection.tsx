@@ -38,12 +38,12 @@ export default function LiveConversationsSection() {
 
   return (
     <div className="space-y-6" dir="rtl">
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-8">
-        <h2 className="text-2xl font-semibold text-slate-900 dark:text-zinc-100 text-right mb-2">שיחות חיות</h2>
-        <p className="text-sm text-slate-500 dark:text-zinc-400 text-right">צפייה בזמן אמת בהודעות נכנסות ותגובות AI (מתעדכן כל 15 שניות).</p>
+      <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-8">
+        <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50 text-right mb-2">שיחות חיות</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 text-right">צפייה בזמן אמת בהודעות נכנסות ותגובות AI (מתעדכן כל 15 שניות).</p>
       </div>
 
-      <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 overflow-hidden">
+      <div className="rounded-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 overflow-hidden">
         <div className="p-4 border-b border-zinc-700 flex items-center justify-between flex-row-reverse">
           <h3 className="text-lg font-semibold text-zinc-100 flex items-center gap-2 flex-row-reverse"><Radio className="h-5 w-5" /> עדכון אחרון</h3>
           <button type="button" onClick={fetchLogs} disabled={loading} className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 disabled:opacity-50 flex items-center gap-1.5">

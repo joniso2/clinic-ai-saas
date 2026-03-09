@@ -62,7 +62,7 @@ export function DocumentDrawer({ doc, open, onClose, onCancelled }: Props) {
     const normalized = phone.startsWith('0') ? `972${phone.slice(1)}` : phone;
     const total = `₪${Number(doc.total).toLocaleString('he-IL', { minimumFractionDigits: 2 })}`;
     const text = encodeURIComponent(
-      `שלום ${doc.customer_name},\nמצורף ${DOC_TYPE_LABELS[doc.doc_type]} מספר ${doc.doc_number} על סך ${total}.\nניתן לצפות בפרטים המלאים בפנייה לקליניקה.`
+      `שלום ${doc.customer_name},\nמצורף ${DOC_TYPE_LABELS[doc.doc_type]} מספר ${doc.doc_number} על סך ${total}.\nניתן לצפות בפרטים המלאים בפנייה אלינו.`
     );
     const href = normalized
       ? `https://wa.me/${normalized}?text=${text}`
@@ -120,31 +120,31 @@ export function DocumentDrawer({ doc, open, onClose, onCancelled }: Props) {
 
       {/* Drawer panel */}
       <div
-        className="fixed top-0 left-0 bottom-0 z-50 w-full max-w-md bg-white dark:bg-zinc-900
+        className="fixed top-0 left-0 bottom-0 z-50 w-full max-w-md bg-white dark:bg-slate-950
           shadow-[0_10px_30px_rgba(0,0,0,0.12),0_4px_8px_rgba(0,0,0,0.06)]
-          dark:shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden"
+          dark:shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden drawer-enter"
         dir="rtl"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 px-6 py-4 shrink-0">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4 shrink-0">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/30">
               <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <p className="font-mono text-[15px] font-bold text-slate-900 dark:text-zinc-100">
+                <p className="font-mono text-[15px] font-bold text-slate-900 dark:text-slate-50">
                   {doc.doc_number}
                 </p>
                 <button
                   onClick={handleCopyDocNumber}
-                  className="rounded-md p-1 text-slate-300 hover:text-slate-500 dark:text-zinc-600 dark:hover:text-zinc-400 transition-colors"
+                  className="rounded-md p-1 text-slate-300 hover:text-slate-500 dark:text-slate-600 dark:hover:text-slate-400 transition-colors"
                   title="העתק מספר מסמך"
                 >
                   {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
               </div>
-              <p className="text-[13px] text-slate-500 dark:text-zinc-400">
+              <p className="text-[13px] text-slate-500 dark:text-slate-400">
                 {DOC_TYPE_LABELS[doc.doc_type]}
               </p>
             </div>
@@ -152,7 +152,7 @@ export function DocumentDrawer({ doc, open, onClose, onCancelled }: Props) {
           <button
             onClick={onClose}
             className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400
-              hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-200
+              hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200
               transition-colors focus:outline-none focus:ring-2 focus:ring-slate-200"
           >
             <X className="h-4 w-4" />
@@ -163,7 +163,7 @@ export function DocumentDrawer({ doc, open, onClose, onCancelled }: Props) {
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
 
           {/* Status + Date banner */}
-          <div className="flex items-center justify-between rounded-xl bg-slate-50 dark:bg-zinc-800/50 px-4 py-3">
+          <div className="flex items-center justify-between rounded-xl bg-slate-50 dark:bg-slate-800/50 px-4 py-3">
             <span className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-[5px] text-[12px] font-medium border leading-none
               ${doc.status === 'issued'
                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/40'
@@ -172,21 +172,21 @@ export function DocumentDrawer({ doc, open, onClose, onCancelled }: Props) {
               {doc.status === 'issued' ? <Check className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
               {doc.status === 'issued' ? 'הופק' : 'בוטל'}
             </span>
-            <span className="text-[13px] text-slate-500 dark:text-zinc-400 tabular-nums">{fmtDate(doc.issued_at)}</span>
+            <span className="text-[13px] text-slate-500 dark:text-slate-400 tabular-nums">{fmtDate(doc.issued_at)}</span>
           </div>
 
           {/* Total highlight */}
-          <div className="rounded-xl bg-gradient-to-l from-blue-50/50 to-white dark:from-blue-950/10 dark:to-zinc-900
+          <div className="rounded-xl bg-gradient-to-l from-blue-50/50 to-white dark:from-blue-950/10 dark:to-slate-900
             border border-blue-100/60 dark:border-blue-900/30 p-5 text-center">
-            <p className="text-[13px] text-slate-500 dark:text-zinc-400 mb-1">סה״כ לתשלום</p>
-            <p className="text-[32px] font-bold text-slate-900 dark:text-zinc-100 tabular-nums leading-none">
+            <p className="text-[13px] text-slate-500 dark:text-slate-400 mb-1">סה״כ לתשלום</p>
+            <p className="text-[32px] font-bold text-slate-900 dark:text-slate-50 tabular-nums leading-none">
               {fmt(doc.total)}
             </p>
             <div className="mt-2 flex items-center justify-center gap-4">
-              <span className="text-[12px] text-slate-400 dark:text-zinc-500 tabular-nums">
+              <span className="text-[12px] text-slate-400 dark:text-slate-500 tabular-nums">
                 לפני מע״מ: {fmt(doc.subtotal)}
               </span>
-              <span className="text-[12px] text-slate-400 dark:text-zinc-500 tabular-nums">
+              <span className="text-[12px] text-slate-400 dark:text-slate-500 tabular-nums">
                 מע״מ ({vatPct}%): {fmt(doc.vat_amount)}
               </span>
             </div>
@@ -195,25 +195,25 @@ export function DocumentDrawer({ doc, open, onClose, onCancelled }: Props) {
           {/* Customer info */}
           <section>
             <div className="flex items-center gap-2 mb-3">
-              <User className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
-              <h3 className="text-[12px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+              <User className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
+              <h3 className="text-[12px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                 פרטי לקוח
               </h3>
             </div>
-            <div className="rounded-xl border border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/40 p-4 space-y-2">
-              <p className="text-[14px] font-semibold text-slate-900 dark:text-zinc-100">{doc.customer_name}</p>
+            <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 p-4 space-y-2">
+              <p className="text-[14px] font-semibold text-slate-900 dark:text-slate-50">{doc.customer_name}</p>
               {doc.customer_phone && (
-                <p className="text-[13px] text-slate-500 dark:text-zinc-400 tabular-nums">{doc.customer_phone}</p>
+                <p className="text-[13px] text-slate-500 dark:text-slate-400 tabular-nums">{doc.customer_phone}</p>
               )}
               {doc.customer_email && (
-                <p className="text-[13px] text-slate-500 dark:text-zinc-400">{doc.customer_email}</p>
+                <p className="text-[13px] text-slate-500 dark:text-slate-400">{doc.customer_email}</p>
               )}
               {doc.customer_address && (
-                <p className="text-[13px] text-slate-500 dark:text-zinc-400">{doc.customer_address}</p>
+                <p className="text-[13px] text-slate-500 dark:text-slate-400">{doc.customer_address}</p>
               )}
               {doc.customer_type === 'business' && doc.customer_business_number && (
-                <p className="text-[13px] text-slate-500 dark:text-zinc-400">
-                  ח.פ / ע.מ: <span className="font-medium text-slate-600 dark:text-zinc-300">{doc.customer_business_number}</span>
+                <p className="text-[13px] text-slate-500 dark:text-slate-400">
+                  ח.פ / ע.מ: <span className="font-medium text-slate-600 dark:text-slate-300">{doc.customer_business_number}</span>
                 </p>
               )}
             </div>
@@ -222,19 +222,19 @@ export function DocumentDrawer({ doc, open, onClose, onCancelled }: Props) {
           {/* Business info */}
           <section>
             <div className="flex items-center gap-2 mb-3">
-              <Building2 className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
-              <h3 className="text-[12px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+              <Building2 className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
+              <h3 className="text-[12px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                 פרטי מנפיק
               </h3>
             </div>
-            <div className="rounded-xl border border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/40 p-4 space-y-2">
-              <p className="text-[14px] font-semibold text-slate-900 dark:text-zinc-100">{doc.business_name}</p>
-              <p className="text-[13px] text-slate-500 dark:text-zinc-400">מס׳ עסק: <span className="font-medium text-slate-600 dark:text-zinc-300">{doc.business_number}</span></p>
+            <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 p-4 space-y-2">
+              <p className="text-[14px] font-semibold text-slate-900 dark:text-slate-50">{doc.business_name}</p>
+              <p className="text-[13px] text-slate-500 dark:text-slate-400">מס׳ עסק: <span className="font-medium text-slate-600 dark:text-slate-300">{doc.business_number}</span></p>
               {doc.vat_number && (
-                <p className="text-[13px] text-slate-500 dark:text-zinc-400">עוסק מורשה: <span className="font-medium text-slate-600 dark:text-zinc-300">{doc.vat_number}</span></p>
+                <p className="text-[13px] text-slate-500 dark:text-slate-400">עוסק מורשה: <span className="font-medium text-slate-600 dark:text-slate-300">{doc.vat_number}</span></p>
               )}
               {doc.business_address && (
-                <p className="text-[13px] text-slate-500 dark:text-zinc-400">{doc.business_address}</p>
+                <p className="text-[13px] text-slate-500 dark:text-slate-400">{doc.business_address}</p>
               )}
             </div>
           </section>
@@ -242,28 +242,28 @@ export function DocumentDrawer({ doc, open, onClose, onCancelled }: Props) {
           {/* Line items */}
           <section>
             <div className="flex items-center gap-2 mb-3">
-              <Hash className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
-              <h3 className="text-[12px] font-semibold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+              <Hash className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
+              <h3 className="text-[12px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                 פריטים
               </h3>
             </div>
-            <div className="rounded-xl border border-slate-100 dark:border-zinc-800 overflow-hidden">
+            <div className="rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-50/70 dark:bg-zinc-800/80 border-b border-slate-200 dark:border-zinc-700">
-                    <th className="py-2.5 px-3 text-right text-[12px] font-semibold text-slate-500 dark:text-zinc-400 tracking-wide">תיאור</th>
-                    <th className="py-2.5 px-3 text-center text-[12px] font-semibold text-slate-500 dark:text-zinc-400 tracking-wide w-12">כמות</th>
-                    <th className="py-2.5 px-3 text-left text-[12px] font-semibold text-slate-500 dark:text-zinc-400 tracking-wide w-24">מחיר</th>
-                    <th className="py-2.5 px-3 text-left text-[12px] font-semibold text-slate-500 dark:text-zinc-400 tracking-wide w-24">סה״כ</th>
+                  <tr className="bg-slate-50/70 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700">
+                    <th className="py-2.5 px-3 text-right text-[12px] font-semibold text-slate-500 dark:text-slate-400 tracking-wide">תיאור</th>
+                    <th className="py-2.5 px-3 text-center text-[12px] font-semibold text-slate-500 dark:text-slate-400 tracking-wide w-12">כמות</th>
+                    <th className="py-2.5 px-3 text-left text-[12px] font-semibold text-slate-500 dark:text-slate-400 tracking-wide w-24">מחיר</th>
+                    <th className="py-2.5 px-3 text-left text-[12px] font-semibold text-slate-500 dark:text-slate-400 tracking-wide w-24">סה״כ</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(doc.billing_document_items ?? []).map((item) => (
-                    <tr key={item.id} className="border-b border-slate-50 dark:border-zinc-800/60 last:border-0">
-                      <td className="py-3 px-3 text-[13px] text-slate-700 dark:text-zinc-300">{item.description}</td>
-                      <td className="py-3 px-3 text-center text-[13px] text-slate-500 dark:text-zinc-400 tabular-nums">{item.quantity}</td>
-                      <td className="py-3 px-3 text-left text-[13px] text-slate-500 dark:text-zinc-400 tabular-nums">{fmt(item.unit_price)}</td>
-                      <td className="py-3 px-3 text-left text-[13px] text-slate-700 dark:text-zinc-300 tabular-nums font-semibold">{fmt(item.line_total)}</td>
+                    <tr key={item.id} className="border-b border-slate-50 dark:border-slate-800/60 last:border-0">
+                      <td className="py-3 px-3 text-[13px] text-slate-700 dark:text-slate-300">{item.description}</td>
+                      <td className="py-3 px-3 text-center text-[13px] text-slate-500 dark:text-slate-400 tabular-nums">{item.quantity}</td>
+                      <td className="py-3 px-3 text-left text-[13px] text-slate-500 dark:text-slate-400 tabular-nums">{fmt(item.unit_price)}</td>
+                      <td className="py-3 px-3 text-left text-[13px] text-slate-700 dark:text-slate-300 tabular-nums font-semibold">{fmt(item.line_total)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -300,7 +300,7 @@ export function DocumentDrawer({ doc, open, onClose, onCancelled }: Props) {
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
                 placeholder="סיבת הביטול (אופציונלי)"
-                className="w-full rounded-lg border border-amber-200 dark:border-amber-700 bg-white dark:bg-zinc-800
+                className="w-full rounded-lg border border-amber-200 dark:border-amber-700 bg-white dark:bg-slate-800
                   px-3 h-11 text-sm text-right focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all"
               />
               {cancelError && (
@@ -310,8 +310,8 @@ export function DocumentDrawer({ doc, open, onClose, onCancelled }: Props) {
                 <button
                   onClick={() => { setConfirmCancel(false); setCancelError(null); }}
                   disabled={cancelling}
-                  className="flex-1 rounded-lg border border-slate-200 dark:border-zinc-700 px-3 h-10 text-sm
-                    text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-40"
+                  className="flex-1 rounded-lg border border-slate-200 dark:border-slate-700 px-3 h-10 text-sm
+                    text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-40"
                 >
                   חזרה
                 </button>
@@ -329,13 +329,13 @@ export function DocumentDrawer({ doc, open, onClose, onCancelled }: Props) {
         </div>
 
         {/* Footer actions */}
-        <div className="border-t border-slate-100 dark:border-zinc-800 px-6 py-4 space-y-2.5 shrink-0">
+        <div className="border-t border-slate-100 dark:border-slate-800 px-6 py-4 space-y-2.5 shrink-0">
           {/* Primary: download */}
           <button
             onClick={handleDownloadPDF}
             disabled={pdfLoading}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600
-              h-11 text-sm font-semibold text-white hover:bg-blue-700 transition-colors
+            className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600
+              h-11 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors
               shadow-sm disabled:opacity-50"
           >
             <Download className="h-4 w-4" />
