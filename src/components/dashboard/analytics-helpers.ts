@@ -1,10 +1,14 @@
 // ─── Date Range Types ────────────────────────────────────────────────────────
 
-export type Preset = '7d' | '30d' | '90d' | 'custom';
+export type Preset = '1d' | '7d' | '30d' | '90d' | 'custom';
 
 export function getPresetRange(preset: Preset): { from: string; to: string } | null {
   if (preset === 'custom') return null;
-  const to   = new Date();
+  const to = new Date();
+  if (preset === '1d') {
+    const from = new Date(to.getFullYear(), to.getMonth(), to.getDate(), 0, 0, 0, 0);
+    return { from: from.toISOString(), to: to.toISOString() };
+  }
   const days = preset === '7d' ? 7 : preset === '90d' ? 90 : 30;
   const from = new Date(to.getTime() - days * 86_400_000);
   return { from: from.toISOString(), to: to.toISOString() };
@@ -49,6 +53,7 @@ export function fmtHours(h: number): string {
 }
 
 export const PRESETS: { label: string; value: Preset }[] = [
+  { label: 'יומי', value: '1d' },
   { label: '7 ימים', value: '7d' },
   { label: '30 יום', value: '30d' },
   { label: '90 יום', value: '90d' },

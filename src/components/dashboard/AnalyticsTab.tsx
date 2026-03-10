@@ -33,9 +33,11 @@ import {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function AnalyticsTab() {
-  const [preset, setPreset] = useState<Preset>('30d');
-  const [customFrom, setCustomFrom] = useState<string>(toInputDate(new Date(Date.now() - 30 * 86_400_000).toISOString()));
-  const [customTo, setCustomTo] = useState<string>(toInputDate(new Date().toISOString()));
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const [preset, setPreset] = useState<Preset>('1d');
+  const [customFrom, setCustomFrom] = useState<string>(todayStr);
+  const [customTo, setCustomTo] = useState<string>(todayStr);
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -75,7 +77,7 @@ export function AnalyticsTab() {
     if (from && to) setPreset('custom');
   };
 
-  const periodLabel = preset === '7d' ? '7 ימים' : preset === '90d' ? '90 יום' : preset === 'custom' ? 'מותאם' : '30 יום';
+  const periodLabel = preset === '1d' ? 'היום' : preset === '7d' ? '7 ימים' : preset === '90d' ? '90 יום' : preset === 'custom' ? 'מותאם' : '30 יום';
 
   return (
     <div className="space-y-8" dir="rtl">

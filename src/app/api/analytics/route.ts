@@ -33,6 +33,10 @@ export async function GET(req: NextRequest) {
     let range: { from: string; to: string };
     if (fromParam && toParam) {
       range = { from: new Date(fromParam).toISOString(), to: new Date(toParam).toISOString() };
+    } else if (preset === '1d') {
+      const to = new Date();
+      const from = new Date(to.getFullYear(), to.getMonth(), to.getDate(), 0, 0, 0, 0);
+      range = { from: from.toISOString(), to: to.toISOString() };
     } else {
       const days = preset === '7d' ? 7 : preset === '90d' ? 90 : 30;
       range = getDefaultRange(days);
