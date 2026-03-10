@@ -59,6 +59,7 @@ export function LeadsTable({
   pricingServices = [],
   nextAppointmentsByLeadId,
   onRejectLead,
+  toolbarStartContent,
 }: {
   leads: Lead[];
   onView: (lead: Lead) => void;
@@ -79,6 +80,8 @@ export function LeadsTable({
   pricingServices?: { service_name: string; price: number }[];
   nextAppointmentsByLeadId?: Record<string, string | undefined>;
   onRejectLead?: (leadId: string, reason: string) => void;
+  /** Rendered at the start of the toolbar row (left in RTL), e.g. "ליד חדש" + count */
+  toolbarStartContent?: React.ReactNode;
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -241,7 +244,13 @@ export function LeadsTable({
 
   return (
     <div className="space-y-3">
-      {/* Toolbar */}
+      {/* Mobile only: original layout — button + count in their own row above toolbar */}
+      {toolbarStartContent != null && (
+        <div className="flex sm:hidden flex-col gap-4 flex-row-reverse justify-end mb-4">
+          {toolbarStartContent}
+        </div>
+      )}
+      {/* Toolbar: search + filters; on desktop only, toolbarStartContent is in this row */}
       <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white dark:border-slate-800/70 dark:bg-slate-950/90 px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between flex-row-reverse">
         <div className="flex flex-wrap items-center gap-3 flex-row-reverse justify-end">
           <div className="relative">
@@ -296,6 +305,11 @@ export function LeadsTable({
             </button>
           </div>
         </div>
+        {toolbarStartContent != null && (
+          <div className="hidden sm:flex items-center gap-2 flex-row-reverse shrink-0">
+            {toolbarStartContent}
+          </div>
+        )}
       </div>
 
       {/* Bulk action bar — above table when at least one selected */}

@@ -515,20 +515,6 @@ export default function DashboardClient() {
             </div>
           )}
 
-          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between flex-row-reverse sm:justify-end">
-            <div className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 card-shadow flex-row-reverse">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              {leads.length} לידים במעקב
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowNewLeadForm(true)}
-              className="inline-flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 active:scale-[0.98]"
-            >
-              ליד חדש +
-            </button>
-          </div>
-
           {error && (
             <div className="mb-6 rounded-2xl border border-red-200/80 dark:border-red-900/60 bg-red-50/90 dark:bg-red-950/40 px-4 py-3 text-sm text-red-700 dark:text-red-400">
               {error}
@@ -585,6 +571,21 @@ export default function DashboardClient() {
               pricingServices={pricingServices}
               nextAppointmentsByLeadId={nextAppointmentsByLeadId}
               onRejectLead={handleRejectLead}
+              toolbarStartContent={
+                <>
+                  <div className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 card-shadow flex-row-reverse">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    {leads.length} לידים במעקב
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowNewLeadForm(true)}
+                    className="inline-flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 active:scale-[0.98]"
+                  >
+                    ליד חדש +
+                  </button>
+                </>
+              }
             />
           )}
         </div>
