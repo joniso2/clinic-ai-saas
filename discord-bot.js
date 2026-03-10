@@ -127,6 +127,7 @@ client.on(Events.MessageCreate, async (message) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.DISCORD_WEBHOOK_SECRET}`,
         },
         body: JSON.stringify(payload),
         signal: controller.signal,
