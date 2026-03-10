@@ -613,6 +613,7 @@ export default function DashboardClient() {
           setShowNewLeadForm(false);
           setDrawerLead(lead);
         }}
+        pricingServices={pricingServices}
       />
 
       <ConfirmDeleteModal

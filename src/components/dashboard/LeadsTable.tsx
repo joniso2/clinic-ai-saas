@@ -126,7 +126,10 @@ export function LeadsTable({
   const [statusDropdownId, setStatusDropdownId] = useState<string | null>(null);
   const [statusDropdownPos, setStatusDropdownPos] = useState<{ top: number; right: number } | null>(null);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
+  const DEAL_VALUE_OTHER = '__other__';
   const [dealValueLeadId, setDealValueLeadId] = useState<string | null>(null);
+  /** '' = לא נבחר, __other__ = הזנה ידנית, אחרת = service_name מתמחור */
+  const [dealValueServiceKey, setDealValueServiceKey] = useState('');
   const [dealValueInput, setDealValueInput] = useState('');
   const [dealValueSaving, setDealValueSaving] = useState(false);
   const router = useRouter();
@@ -402,16 +405,26 @@ export function LeadsTable({
                 </div>
               </div>
 
-              {/* Middle row: status + value + date */}
+              {/* Middle row: status + value (+ button for value when 0) + date + interest */}
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
                 <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-[11px] font-semibold ${STATUS_BADGE_STYLES[lead.status ?? 'Pending'] ?? STATUS_BADGE_STYLES['Pending']}`}>
                   {STATUS_LABELS[lead.status ?? 'Pending'] ?? lead.status ?? STATUS_LABELS.Pending}
                 </span>
-                {(lead.estimated_deal_value ?? 0) > 0 && (
+                {(lead.estimated_deal_value ?? 0) > 0 ? (
                   <span className="tabular-nums text-slate-700 dark:text-slate-300 font-medium">
                     {formatCurrencyILS(lead.estimated_deal_value!)}
                   </span>
-                )}
+                ) : onUpdateDealValue ? (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setDealValueLeadId(lead.id); setDealValueServiceKey(''); setDealValueInput(''); }}
+                    title="הוסף שווי"
+                    aria-label="הוסף שווי"
+                    className="inline-flex items-center justify-center rounded-lg border border-emerald-200 dark:border-emerald-700/40 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
+                  >
+                    <Plus className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
+                  </button>
+                ) : null}
                 {lead.last_contact_date && (
                   <span className="tabular-nums text-slate-500 dark:text-slate-400">
                     {formatDateDDMMYYYY(lead.last_contact_date)}
@@ -420,29 +433,32 @@ export function LeadsTable({
                 {lead.source && SOURCE_LABELS[lead.source] && (
                   <span className="text-slate-500 dark:text-slate-400">{SOURCE_LABELS[lead.source]}</span>
                 )}
+                {lead.interest && (
+                  <span className="text-slate-600 dark:text-slate-400">סוג שירות: {lead.interest}</span>
+                )}
               </div>
 
-              {/* Bottom row: actions */}
-              <div className="mt-2.5 flex items-center gap-1 border-t border-slate-100 dark:border-slate-800 pt-2" onClick={(e) => e.stopPropagation()}>
+              {/* Bottom row: actions — on mobile, all icons same size (h-9 w-9) and slightly larger */}
+              <div className="mt-2.5 flex items-center gap-1.5 border-t border-slate-100 dark:border-slate-800 pt-2" onClick={(e) => e.stopPropagation()}>
                 {lead.phone && (
                   <a href={`tel:${lead.phone}`}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                    <Phone className="h-4 w-4" />
+                    className="inline-flex h-9 w-9 min-w-[2.25rem] min-h-[2.25rem] items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors">
+                    <Phone className="h-4 w-4 shrink-0" />
                   </a>
                 )}
                 {lead.phone && (
                   <a href={toWaHref(lead.phone)} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-green-50 dark:hover:bg-green-950/40 hover:text-green-600 dark:hover:text-green-400 transition-colors">
-                    <WhatsAppIcon className="h-4 w-4" />
+                    className="inline-flex h-9 w-9 min-w-[2.25rem] min-h-[2.25rem] items-center justify-center rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors">
+                    <WhatsAppIcon className="h-4 w-4 shrink-0" />
                   </a>
                 )}
-                <ActionIconButton icon={CalendarIcon} label="קבע תור" variant="view" onClick={() => onScheduleAppointment(lead)} />
-                <ActionIconButton icon={Pencil} label="עריכה" variant="edit" onClick={() => onEdit(lead)} />
+                <ActionIconButton size="md" icon={CalendarIcon} label="קבע תור" variant="view" onClick={() => onScheduleAppointment(lead)} />
+                <ActionIconButton size="md" icon={Pencil} label="עריכה" variant="edit" onClick={() => onEdit(lead)} />
                 {onCompleteLead && lead.status !== 'Closed' && lead.status !== 'Disqualified' && (
-                  <ActionIconButton icon={CheckCircle} label="סיום טיפול" variant="complete" onClick={() => setCompleteLead(lead)} />
+                  <ActionIconButton size="md" icon={CheckCircle} label="סיום טיפול" variant="complete" onClick={() => setCompleteLead(lead)} />
                 )}
                 <div className="flex-1" />
-                <ActionIconButton icon={Trash2} label="מחיקה" variant="delete" onClick={() => onDelete(lead)} />
+                <ActionIconButton size="md" icon={Trash2} label="מחיקה" variant="delete" onClick={() => onDelete(lead)} />
               </div>
             </div>
           );
@@ -567,7 +583,7 @@ export function LeadsTable({
                       ) : onUpdateDealValue ? (
                         <button
                           type="button"
-                          onClick={() => { setDealValueLeadId(lead.id); setDealValueInput(''); }}
+                          onClick={() => { setDealValueLeadId(lead.id); setDealValueServiceKey(''); setDealValueInput(''); }}
                           title="הוסף שווי"
                           aria-label="הוסף שווי"
                           className="inline-flex items-center justify-center rounded-lg border border-emerald-200 dark:border-emerald-700/40 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/30"
@@ -798,26 +814,47 @@ export function LeadsTable({
         />
       )}
 
-      {/* Deal Value Modal */}
+      {/* Deal Value Modal — בחירה מתמחור או הזנה ידנית */}
       {dealValueLeadId && onUpdateDealValue && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" dir="rtl" role="dialog" aria-modal="true" aria-labelledby="deal-value-title">
           <div className="modal-enter w-full max-w-sm rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-xl p-5">
             <h2 id="deal-value-title" className="text-base font-semibold text-slate-900 dark:text-slate-50 text-right mb-3">הוסף שווי (₪)</h2>
-            <input
-              type="number"
-              min={0}
-              step={1}
-              value={dealValueInput}
-              onChange={(e) => setDealValueInput(e.target.value)}
-              placeholder="הזן סכום"
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-right text-sm text-slate-900 dark:text-slate-50 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 dark:focus:border-indigo-500"
-              dir="ltr"
-              autoFocus
-            />
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 text-right mb-1.5">בחר סוג שירות או הזן ידנית</label>
+                <select
+                  value={dealValueServiceKey}
+                  onChange={(e) => setDealValueServiceKey(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-right text-sm text-slate-900 dark:text-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 dark:focus:border-indigo-500"
+                  dir="rtl"
+                >
+                  <option value="">בחר סוג שירות</option>
+                  {pricingServices.map((s) => (
+                    <option key={s.service_name} value={s.service_name}>{s.service_name} — ₪{s.price}</option>
+                  ))}
+                  <option value={DEAL_VALUE_OTHER}>אחר (הזנה ידנית)</option>
+                </select>
+              </div>
+              {dealValueServiceKey === DEAL_VALUE_OTHER && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 text-right mb-1.5">סכום (₪)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={dealValueInput}
+                    onChange={(e) => setDealValueInput(e.target.value)}
+                    placeholder="הזן סכום"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-right text-sm text-slate-900 dark:text-slate-50 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 dark:focus:border-indigo-500"
+                    dir="ltr"
+                  />
+                </div>
+              )}
+            </div>
             <div className="flex gap-2 mt-4 justify-end">
               <button
                 type="button"
-                onClick={() => { setDealValueLeadId(null); setDealValueInput(''); }}
+                onClick={() => { setDealValueLeadId(null); setDealValueServiceKey(''); setDealValueInput(''); }}
                 disabled={dealValueSaving}
                 className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
               >
@@ -825,9 +862,11 @@ export function LeadsTable({
               </button>
               <button
                 type="button"
-                disabled={dealValueSaving || !dealValueInput.trim() || Number(dealValueInput) <= 0}
+                disabled={dealValueSaving || !(dealValueServiceKey === DEAL_VALUE_OTHER ? dealValueInput.trim() && Number(dealValueInput) > 0 : dealValueServiceKey)}
                 onClick={async () => {
-                  const num = Number(dealValueInput);
+                  const num = dealValueServiceKey === DEAL_VALUE_OTHER
+                    ? Number(dealValueInput)
+                    : (pricingServices.find((s) => s.service_name === dealValueServiceKey)?.price ?? 0);
                   if (num <= 0) return;
                   setDealValueSaving(true);
                   const err = await onUpdateDealValue(dealValueLeadId, num);
@@ -837,6 +876,7 @@ export function LeadsTable({
                     return;
                   }
                   setDealValueLeadId(null);
+                  setDealValueServiceKey('');
                   setDealValueInput('');
                 }}
                 className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:pointer-events-none rounded-xl transition"

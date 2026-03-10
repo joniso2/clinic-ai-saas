@@ -111,14 +111,20 @@ export function ActionIconButton({
   variant,
   onClick,
   disabled,
+  size = 'sm',
+  className,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   variant: 'view' | 'edit' | 'call' | 'complete' | 'more' | 'delete';
   onClick: () => void;
   disabled?: boolean;
+  /** sm = default compact, md = larger square (e.g. mobile) */
+  size?: 'sm' | 'md';
+  className?: string;
 }) {
-  const base = 'inline-flex items-center justify-center rounded-lg px-2 py-1 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-slate-400/30 dark:focus:ring-slate-500/50';
+  const base = 'inline-flex items-center justify-center rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-slate-400/30 dark:focus:ring-slate-500/50';
+  const sizeClasses = size === 'md' ? 'h-9 w-9 min-w-[2.25rem] min-h-[2.25rem] p-0' : 'px-2 py-1';
   const variants = {
     view: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700',
     edit: 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40',
@@ -127,6 +133,7 @@ export function ActionIconButton({
     more: 'bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800',
     delete: 'text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400',
   };
+  const deleteMd = size === 'md' && variant === 'delete' ? 'bg-slate-100 dark:bg-slate-800' : '';
   return (
     <button
       type="button"
@@ -134,9 +141,9 @@ export function ActionIconButton({
       disabled={disabled}
       title={label}
       aria-label={label}
-      className={`${base} ${variants[variant]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+      className={`${base} ${sizeClasses} ${variants[variant]} ${deleteMd} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className ?? ''}`}
     >
-      <Icon className="h-3.5 w-3.5 shrink-0" />
+      <Icon className={size === 'md' ? 'h-4 w-4 shrink-0' : 'h-3.5 w-3.5 shrink-0'} />
     </button>
   );
 }
@@ -198,18 +205,6 @@ export function PhoneContactModal({ phone, onClose }: { phone: string; onClose: 
   );
 }
 
-// ─── Book Time Slots ─────────────────────────────────────────────────────────
-
-const BOOK_TIME_SLOTS = (() => {
-  const slots: string[] = [];
-  for (let m = 8 * 60; m <= 18 * 60; m += 30) {
-    const h = Math.floor(m / 60);
-    const min = m % 60;
-    slots.push(`${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`);
-  }
-  return slots;
-})();
-
 // ─── Pending Review Modal ─────────────────────────────────────────────────────
 
 export function PendingReviewModal({
@@ -229,13 +224,8 @@ export function PendingReviewModal({
   onScheduleAppointment: (lead: Lead) => void;
   acceptLoading?: boolean;
 }) {
-  const [mode, setMode] = useState<'review' | 'book' | 'reject'>('review');
+  const [mode, setMode] = useState<'review' | 'reject'>('review');
   const [rejectReason, setRejectReason] = useState<RejectReason | ''>('');
-  const [bookDate, setBookDate] = useState('');
-  const [bookTime, setBookTime] = useState('');
-  const [bookLoading, setBookLoading] = useState(false);
-  const [bookError, setBookError] = useState('');
-  const dateInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -245,40 +235,6 @@ export function PendingReviewModal({
 
   const priority = getDisplayPriority(lead);
   const hasAppointment = !!nextAppointment;
-
-  const handleInlineBook = async () => {
-    if (!bookDate || !bookTime) { setBookError('יש למלא תאריך ושעה'); return; }
-    const [dd, mm, yyyy] = bookDate.split('/');
-    if (!dd || !mm || !yyyy) { setBookError('פורמט תאריך: DD/MM/YYYY'); return; }
-    const iso = `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}T${bookTime}:00+02:00`;
-    setBookLoading(true);
-    setBookError('');
-    try {
-      const res = await fetch('/api/appointments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          patient_name: lead.full_name || 'ליד ללא שם',
-          datetime: iso,
-          type: 'new',
-          lead_id: lead.id,
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        const msg = res.status === 401
-          ? 'אין הרשאה או שלא נבחרה קליניקה — וודא שהתחברת כמנהל הקליניקה'
-          : (data.error || data.message || 'שגיאה בקביעת התור');
-        setBookError(msg);
-        return;
-      }
-      onAccept();
-    } catch {
-      setBookError('שגיאת רשת');
-    } finally {
-      setBookLoading(false);
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -291,7 +247,7 @@ export function PendingReviewModal({
         {/* Header */}
         <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <h2 className="text-base font-semibold text-slate-900 dark:text-slate-50 text-right">
-            {mode === 'review' ? 'סקירת ליד' : mode === 'book' ? 'קביעת תור' : 'הסרת ליד'}
+            {mode === 'review' ? 'סקירת ליד' : 'הסרת ליד'}
           </h2>
           <button type="button" onClick={onClose} className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition-colors">
             <X className="h-4 w-4" />
@@ -376,7 +332,7 @@ export function PendingReviewModal({
               ) : (
                 <button
                   type="button"
-                  onClick={() => setMode('book')}
+                  onClick={() => onScheduleAppointment(lead)}
                   className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white transition"
                 >
                   <CalendarIcon className="h-3.5 w-3.5" />
@@ -390,88 +346,6 @@ export function PendingReviewModal({
               >
                 <X className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />
                 הסר ליד
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Inline Booking */}
-        {mode === 'book' && (
-          <div className="px-5 py-4 space-y-4">
-            <p className="text-xs text-slate-500 dark:text-slate-400 text-right">
-              קביעת תור עבור <span className="font-medium text-slate-700 dark:text-slate-300">{lead.full_name || 'ליד ללא שם'}</span>
-            </p>
-
-            {bookError && (
-              <div className="rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 px-3 py-2 text-xs text-red-700 dark:text-red-400">
-                {bookError}
-              </div>
-            )}
-
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300 text-right block">תאריך</label>
-                <div className="relative">
-                  <input
-                    ref={dateInputRef}
-                    type="date"
-                    className="absolute inset-0 opacity-0 pointer-events-none"
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val) {
-                        const [y, m, d] = val.split('-');
-                        setBookDate(`${d}/${m}/${y}`);
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => dateInputRef.current?.showPicker()}
-                    className="flex w-full items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm text-right transition-colors hover:border-slate-300 dark:hover:border-slate-500"
-                  >
-                    <CalendarIcon className="h-4 w-4 text-slate-400 shrink-0" />
-                    <span className={bookDate ? 'text-slate-900 dark:text-slate-100 tabular-nums' : 'text-slate-400 dark:text-slate-500'}>
-                      {bookDate || 'בחר תאריך'}
-                    </span>
-                  </button>
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300 text-right block">שעה</label>
-                <div className="grid grid-cols-4 gap-1.5 max-h-36 overflow-y-auto">
-                  {BOOK_TIME_SLOTS.map(slot => (
-                    <button
-                      key={slot}
-                      type="button"
-                      onClick={() => setBookTime(slot)}
-                      className={`rounded-lg px-2 py-1.5 text-xs tabular-nums font-medium transition-colors
-                        ${bookTime === slot
-                          ? 'bg-indigo-600 text-white shadow-sm'
-                          : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200 dark:border-slate-700'
-                        }`}
-                    >
-                      {slot}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => { setMode('review'); setBookError(''); }}
-                className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition"
-              >
-                חזרה
-              </button>
-              <button
-                type="button"
-                disabled={bookLoading}
-                onClick={handleInlineBook}
-                className="flex-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed px-4 py-2.5 text-sm font-semibold text-white transition"
-              >
-                {bookLoading ? 'קובע...' : 'אשר תור'}
               </button>
             </div>
           </div>

@@ -7,11 +7,15 @@ import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useUnsavedWarning } from '@/hooks/useUnsavedWarning';
 import type { Lead, LeadStatus } from '@/types/leads';
 
+const OTHER_SERVICE_KEY = '__other__';
+
 interface NewLeadDrawerProps {
   open: boolean;
   clinicId: string | null;
   onClose: () => void;
   onCreated: (lead: Lead) => void;
+  /** שירותים מתמחור — בחירה תמלא סוג שירות + שווי */
+  pricingServices?: { service_name: string; price: number }[];
 }
 
 const STATUS_OPTIONS: { value: LeadStatus; label: string }[] = [
@@ -22,14 +26,17 @@ const STATUS_OPTIONS: { value: LeadStatus; label: string }[] = [
   { value: 'Disqualified', label: 'לא רלוונטי' },
 ];
 
-export default function NewLeadDrawer({ open, clinicId, onClose, onCreated }: NewLeadDrawerProps) {
+export default function NewLeadDrawer({ open, clinicId, onClose, onCreated, pricingServices = [] }: NewLeadDrawerProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   useFocusTrap(panelRef, open);
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [interest, setInterest] = useState('');
+  /** '' = לא נבחר, __other__ = אחר, אחרת = service_name מתמחור */
+  const [selectedServiceKey, setSelectedServiceKey] = useState('');
+  /** טקסט חופשי כשנבחר "אחר" */
+  const [interestOther, setInterestOther] = useState('');
   const [status, setStatus] = useState<LeadStatus>('Pending');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,10 +48,16 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated }: Ne
     setName('');
     setPhone('');
     setEmail('');
-    setInterest('');
+    setSelectedServiceKey('');
+    setInterestOther('');
     setStatus('Pending');
     setError(null);
   }, []);
+
+  const interest = selectedServiceKey === OTHER_SERVICE_KEY ? interestOther.trim() : (selectedServiceKey || '');
+  const estimatedDealValue = selectedServiceKey && selectedServiceKey !== OTHER_SERVICE_KEY
+    ? (pricingServices.find((s) => s.service_name === selectedServiceKey)?.price ?? null)
+    : null;
 
   // Escape key closes drawer
   useEffect(() => {
@@ -74,8 +87,9 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated }: Ne
           full_name: name.trim(),
           email: email.trim() || null,
           phone: phone.trim() || null,
-          interest: interest.trim() || null,
+          interest: interest || null,
           status,
+          ...(estimatedDealValue != null && { estimated_deal_value: estimatedDealValue }),
         }),
       });
 
@@ -181,14 +195,33 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated }: Ne
             <p className={`${sectionGroupLabel} mt-6`}>פרטי ליד</p>
 
             <div>
-              <label className={inputLabel}>עניין / תלונה עיקרית</label>
-              <input
-                type="text"
-                value={interest}
-                onChange={(e) => setInterest(e.target.value)}
+              <label className={inputLabel}>סוג שירות</label>
+              <select
+                value={selectedServiceKey}
+                onChange={(e) => setSelectedServiceKey(e.target.value)}
                 className={input}
-              />
+              >
+                <option value="">בחר סוג שירות</option>
+                {pricingServices.map((s) => (
+                  <option key={s.service_name} value={s.service_name}>
+                    {s.service_name} — ₪{s.price}
+                  </option>
+                ))}
+                <option value={OTHER_SERVICE_KEY}>אחר (הזנה ידנית)</option>
+              </select>
             </div>
+            {selectedServiceKey === OTHER_SERVICE_KEY && (
+              <div>
+                <label className={inputLabel}>סוג שירות / עניין (ידני)</label>
+                <input
+                  type="text"
+                  value={interestOther}
+                  onChange={(e) => setInterestOther(e.target.value)}
+                  className={input}
+                  placeholder="הזן תיאור"
+                />
+              </div>
+            )}
 
             <div>
               <label className={inputLabel}>סטטוס</label>

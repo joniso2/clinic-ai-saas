@@ -220,27 +220,25 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
         aria-modal="true"
         aria-label="קביעת תור"
       >
-        {/* Header */}
+        {/* Header — כמו בתמונה: כותרת מרכזית, אייקון לוח שנה, X לסגירה */}
         <div className="bg-slate-900 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
-                <CalendarIcon className="h-4 w-4 text-white" />
-              </div>
-              <div>
-                <h2 className="text-sm font-semibold text-white">קביעת תור</h2>
-                <p className="text-xs text-slate-400">{patientName}</p>
-              </div>
-            </div>
+          <div className="flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full p-1.5 text-slate-400 hover:bg-white/10 hover:text-white transition-colors"
+              className="rounded-full p-1.5 text-slate-400 hover:bg-white/10 hover:text-white transition-colors shrink-0"
               aria-label="סגור"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </button>
+            <h2 className="text-lg font-bold text-white text-center flex-1">קביעת תור</h2>
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 shrink-0">
+              <CalendarIcon className="h-5 w-5 text-white" />
+            </div>
           </div>
+          {patientName && (
+            <p className="text-xs text-slate-400 text-center mt-1">{patientName}</p>
+          )}
         </div>
 
         <div className="space-y-4 px-6 py-5">
@@ -264,13 +262,13 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
                   : 'border-slate-200 bg-white hover:border-slate-300 focus-within:ring-2 focus-within:ring-slate-900/10 focus-within:border-slate-400'
                 }`}
             >
-              <CalendarIcon className="h-4 w-4 text-slate-400 shrink-0" />
-              <span className="flex-1 tabular-nums text-slate-900">{date}</span>
               {dayConfig?.enabled && (
-                <span className="text-xs text-slate-400">
+                <span className="text-slate-600 dark:text-slate-700 font-medium">
                   {DAY_LABELS_HE[dayConfig.day]}
                 </span>
               )}
+              <span className="flex-1 tabular-nums text-slate-900">{date}</span>
+              <CalendarIcon className="h-4 w-4 text-slate-400 shrink-0" />
             </button>
             {showCalendar && (
               <DatePicker
@@ -291,7 +289,7 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
             )}
           </div>
 
-          {/* Time slots */}
+          {/* Time slots — טווח שעות + קטגוריות בוקר/צהריים/ערב */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-600 block">
               שעה
@@ -316,7 +314,7 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
                           onClick={() => setTime(slot)}
                           className={`rounded-lg px-2 py-1.5 text-xs tabular-nums font-medium transition-colors
                             ${time === slot
-                              ? 'bg-indigo-600 text-white shadow-sm'
+                              ? 'bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-500/30'
                               : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200'
                             }`}
                         >
@@ -336,8 +334,8 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4 bg-slate-50/50">
+        {/* Footer — ביטול (ימין) + קבע תור (שמאל, ראשי) כמו בתמונה */}
+        <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-6 py-4 bg-slate-50/50">
           <button
             type="button"
             onClick={onClose}

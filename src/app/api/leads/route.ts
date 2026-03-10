@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
     interest?: string;
     clinic_id?: string;
     status?: string;
+    estimated_deal_value?: number | null;
   };
 
   let clinicId: string | null = null;
@@ -63,6 +64,7 @@ export async function POST(req: NextRequest) {
     email: parsed.email ?? null,
     interest: parsed.interest ?? null,
     status: parsed.status ?? 'Pending',
+    ...(parsed.estimated_deal_value != null && { estimated_deal_value: parsed.estimated_deal_value }),
   });
 
   if (error) {
