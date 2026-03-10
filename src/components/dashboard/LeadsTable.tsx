@@ -358,8 +358,8 @@ export function LeadsTable({
         </div>
       )}
 
-      {/* ── Mobile Card Layout ─────────────────────────────────────────── */}
-      <div className="md:hidden space-y-2" dir="rtl">
+      {/* ── Mobile Card Layout (גדול ~10%) ───────────────────────────────── */}
+      <div className="md:hidden space-y-3" dir="rtl">
         {filteredAndSorted.map((lead) => {
           const priority = getDisplayPriority(lead);
           const urgent = isUrgent(lead);
@@ -369,7 +369,7 @@ export function LeadsTable({
               key={lead.id}
               onClick={() => onView(lead)}
               className={[
-                'rounded-xl border bg-white dark:bg-slate-900 p-3.5 transition-colors cursor-pointer active:scale-[0.99]',
+                'rounded-2xl border bg-white dark:bg-slate-900 p-4 transition-colors cursor-pointer active:scale-[0.99]',
                 isSelected
                   ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50/80 dark:bg-indigo-950/25'
                   : urgent
@@ -378,20 +378,20 @@ export function LeadsTable({
               ].join(' ')}
             >
               {/* Top row: name + status */}
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start justify-between gap-2.5">
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
                     {urgent && <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-red-500/90" />}
-                    <span className="text-sm font-bold text-slate-900 dark:text-slate-50 truncate">
+                    <span className="text-[15px] font-bold text-slate-900 dark:text-slate-50 truncate leading-snug">
                       {lead.full_name || 'ליד ללא שם'}
                     </span>
                   </div>
                   {lead.email && (
-                    <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5 truncate">{lead.email}</p>
+                    <p className="text-[13px] text-slate-500 dark:text-slate-500 mt-1 truncate">{lead.email}</p>
                   )}
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className={`inline-flex rounded-lg px-2 py-0.5 text-[11px] font-semibold ${PRIORITY_STYLES[priority]}`}>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold ${PRIORITY_STYLES[priority]}`}>
                     {PRIORITY_LABELS[priority] ?? priority}
                   </span>
                   <input
@@ -399,15 +399,27 @@ export function LeadsTable({
                     checked={isSelected}
                     onChange={(e) => { e.stopPropagation(); toggleSelect(lead.id); }}
                     onClick={(e) => e.stopPropagation()}
-                    className="h-4 w-4 rounded border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-800 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
+                    className="h-[18px] w-[18px] rounded border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-800 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
                     aria-label="בחר ליד"
                   />
                 </div>
               </div>
 
-              {/* Middle row: status + value (+ button for value when 0) + date + interest */}
-              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-[11px] font-semibold ${STATUS_BADGE_STYLES[lead.status ?? 'Pending'] ?? STATUS_BADGE_STYLES['Pending']}`}>
+              {/* מלבן סוג שירות — טיפול נקבע לתור (מובייל) */}
+              {lead.interest && (
+                <div className="mt-2.5 rounded-xl border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/60 dark:bg-indigo-950/30 px-3.5 py-2.5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-400 mb-1">
+                    טיפול נקבע לתור
+                  </p>
+                  <p className="text-[15px] font-medium text-slate-800 dark:text-slate-200 leading-snug">
+                    {lead.interest}
+                  </p>
+                </div>
+              )}
+
+              {/* Middle row: status + value (+ button for value when 0) + date */}
+              <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px]">
+                <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold ${STATUS_BADGE_STYLES[lead.status ?? 'Pending'] ?? STATUS_BADGE_STYLES['Pending']}`}>
                   {STATUS_LABELS[lead.status ?? 'Pending'] ?? lead.status ?? STATUS_LABELS.Pending}
                 </span>
                 {(lead.estimated_deal_value ?? 0) > 0 ? (
@@ -420,7 +432,7 @@ export function LeadsTable({
                     onClick={(e) => { e.stopPropagation(); setDealValueLeadId(lead.id); setDealValueServiceKey(''); setDealValueInput(''); }}
                     title="הוסף שווי"
                     aria-label="הוסף שווי"
-                    className="inline-flex items-center justify-center rounded-lg border border-emerald-200 dark:border-emerald-700/40 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
+                    className="inline-flex items-center justify-center rounded-lg border border-emerald-200 dark:border-emerald-700/40 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
                   >
                     <Plus className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
                   </button>
@@ -433,32 +445,29 @@ export function LeadsTable({
                 {lead.source && SOURCE_LABELS[lead.source] && (
                   <span className="text-slate-500 dark:text-slate-400">{SOURCE_LABELS[lead.source]}</span>
                 )}
-                {lead.interest && (
-                  <span className="text-slate-600 dark:text-slate-400">סוג שירות: {lead.interest}</span>
-                )}
               </div>
 
-              {/* Bottom row: actions — on mobile, all icons same size (h-9 w-9) and slightly larger */}
-              <div className="mt-2.5 flex items-center gap-1.5 border-t border-slate-100 dark:border-slate-800 pt-2" onClick={(e) => e.stopPropagation()}>
+              {/* Bottom row: actions — on mobile, icons ~10% larger */}
+              <div className="mt-3 flex items-center gap-2 border-t border-slate-100 dark:border-slate-800 pt-3" onClick={(e) => e.stopPropagation()}>
                 {lead.phone && (
                   <a href={`tel:${lead.phone}`}
-                    className="inline-flex h-9 w-9 min-w-[2.25rem] min-h-[2.25rem] items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors">
-                    <Phone className="h-4 w-4 shrink-0" />
+                    className="inline-flex h-10 w-10 min-w-[2.5rem] min-h-[2.5rem] items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors">
+                    <Phone className="h-[18px] w-[18px] shrink-0" />
                   </a>
                 )}
                 {lead.phone && (
                   <a href={toWaHref(lead.phone)} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex h-9 w-9 min-w-[2.25rem] min-h-[2.25rem] items-center justify-center rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors">
-                    <WhatsAppIcon className="h-4 w-4 shrink-0" />
+                    className="inline-flex h-10 w-10 min-w-[2.5rem] min-h-[2.5rem] items-center justify-center rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors">
+                    <WhatsAppIcon className="h-[18px] w-[18px] shrink-0" />
                   </a>
                 )}
-                <ActionIconButton size="md" icon={CalendarIcon} label="קבע תור" variant="view" onClick={() => onScheduleAppointment(lead)} />
-                <ActionIconButton size="md" icon={Pencil} label="עריכה" variant="edit" onClick={() => onEdit(lead)} />
+                <ActionIconButton size="lg" icon={CalendarIcon} label="קבע תור" variant="view" onClick={() => onScheduleAppointment(lead)} />
+                <ActionIconButton size="lg" icon={Pencil} label="עריכה" variant="edit" onClick={() => onEdit(lead)} />
                 {onCompleteLead && lead.status !== 'Closed' && lead.status !== 'Disqualified' && (
-                  <ActionIconButton size="md" icon={CheckCircle} label="סיום טיפול" variant="complete" onClick={() => setCompleteLead(lead)} />
+                  <ActionIconButton size="lg" icon={CheckCircle} label="סיום טיפול" variant="complete" onClick={() => setCompleteLead(lead)} />
                 )}
                 <div className="flex-1" />
-                <ActionIconButton size="md" icon={Trash2} label="מחיקה" variant="delete" onClick={() => onDelete(lead)} />
+                <ActionIconButton size="lg" icon={Trash2} label="מחיקה" variant="delete" onClick={() => onDelete(lead)} />
               </div>
             </div>
           );

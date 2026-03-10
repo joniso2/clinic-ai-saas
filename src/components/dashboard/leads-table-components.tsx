@@ -119,12 +119,12 @@ export function ActionIconButton({
   variant: 'view' | 'edit' | 'call' | 'complete' | 'more' | 'delete';
   onClick: () => void;
   disabled?: boolean;
-  /** sm = default compact, md = larger square (e.g. mobile) */
-  size?: 'sm' | 'md';
+  /** sm = default compact, md = larger square (e.g. mobile), lg = ~10% larger for mobile cards */
+  size?: 'sm' | 'md' | 'lg';
   className?: string;
 }) {
   const base = 'inline-flex items-center justify-center rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-slate-400/30 dark:focus:ring-slate-500/50';
-  const sizeClasses = size === 'md' ? 'h-9 w-9 min-w-[2.25rem] min-h-[2.25rem] p-0' : 'px-2 py-1';
+  const sizeClasses = size === 'lg' ? 'h-10 w-10 min-w-[2.5rem] min-h-[2.5rem] p-0' : size === 'md' ? 'h-9 w-9 min-w-[2.25rem] min-h-[2.25rem] p-0' : 'px-2 py-1';
   const variants = {
     view: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700',
     edit: 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40',
@@ -133,7 +133,8 @@ export function ActionIconButton({
     more: 'bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800',
     delete: 'text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400',
   };
-  const deleteMd = size === 'md' && variant === 'delete' ? 'bg-slate-100 dark:bg-slate-800' : '';
+  const deleteMd = (size === 'md' || size === 'lg') && variant === 'delete' ? 'bg-slate-100 dark:bg-slate-800' : '';
+  const iconSize = size === 'lg' ? 'h-[18px] w-[18px]' : size === 'md' ? 'h-4 w-4' : 'h-3.5 w-3.5';
   return (
     <button
       type="button"
@@ -143,7 +144,7 @@ export function ActionIconButton({
       aria-label={label}
       className={`${base} ${sizeClasses} ${variants[variant]} ${deleteMd} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className ?? ''}`}
     >
-      <Icon className={size === 'md' ? 'h-4 w-4 shrink-0' : 'h-3.5 w-3.5 shrink-0'} />
+      <Icon className={`${iconSize} shrink-0`} />
     </button>
   );
 }
