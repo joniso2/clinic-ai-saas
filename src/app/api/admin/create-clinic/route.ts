@@ -9,6 +9,19 @@ function randomPassword(length = 12): string {
   return s;
 }
 
+/** Generate a URL-safe slug from clinic name; ensure unique by appending short id. */
+function slugFromName(name: string): string {
+  const base = name
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9\u0590-\u05ff-]/g, '') // allow Hebrew
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '') || 'clinic';
+  const suffix = Math.random().toString(36).slice(2, 8);
+  return `${base}-${suffix}`;
+}
+
 /** POST /api/admin/create-clinic — create clinic + admin user (Super Admin only). */
 export async function POST(req: NextRequest) {
   const user = await requireSuperAdmin();
@@ -76,16 +89,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'יצירת משתמש נכשלה' }, { status: 500 });
   }
 
-  // 2) Create clinic
+  // 2) Create clinic (slug required for booking URLs)
+  const slug = slugFromName(clinicName);
   const { data: clinic, error: clinicError } = await supabase
     .from('clinics')
     .insert({
       name: clinicName,
+      slug,
       plan_id: plan_id || null,
       status: 'active',
       created_by: user.id,
     })
-    .select('id, name, plan_id, status')
+    .select('id, name, slug, plan_id, status')
     .single();
 
   if (clinicError) {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as leadRepository from '@/repositories/lead.repository';
 import { createClient } from '@/lib/supabase-server';
-import { getEffectiveClinicId, getSessionUser } from '@/lib/auth-server';
+import { getClinicIdFromSession, getEffectiveClinicId, getSessionUser } from '@/lib/auth-server';
 
 function isAgentAuthorized(req: NextRequest): boolean {
   const configuredSecret = process.env.AGENT_API_SECRET;
@@ -44,16 +44,7 @@ export async function POST(req: NextRequest) {
   if (isAgentAuthorized(req)) {
     clinicId = parsed.clinic_id ?? null;
   } else {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: clinicLink } = await supabase
-        .from('clinic_users')
-        .select('clinic_id')
-        .eq('user_id', user.id)
-        .single();
-      clinicId = clinicLink?.clinic_id ?? null;
-    }
+    clinicId = await getClinicIdFromSession();
   }
 
   if (!parsed.full_name || !clinicId) {

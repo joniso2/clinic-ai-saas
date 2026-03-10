@@ -3,8 +3,9 @@ import { getEffectiveClinicId } from '@/lib/auth-server';
 import * as appointmentRepo from '@/repositories/appointment.repository';
 import * as appointmentService from '@/services/appointment.service';
 import * as leadRepository from '@/repositories/lead.repository';
+import { getClinicSettings } from '@/repositories/settings.repository';
 import type { AppointmentType } from '@/types/appointments';
-import type { ScheduleAppointmentParams } from '@/services/appointment.service';
+import type { ScheduleAppointmentParams, SchedulingConfig } from '@/services/appointment.service';
 
 /** GET /api/appointments?month=MM&year=YYYY&clinic_id=UUID (optional, for SUPER_ADMIN) */
 export async function GET(req: NextRequest) {
@@ -127,12 +128,34 @@ export async function POST(req: NextRequest) {
     const appointmentType: AppointmentType =
       type === 'follow_up' ? 'follow_up' : 'new';
 
+    // Load clinic settings so opening hours match "שעות פעילות" in dashboard
+    let config: SchedulingConfig | undefined;
+    const { data: settings } = await getClinicSettings(clinicId);
+    if (settings?.working_hours?.length) {
+      const trimmed = datetimeRaw.trim();
+      const reqDate = /[Zz]$|[+-]\d{2}:\d{2}$/.test(trimmed) ? new Date(trimmed) : new Date(trimmed + '+02:00');
+      const israelDateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit' }).format(reqDate);
+      const israelDay = new Date(israelDateStr + 'T12:00:00+02:00').getUTCDay();
+      const dayConfig = settings.working_hours.find((d) => d.day === israelDay);
+      const openH = dayConfig ? parseInt(dayConfig.open.split(':')[0] ?? '8', 10) : 8;
+      const closeH = dayConfig ? parseInt(dayConfig.close.split(':')[0] ?? '16', 10) : 16;
+      config = {
+        openHour: dayConfig?.enabled ? openH : 0,
+        closeHour: dayConfig?.enabled ? closeH : 0,
+        slotMinutes: settings.slot_minutes ?? 30,
+        bufferMinutes: settings.buffer_minutes ?? 0,
+        maxPerDay: settings.max_appointments_per_day ?? null,
+        minBookingNoticeHours: settings.min_booking_notice_hours ?? 0,
+      };
+    }
+
     const params: ScheduleAppointmentParams = {
       clinicId,
       patientName:            patient_name,
       requestedDatetimeRaw:   datetimeRaw,
       type:                   appointmentType,
       leadId:                 resolvedLeadId ?? undefined,
+      config,
     };
     const result = await appointmentService.scheduleAppointment(params);
 
@@ -152,24 +175,33 @@ export async function POST(req: NextRequest) {
       );
     }
     if (result.status === 'unavailable') {
+      const msg = result.suggestions?.length
+        ? `המועד תפוס. נסה: ${result.suggestions.slice(0, 3).join(', ')}`
+        : 'המועד תפוס';
       return NextResponse.json(
-        { status: 'unavailable', suggestions: result.suggestions },
+        { status: 'unavailable', error: msg, suggestions: result.suggestions },
         { status: 409 },
       );
     }
     if (result.status === 'outside_hours') {
+      const message = `העסק פתוח ${result.openHour}:00–${result.closeHour}:00`;
       return NextResponse.json(
         {
           status: 'outside_hours',
-          message: `Clinic is open ${result.openHour}:00–${result.closeHour}:00`,
+          message,
+          error: message,
         },
         { status: 422 },
       );
     }
     if (result.status === 'follow_up_too_soon') {
+      const message = result.earliestAllowed
+        ? `תור מעקב אפשרי מ-${result.earliestAllowed}`
+        : 'תור מעקב מוקדם מדי';
       return NextResponse.json(
         {
           status: 'follow_up_too_soon',
+          error: message,
           earliestAllowed: result.earliestAllowed,
         },
         { status: 422 },

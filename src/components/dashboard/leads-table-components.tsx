@@ -266,7 +266,10 @@ export function PendingReviewModal({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setBookError(data.error || 'שגיאה בקביעת התור');
+        const msg = res.status === 401
+          ? 'אין הרשאה או שלא נבחרה קליניקה — וודא שהתחברת כמנהל הקליניקה'
+          : (data.error || data.message || 'שגיאה בקביעת התור');
+        setBookError(msg);
         return;
       }
       onAccept();

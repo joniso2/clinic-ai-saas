@@ -668,7 +668,7 @@ function ServiceFormModal({
             <input type="text" value={name}
               onChange={(e) => { setName(e.target.value); setFieldErrors((p) => ({ ...p, name: undefined })); }}
               className={`w-full h-11 rounded-lg border bg-white dark:bg-slate-800 px-3 text-sm text-slate-900 dark:text-slate-50 text-right placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30 transition-colors ${fieldErrors.name ? 'border-red-400 dark:border-red-600' : 'border-slate-200 dark:border-slate-700'}`}
-              placeholder="לדוגמה: טיפול שורש" />
+              placeholder="לדוגמה: פגישת ייעוץ, טיפול בסיסי" />
             {fieldErrors.name && <p className="mt-1 text-xs text-red-600 dark:text-red-400 text-right">{fieldErrors.name}</p>}
           </div>
           <div>
@@ -697,7 +697,7 @@ function ServiceFormModal({
             </label>
             <input type="text" value={aliasesStr} onChange={(e) => setAliasesStr(e.target.value)}
               className="w-full h-11 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm text-slate-900 dark:text-slate-50 text-right placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30 transition-colors"
-              placeholder="טיפול שורש, שורש, רוט" />
+              placeholder="מילות חיפוש או כינויים, מופרדים בפסיק" />
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 text-right mb-1.5">
@@ -705,7 +705,7 @@ function ServiceFormModal({
             </label>
             <input type="text" value={category} onChange={(e) => setCategory(e.target.value)}
               className="w-full h-11 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm text-slate-900 dark:text-slate-50 text-right placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/30 transition-colors"
-              placeholder="לדוגמה: שיניים, עיניים, כירורגיה" />
+              placeholder="לדוגמה: קטגוריה א׳, קטגוריה ב׳" />
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 text-right mb-1.5">

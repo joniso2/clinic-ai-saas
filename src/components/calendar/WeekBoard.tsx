@@ -103,19 +103,13 @@ export function WeekBoard({
             <p className={`text-[11px] font-semibold uppercase tracking-[0.06em] leading-tight ${col.isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400'}`}>
               {col.dayLabel}
             </p>
-            {col.isToday ? (
-              <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-[15px] font-bold">
-                {col.dayNum}
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => onDayClick(col.dateStr)}
-                className="h-8 w-8 rounded-full flex items-center justify-center text-[15px] font-bold text-slate-900 dark:text-slate-50 tabular-nums hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer bg-transparent border-0 transition-colors"
-              >
-                {col.dayNum}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => onDayClick(col.dateStr)}
+              className={`h-8 w-8 rounded-full flex items-center justify-center text-[15px] font-bold tabular-nums cursor-pointer border-0 transition-colors ${col.isToday ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'text-slate-900 dark:text-slate-50 hover:bg-slate-100 dark:hover:bg-slate-800 bg-transparent'}`}
+            >
+              {col.dayNum}
+            </button>
             <p className={`text-[10px] tabular-nums ${col.isToday ? 'text-indigo-500 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}`}>
               {col.events.length > 0 ? `${col.events.length} תורים` : ''}
             </p>

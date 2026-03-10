@@ -73,8 +73,8 @@ export function NewAppointmentForm({ prefillDate, prefillTime, onClose, onSucces
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 backdrop-blur-sm">
-      <form onSubmit={handleSubmit} className="modal-enter w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 backdrop-blur-sm" onClick={onClose} role="presentation">
+      <form onSubmit={handleSubmit} className="modal-enter w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex-row-reverse">
           <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100 text-right">תור חדש</h2>
           <button type="button" onClick={onClose}
