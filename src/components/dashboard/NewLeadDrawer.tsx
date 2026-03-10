@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
-import { btn, input, inputLabel, sectionGroupLabel } from '@/lib/ui-classes';
+import { btn, input, inputLabel } from '@/lib/ui-classes';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useUnsavedWarning } from '@/hooks/useUnsavedWarning';
 import type { Lead, LeadStatus } from '@/types/leads';
@@ -28,7 +29,10 @@ const STATUS_OPTIONS: { value: LeadStatus; label: string }[] = [
 
 export default function NewLeadDrawer({ open, clinicId, onClose, onCreated, pricingServices = [] }: NewLeadDrawerProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
   useFocusTrap(panelRef, open);
+
+  useEffect(() => setMounted(true), []);
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -58,6 +62,19 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated, pric
   const estimatedDealValue = selectedServiceKey && selectedServiceKey !== OTHER_SERVICE_KEY
     ? (pricingServices.find((s) => s.service_name === selectedServiceKey)?.price ?? null)
     : null;
+
+  // Lock body scroll when modal is open (critical for mobile)
+  useEffect(() => {
+    if (!open) return;
+    const prevBody = document.body.style.overflow;
+    const prevHtml = document.documentElement.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevBody || '';
+      document.documentElement.style.overflow = prevHtml || '';
+    };
+  }, [open]);
 
   // Escape key closes drawer
   useEffect(() => {
@@ -108,28 +125,41 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated, pric
     }
   };
 
-  return (
+  const modalContent = (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — touch-none so it doesn't steal touch/scroll gestures */}
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm"
+          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm touch-none"
           onClick={onClose}
         />
       )}
 
-      {/* Panel */}
+      {/* Panel: mobile = bottom-sheet, desktop (md+) = side-drawer */}
       <aside
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label="ליד חדש"
-        className={`fixed end-0 top-14 bottom-0 z-50 flex w-full sm:max-w-[420px] flex-col bg-white dark:bg-slate-900 border-s border-slate-200 dark:border-slate-800 shadow-[0_10px_30px_rgba(0,0,0,0.12),0_4px_8px_rgba(0,0,0,0.06)] transition-transform duration-200 ease-out ${
-          open ? 'translate-x-0' : 'ltr:translate-x-full rtl:-translate-x-full'
-        }`}
+        className={`fixed z-50 flex flex-col bg-white dark:bg-slate-900 transition-transform duration-300 ease-out
+          inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
+          shadow-[0_-6px_40px_rgba(0,0,0,0.18),0_-1px_4px_rgba(0,0,0,0.06)]
+          md:inset-x-auto md:end-0 md:top-14 md:bottom-0 md:w-[420px]
+          md:rounded-none md:max-h-none
+          md:border-s md:border-slate-200 dark:md:border-slate-800
+          md:shadow-[0_10px_30px_rgba(0,0,0,0.12),0_4px_8px_rgba(0,0,0,0.06)]
+          ${open
+            ? 'translate-y-0 md:translate-x-0'
+            : 'translate-y-full md:translate-y-0 md:ltr:translate-x-full md:rtl:-translate-x-full'
+          }`}
       >
+        {/* Mobile drag handle */}
+        <div className="flex justify-center pt-3 pb-0 md:hidden" aria-hidden="true">
+          <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+        </div>
+
         {/* Sticky Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-5 py-4 md:px-6">
           <h2 className="text-[18px] font-semibold text-slate-900 dark:text-slate-50">
             ליד חדש
           </h2>
@@ -144,17 +174,14 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated, pric
         </div>
 
         {/* Scrollable Body */}
-        <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+        <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0 overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-none touch-pan-y touch-auto px-5 py-5 space-y-5 md:px-6">
             {/* Error Banner */}
             {error && (
               <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-[14px] text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-400">
                 {error}
               </div>
             )}
-
-            {/* Section: Contact Details */}
-            <p className={sectionGroupLabel}>פרטי קשר</p>
 
             <div>
               <label className={inputLabel}>
@@ -190,9 +217,6 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated, pric
                 className={`${input} text-left`}
               />
             </div>
-
-            {/* Section: Lead Details */}
-            <p className={`${sectionGroupLabel} mt-6`}>פרטי ליד</p>
 
             <div>
               <label className={inputLabel}>סוג שירות</label>
@@ -239,19 +263,19 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated, pric
             </div>
           </div>
 
-          {/* Sticky Footer */}
-          <div className="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800 px-6 py-4">
+          {/* Sticky Footer — shrink-0 so it never gets pushed off; mobile: stacked, desktop: row */}
+          <div className="shrink-0 flex flex-col gap-2.5 border-t border-slate-100 dark:border-slate-800 px-4 pt-4 pb-8 md:flex-row md:items-center md:justify-end md:gap-3 md:px-6 md:py-4">
             <button
               type="button"
               onClick={onClose}
-              className={btn.secondary}
+              className={`${btn.secondary} w-full justify-center md:w-auto`}
               disabled={submitting}
             >
               ביטול
             </button>
             <button
               type="submit"
-              className={btn.primary}
+              className={`${btn.primary} w-full justify-center md:w-auto`}
               disabled={submitting}
             >
               {submitting ? 'שומר...' : 'שמור ליד'}
@@ -261,4 +285,7 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated, pric
       </aside>
     </>
   );
+
+  if (!mounted) return null;
+  return createPortal(modalContent, document.body);
 }

@@ -28,7 +28,7 @@ export default function BottomNav() {
         WebkitBackdropFilter: 'blur(20px) saturate(180%)',
         borderRadius: '16px 16px 0 0',
         boxShadow: '0 -4px 24px rgba(0,0,0,0.07)',
-        paddingBottom: 'env(safe-area-inset-bottom)',
+        paddingBottom: 'max(env(safe-area-inset-bottom), 12px)',
       }}
     >
       <div className="flex items-center justify-around h-[60px] px-2">

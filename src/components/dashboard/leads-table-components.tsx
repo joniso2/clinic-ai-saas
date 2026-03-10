@@ -172,6 +172,11 @@ export function PhoneContactModal({ phone, onClose }: { phone: string; onClose: 
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+
   const waNumber = phone.replace(/\D/g, '').replace(/^0/, '972');
 
   return (
@@ -181,7 +186,7 @@ export function PhoneContactModal({ phone, onClose }: { phone: string; onClose: 
         <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
           <h2 className="text-base font-semibold text-slate-900 dark:text-slate-50 text-right">יצירת קשר</h2>
         </div>
-        <div className="px-5 py-4 space-y-2.5">
+        <div className="px-5 py-4 space-y-2.5 safe-area-bottom">
           <a
             href={`tel:${phone}`}
             className="flex items-center gap-3 w-full rounded-xl border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/60 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition"
@@ -234,6 +239,12 @@ export function PendingReviewModal({
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
 
+  // Lock body scroll when modal open (mobile: prevents background scroll/jump)
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+
   const priority = getDisplayPriority(lead);
   const hasAppointment = !!nextAppointment;
 
@@ -244,9 +255,9 @@ export function PendingReviewModal({
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="relative w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-950 shadow-xl dark:shadow-2xl modal-enter">
+      <div className="relative w-full max-w-md max-h-[90dvh] md:max-h-[90vh] rounded-2xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-950 shadow-xl dark:shadow-2xl modal-enter flex flex-col">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <div className="shrink-0 px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <h2 className="text-base font-semibold text-slate-900 dark:text-slate-50 text-right">
             {mode === 'review' ? 'סקירת ליד' : 'הסרת ליד'}
           </h2>
@@ -255,9 +266,9 @@ export function PendingReviewModal({
           </button>
         </div>
 
-        {/* Step 1: Review */}
+        {/* Step 1: Review — scrollable content only */}
         {mode === 'review' && (
-          <div className="px-5 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
+          <div className="flex-1 min-h-0 px-5 py-4 space-y-4 overflow-y-auto overflow-x-hidden overscroll-behavior-contain">
             {/* Name + Priority */}
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-slate-900 dark:text-slate-50">{lead.full_name || 'ליד ללא שם'}</span>
@@ -319,8 +330,8 @@ export function PendingReviewModal({
               </div>
             )}
 
-            {/* Actions */}
-            <div className="space-y-3 pt-1">
+            {/* Actions — fixed footer with safe area on mobile */}
+            <div className="space-y-3 pt-1 safe-area-bottom">
               {hasAppointment ? (
                 <button
                   type="button"
@@ -354,7 +365,7 @@ export function PendingReviewModal({
 
         {/* Reject step */}
         {mode === 'reject' && (
-          <div className="px-5 py-4 space-y-4">
+          <div className="shrink-0 px-5 py-4 space-y-4 safe-area-bottom">
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">בחר סיבה להמשך:</p>
             <div className="space-y-2">
               {REJECT_REASONS.map((reason) => (
@@ -429,6 +440,11 @@ export function CompleteLeadModal({
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
 
   const valueNum = Number(valueInput);
   const isValid = valueNum > 0;
@@ -514,7 +530,7 @@ export function CompleteLeadModal({
             />
           </div>
         </div>
-        <div className="mt-5 flex gap-2 justify-start">
+        <div className="mt-5 flex gap-2 justify-start safe-area-bottom">
           <button
             type="button"
             onClick={onClose}

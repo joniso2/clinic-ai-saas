@@ -36,6 +36,7 @@ export default function DashboardClient() {
 
   const [showNewLeadForm, setShowNewLeadForm] = useState(false);
   const isLargeScreen = useMediaQuery('(min-width: 1024px)');
+  const isMobile = useMediaQuery('(max-width: 767px)');
   const { registerLeads, registerOnNewLead } = useCommandPalette();
 
   const [drawerLead, setDrawerLead] = useState<Lead | null>(null);
@@ -611,7 +612,7 @@ export default function DashboardClient() {
         onCreated={(lead) => {
           setLeads((prev) => [lead, ...prev]);
           setShowNewLeadForm(false);
-          setDrawerLead(lead);
+          if (!isMobile) setDrawerLead(lead);
         }}
         pricingServices={pricingServices}
       />

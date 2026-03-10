@@ -74,7 +74,7 @@ export default function MobileDrawer({ open, onClose, children }: MobileDrawerPr
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className={`fixed top-0 start-0 z-50 h-full md:hidden flex flex-col bg-white dark:bg-slate-950 shadow-2xl
+        className={`fixed top-0 start-0 z-50 h-full max-h-[100dvh] md:hidden flex flex-col bg-white dark:bg-slate-950 shadow-2xl
           transition-transform duration-300 ease-in-out will-change-transform drawer-enter
           ${open ? 'translate-x-0' : 'translate-x-full'}`}
         style={{

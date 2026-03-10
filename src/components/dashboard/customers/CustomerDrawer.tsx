@@ -72,6 +72,14 @@ export function CustomerDrawer({
   useFocusTrap(panelRef, !!customer);
   useEscapeKey(!!customer, onClose);
 
+  // Lock body scroll when drawer is open (prevents background scroll / jump on mobile)
+  useEffect(() => {
+    if (customer) {
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
+    }
+  }, [customer]);
+
   const suggestions = useMemo(() => computeSuggestions(customer, allCustomers), [customer, allCustomers]);
   const statusBadge = customer ? getStatusBadgeStyle(customer.status) : null;
   const avatarColor = customer ? getAvatarColor(customer.id) : 'bg-slate-400';
@@ -161,11 +169,11 @@ export function CustomerDrawer({
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div
         ref={panelRef}
-        className="drawer-enter relative w-full sm:max-w-[420px] bg-white dark:bg-slate-950 border-s border-slate-200 dark:border-slate-800 shadow-2xl overflow-y-auto flex flex-col"
+        className="drawer-enter relative w-full sm:max-w-[420px] h-full max-h-[100dvh] md:max-h-none bg-white dark:bg-slate-950 border-s border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col"
         dir="rtl"
       >
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex items-center justify-between">
+        {/* Fixed Header */}
+        <div className="shrink-0 z-10 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${avatarColor} text-white text-sm font-bold shrink-0`}>
               {initials}
@@ -185,7 +193,7 @@ export function CustomerDrawer({
         </div>
 
 
-        <div className="flex-1 p-5 space-y-5">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-behavior-contain p-5 space-y-5">
           {loading && !customer ? (
             <div className="flex justify-center py-12">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 dark:border-slate-700 border-t-indigo-500" />
@@ -444,45 +452,48 @@ export function CustomerDrawer({
                 </section>
               )}
 
-              {/* Action buttons */}
-              <section className="pt-1">
-                <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] mb-2">פעולות</p>
-                <div className="grid grid-cols-3 gap-2 mb-2">
-                  <a
-                    href={`tel:${customer.phone}`}
-                    className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-3 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
-                  >
-                    <Phone className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-                    התקשר
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => window.open(`https://wa.me/972${(customer.phone ?? '').replace(/\D/g, '').replace(/^0/, '')}`, '_blank')}
-                    className="flex flex-col items-center gap-1.5 rounded-xl border border-green-200 dark:border-green-800/50 bg-green-50 dark:bg-green-900/20 px-2 py-3 text-xs font-medium text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    וואטסאפ
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onSchedule}
-                    className="flex flex-col items-center gap-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800/50 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-3 text-xs font-medium text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition"
-                  >
-                    <Calendar className="h-4 w-4" />
-                    קבע תור
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  onClick={onDelete}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-400 dark:text-slate-500 hover:border-red-200 dark:hover:border-red-800/50 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 dark:hover:text-red-400 transition"
-                >
-                  <Archive className="h-4 w-4" /> ארכוב לקוח
-                </button>
-              </section>
             </>
           ) : null}
         </div>
+
+        {/* Fixed Footer (safe area on mobile / iOS home indicator) */}
+        {customer && (
+          <div className="shrink-0 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 px-5 py-4 safe-area-bottom">
+            <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] mb-2">פעולות</p>
+            <div className="grid grid-cols-3 gap-2 mb-2">
+              <a
+                href={`tel:${customer.phone}`}
+                className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-3 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+              >
+                <Phone className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                התקשר
+              </a>
+              <button
+                type="button"
+                onClick={() => window.open(`https://wa.me/972${(customer.phone ?? '').replace(/\D/g, '').replace(/^0/, '')}`, '_blank')}
+                className="flex flex-col items-center gap-1.5 rounded-xl border border-green-200 dark:border-green-800/50 bg-green-50 dark:bg-green-900/20 px-2 py-3 text-xs font-medium text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition"
+              >
+                <MessageCircle className="h-4 w-4" />
+                וואטסאפ
+              </button>
+              <button
+                type="button"
+                onClick={onSchedule}
+                className="flex flex-col items-center gap-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800/50 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-3 text-xs font-medium text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition"
+              >
+                <Calendar className="h-4 w-4" />
+                קבע תור
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={onDelete}
+              className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-400 dark:text-slate-500 hover:border-red-200 dark:hover:border-red-800/50 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 dark:hover:text-red-400 transition"
+            >
+              <Archive className="h-4 w-4" /> ארכוב לקוח
+            </button>
+          </div>
+        )}
       </div>
 
       <style>{`

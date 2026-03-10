@@ -218,7 +218,7 @@ function LayoutInner({ children, initialRole, initialUserEmail }: DashboardLayou
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#FAFAF9] dark:bg-slate-950 text-slate-900 dark:text-slate-50 overflow-x-hidden transition-colors duration-300">
+    <div className="flex min-h-[100dvh] md:min-h-screen flex-col bg-[#FAFAF9] dark:bg-slate-950 text-slate-900 dark:text-slate-50 overflow-x-hidden transition-colors duration-300">
 
       <header
         className="border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md w-full sticky top-0 z-40 transition-all duration-200 ease-out h-14"

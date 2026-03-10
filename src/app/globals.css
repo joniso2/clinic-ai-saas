@@ -58,6 +58,20 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Mobile viewport: use dvh so content isn't cut off by browser UI (PWA / home screen) */
+@supports (min-height: 100dvh) {
+  @media (max-width: 767px) {
+    body {
+      min-height: 100dvh;
+    }
+  }
+}
+
+/* Safe area for bottom bars / modal footers (iOS home indicator) */
+.safe-area-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 20px);
+}
+
 /* Prevent tap highlight on interactive elements */
 button, a {
   -webkit-tap-highlight-color: transparent;

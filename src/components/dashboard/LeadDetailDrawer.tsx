@@ -85,11 +85,11 @@ export function LeadDetailDrawer({
   const priority = getDisplayPriority(lead);
   const status = (lead.status ?? 'Pending') as LeadStatus;
 
-  // ── Shared inner content (header + scrollable body + footer) ──
+  // ── Shared inner content (fixed header + scrollable body + fixed footer) ──
   const drawerContent = (
     <>
-      {/* ── Sticky Header ── */}
-      <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex items-center justify-between">
+      {/* ── Fixed Header ── */}
+      <div className="shrink-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex items-center justify-between">
         <h2 className="text-[20px] font-bold text-slate-900 dark:text-slate-50 text-right">
           {lead.full_name || 'ליד ללא שם'}
         </h2>
@@ -105,7 +105,7 @@ export function LeadDetailDrawer({
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 py-5 text-right">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-behavior-contain px-5 py-5 text-right">
         <div className="space-y-6">
 
           {/* Badges row */}
@@ -262,8 +262,8 @@ export function LeadDetailDrawer({
         </div>
       </div>
 
-      {/* ── Sticky Footer ── */}
-      <div className="sticky bottom-0 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-5 py-4">
+      {/* ── Fixed Footer (safe area on mobile) ── */}
+      <div className="shrink-0 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-5 py-4 safe-area-bottom">
         <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.12em] mb-3">פעולות</p>
         <div className="flex items-center gap-2">
           <button
@@ -338,7 +338,7 @@ export function LeadDetailDrawer({
         <aside
           ref={panelRef}
           dir="rtl"
-          className="drawer-enter relative w-full sm:max-w-[420px] bg-white dark:bg-slate-950 border-s border-slate-200 dark:border-slate-800 shadow-2xl overflow-y-auto flex flex-col"
+          className="drawer-enter relative w-full sm:max-w-[420px] h-full max-h-[100dvh] md:max-h-none bg-white dark:bg-slate-950 border-s border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col"
           aria-label="פרטי ליד"
         >
           {drawerContent}
