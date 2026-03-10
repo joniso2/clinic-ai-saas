@@ -4,7 +4,14 @@
       "Bash(npx tsc:*)",
       "Bash(npm install:*)",
       "Bash(xargs grep:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(ls:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(xargs wc:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npx next:*)",
+      "Bash(git:*)"
     ]
   }
 }
