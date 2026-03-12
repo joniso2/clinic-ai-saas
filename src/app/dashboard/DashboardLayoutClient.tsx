@@ -318,7 +318,7 @@ function LayoutInner({ children, initialRole, initialUserEmail }: DashboardLayou
                   }
                 }}
                 className={`inline-flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold
-                  transition-all duration-200 ease-out active:scale-[0.98] flex-row-reverse justify-end
+                  transition-all duration-200 ease-out active:scale-[0.98]
                   ${active
                     ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -360,7 +360,7 @@ function LayoutInner({ children, initialRole, initialUserEmail }: DashboardLayou
                         }
                       }}
                       className={`group inline-flex w-full items-center rounded-lg py-2 text-[13px] transition-all duration-150
-                        ${collapsed ? 'justify-center px-0' : 'flex-row-reverse justify-end gap-2.5 mx-1 px-2.5'}
+                        ${collapsed ? 'justify-center px-0' : 'gap-2.5 mx-1 px-2.5'}
                         ${active
                           ? `font-semibold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400
                              ${!collapsed ? 'border-s-2 border-s-indigo-500' : ''}`
@@ -397,7 +397,7 @@ function LayoutInner({ children, initialRole, initialUserEmail }: DashboardLayou
                             title={collapsed ? label : undefined}
                             onClick={() => router.push(href)}
                             className={`group inline-flex w-full items-center rounded-lg py-2 text-[13px] transition-all duration-150
-                              ${collapsed ? 'justify-center px-0' : 'flex-row-reverse justify-end gap-2.5 mx-1 px-2.5'}
+                              ${collapsed ? 'justify-center px-0' : 'gap-2.5 mx-1 px-2.5'}
                               ${active
                                 ? `font-semibold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400
                                    ${!collapsed ? 'border-s-2 border-s-indigo-500' : ''}`
