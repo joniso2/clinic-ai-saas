@@ -44,10 +44,11 @@ export async function GET(
       .eq('clinic_id', clinic.id)
       .order('sort_order'),
     supabase.from('working_hours').select('*').eq('clinic_id', clinic.id),
-    supabase.from('clinic_settings').select('address').eq('clinic_id', clinic.id).maybeSingle(),
+    supabase.from('clinic_settings').select('address, working_hours').eq('clinic_id', clinic.id).maybeSingle(),
   ]);
 
-  const clinicWithAddress = { ...clinic, address: (settings as { address?: string } | null)?.address ?? (clinic as { address?: string }).address ?? null };
+  const settingsRow = settings as { address?: string; working_hours?: Array<{ day: number; enabled: boolean; open: string; close: string }> } | null;
+  const clinicWithAddress = { ...clinic, address: settingsRow?.address ?? (clinic as { address?: string }).address ?? null };
 
   return NextResponse.json({
     clinic: clinicWithAddress,
@@ -55,6 +56,8 @@ export async function GET(
     workers: workers ?? [],
     gallery: gallery ?? [],
     workingHours: workingHours ?? [],
+    /** שעות פעילות מהגדרות העסק (התאמה להגדרות → זמנים) */
+    businessWorkingHours: settingsRow?.working_hours ?? null,
   });
   } catch (err) {
     console.error(err);

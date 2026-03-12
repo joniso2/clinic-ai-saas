@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { C } from "@/lulu/lib/tokens";
 import { sectionReveal, revealChild, SP } from "@/lulu/lib/animations";
@@ -11,13 +12,42 @@ const CONTACTS = [
   { icon: "📍", label: "מיקום",    sub: "תל אביב",                   href: "https://maps.google.com",       bg: "rgba(66,133,244,0.07)"  },
 ] as const;
 
-const HOURS = [
+const DEFAULT_HOURS: [string, string][] = [
   ["א׳ – ה׳", "09:00 – 20:00"],
-  ["שישי",     "09:00 – 14:00"],
-  ["שבת",      "סגור"],
-] as const;
+  ["שישי", "09:00 – 14:00"],
+  ["שבת", "סגור"],
+];
+
+type WorkingHoursDay = { day: number; enabled: boolean; open: string; close: string };
+
+function formatBusinessHours(wh: WorkingHoursDay[] | null): [string, string][] {
+  if (!wh || wh.length !== 7) return DEFAULT_HOURS;
+  const row = (dayIndex: number) => {
+    const d = wh[dayIndex];
+    if (!d?.enabled) return "סגור";
+    return `${d.open} – ${d.close}`;
+  };
+  const sunThu = wh.slice(0, 5);
+  const firstEnabled = sunThu.find((d) => d.enabled);
+  const sunThuStr = firstEnabled ? `${firstEnabled.open} – ${firstEnabled.close}` : "סגור";
+  return [
+    ["א׳ – ה׳", sunThuStr],
+    ["שישי", row(5)],
+    ["שבת", row(6)],
+  ];
+}
 
 export default function Footer() {
+  const [hours, setHours] = useState<[string, string][]>(DEFAULT_HOURS);
+
+  useEffect(() => {
+    fetch("/api/clinics/lulu")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data: { businessWorkingHours?: WorkingHoursDay[] } | null) => {
+        if (data?.businessWorkingHours) setHours(formatBusinessHours(data.businessWorkingHours));
+      })
+      .catch(() => {});
+  }, []);
   return (
     <footer
       id="contact"
@@ -88,14 +118,14 @@ export default function Footer() {
         }}>
           שעות פעילות
         </p>
-        {HOURS.map(([day, hours]) => (
+        {hours.map(([day, hrs]) => (
           <div
             key={day}
             style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: "1px solid rgba(0,0,0,0.05)" }}
           >
             <span style={{ fontSize: 13, color: C.dim }}>{day}</span>
-            <span style={{ fontSize: 13, color: hours === "סגור" ? C.muted : C.ink, fontWeight: 500 }}>
-              {hours}
+            <span style={{ fontSize: 13, color: hrs === "סגור" ? C.muted : C.ink, fontWeight: 500 }}>
+              {hrs}
             </span>
           </div>
         ))}
