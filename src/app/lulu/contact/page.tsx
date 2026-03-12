@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Footer from "@/lulu/components/Footer";
+import Footer from "@/sites/lulu/components/Footer";
 
 export const metadata: Metadata = {
   title: "צור קשר – ????? LULU",

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import HeroSection    from "@/lulu/sections/HeroSection";
-import ExploreSection from "@/lulu/sections/ExploreSection";
-import ShopSection    from "@/lulu/sections/ShopSection";
-import Footer         from "@/lulu/components/Footer";
+import HeroSection    from "@/sites/lulu/sections/HeroSection";
+import ExploreSection from "@/sites/lulu/sections/ExploreSection";
+import ShopSection    from "@/sites/lulu/sections/ShopSection";
+import Footer         from "@/sites/lulu/components/Footer";
 
 export const metadata: Metadata = {
   title: "מרפאת LULU – קליניקת יופי פרימיום",

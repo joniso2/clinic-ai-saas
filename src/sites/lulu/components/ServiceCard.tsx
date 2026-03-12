@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { C } from "@/lulu/lib/tokens";
-import { scaleIn, SP_FAST } from "@/lulu/lib/animations";
-import type { Service } from "@/lulu/data/services";
+import { C } from "@/sites/lulu/lib/tokens";
+import { scaleIn, SP_FAST } from "@/sites/lulu/lib/animations";
+import type { Service } from "@/sites/lulu/data/services";
 
 interface ServiceCardProps {
   svc:      Service;

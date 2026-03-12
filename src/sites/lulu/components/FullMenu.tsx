@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { C } from "@/lulu/lib/tokens";
-import { SP, SP_SOFT } from "@/lulu/lib/animations";
+import { C } from "@/sites/lulu/lib/tokens";
+import { SP, SP_SOFT } from "@/sites/lulu/lib/animations";
 import MagneticButton from "./MagneticButton";
 
 interface FullMenuProps {

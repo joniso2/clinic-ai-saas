@@ -1,9 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { C } from "@/lulu/lib/tokens";
-import { sectionReveal, revealChild } from "@/lulu/lib/animations";
-import MasonryGallery from "@/lulu/components/MasonryGallery";
+import { C } from "@/sites/lulu/lib/tokens";
+import { sectionReveal, revealChild } from "@/sites/lulu/lib/animations";
+import MasonryGallery from "@/sites/lulu/components/MasonryGallery";
 
 export default function ExploreSection() {
   return (

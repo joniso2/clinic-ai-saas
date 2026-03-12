@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { GALLERY } from "@/lulu/data/gallery";
-import { stagger, scaleIn } from "@/lulu/lib/animations";
+import { GALLERY } from "@/sites/lulu/data/gallery";
+import { stagger, scaleIn } from "@/sites/lulu/lib/animations";
 
 export default function MasonryGallery() {
   const [tapped, setTapped] = useState<number | null>(null);

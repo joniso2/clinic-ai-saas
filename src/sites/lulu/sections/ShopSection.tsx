@@ -1,9 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { C } from "@/lulu/lib/tokens";
-import { sectionReveal, revealChild } from "@/lulu/lib/animations";
-import ProductCarousel from "@/lulu/components/ProductCarousel";
+import { C } from "@/sites/lulu/lib/tokens";
+import { sectionReveal, revealChild } from "@/sites/lulu/lib/animations";
+import ProductCarousel from "@/sites/lulu/components/ProductCarousel";
 
 export default function ShopSection() {
   return (

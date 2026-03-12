@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { Service } from "@/lulu/data/services";
+import type { Service } from "@/sites/lulu/data/services";
 
 export interface BookingState {
   service: Service | null;

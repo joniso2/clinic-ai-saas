@@ -1,5 +1,7 @@
-require("dotenv").config({ path: ".env.local" });
-require('dotenv').config();
+const path = require('path');
+const projectRoot = path.join(__dirname, '..', '..');
+require('dotenv').config({ path: path.join(projectRoot, '.env.local') });
+require('dotenv').config({ path: path.join(projectRoot, '.env') });
 const {
   Client,
   Events,

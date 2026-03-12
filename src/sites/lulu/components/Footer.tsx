@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { C } from "@/lulu/lib/tokens";
-import { sectionReveal, revealChild, SP } from "@/lulu/lib/animations";
+import { C } from "@/sites/lulu/lib/tokens";
+import { sectionReveal, revealChild, SP } from "@/sites/lulu/lib/animations";
 
 const CONTACTS = [
   { icon: "📞", label: "התקשרי",   sub: "+972 50 000 0000",         href: "tel:+972500000000",             bg: "rgba(200,68,106,0.07)"   },

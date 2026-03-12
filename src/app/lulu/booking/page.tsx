@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import BookingSection from "@/lulu/sections/BookingSection";
+import BookingSection from "@/sites/lulu/sections/BookingSection";
 
 export const metadata: Metadata = {
   title: "הזמנת תור – ????? LULU",

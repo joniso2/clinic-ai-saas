@@ -3,10 +3,10 @@
 import { useRef } from "react";
 import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { C } from "@/lulu/lib/tokens";
-import { sectionReveal, revealChild, scaleIn } from "@/lulu/lib/animations";
-import MagneticButton from "@/lulu/components/MagneticButton";
-import NailPolishHero from "@/lulu/components/NailPolishHero";
+import { C } from "@/sites/lulu/lib/tokens";
+import { sectionReveal, revealChild, scaleIn } from "@/sites/lulu/lib/animations";
+import MagneticButton from "@/sites/lulu/components/MagneticButton";
+import NailPolishHero from "@/sites/lulu/components/NailPolishHero";
 
 
 export default function HeroSection() {

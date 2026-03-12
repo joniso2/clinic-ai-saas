@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { C } from "@/lulu/lib/tokens";
-import { SP, SP_FAST, stagger, slideStep } from "@/lulu/lib/animations";
-import { useBookingState } from "@/lulu/lib/hooks";
-import type { Service } from "@/lulu/data/services";
-import MagneticButton from "@/lulu/components/MagneticButton";
-import ServiceCard from "@/lulu/components/ServiceCard";
+import { C } from "@/sites/lulu/lib/tokens";
+import { SP, SP_FAST, stagger, slideStep } from "@/sites/lulu/lib/animations";
+import { useBookingState } from "@/sites/lulu/lib/hooks";
+import type { Service } from "@/sites/lulu/data/services";
+import MagneticButton from "@/sites/lulu/components/MagneticButton";
+import ServiceCard from "@/sites/lulu/components/ServiceCard";
 
 const LABELS = ["שירות", "תאריך ושעה", "פרטים", "אימות"];
 

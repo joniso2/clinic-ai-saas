@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { C } from "@/lulu/lib/tokens";
+import { C } from "@/sites/lulu/lib/tokens";
 
 const SPARKLES = [
   { x: 48,  y: 42,  s: 10, d: 0    },

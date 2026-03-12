@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { LandingView } from '@/components/booking/LandingView';
-import { ClicaLandingClient } from '@/components/clica/ClicaLandingClient';
+import { ClicaLandingClient } from '@/sites/clica/components/ClicaLandingClient';
 import { CLICA_PLACEHOLDER_PRODUCTS } from '@/lib/clica-media';
 import type { ClinicPageData } from '@/types/booking';
 

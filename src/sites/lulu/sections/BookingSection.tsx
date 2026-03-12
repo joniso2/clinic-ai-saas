@@ -1,9 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { C } from "@/lulu/lib/tokens";
-import { sectionReveal, revealChild, SP } from "@/lulu/lib/animations";
-import BookingWizard from "@/lulu/components/BookingWizard";
+import { C } from "@/sites/lulu/lib/tokens";
+import { sectionReveal, revealChild, SP } from "@/sites/lulu/lib/animations";
+import BookingWizard from "@/sites/lulu/components/BookingWizard";
 
 export default function BookingSection() {
   return (

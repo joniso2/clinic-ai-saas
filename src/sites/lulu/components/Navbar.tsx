@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { C } from "@/lulu/lib/tokens";
-import { SP } from "@/lulu/lib/animations";
+import { C } from "@/sites/lulu/lib/tokens";
+import { SP } from "@/sites/lulu/lib/animations";
 import MagneticButton from "./MagneticButton";
 
 interface NavbarProps {

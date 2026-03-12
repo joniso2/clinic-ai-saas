@@ -7,7 +7,7 @@ import {
   useSpring as useMotionSpring,
   useReducedMotion,
 } from "framer-motion";
-import { C } from "@/lulu/lib/tokens";
+import { C } from "@/sites/lulu/lib/tokens";
 
 interface MagneticButtonProps {
   children:    React.ReactNode;

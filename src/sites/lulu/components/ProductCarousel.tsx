@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { PRODUCTS } from "@/lulu/data/products";
-import { C } from "@/lulu/lib/tokens";
-import { SP, SP_FAST } from "@/lulu/lib/animations";
+import { PRODUCTS } from "@/sites/lulu/data/products";
+import { C } from "@/sites/lulu/lib/tokens";
+import { SP, SP_FAST } from "@/sites/lulu/lib/animations";
 
 export default function ProductCarousel() {
   const [added,  setAdded]  = useState<Record<number, boolean>>({});

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { Building2, Phone, MapPin, Globe, DollarSign, Image, FileText, Save, CheckCircle2, AlertCircle, Loader2, Link2, Copy, ExternalLink } from 'lucide-react';
-import { AdminHeroMediaEditor } from '@/components/clica/AdminHeroMediaEditor';
+import { AdminHeroMediaEditor } from '@/sites/clica/components/AdminHeroMediaEditor';
 import { useUnsavedWarning } from '@/hooks/useUnsavedWarning';
 import type { ClinicSettings } from '@/services/settings.service';
 

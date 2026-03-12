@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { C } from "@/lulu/lib/tokens";
-import { SP, SP_FAST } from "@/lulu/lib/animations";
+import { C } from "@/sites/lulu/lib/tokens";
+import { SP, SP_FAST } from "@/sites/lulu/lib/animations";
 
 const NAV_ITEMS = [
   {

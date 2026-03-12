@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import type { ReactNode } from "react";
-import "@/lulu/styles/globals.css";
-import Navbar from "@/lulu/components/Navbar";
-import FullMenu from "@/lulu/components/FullMenu";
-import BottomBar from "@/lulu/components/BottomBar";
+import "@/sites/lulu/styles/globals.css";
+import Navbar from "@/sites/lulu/components/Navbar";
+import FullMenu from "@/sites/lulu/components/FullMenu";
+import BottomBar from "@/sites/lulu/components/BottomBar";
 
 export default function LuxeLayout({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);

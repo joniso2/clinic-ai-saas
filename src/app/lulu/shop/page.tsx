@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import ShopSection from "@/lulu/sections/ShopSection";
+import ShopSection from "@/sites/lulu/sections/ShopSection";
 
 export const metadata: Metadata = {
   title: "חנות – ????? LULU",
