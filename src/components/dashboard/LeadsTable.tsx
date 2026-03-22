@@ -19,6 +19,7 @@ import type { Lead } from '@/types/leads';
 import { getDisplayPriority, type Priority, type LeadStatus } from '@/types/leads';
 import { STATUS_LABELS, PRIORITY_LABELS, SOURCE_LABELS, formatCurrencyILS } from '@/lib/hebrew';
 import { useToast } from '@/components/ui/Toast';
+import { GlassSelect } from '@/components/ui/GlassSelect';
 
 // Extracted modules
 import {
@@ -831,18 +832,15 @@ export function LeadsTable({
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 text-right mb-1.5">בחר סוג שירות או הזן ידנית</label>
-                <select
+                <GlassSelect
                   value={dealValueServiceKey}
-                  onChange={(e) => setDealValueServiceKey(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-right text-sm text-slate-900 dark:text-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 dark:focus:border-indigo-500"
-                  dir="rtl"
-                >
-                  <option value="">בחר סוג שירות</option>
-                  {pricingServices.map((s) => (
-                    <option key={s.service_name} value={s.service_name}>{s.service_name} — ₪{s.price}</option>
-                  ))}
-                  <option value={DEAL_VALUE_OTHER}>אחר (הזנה ידנית)</option>
-                </select>
+                  onChange={(v) => setDealValueServiceKey(v)}
+                  options={[
+                    ...pricingServices.map((s) => ({ value: s.service_name, label: `${s.service_name} — ₪${s.price}` })),
+                    { value: DEAL_VALUE_OTHER, label: 'אחר (הזנה ידנית)' },
+                  ]}
+                  placeholder="בחר סוג שירות"
+                />
               </div>
               {dealValueServiceKey === DEAL_VALUE_OTHER && (
                 <div>

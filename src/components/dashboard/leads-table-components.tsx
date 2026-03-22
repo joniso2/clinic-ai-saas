@@ -5,6 +5,7 @@ import {
   Phone, X, Mail, Sparkles, MessageSquare,
   Calendar as CalendarIcon, ChevronDown, CheckCircle,
 } from 'lucide-react';
+import { GlassSelect } from '@/components/ui/GlassSelect';
 import type { Lead } from '@/types/leads';
 import { getDisplayPriority, type Priority } from '@/types/leads';
 import { STATUS_LABELS, PRIORITY_LABELS, SOURCE_LABELS } from '@/lib/hebrew';
@@ -497,18 +498,13 @@ export function CompleteLeadModal({
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">סוג שירות (אופציונלי)</label>
-            <select
+            <GlassSelect
               value={serviceType}
-              onChange={(e) => handleServiceChange(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 text-right focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-slate-500"
-            >
-              <option value="">בחר סוג שירות</option>
-              {serviceChoices.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => handleServiceChange(v)}
+              options={serviceChoices.map((name) => ({ value: name, label: name }))}
+              placeholder="בחר סוג שירות"
+              className="mt-1"
+            />
             {serviceType === OTHER_SERVICE && (
               <input
                 type="text"

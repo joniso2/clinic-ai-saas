@@ -32,7 +32,7 @@ export function LeadsKpiCards({
   const open = leads.length - closed;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(180px,1fr))]" dir="rtl">
+    <div className="grid grid-cols-2 gap-2.5 sm:gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(180px,1fr))]" dir="rtl">
       <KpiCard
         label="לידים פתוחים"
         value={open}
@@ -65,14 +65,16 @@ export function LeadsKpiCards({
         iconContainerClass={ACCENT.indigo.icon}
         borderAccentClass={ACCENT.indigo.border}
       />
-      <KpiCard
-        label="הכנסה פוטנציאלית"
-        value={totalRevenue > 0 ? formatCurrencyILS(totalRevenue) : '—'}
-        sub="שווי צינור"
-        icon={DollarSign}
-        iconContainerClass={ACCENT.emerald.icon}
-        borderAccentClass={ACCENT.emerald.border}
-      />
+      <div className="col-span-2 sm:col-span-1">
+        <KpiCard
+          label="הכנסה פוטנציאלית"
+          value={totalRevenue > 0 ? formatCurrencyILS(totalRevenue) : '—'}
+          sub="שווי צינור"
+          icon={DollarSign}
+          iconContainerClass={ACCENT.emerald.icon}
+          borderAccentClass={ACCENT.emerald.border}
+        />
+      </div>
     </div>
   );
 }

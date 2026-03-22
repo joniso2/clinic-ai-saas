@@ -13,6 +13,7 @@ import type { Lead } from '@/types/leads';
 import type { CompletedAppointmentRow } from '@/repositories/appointment.repository';
 import { formatCurrencyILS, formatPhoneILS, PATIENT_STATUS_LABELS } from '@/lib/hebrew';
 import { KpiCard, KPI_ACCENT } from '@/components/ui/KpiCard';
+import { GlassSelect } from '@/components/ui/GlassSelect';
 
 // Extracted modules
 import {
@@ -296,16 +297,22 @@ export function CustomersTab() {
       <div className="space-y-3">
         <div>
           <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">סטטוס</label>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 focus:outline-none" dir="rtl">
-            <option value="">הכל</option>
-            {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{PATIENT_STATUS_LABELS[s] ?? s}</option>)}
-          </select>
+          <GlassSelect
+            value={statusFilter}
+            onChange={(v) => setStatusFilter(v)}
+            options={[
+              { value: '', label: 'הכל' },
+              ...STATUS_OPTIONS.map((s) => ({ value: s, label: PATIENT_STATUS_LABELS[s] ?? s })),
+            ]}
+          />
         </div>
         <div>
           <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">מיון לפי</label>
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 focus:outline-none" dir="rtl">
-            {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
+          <GlassSelect
+            value={sortBy}
+            onChange={(v) => setSortBy(v as SortKey)}
+            options={SORT_OPTIONS}
+          />
         </div>
       </div>
 
@@ -334,12 +341,12 @@ export function CustomersTab() {
   if (loading && customers.length === 0) {
     return (
       <div className="space-y-6 py-4" dir="rtl">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-3">
-              <div className="h-10 w-10 rounded-full animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />
-              <div className="h-7 w-20 rounded-lg animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />
-              <div className="h-4 w-28 rounded-lg animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />
+            <div key={i} className="rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 space-y-3">
+              <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl sm:rounded-full animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />
+              <div className="h-6 sm:h-7 w-16 sm:w-20 rounded-lg animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />
+              <div className="h-3 sm:h-4 w-20 sm:w-28 rounded-lg animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />
             </div>
           ))}
         </div>
@@ -409,7 +416,7 @@ export function CustomersTab() {
           </div>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KpiCard label="סה״כ לקוחות"   value={String(filteredClosedLeads.length)}         icon={Users}       iconContainerClass={KPI_ACCENT.indigo.icon}  borderAccentClass={KPI_ACCENT.indigo.border} />
           <KpiCard label="סה״כ הכנסות"   value={formatCurrencyILS(kpiRevLeads)}              icon={DollarSign}  iconContainerClass={KPI_ACCENT.emerald.icon} borderAccentClass={KPI_ACCENT.emerald.border} />
           <KpiCard label="ממוצע ללקוח"   value={filteredClosedLeads.length ? formatCurrencyILS(kpiRevLeads / filteredClosedLeads.length) : '—'} icon={TrendingUp} iconContainerClass={KPI_ACCENT.purple.icon} borderAccentClass={KPI_ACCENT.purple.border} />
@@ -433,9 +440,11 @@ export function CustomersTab() {
                 שלח הודעה
               </button>
               <SortAsc className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} className="rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-300 focus:outline-none" dir="rtl">
-                {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              <GlassSelect
+                value={sortBy}
+                onChange={(v) => setSortBy(v as SortKey)}
+                options={SORT_OPTIONS}
+              />
             </div>
           </div>
 
@@ -606,7 +615,7 @@ export function CustomersTab() {
       )}
 
       {/* KPI cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard label="סה״כ לקוחות" value={String(filteredCustomers.length)} sub={`${customers.length} במערכת`} icon={Users}      iconContainerClass={KPI_ACCENT.indigo.icon}  borderAccentClass={KPI_ACCENT.indigo.border} />
         <KpiCard label="סה״כ הכנסות" value={formatCurrencyILS(kpiRevCustomers)}                                    icon={DollarSign} iconContainerClass={KPI_ACCENT.emerald.icon} borderAccentClass={KPI_ACCENT.emerald.border} />
         <KpiCard label="ממוצע ללקוח" value={formatCurrencyILS(kpiAvgCustomers)}                                    icon={TrendingUp} iconContainerClass={KPI_ACCENT.purple.icon} borderAccentClass={KPI_ACCENT.purple.border} />
@@ -643,9 +652,11 @@ export function CustomersTab() {
               {selectedIds.size > 0 ? `שלח ל-${selectedIds.size}` : 'שלח הודעה'}
             </button>
             <SortAsc className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} className="rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-300 focus:outline-none" dir="rtl">
-              {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
+            <GlassSelect
+              value={sortBy}
+              onChange={(v) => setSortBy(v as SortKey)}
+              options={SORT_OPTIONS}
+            />
           </div>
         </div>
 

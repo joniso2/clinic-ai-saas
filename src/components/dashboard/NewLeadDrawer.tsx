@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 import { btn, input, inputLabel } from '@/lib/ui-classes';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useUnsavedWarning } from '@/hooks/useUnsavedWarning';
+import { GlassSelect } from '@/components/ui/GlassSelect';
 import type { Lead, LeadStatus } from '@/types/leads';
 
 const OTHER_SERVICE_KEY = '__other__';
@@ -220,19 +221,15 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated, pric
 
             <div>
               <label className={inputLabel}>סוג שירות</label>
-              <select
+              <GlassSelect
                 value={selectedServiceKey}
-                onChange={(e) => setSelectedServiceKey(e.target.value)}
-                className={input}
-              >
-                <option value="">בחר סוג שירות</option>
-                {pricingServices.map((s) => (
-                  <option key={s.service_name} value={s.service_name}>
-                    {s.service_name} — ₪{s.price}
-                  </option>
-                ))}
-                <option value={OTHER_SERVICE_KEY}>אחר (הזנה ידנית)</option>
-              </select>
+                onChange={(v) => setSelectedServiceKey(v)}
+                options={[
+                  ...pricingServices.map((s) => ({ value: s.service_name, label: `${s.service_name} — ₪${s.price}` })),
+                  { value: OTHER_SERVICE_KEY, label: 'אחר (הזנה ידנית)' },
+                ]}
+                placeholder="בחר סוג שירות"
+              />
             </div>
             {selectedServiceKey === OTHER_SERVICE_KEY && (
               <div>
@@ -249,17 +246,11 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated, pric
 
             <div>
               <label className={inputLabel}>סטטוס</label>
-              <select
+              <GlassSelect
                 value={status}
-                onChange={(e) => setStatus(e.target.value as LeadStatus)}
-                className={input}
-              >
-                {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => setStatus(v as LeadStatus)}
+                options={STATUS_OPTIONS}
+              />
             </div>
           </div>
 

@@ -19,9 +19,24 @@ export function KpiCard({
 }: KpiCardProps) {
   return (
     <div
-      className={`group relative rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-sm dark:shadow-none transition-all duration-300 hover:shadow-md dark:hover:bg-slate-800/60 hover:-translate-y-0.5 border-s-4 ${borderAccentClass}`}
+      className={`group relative rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 py-2 sm:p-5 md:p-6 sm:rounded-2xl shadow-sm dark:shadow-none transition-all duration-300 hover:shadow-md dark:hover:bg-slate-800/60 hover:-translate-y-0.5 border-s-4 ${borderAccentClass}`}
     >
-      <div className="flex items-center gap-4 flex-row-reverse text-right">
+      {/* Mobile: compact vertical */}
+      <div className="flex flex-col items-end gap-0.5 text-right sm:hidden">
+        <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${iconContainerClass}`}>
+          <Icon className="h-3.5 w-3.5 shrink-0 text-current" strokeWidth={2} />
+        </div>
+        <div className="min-w-0 w-full">
+          <p className="text-[22px] font-bold tabular-nums leading-tight text-slate-900 dark:text-white">
+            {value}
+          </p>
+          <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-tight">
+            {label}
+          </p>
+        </div>
+      </div>
+      {/* Desktop: horizontal layout */}
+      <div className="hidden sm:flex items-center gap-4 flex-row-reverse text-right">
         <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-150 ${iconContainerClass}`}>
           <Icon className="h-5 w-5 shrink-0 text-current" strokeWidth={2} />
         </div>

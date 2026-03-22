@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 import { useUnsavedWarning } from '@/hooks/useUnsavedWarning';
+import { GlassSelect } from '@/components/ui/GlassSelect';
 import type { Lead } from '@/types/leads';
 import type { LeadStatus } from '@/types/leads';
 
@@ -170,17 +171,17 @@ export function EditLeadModal({
                   <label className="block text-[13px] font-medium text-slate-600 dark:text-slate-400 mb-1.5">
                     סטטוס
                   </label>
-                  <select
+                  <GlassSelect
                     value={status}
-                    onChange={(e) => setStatus(e.target.value as LeadStatus)}
-                    className={`${inputCls} appearance-none`}
-                  >
-                    <option value="Pending">ממתין</option>
-                    <option value="Contacted">נוצר קשר</option>
-                    <option value="Appointment scheduled">תור נקבע</option>
-                    <option value="Closed">נסגר</option>
-                    <option value="Disqualified">הוסר</option>
-                  </select>
+                    onChange={(v) => setStatus(v as LeadStatus)}
+                    options={[
+                      { value: 'Pending', label: 'ממתין' },
+                      { value: 'Contacted', label: 'נוצר קשר' },
+                      { value: 'Appointment scheduled', label: 'תור נקבע' },
+                      { value: 'Closed', label: 'נסגר' },
+                      { value: 'Disqualified', label: 'הוסר' },
+                    ]}
+                  />
                 </div>
               </div>
             </div>

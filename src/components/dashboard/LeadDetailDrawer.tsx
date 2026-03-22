@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { X, Mail, Phone, Calendar, Tag, DollarSign, Receipt, Users } from 'lucide-react';
+import { GlassSelect } from '@/components/ui/GlassSelect';
 import type { Lead } from '@/types/leads';
 import {
   getDisplayPriority,
@@ -220,40 +221,37 @@ export function LeadDetailDrawer({
           {/* ── AI Section ── */}
           <AIIntelligenceSection lead={lead} />
 
-          {/* ── Timeline Section (status quick-actions) ── */}
+          {/* ── Timeline Section (status + quick-actions) ── */}
           <div>
             <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.12em] mb-3">ציר זמן</p>
-            <div className="flex items-center gap-2">
-              <select
+            <div className="space-y-3">
+              <GlassSelect
                 value={status}
-                onChange={(e) => onStatusChange(lead.id, e.target.value as LeadStatus)}
-                className="flex-1 min-w-0 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 focus:border-slate-400 dark:focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:focus:ring-slate-500/50 transition-colors text-right"
-              >
-                <option value="Pending">ממתין</option>
-                <option value="Contacted">נוצר קשר</option>
-                <option value="Appointment scheduled">תור נקבע</option>
-                <option value="Closed">נסגר</option>
-                <option value="Disqualified">הוסר</option>
-              </select>
-              <div className="flex shrink-0 items-center gap-px rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-1 flex-row-reverse">
+                onChange={(v) => onStatusChange(lead.id, v as LeadStatus)}
+                options={[
+                  { value: 'Pending', label: 'ממתין' },
+                  { value: 'Contacted', label: 'נוצר קשר' },
+                  { value: 'Appointment scheduled', label: 'תור נקבע' },
+                  { value: 'Closed', label: 'נסגר' },
+                  { value: 'Disqualified', label: 'הוסר' },
+                ]}
+              />
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => onMarkContacted(lead.id)}
-                  title="סמן נוצר קשר"
-                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-50 transition-colors flex-row-reverse"
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-50 transition-colors"
                 >
                   <Phone className="h-3.5 w-3.5 shrink-0" />
-                  <span className="hidden sm:inline">נוצר קשר</span>
+                  סמן נוצר קשר
                 </button>
-                <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-0.5" />
                 <button
                   type="button"
                   onClick={() => onScheduleFollowUp(lead.id)}
-                  title="קבע מעקב"
-                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-50 transition-colors flex-row-reverse"
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800/50 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-2.5 text-xs font-medium text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors"
                 >
                   <Calendar className="h-3.5 w-3.5 shrink-0" />
-                  <span className="hidden sm:inline">מעקב</span>
+                  קבע מעקב
                 </button>
               </div>
             </div>
@@ -348,3 +346,4 @@ export function LeadDetailDrawer({
     </>
   );
 }
+
