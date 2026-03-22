@@ -221,7 +221,7 @@ function LayoutInner({ children, initialRole, initialUserEmail }: DashboardLayou
     <div className="flex min-h-[100dvh] md:min-h-screen flex-col bg-[#FAFAF9] dark:bg-slate-950 text-slate-900 dark:text-slate-50 overflow-x-hidden transition-colors duration-300">
 
       <header
-        className="border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md w-full sticky top-0 z-40 transition-all duration-200 ease-out h-14"
+        className="border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md w-full sticky top-0 z-40 transition-all duration-200 ease-out md:h-14"
         style={{ paddingTop: 'env(safe-area-inset-top)', boxShadow: scrolled ? '0 1px 3px rgba(0,0,0,0.06)' : 'none' }}
       >
         <div className="absolute inset-0 md:hidden dark:hidden"
@@ -232,7 +232,7 @@ function LayoutInner({ children, initialRole, initialUserEmail }: DashboardLayou
         />
         <div className="absolute inset-0 hidden md:block bg-white dark:bg-slate-950" />
 
-        <div className="relative flex h-full w-full items-center">
+        <div className="relative flex h-14 w-full items-center">
 
           {/* Desktop logo zone — mirrors sidebar width */}
           <div className={`hidden md:flex h-full shrink-0 items-center border-e border-slate-200 dark:border-slate-800
