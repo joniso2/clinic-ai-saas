@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, type CSSProperties } from 'react';
 import {
   X, MessageCircle, Send, Clock, Calendar, Repeat, CheckCircle2,
   Users, ChevronDown, Smartphone, AlertCircle, RefreshCw,
@@ -177,7 +177,7 @@ function ComposeTab({
         <div className="space-y-2">
           {[
             { value: 'all',               label: `כל הלקוחות`, count: customers.length },
-            { value: 'custom',            label: `לקוחות נבחרים`, count: customers.filter((c) => selectedIds.has(c.id)).length, disabled: selectedIds.size === 0 },
+            { value: 'custom',            label: selectedIds.size > 0 ? `לקוחות נבחרים` : `לקוחות נבחרים (סמן לקוחות ברשימה)`, count: customers.filter((c) => selectedIds.has(c.id)).length },
             { value: 'last_visit_filter', label: null, count: null },
           ].map((opt) => (
             <label
@@ -186,14 +186,13 @@ function ComposeTab({
                 audienceType === opt.value
                   ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50/60 dark:bg-indigo-900/20'
                   : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/40 hover:border-slate-300 dark:hover:border-slate-600'
-              } ${(opt as { disabled?: boolean }).disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+              }`}
             >
               <input
                 type="radio"
                 name="audience"
                 value={opt.value}
                 checked={audienceType === opt.value}
-                disabled={(opt as { disabled?: boolean }).disabled}
                 onChange={() => setAudienceType(opt.value as AudienceType)}
                 className="text-indigo-500 focus:ring-indigo-500/30"
               />
@@ -472,13 +471,23 @@ export function MessagingPanel({
     setTab('log');
   };
 
+  // Lock body scroll
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
+  }, []);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 px-4 pb-4" dir="rtl">
-      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 pb-20 md:pb-4" dir="rtl">
+      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm touch-none" onClick={onClose} aria-hidden="true" />
 
       <div
         className="relative w-full max-w-2xl bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col"
-        style={{ maxHeight: 'calc(100dvh - 4rem)', animation: 'slideUpFade 200ms ease-out forwards' }}
+        style={{ maxHeight: 'calc(100dvh - 6rem)', animation: 'slideUpFade 200ms ease-out forwards' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4 bg-white dark:bg-slate-950 shrink-0">
@@ -523,7 +532,7 @@ export function MessagingPanel({
         </div>
 
         {/* Tab body */}
-        <div className="overflow-y-auto flex-1">
+        <div className="overflow-y-auto flex-1 overscroll-contain" style={{ minHeight: 0 }}>
           {tab === 'compose' ? (
             <ComposeTab customers={customers} selectedIds={selectedIds} onSent={handleSent} />
           ) : (
@@ -534,7 +543,7 @@ export function MessagingPanel({
 
       {/* Success toast */}
       {successToast && (
-        <div className="fixed bottom-6 left-1/2 z-[70] -translate-x-1/2 inline-flex items-center gap-2 rounded-xl bg-emerald-700 dark:bg-emerald-800 border border-emerald-600 px-4 py-2.5 text-sm text-white shadow-xl">
+        <div className="fixed bottom-24 left-1/2 z-[70] -translate-x-1/2 inline-flex items-center gap-2 rounded-xl bg-emerald-700 dark:bg-emerald-800 border border-emerald-600 px-4 py-2.5 text-sm text-white shadow-xl">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           {successToast}
         </div>

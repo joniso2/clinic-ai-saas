@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
-import { X, Mail, Phone, Calendar, Tag, DollarSign, Receipt, Users } from 'lucide-react';
+import { X, Mail, Phone, Calendar, Tag, DollarSign, Receipt, Users, ExternalLink } from 'lucide-react';
 import { GlassSelect } from '@/components/ui/GlassSelect';
 import type { Lead } from '@/types/leads';
 import {
@@ -25,6 +26,7 @@ export function LeadDetailDrawer({
   onMarkContacted,
   onScheduleFollowUp,
   onEdit,
+  appointmentDate,
   mode = 'overlay',
 }: {
   lead: Lead | null;
@@ -32,10 +34,12 @@ export function LeadDetailDrawer({
   onClose: () => void;
   onStatusChange: (leadId: string, status: LeadStatus) => void;
   onMarkContacted: (leadId: string) => void;
-  onScheduleFollowUp: (leadId: string) => void;
+  onScheduleFollowUp: (leadId: string, days?: number) => void;
   onEdit: (lead: Lead) => void;
+  appointmentDate?: string;
   mode?: 'overlay' | 'inline';
 }) {
+  const router = useRouter();
   const panelRef = useRef<HTMLDivElement>(null);
   useFocusTrap(panelRef, open);
 
@@ -55,20 +59,20 @@ export function LeadDetailDrawer({
     setReceiptOpen(true);
   };
 
-  // Body overflow lock + Escape key — overlay mode only
+  // Body + html overflow lock + Escape key — overlay mode only
   useEffect(() => {
-    if (mode !== 'overlay') return;
-    if (open) {
-      const handler = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') onClose();
-      };
-      document.addEventListener('keydown', handler);
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.removeEventListener('keydown', handler);
-        document.body.style.overflow = '';
-      };
-    }
+    if (mode !== 'overlay' || !open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handler);
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
   }, [open, onClose, mode]);
 
   // ── Inline mode: empty state when no lead ──
@@ -98,7 +102,7 @@ export function LeadDetailDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="h-8 w-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 transition-colors"
+            className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
             aria-label="סגור"
           >
             <X className="h-4 w-4" />
@@ -106,7 +110,7 @@ export function LeadDetailDrawer({
         )}
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-behavior-contain px-5 py-5 text-right">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-5 py-5 text-right" style={{ minHeight: 0 }}>
         <div className="space-y-6">
 
           {/* Badges row */}
@@ -124,161 +128,154 @@ export function LeadDetailDrawer({
             )}
           </div>
 
-          {/* ── Contact Details Section ── */}
+          {/* ── Contact Details ── */}
           <div>
-            <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.12em] mb-3">פרטי קשר</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
-              {/* Right column (first in DOM for RTL): email, phone, interest, deal value, receipt */}
-              <div className="space-y-5">
-                {lead.email && (
-                  <div className="space-y-1.5 text-right">
-                    <div className="flex items-center gap-2 justify-start">
-                      <Mail className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">אימייל</span>
-                    </div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-50 break-all">{lead.email}</p>
+            <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.12em] mb-2">פרטי קשר</p>
+            <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 divide-y divide-slate-100 dark:divide-slate-800">
+              {lead.email && (
+                <div className="flex items-center justify-between px-4 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-slate-500" />
+                    <span className="text-xs text-slate-500 dark:text-slate-400">אימייל</span>
                   </div>
-                )}
-                {lead.phone && (
-                  <div className="space-y-1.5 text-right">
-                    <div className="flex items-center gap-2 justify-start">
-                      <Phone className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">טלפון</span>
-                    </div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                      <button
-                        type="button"
-                        onClick={() => setPhoneModalOpen(true)}
-                        className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition-colors"
-                      >
-                        {lead.phone}
-                      </button>
-                    </p>
-                  </div>
-                )}
-                {lead.interest && (
-                  <div className="space-y-1.5 text-right">
-                    <div className="flex items-center gap-2 justify-start">
-                      <Tag className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">עניין</span>
-                    </div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{lead.interest}</p>
-                  </div>
-                )}
-                {(lead.estimated_deal_value ?? 0) > 0 && (
-                  <div className="space-y-1.5 text-right">
-                    <div className="flex items-center gap-2 justify-start">
-                      <DollarSign className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">שווי עסקה</span>
-                    </div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{formatCurrencyILS(lead.estimated_deal_value!)}</p>
-                  </div>
-                )}
-
-                {isClosedLead && (
-                  <button
-                    type="button"
-                    onClick={handleIssueReceipt}
-                    className="flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5
-                      text-sm font-semibold text-white shadow-sm transition-colors w-full justify-center"
-                  >
-                    <Receipt className="h-4 w-4 shrink-0" />
-                    הפק קבלה
-                  </button>
-                )}
-              </div>
-              {/* Left column (second in DOM for RTL): created, last contact, next follow-up */}
-              <div className="space-y-5">
-                <div className="space-y-1.5 text-right">
-                  <div className="flex items-center gap-2 justify-start">
-                    <Calendar className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">נוצר בתאריך</span>
-                  </div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{formatDateDDMMYYYY(lead.created_at)}</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-50 truncate max-w-[55%]">{lead.email}</p>
                 </div>
-                {lead.last_contact_date && (
-                  <div className="space-y-1.5 text-right">
-                    <div className="flex items-center gap-2 justify-start">
-                      <Calendar className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">קשר אחרון</span>
-                    </div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{formatDateDDMMYYYY(lead.last_contact_date)}</p>
+              )}
+              {lead.phone && (
+                <div className="flex items-center justify-between px-4 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-slate-500" />
+                    <span className="text-xs text-slate-500 dark:text-slate-400">טלפון</span>
                   </div>
-                )}
-                {lead.next_follow_up_date && (
-                  <div className="space-y-1.5 text-right">
-                    <div className="flex items-center gap-2 justify-start">
-                      <Calendar className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">מעקב הבא</span>
-                    </div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{formatDateDDMMYYYY(lead.next_follow_up_date)}</p>
+                  <button type="button" onClick={() => setPhoneModalOpen(true)} className="text-sm font-semibold text-slate-900 dark:text-slate-50 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                    {lead.phone}
+                  </button>
+                </div>
+              )}
+              {lead.interest && (
+                <div className="flex items-center justify-between px-4 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-slate-500" />
+                    <span className="text-xs text-slate-500 dark:text-slate-400">עניין</span>
                   </div>
-                )}
-              </div>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{lead.interest}</p>
+                </div>
+              )}
+              {(lead.estimated_deal_value ?? 0) > 0 && (
+                <div className="flex items-center justify-between px-4 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-slate-500" />
+                    <span className="text-xs text-slate-500 dark:text-slate-400">שווי עסקה</span>
+                  </div>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{formatCurrencyILS(lead.estimated_deal_value!)}</p>
+                </div>
+              )}
             </div>
           </div>
+
+          {/* ── Dates & Calendar ── */}
+          <div>
+            <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.12em] mb-2">תאריכים</p>
+            <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 divide-y divide-slate-100 dark:divide-slate-800">
+              <div className="flex items-center justify-between px-4 py-2.5">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-slate-500" />
+                  <span className="text-xs text-slate-500 dark:text-slate-400">התקבל בתאריך</span>
+                </div>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{formatDateDDMMYYYY(lead.created_at)}</p>
+              </div>
+              {appointmentDate && (
+                <button
+                  type="button"
+                  onClick={() => { onClose(); router.push(`/dashboard/calendar?date=${appointmentDate.slice(0, 10)}`); }}
+                  className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                    <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">תור נקבע</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">{formatDateDDMMYYYY(appointmentDate)}</p>
+                    <ExternalLink className="h-3 w-3 text-emerald-400" />
+                  </div>
+                </button>
+              )}
+              {lead.next_follow_up_date && (
+                <button
+                  type="button"
+                  onClick={() => { onClose(); router.push(`/dashboard/calendar?date=${lead.next_follow_up_date!.slice(0, 10)}`); }}
+                  className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-3.5 w-3.5 shrink-0 text-indigo-500 dark:text-indigo-400" />
+                    <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400">מעקב הבא</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{formatDateDDMMYYYY(lead.next_follow_up_date)}</p>
+                    <ExternalLink className="h-3 w-3 text-indigo-400" />
+                  </div>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {isClosedLead && (
+            <button
+              type="button"
+              onClick={handleIssueReceipt}
+              className="flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5
+                text-sm font-semibold text-white shadow-sm transition-colors w-full justify-center"
+            >
+              <Receipt className="h-4 w-4 shrink-0" />
+              הפק קבלה
+            </button>
+          )}
 
           {/* ── AI Section ── */}
           <AIIntelligenceSection lead={lead} />
 
-          {/* ── Timeline Section (status + quick-actions) ── */}
+          {/* ── Status ── */}
           <div>
-            <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.12em] mb-3">ציר זמן</p>
-            <div className="space-y-3">
-              <GlassSelect
-                value={status}
-                onChange={(v) => onStatusChange(lead.id, v as LeadStatus)}
-                options={[
-                  { value: 'Pending', label: 'ממתין' },
-                  { value: 'Contacted', label: 'נוצר קשר' },
-                  { value: 'Appointment scheduled', label: 'תור נקבע' },
-                  { value: 'Closed', label: 'נסגר' },
-                  { value: 'Disqualified', label: 'הוסר' },
-                ]}
-              />
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => onMarkContacted(lead.id)}
-                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-50 transition-colors"
-                >
-                  <Phone className="h-3.5 w-3.5 shrink-0" />
-                  סמן נוצר קשר
-                </button>
+            <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.12em] mb-2">סטטוס</p>
+            <GlassSelect
+              value={status}
+              onChange={(v) => onStatusChange(lead.id, v as LeadStatus)}
+              options={[
+                { value: 'Pending', label: 'ממתין' },
+                { value: 'Contacted', label: 'נוצר קשר' },
+                { value: 'Appointment scheduled', label: 'תור נקבע' },
+                { value: 'Closed', label: 'נסגר' },
+                { value: 'Disqualified', label: 'הוסר' },
+              ]}
+            />
+          </div>
+
+          {/* ── Follow-up scheduler ── */}
+          <FollowUpScheduler leadId={lead.id} onSchedule={onScheduleFollowUp} />
+
+          {/* ── Actions ── */}
+          <div>
+            <div className="flex items-center gap-2">
+              {!appointmentDate && (
                 <button
                   type="button"
                   onClick={() => onScheduleFollowUp(lead.id)}
-                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800/50 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-2.5 text-xs font-medium text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors"
+                  className="flex-1 inline-flex items-center justify-center gap-2 h-10 rounded-lg bg-indigo-600 text-white text-[13px] font-semibold hover:bg-indigo-700 transition-all duration-150"
                 >
-                  <Calendar className="h-3.5 w-3.5 shrink-0" />
-                  קבע מעקב
+                  <Calendar className="h-4 w-4 shrink-0" />
+                  קבע תור
                 </button>
-              </div>
+              )}
+              <button
+                type="button"
+                onClick={() => onEdit(lead)}
+                className="flex-1 inline-flex items-center justify-center gap-2 h-10 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-[13px] font-semibold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-all duration-150"
+              >
+                ערוך ליד
+              </button>
             </div>
           </div>
 
-        </div>
-      </div>
-
-      {/* ── Fixed Footer (safe area on mobile) ── */}
-      <div className="shrink-0 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-5 py-4 safe-area-bottom">
-        <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.12em] mb-3">פעולות</p>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onScheduleFollowUp(lead.id)}
-            className="inline-flex items-center justify-center gap-2 h-10 px-5 rounded-lg bg-indigo-600 text-white text-[14px] font-semibold hover:bg-indigo-700 transition-all duration-150"
-          >
-            <Calendar className="h-4 w-4 shrink-0" />
-            קבע תור
-          </button>
-          <button
-            type="button"
-            onClick={() => onEdit(lead)}
-            className="inline-flex items-center justify-center gap-2 h-10 px-5 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-[14px] font-semibold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition-all duration-150"
-          >
-            ערוך ליד
-          </button>
         </div>
       </div>
     </>
@@ -327,23 +324,101 @@ export function LeadDetailDrawer({
   if (!open) return null;
   return (
     <>
-      <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true">
-        <div
-          className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
-          onClick={onClose}
-          aria-hidden="true"
-        />
-        <aside
-          ref={panelRef}
-          dir="rtl"
-          className="drawer-enter relative w-full sm:max-w-[420px] h-full max-h-[100dvh] md:max-h-none bg-white dark:bg-slate-950 border-s border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col"
-          aria-label="פרטי ליד"
-        >
-          {drawerContent}
-        </aside>
-      </div>
+      {/* Backdrop — touch-none blocks iOS touch passthrough */}
+      <div
+        className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm touch-none"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      {/* Panel — mobile: stops above bottom nav, desktop: side drawer */}
+      <aside
+        ref={panelRef}
+        dir="rtl"
+        role="dialog"
+        aria-modal="true"
+        className="fixed z-[60] drawer-enter
+          inset-x-0 top-0 bottom-[76px] md:bottom-0
+          md:inset-y-0 md:inset-x-auto md:end-0 md:w-full md:max-w-[420px]
+          md:border-s md:border-slate-200 dark:md:border-slate-800
+          bg-white dark:bg-slate-950 shadow-2xl flex flex-col"
+        aria-label="פרטי ליד"
+      >
+        {drawerContent}
+      </aside>
       {portals}
     </>
   );
 }
 
+// ── Follow-up scheduler with quick picks + custom date & time ──
+function FollowUpScheduler({ leadId, onSchedule }: {
+  leadId: string;
+  onSchedule: (leadId: string, days?: number) => void;
+}) {
+  const [customDate, setCustomDate] = useState('');
+  const [customTime, setCustomTime] = useState('10:00');
+  const [showCustom, setShowCustom] = useState(false);
+
+  const handleCustomSubmit = () => {
+    if (!customDate) return;
+    const diff = Math.ceil((new Date(`${customDate}T${customTime}`).getTime() - Date.now()) / 86400000);
+    if (diff > 0) onSchedule(leadId, diff);
+    setShowCustom(false);
+    setCustomDate('');
+  };
+
+  return (
+    <div>
+      <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.12em] mb-2">קבע מעקב</p>
+      <div className="rounded-xl border border-slate-200/80 dark:border-slate-700/60 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm shadow-sm overflow-hidden">
+        {/* Quick picks */}
+        <div className="flex divide-x divide-slate-100 dark:divide-slate-700/60 rtl:divide-x-reverse">
+          <button type="button" onClick={() => onSchedule(leadId, 1)}
+            className="flex-1 py-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
+            מחר
+          </button>
+          <button type="button" onClick={() => onSchedule(leadId, 7)}
+            className="flex-1 py-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
+            עוד שבוע
+          </button>
+          <button type="button" onClick={() => onSchedule(leadId, 30)}
+            className="flex-1 py-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
+            עוד חודש
+          </button>
+          <button type="button" onClick={() => setShowCustom(!showCustom)}
+            className={`flex-1 py-2.5 text-xs font-medium transition-colors ${showCustom ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-300'}`}>
+            בחירה ידנית
+          </button>
+        </div>
+        {/* Custom date + time picker */}
+        {showCustom && (
+          <div className="border-t border-slate-100 dark:border-slate-700/60 p-3 space-y-2">
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={customDate}
+                onChange={(e) => setCustomDate(e.target.value)}
+                min={new Date(Date.now() + 86400000).toISOString().slice(0, 10)}
+                className="flex-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
+              />
+              <input
+                type="time"
+                value={customTime}
+                onChange={(e) => setCustomTime(e.target.value)}
+                className="w-24 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleCustomSubmit}
+              disabled={!customDate}
+              className="w-full rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              קבע מעקב
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

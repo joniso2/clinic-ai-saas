@@ -182,6 +182,7 @@ export type ScheduleAppointmentParams = {
   requestedDatetimeRaw: string;
   type: AppointmentType;
   leadId?: string | null;
+  serviceName?: string | null;
   config?: SchedulingConfig;
 };
 
@@ -192,7 +193,7 @@ export type ScheduleAppointmentParams = {
  * Pass `config` to apply clinic-level scheduling rules from settings.
  */
 export async function scheduleAppointment(params: ScheduleAppointmentParams): Promise<ScheduleResult> {
-  const { clinicId, patientName, requestedDatetimeRaw, type, leadId, config } = params;
+  const { clinicId, patientName, requestedDatetimeRaw, type, leadId, serviceName, config } = params;
 
   const openHour   = config?.openHour   ?? CLINIC_OPEN_HOUR;
   const closeHour  = config?.closeHour  ?? CLINIC_CLOSE_HOUR;
@@ -280,6 +281,7 @@ export async function scheduleAppointment(params: ScheduleAppointmentParams): Pr
     datetime:     requestedDate.toISOString(),
     type,
     lead_id:      leadId ?? null,
+    ...(serviceName ? { service_name: serviceName } : {}),
   });
 
   if (error || !data) {

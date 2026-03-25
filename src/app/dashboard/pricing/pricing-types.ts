@@ -10,11 +10,25 @@ export type ClinicService = {
   is_active: boolean;
   description?: string | null;
   category?: string | null;
+  color?: string | null;
   created_at?: string;
   updated_at?: string;
   bookings_count?: number;
   total_revenue?: number;
 };
+
+export const SERVICE_COLOR_PRESETS = [
+  '#6366f1', // indigo
+  '#ec4899', // pink
+  '#f59e0b', // amber
+  '#10b981', // emerald
+  '#3b82f6', // blue
+  '#8b5cf6', // violet
+  '#ef4444', // red
+  '#14b8a6', // teal
+  '#f97316', // orange
+  '#06b6d4', // cyan
+] as const;
 
 export type Role = 'CLINIC_ADMIN' | 'STAFF' | 'SUPER_ADMIN';
 export type StatusFilter = 'all' | 'active' | 'inactive';

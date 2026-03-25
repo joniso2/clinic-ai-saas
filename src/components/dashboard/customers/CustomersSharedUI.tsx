@@ -95,13 +95,6 @@ export function Toolbar({
           <Upload className="h-3.5 w-3.5" /> ייבוא לקוחות
         </button>
 
-        <button
-          type="button"
-          onClick={onBackToLeads}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition"
-        >
-          חזרה ללידים <ArrowRight className="h-3.5 w-3.5" />
-        </button>
       </div>
     </div>
   );

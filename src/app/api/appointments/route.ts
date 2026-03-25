@@ -82,7 +82,8 @@ export async function POST(req: NextRequest) {
       lead_id,
       email,
       phone,
-    } = body as { patient_name?: string; datetime?: string; type?: AppointmentType; lead_id?: string | null; email?: string | null; phone?: string | null };
+      service_name,
+    } = body as { patient_name?: string; datetime?: string; type?: AppointmentType; lead_id?: string | null; email?: string | null; phone?: string | null; service_name?: string | null };
 
     if (!patient_name || !datetimeRaw) {
       return NextResponse.json(
@@ -155,6 +156,7 @@ export async function POST(req: NextRequest) {
       requestedDatetimeRaw:   datetimeRaw,
       type:                   appointmentType,
       leadId:                 resolvedLeadId ?? undefined,
+      serviceName:            service_name ?? undefined,
       config,
     };
     const result = await appointmentService.scheduleAppointment(params);

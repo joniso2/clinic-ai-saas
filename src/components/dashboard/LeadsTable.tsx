@@ -69,7 +69,7 @@ export function LeadsTable({
   onStatusChange: (leadId: string, status: LeadStatus) => void;
   onAcceptPendingLead?: (lead: Lead) => Promise<void>;
   onMarkContacted: (leadId: string) => void;
-  onScheduleFollowUp: (leadId: string) => void;
+  onScheduleFollowUp: (leadId: string, days?: number) => void;
   onScheduleAppointment: (lead: Lead) => void;
   onUpdateDealValue?: (leadId: string, value: number) => Promise<string | null>;
   onCompleteLead?: (
@@ -248,12 +248,6 @@ export function LeadsTable({
 
   return (
     <div className="space-y-3">
-      {/* Mobile only: original layout — button + count in their own row above toolbar */}
-      {toolbarStartContent != null && (
-        <div className="flex sm:hidden flex-col gap-4 flex-row-reverse justify-end mb-4">
-          {toolbarStartContent}
-        </div>
-      )}
       {/* Toolbar: search + filters; on desktop only, toolbarStartContent is in this row */}
       <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white dark:border-slate-800/70 dark:bg-slate-950/90 px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between flex-row-reverse">
         <div className="flex flex-wrap items-center gap-3 flex-row-reverse justify-end">
@@ -261,7 +255,7 @@ export function LeadsTable({
             <Search className="absolute end-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
             <input
               type="search"
-              placeholder="חיפוש לפי שם או אימייל..."
+              placeholder="חיפוש..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded-lg border border-slate-200 bg-white py-2 pe-9 ps-4 text-sm text-right text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:border-slate-700/60 dark:bg-slate-800/60 dark:text-slate-200 dark:placeholder:text-slate-500 dark:focus:border-slate-500 dark:focus:ring-slate-500/50 transition-colors duration-150 sm:w-56"
@@ -287,27 +281,6 @@ export function LeadsTable({
             onOpenChange={(o) => setOpenFilter(o ? 'status' : null)}
             minWidth="140px"
           />
-          <div className="flex items-center gap-2 flex-row-reverse">
-            <label className="text-[11px] text-slate-500 dark:text-slate-500 shrink-0">מיון:</label>
-            <FilterDropdown
-              id="filter-sort"
-              value={sortKey}
-              options={['created', 'revenue', 'name']}
-              getLabel={(v) => SORT_LABELS[v]}
-              onChange={(v) => setSortKey(v)}
-              open={openFilter === 'sort'}
-              onOpenChange={(o) => setOpenFilter(o ? 'sort' : null)}
-              minWidth="130px"
-            />
-            <button
-              type="button"
-              onClick={() => setSortDesc((d) => !d)}
-              className="rounded-lg border border-slate-200 bg-white p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:border-slate-700/60 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:bg-slate-700/60 dark:hover:text-slate-200 transition-colors duration-150 shrink-0"
-              title={sortDesc ? 'יורד' : 'עולה'}
-            >
-              <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${sortDesc ? '' : 'rotate-180'}`} />
-            </button>
-          </div>
         </div>
         {toolbarStartContent != null && (
           <div className="hidden sm:flex items-center gap-2 flex-row-reverse shrink-0">
@@ -315,6 +288,12 @@ export function LeadsTable({
           </div>
         )}
       </div>
+      {/* Mobile only: count + new lead button below toolbar */}
+      {toolbarStartContent != null && (
+        <div className="flex sm:hidden items-center gap-3 flex-row-reverse justify-end">
+          {toolbarStartContent}
+        </div>
+      )}
 
       {/* Bulk action bar — above table when at least one selected */}
       {selectedIds.size > 0 && (

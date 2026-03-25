@@ -10,7 +10,7 @@ export async function GET() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('clinic_services')
-    .select('id, clinic_id, service_name, price, duration_minutes, aliases, is_active, category, created_at')
+    .select('id, clinic_id, service_name, price, duration_minutes, aliases, is_active, category, color, created_at')
     .eq('clinic_id', row.clinic_id)
     .order('service_name');
 

@@ -237,23 +237,24 @@ export function TopServicesChart({ data }: { data: { serviceName: string; total:
     return <p className="text-center text-sm text-slate-400 py-8">אין נתוני שירותים לתקופה זו</p>;
   }
   const top = data.slice(0, 5);
+  const maxVal = Math.max(...top.map((d) => d.total), 1);
   return (
-    <ResponsiveContainer width="100%" height={Math.max(top.length * 48, 120)}>
-      <BarChart data={top} layout="vertical" margin={{ top: 0, right: 10, left: 10, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
-        <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={(v: number) => fmt(v)} />
-        <YAxis type="category" dataKey="serviceName" tick={{ fontSize: 12, fill: '#64748b' }} tickLine={false} axisLine={false} width={120} />
-        <Tooltip
-          contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 12, direction: 'rtl' }}
-          formatter={(value) => [fmt(Number(value)), 'הכנסה']}
-        />
-        <Bar dataKey="total" radius={[0, 4, 4, 0]} barSize={24}>
-          {top.map((_, idx) => (
-            <Cell key={idx} fill={SERVICE_COLORS[idx] ?? '#e0e7ff'} />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+    <div className="space-y-3" dir="rtl">
+      {top.map((item, i) => (
+        <div key={item.serviceName} className="space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate max-w-[60%]">{item.serviceName}</span>
+            <span className="text-xs font-semibold text-slate-900 dark:text-slate-50 tabular-nums">{fmt(item.total)}</span>
+          </div>
+          <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+            <div
+              className="h-full rounded-full transition-all duration-700 ease-out"
+              style={{ width: `${(item.total / maxVal) * 100}%`, background: SERVICE_COLORS[i] ?? '#e0e7ff' }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 

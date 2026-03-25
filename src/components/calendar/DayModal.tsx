@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, Plus, Phone, MessageCircle, Sparkles, ReceiptText, Calendar as CalendarIcon } from 'lucide-react';
+import { X, Plus, Phone, MessageCircle, Sparkles, ReceiptText, Calendar as CalendarIcon, CheckCircle2 } from 'lucide-react';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 import { ConfirmDeleteModal } from '@/components/dashboard/ConfirmDeleteModal';
@@ -18,13 +18,14 @@ export type DayModalProps = {
   year: number;
   appointments: Appointment[];
   onClose: () => void;
+  onComplete?: (apt: Appointment) => void;
   onDelete: (id: string) => void;
   onAdd: (day: number) => void;
   onViewLead: (lead: Lead) => void;
 };
 
 export function DayModal({
-  day, month, year, appointments, onClose, onDelete, onAdd, onViewLead,
+  day, month, year, appointments, onClose, onComplete, onDelete, onAdd, onViewLead,
 }: DayModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   useFocusTrap(panelRef, true);
@@ -193,6 +194,17 @@ export function DayModal({
                     </button>
                   )}
 
+                  {apt.status !== 'completed' && apt.status !== 'cancelled' && onComplete && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onComplete(apt); }}
+                      className="mt-2 flex items-center gap-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40
+                        px-2.5 py-1.5 text-[11px] font-semibold text-indigo-700 dark:text-indigo-400
+                        hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+                    >
+                      <CheckCircle2 className="h-3 w-3" />
+                      סגור תור
+                    </button>
+                  )}
                   {apt.status === 'completed' && (
                     appointmentReceiptMap[apt.id] ? (
                       <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">

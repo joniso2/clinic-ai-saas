@@ -8,7 +8,7 @@ export type TeamMember = {
   last_sign_in_at: string | null;
 };
 
-export const ROLE_DISPLAY_OPTIONS = ['מנהל', 'רופא', 'מזכירה', 'תומך'] as const;
+export const ROLE_DISPLAY_OPTIONS = ['מנהל', 'עובד', 'מזכירה', 'שיווק', 'תומך'] as const;
 
 export function getRoleDisplay(dbRole: string, jobTitle: string | null): string {
   if (dbRole === 'CLINIC_ADMIN') return 'מנהל';
@@ -18,7 +18,8 @@ export function getRoleDisplay(dbRole: string, jobTitle: string | null): string 
 
 export const ROLE_PERMISSIONS: Record<string, string> = {
   מנהל: 'גישה מלאה',
-  רופא: 'לידים, תורים',
-  מזכירה: 'לידים, תורים',
+  עובד: 'לידים, תורים, לקוחות',
+  מזכירה: 'לידים, תורים, לקוחות',
+  שיווק: 'לידים, אנליטיקה',
   תומך: 'צפייה מוגבלת',
 };

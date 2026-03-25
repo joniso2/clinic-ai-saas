@@ -139,7 +139,7 @@ export function ActionIconButton({
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
       disabled={disabled}
       title={label}
       aria-label={label}

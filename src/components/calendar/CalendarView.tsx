@@ -60,6 +60,7 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
   const [receiptPromptApt, setReceiptPromptApt] = useState<Appointment | null>(null);
   const [receiptModalApt, setReceiptModalApt] = useState<Appointment | null>(null);
   const [billingSettings, setBillingSettings] = useState<BillingSettings | null | 'loading' | 'none'>(null);
+  const [serviceColorMap, setServiceColorMap] = useState<Record<string, string>>({});
 
   // On mobile, default to day view
   useEffect(() => {
@@ -118,6 +119,21 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
     return () => { cancelled = true; };
   }, [appointments, clinicId]);
 
+  // Fetch service colors once
+  useEffect(() => {
+    fetch('/api/clinic-services', { credentials: 'include' })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        const list = data?.services ?? (Array.isArray(data) ? data : []);
+        const map: Record<string, string> = {};
+        for (const s of list) {
+          if (s?.service_name && s?.color) map[s.service_name] = s.color;
+        }
+        setServiceColorMap(map);
+      })
+      .catch((err) => console.error('[Calendar] failed to fetch service colors:', err));
+  }, []);
+
   const fetchAppointments = useCallback(async (y: number, m: number) => {
     const key = `${y}-${m}`;
     setLoading(true);
@@ -174,7 +190,12 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
   const handleSelectEvent = useCallback(async (event: object) => {
     const calEvent = event as CalendarEvent;
     const apt = calEvent.resource;
-    if (!apt.lead_id) return;
+    if (!apt.lead_id) {
+      // No lead linked — show as minimal lead in drawer
+      setDrawerLead({ id: apt.id, full_name: apt.patient_name, status: 'Pending', interest: apt.service_name } as Lead);
+      setDrawerOpen(true);
+      return;
+    }
     try {
       const res = await fetch(`/api/leads/${apt.lead_id}`, { credentials: 'include' });
       if (res.ok) {
@@ -209,7 +230,7 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
         .sort((a, b) => a.start.getTime() - b.start.getTime());
       cols.push({
         dateStr,
-        dayLabel: format(d, 'EEEEEE', { locale: he }),
+        dayLabel: format(d, 'EEEE', { locale: he }).replace('יום ', ''),
         dayNum: getDate(d),
         isToday: dateStr === todayStr,
         events: eventsForDay,
@@ -417,14 +438,6 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
         </div>
       </div>
 
-      {/* Stats bar */}
-      {!loading && (
-        <div className="px-5 py-2 border-b border-slate-100 dark:border-slate-800 text-right shrink-0">
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            היום: {todayCount} תורים · {appointments.length} החודש
-          </p>
-        </div>
-      )}
 
       {/* Loading / Error */}
       {loading && (
@@ -456,6 +469,7 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
             onDayClick={handleDayClick}
             onComplete={handleCompleteAppointment}
             leadStatusByLeadId={leadStatusByLeadId}
+            serviceColorMap={serviceColorMap}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             canDrag={hasFinePointer}
@@ -501,6 +515,7 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
           year={selectedDay.year}
           appointments={selectedDayAppointments}
           onClose={handleCloseDayModal}
+          onComplete={handleCompleteAppointment}
           onDelete={(id) => {
             const apt = appointments.find((a) => a.id === id);
             if (apt) setPendingDeleteApt(apt);

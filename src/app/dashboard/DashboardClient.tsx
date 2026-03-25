@@ -290,10 +290,12 @@ export default function DashboardClient() {
     );
   }, []);
 
-  const handleScheduleFollowUp = useCallback(async (leadId: string) => {
+  const handleScheduleFollowUp = useCallback(async (leadId: string, days = 7) => {
+    const lead = leads.find((l) => l.id === leadId) ?? drawerLead;
     const next = new Date();
-    next.setDate(next.getDate() + 7);
+    next.setDate(next.getDate() + days);
     const dateStr = next.toISOString().slice(0, 10);
+    // 1. Update the lead's follow-up date
     const res = await fetch(`/api/leads/${leadId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -305,13 +307,28 @@ export default function DashboardClient() {
       setError((json as { error?: string }).error ?? 'Failed to update');
       return;
     }
+    // 2. Create a follow-up appointment in the calendar
+    if (lead?.full_name) {
+      const datetime = `${dateStr}T10:00:00`;
+      await fetch('/api/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          patient_name: lead.full_name,
+          datetime,
+          type: 'follow_up',
+          lead_id: leadId,
+        }),
+      }).catch(() => {});
+    }
     setLeads((prev) =>
       prev.map((l) => (l.id === leadId ? { ...l, next_follow_up_date: dateStr } : l))
     );
     setDrawerLead((prev) =>
       prev?.id === leadId ? { ...prev, next_follow_up_date: dateStr } : prev
     );
-  }, []);
+  }, [leads, drawerLead]);
 
   const handleUpdateDealValue = useCallback(async (leadId: string, value: number) => {
     const res = await fetch(`/api/leads/${leadId}`, {
@@ -504,11 +521,6 @@ export default function DashboardClient() {
       <div dir="rtl">
         {/* Table panel */}
         <div>
-          <div className="mb-6 text-right">
-            <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">CRM</p>
-            <h1 className="mt-1 text-[28px] font-bold text-slate-900 dark:text-slate-50 leading-tight tracking-tight">לידים</h1>
-            <p className="mt-1.5 text-[15px] text-slate-500 dark:text-slate-400">ניהול וטיפול בלידים נכנסים</p>
-          </div>
 
           {!loading && !error && leads.length > 0 && (
             <div className="mb-8">
@@ -601,6 +613,7 @@ export default function DashboardClient() {
         onMarkContacted={handleMarkContacted}
         onScheduleFollowUp={handleScheduleFollowUp}
         onEdit={handleEditFromDrawer}
+        appointmentDate={drawerLead ? nextAppointmentsByLeadId[drawerLead.id] : undefined}
         mode="overlay"
       />
 

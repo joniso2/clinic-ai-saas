@@ -10,7 +10,6 @@ import {
   EditRoleModal,
   ConfirmRemoveModal,
   Users,
-  Stethoscope,
   UserCircle,
   Shield,
 } from './team-components';
@@ -61,9 +60,8 @@ export default function TeamPage() {
     members.filter((m) => getRoleDisplay(m.role, m.job_title) === roleDisplay).length;
 
   const total = members.length;
-  const doctors = countByRole('רופא');
-  const secretaries = countByRole('מזכירה');
   const admins = countByRole('מנהל');
+  const staff = total - admins;
 
   return (
     <>
@@ -92,11 +90,10 @@ export default function TeamPage() {
       )}
 
       {!loading && !error && (
-        <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mb-8 grid grid-cols-3 gap-3">
           <SummaryCard icon={Users} value={total} label="סה״כ אנשי צוות" />
           <SummaryCard icon={Shield} value={admins} label="מנהלים" />
-          <SummaryCard icon={Stethoscope} value={doctors} label="רופאים" />
-          <SummaryCard icon={UserCircle} value={secretaries} label="מזכירות" />
+          <SummaryCard icon={UserCircle} value={staff} label="עובדים" />
         </div>
       )}
 

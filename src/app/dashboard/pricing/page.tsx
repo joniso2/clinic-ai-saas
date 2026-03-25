@@ -12,7 +12,7 @@ import { KpiCard, KPI_ACCENT } from '@/components/ui/KpiCard';
 
 // Extracted modules
 import type { ClinicService, Role, StatusFilter, SortKey } from './pricing-types';
-import { SORT_OPTIONS } from './pricing-types';
+import { SORT_OPTIONS, SERVICE_COLOR_PRESETS } from './pricing-types';
 import { InlineEdit } from './InlineEdit';
 import { ServiceDrawer } from './ServiceDrawer';
 
@@ -188,6 +188,14 @@ export default function PricingPage() {
     }
   };
 
+  const handleColorChange = async (s: ClinicService, color: string) => {
+    setServices((list) => list.map((x) => (x.id === s.id ? { ...x, color } : x)));
+    await fetch(`/api/clinic-services/${s.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ color }),
+    });
+  };
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -260,7 +268,7 @@ export default function PricingPage() {
         <div className="space-y-6" dir="rtl">
 
           {/* KPI cards */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <KpiCard label="סה״כ שירותים"   value={String(kpiTotal)}               icon={Layers}      iconContainerClass={KPI_ACCENT.indigo.icon}  borderAccentClass={KPI_ACCENT.indigo.border} />
             <KpiCard label="שירותים פעילים" value={String(kpiActive)}              sub={`${kpiTotal - kpiActive} מושבתים`} icon={Zap} iconContainerClass={KPI_ACCENT.emerald.icon} borderAccentClass={KPI_ACCENT.emerald.border} />
             <KpiCard label="מחיר ממוצע"     value={formatCurrencyILS(kpiAvgPrice)} icon={DollarSign}  iconContainerClass="bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400" borderAccentClass="border-s-violet-500 dark:border-s-violet-400" />
@@ -415,13 +423,7 @@ export default function PricingPage() {
                         {/* Name */}
                         <td className="py-3.5 px-5">
                           <div className="flex items-center gap-3">
-                            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                              s.is_active
-                                ? 'bg-indigo-500/10 dark:bg-indigo-500/20'
-                                : 'bg-slate-100 dark:bg-slate-800'
-                            }`}>
-                              <Package className={`h-4 w-4 ${s.is_active ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}`} />
-                            </div>
+                            <ServiceColorDot service={s} onColorChange={canEdit ? handleColorChange : undefined} />
                             <div>
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="font-semibold text-slate-900 dark:text-slate-50">{s.service_name}</span>
@@ -732,6 +734,50 @@ function ServiceFormModal({
           </div>
         </form>
       </div>
+    </div>
+  );
+}
+
+// ── Service color dot with picker ────────────────────────────────────────────
+
+function ServiceColorDot({ service, onColorChange }: { service: ClinicService; onColorChange?: (s: ClinicService, color: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const color = service.color || SERVICE_COLOR_PRESETS[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); if (onColorChange) setOpen(!open); }}
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border-2 transition-transform hover:scale-110"
+        style={{ backgroundColor: color + '20', borderColor: color }}
+        title="בחר צבע"
+      >
+        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: color }} />
+      </button>
+      {open && (
+        <div className="fixed z-[100] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl p-3 grid grid-cols-5 gap-2" style={{ top: ref.current ? ref.current.getBoundingClientRect().bottom + 4 : 0, left: ref.current ? ref.current.getBoundingClientRect().left - 80 : 0 }} onClick={(e) => e.stopPropagation()}>
+          {SERVICE_COLOR_PRESETS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => { onColorChange?.(service, c); setOpen(false); }}
+              className={`h-8 w-8 rounded-full border-2 transition-transform hover:scale-110 ${c === color ? 'border-slate-900 dark:border-white scale-110 ring-2 ring-offset-2 ring-slate-400' : 'border-transparent'}`}
+              style={{ backgroundColor: c }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

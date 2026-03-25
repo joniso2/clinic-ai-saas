@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from 'react';
 import { Building2, Phone, MapPin, Globe, DollarSign, Image, FileText, Save, CheckCircle2, AlertCircle, Loader2, Link2, Copy, ExternalLink } from 'lucide-react';
-import { AdminHeroMediaEditor } from '@/sites/clica/components/AdminHeroMediaEditor';
 import { useUnsavedWarning } from '@/hooks/useUnsavedWarning';
 import type { ClinicSettings } from '@/services/settings.service';
 
@@ -217,66 +216,7 @@ export function GeneralTab({
         <BookingLinkCard slug={clinicSlug} />
       )}
 
-      {/* Hero media (Clica / premium landing) */}
-      <AdminHeroMediaEditor />
 
-      {/* Editable contact + locale */}
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden">
-        <div className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-700/60 px-5 py-4 flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900">
-            <Phone className="h-4 w-4" />
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">Contact & locale</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">How patients reach you and regional defaults.</p>
-          </div>
-        </div>
-        <div className="px-5 py-5 grid gap-4 sm:grid-cols-2">
-          <Field label="Clinic phone">
-            <Input value={form.clinic_phone} onChange={(v) => set('clinic_phone', v)} placeholder="+972 50 000 0000" />
-          </Field>
-          <Field label="Timezone">
-            <Select value={form.timezone} onChange={(v) => set('timezone', v)} options={TIMEZONES} />
-          </Field>
-          <Field label="Default currency">
-            <Select value={form.currency} onChange={(v) => set('currency', v)} options={CURRENCIES} />
-          </Field>
-          <Field label="Logo URL">
-            <Input value={form.logo_url} onChange={(v) => set('logo_url', v)} placeholder="https://example.com/logo.png" />
-          </Field>
-          <div className="sm:col-span-2">
-            <Field label="Address">
-              <Textarea value={form.address} onChange={(v) => set('address', v)} placeholder="123 Main St, Tel Aviv, Israel" rows={2} />
-            </Field>
-          </div>
-        </div>
-      </div>
-
-      {/* Brand / AI context */}
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden">
-        <div className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-700/60 px-5 py-4 flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900">
-            <FileText className="h-4 w-4" />
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">Business description</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Used by the AI assistant to personalize responses.</p>
-          </div>
-        </div>
-        <div className="px-5 py-5">
-          <Field label="Description">
-            <Textarea
-              value={form.business_description}
-              onChange={(v) => set('business_description', v)}
-              placeholder="A modern dental clinic specializing in preventive and cosmetic dentistry…"
-              rows={4}
-            />
-          </Field>
-          <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-            This context is injected into the AI receptionist prompt automatically.
-          </p>
-        </div>
-      </div>
 
       {/* Save */}
       <div className="flex items-center justify-end gap-3">

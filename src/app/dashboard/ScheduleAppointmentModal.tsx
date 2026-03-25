@@ -184,6 +184,7 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
         datetime: datetimeRaw,
         type,
         lead_id: lead.id,
+        service_name: lead.interest || undefined,
       }),
     });
 
