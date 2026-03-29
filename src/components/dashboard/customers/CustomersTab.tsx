@@ -20,7 +20,6 @@ import {
   STATUS_OPTIONS,
   SORT_OPTIONS,
   type SortKey,
-  type RecallEntry,
   getStatusBadgeStyle,
   getAvatarColor,
   getInitials,
@@ -84,8 +83,8 @@ export function CustomersTab() {
   const [toast, setToast] = useState<string | null>(null);
   const [downloadingTemplate, setDownloadingTemplate] = useState(false);
 
-  // Recall state (in-memory per session)
-  const [recallMap, setRecallMap] = useState<Map<string, RecallEntry>>(new Map());
+  // Enriched data from API (next appointment, risk, payment, etc.)
+  const [detailEnriched, setDetailEnriched] = useState<Record<string, unknown> | null>(null);
 
   // Messaging state
   const [messagingOpen, setMessagingOpen] = useState(false);
@@ -142,13 +141,14 @@ export function CustomersTab() {
   useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(null), 3000); return () => clearTimeout(t); }, [toast]);
 
   useEffect(() => {
-    if (!detailId) { setDetailCustomer(null); setDetailAppointments([]); return; }
+    if (!detailId) { setDetailCustomer(null); setDetailAppointments([]); setDetailEnriched(null); return; }
     setDetailLoading(true);
     fetch(`/api/customers/${detailId}`, { credentials: 'include' })
       .then((r) => r.json())
-      .then((d: { customer?: Patient; appointments?: CompletedAppointmentRow[] }) => {
+      .then((d: { customer?: Patient; appointments?: CompletedAppointmentRow[]; enriched?: Record<string, unknown> }) => {
         setDetailCustomer(d.customer ?? null);
         setDetailAppointments(d.appointments ?? []);
+        setDetailEnriched(d.enriched ?? null);
       })
       .finally(() => setDetailLoading(false));
   }, [detailId]);
@@ -258,8 +258,7 @@ export function CustomersTab() {
     if (res.ok) { setClosedLeads((p) => p.filter((l) => l.id !== deleteLeadId)); if (detailLead?.id === deleteLeadId) closeDrawer(); }
   };
 
-  const getRecall = (id: string): RecallEntry => recallMap.get(id) ?? { active: false, reminderDate: '' };
-  const setRecall = (id: string, entry: RecallEntry) => setRecallMap((p) => new Map(p).set(id, entry));
+  // Recall is now persisted via DB — no in-memory map needed
 
   // ── KPI values ───────────────────────────────────────────────────────────────
 
@@ -453,7 +452,6 @@ export function CustomersTab() {
             {filteredClosedLeads.length === 0 ? (
               <div className="py-12 text-center text-sm text-slate-400 dark:text-slate-500">אין תוצאות</div>
             ) : filteredClosedLeads.map((l) => {
-              const recall = getRecall(l.id);
               const isSelected = selectedIds.has(l.id);
               return (
                 <div key={l.id} onClick={() => setDetailLead(l)}
@@ -462,11 +460,6 @@ export function CustomersTab() {
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getAvatarColor(l.id)} text-white text-xs font-bold`}>
                         {getInitials(l.full_name)}
-                        {recall.active && (
-                          <span className="absolute -top-1 -start-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 border-2 border-white dark:border-slate-900">
-                            <BellRing className="h-2 w-2 text-white" />
-                          </span>
-                        )}
                       </div>
                       <div className="min-w-0">
                         <span className="block font-medium text-slate-800 dark:text-slate-50 truncate">{l.full_name || '—'}</span>
@@ -520,7 +513,6 @@ export function CustomersTab() {
                 {filteredClosedLeads.length === 0 ? (
                   <tr><td colSpan={8} className="py-16 text-center text-sm text-slate-400 dark:text-slate-500">אין תוצאות</td></tr>
                 ) : filteredClosedLeads.map((l) => {
-                  const recall = getRecall(l.id);
                   const isSelected = selectedIds.has(l.id);
                   return (
                   <tr key={l.id} onClick={() => { setDetailLead(l); }}
@@ -537,11 +529,6 @@ export function CustomersTab() {
                       <div className="flex items-center gap-2 min-w-0">
                         <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getAvatarColor(l.id)} text-white text-xs font-bold`}>
                           {getInitials(l.full_name)}
-                          {recall.active && (
-                            <span className="absolute -top-1 -start-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 border-2 border-white dark:border-slate-900">
-                              <BellRing className="h-2 w-2 text-white" />
-                            </span>
-                          )}
                         </div>
                         <span className="font-medium text-slate-800 dark:text-slate-50 truncate">{l.full_name || '—'}</span>
                       </div>
@@ -673,7 +660,6 @@ export function CustomersTab() {
               </div>
             </div>
           ) : filteredCustomers.map((c) => {
-            const recall = getRecall(c.id);
             const statusBadge = getStatusBadgeStyle(c.status);
             const isSelected = selectedIds.has(c.id);
             return (
@@ -683,7 +669,7 @@ export function CustomersTab() {
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getAvatarColor(c.id)} text-white text-xs font-bold`}>
                       {getInitials(c.full_name)}
-                      {recall.active && (
+                      {c.recall_active && (
                         <span className="absolute -top-1 -start-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 border-2 border-white dark:border-slate-900">
                           <BellRing className="h-2 w-2 text-white" />
                         </span>
@@ -757,7 +743,6 @@ export function CustomersTab() {
                   </td>
                 </tr>
               ) : filteredCustomers.map((c) => {
-                const recall = getRecall(c.id);
                 const statusBadge = getStatusBadgeStyle(c.status);
                 const isSelected = selectedIds.has(c.id);
                 return (
@@ -775,7 +760,7 @@ export function CustomersTab() {
                       <div className="flex items-center gap-3">
                         <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getAvatarColor(c.id)} text-white text-xs font-bold`}>
                           {getInitials(c.full_name)}
-                          {recall.active && (
+                          {c.recall_active && (
                             <span className="absolute -top-1 -start-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 border-2 border-white dark:border-slate-900">
                               <BellRing className="h-2 w-2 text-white" />
                             </span>
@@ -810,8 +795,7 @@ export function CustomersTab() {
       {/* Customer drawer */}
       {detailId && (
         <CustomerDrawer
-          customer={detailCustomer} appointments={detailAppointments} loading={detailLoading} allCustomers={customers}
-          recall={getRecall(detailId)} onRecallChange={(r) => setRecall(detailId, r)}
+          customer={detailCustomer} appointments={detailAppointments} enriched={detailEnriched as never} loading={detailLoading} allCustomers={customers}
           onClose={closeDrawer} onSchedule={() => { closeDrawer(); router.push('/dashboard/calendar'); }}
           onDelete={() => { setDeleteId(detailId); closeDrawer(); }}
         />

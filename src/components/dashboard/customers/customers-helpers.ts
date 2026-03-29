@@ -92,3 +92,24 @@ export function getCloseDatePatient(p: Patient): string | null {
 export function getCloseDateLead(l: Lead): string | null { return l.created_at ?? null; }
 export function getValuePatient(p: Patient): number { return Number(p.total_revenue) || 0; }
 export function getValueLead(l: Lead): number { return l.estimated_deal_value ?? 0; }
+
+// ─── Enriched data badge helpers ─────────────────────────────────────────────
+
+export type CancellationRisk = 'low' | 'medium' | 'high';
+export type PaymentStatusValue = 'up_to_date' | 'outstanding' | 'no_billing';
+
+export function getCancellationRiskBadge(risk: CancellationRisk): { label: string; cls: string } {
+  switch (risk) {
+    case 'low':    return { label: 'נמוך',  cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' };
+    case 'medium': return { label: 'בינוני', cls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' };
+    case 'high':   return { label: 'גבוה',  cls: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' };
+  }
+}
+
+export function getPaymentStatusBadge(status: PaymentStatusValue): { label: string; cls: string } {
+  switch (status) {
+    case 'up_to_date':  return { label: 'מעודכן',     cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' };
+    case 'outstanding': return { label: 'חוב פתוח',   cls: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' };
+    case 'no_billing':  return { label: 'אין חיוב',   cls: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400' };
+  }
+}

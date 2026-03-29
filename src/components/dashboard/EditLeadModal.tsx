@@ -179,7 +179,7 @@ export function EditLeadModal({
                       { value: 'Contacted', label: 'נוצר קשר' },
                       { value: 'Appointment scheduled', label: 'תור נקבע' },
                       { value: 'Closed', label: 'נסגר' },
-                      { value: 'Disqualified', label: 'הוסר' },
+                      { value: 'Disqualified', label: 'בוטל' },
                     ]}
                   />
                 </div>

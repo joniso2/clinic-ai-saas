@@ -1,49 +1,149 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import {
   Search,
-  Pencil,
   Trash2,
   Phone,
   Plus,
   CheckCircle,
   Calendar as CalendarIcon,
-  ChevronDown,
-  X,
-  GripVertical,
 } from 'lucide-react';
 import type { Lead } from '@/types/leads';
 import { getDisplayPriority, type Priority, type LeadStatus } from '@/types/leads';
-import { STATUS_LABELS, PRIORITY_LABELS, SOURCE_LABELS, formatCurrencyILS } from '@/lib/hebrew';
+import { STATUS_LABELS, formatCurrencyILS } from '@/lib/hebrew';
 import { useToast } from '@/components/ui/Toast';
 import { GlassSelect } from '@/components/ui/GlassSelect';
 
 // Extracted modules
 import {
   toWaHref,
-  PRIORITY_STYLES,
-  STATUS_BADGE_STYLES,
-  STATUS_OPTIONS,
-  SORT_LABELS,
   type SortKey,
-  formatDateDDMMYYYY,
   formatDateTime,
-  type RejectReason,
 } from './leads-table-helpers';
 import {
   WhatsAppIcon,
   FilterDropdown,
-  ActionIconButton,
   Toast,
   PhoneContactModal,
   PendingReviewModal,
   CompleteLeadModal,
 } from './leads-table-components';
 
-// ─── Main Table Component ────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function getInitials(name: string | null): string {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return parts[0].slice(0, 2).toUpperCase();
+}
+
+/** Risk bar color + label for a lead based on priority */
+function getRiskInfo(lead: Lead): { color: string; barColor: string; label: string } | null {
+  const p = getDisplayPriority(lead);
+  const overdue = lead.next_follow_up_date
+    ? new Date(lead.next_follow_up_date) < new Date()
+    : false;
+  if (p === 'Urgent' || (p === 'High' && overdue)) {
+    return { color: 'text-red-500', barColor: 'bg-red-500', label: 'סיכון גבוה' };
+  }
+  if (p === 'High') {
+    return { color: 'text-orange-500', barColor: 'bg-orange-400', label: 'סיכון בינוני' };
+  }
+  if (p === 'Medium') {
+    return { color: 'text-amber-500', barColor: 'bg-amber-400', label: 'סיכון נמוך' };
+  }
+  return null;
+}
+
+/** Status badge label for leads context */
+function getLeadStageBadge(lead: Lead): { label: string; className: string } | null {
+  const s = lead.status ?? 'Pending';
+  switch (s) {
+    case 'Pending':
+      return { label: 'ליד חדש', className: 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300' };
+    case 'Contacted':
+      return { label: 'נוצר קשר', className: 'bg-sky-50 text-sky-600 dark:bg-sky-900/30 dark:text-sky-300' };
+    case 'Appointment scheduled':
+      return { label: 'תור נקבע', className: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300' };
+    case 'Closed':
+      return { label: 'נסגר', className: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300' };
+    case 'Disqualified':
+      return { label: 'בוטל', className: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400' };
+    default:
+      return null;
+  }
+}
+
+/** Format a Hebrew date like "12 באוקט'" */
+function formatHebrewShortDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return '—';
+  return new Intl.DateTimeFormat('he-IL', {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'Asia/Jerusalem',
+  }).format(d);
+}
+
+/** Format appointment as "היום 14:00" or "12 באוקט' 14:00" */
+function formatAppointmentDisplay(dateStr: string): string {
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return '—';
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const isTomorrow = d.toDateString() === tomorrow.toDateString();
+  const time = new Intl.DateTimeFormat('he-IL', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Jerusalem',
+  }).format(d);
+  if (isToday) return `היום ${time}`;
+  if (isTomorrow) return `מחר ${time}`;
+  return `${formatHebrewShortDate(dateStr)} ${time}`;
+}
+
+/** Structured appointment info for rich rendering */
+function getAppointmentParts(dateStr: string): { label: string; time: string; urgent: boolean } | null {
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return null;
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const isTomorrow = d.toDateString() === tomorrow.toDateString();
+  const time = new Intl.DateTimeFormat('he-IL', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Jerusalem',
+  }).format(d);
+  if (isToday) return { label: 'היום', time, urgent: true };
+  if (isTomorrow) return { label: 'מחר', time, urgent: true };
+  return { label: formatHebrewShortDate(dateStr), time, urgent: false };
+}
+
+// Avatar background colors
+const AVATAR_COLORS = [
+  'bg-violet-500', 'bg-indigo-500', 'bg-blue-500', 'bg-emerald-500',
+  'bg-amber-500', 'bg-rose-500', 'bg-teal-500', 'bg-fuchsia-500',
+];
+
+function getAvatarColor(name: string | null): string {
+  if (!name) return AVATAR_COLORS[0];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+// ─── Main Component ──────────────────────────────────────────────────────────
 
 export function LeadsTable({
   leads,
@@ -61,6 +161,8 @@ export function LeadsTable({
   nextAppointmentsByLeadId,
   onRejectLead,
   toolbarStartContent,
+  selectedLeadId,
+  onNewLead,
 }: {
   leads: Lead[];
   onView: (lead: Lead) => void;
@@ -78,11 +180,12 @@ export function LeadsTable({
     notes?: string,
     serviceType?: string
   ) => Promise<string | { warning: string } | null>;
-  pricingServices?: { service_name: string; price: number }[];
+  pricingServices?: { service_name: string; price: number; color?: string | null }[];
   nextAppointmentsByLeadId?: Record<string, string | undefined>;
   onRejectLead?: (leadId: string, reason: string) => void;
-  /** Rendered at the start of the toolbar row (left in RTL), e.g. "ליד חדש" + count */
   toolbarStartContent?: React.ReactNode;
+  selectedLeadId?: string;
+  onNewLead?: () => void;
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -91,6 +194,9 @@ export function LeadsTable({
   const [sortKey, setSortKey] = useState<SortKey>('created');
   const [openFilter, setOpenFilter] = useState<'priority' | 'status' | 'sort' | null>(null);
   const [sortDesc, setSortDesc] = useState(true);
+
+  // Tab filter
+  const [activeTab, setActiveTab] = useState<'all' | 'in_treatment' | 'checkin'>('all');
 
   // ── Drag-to-trash ──
   const toastApi = useToast();
@@ -129,7 +235,6 @@ export function LeadsTable({
   const statusDropdownRef = useRef<HTMLDivElement>(null);
   const DEAL_VALUE_OTHER = '__other__';
   const [dealValueLeadId, setDealValueLeadId] = useState<string | null>(null);
-  /** '' = לא נבחר, __other__ = הזנה ידנית, אחרת = service_name מתמחור */
   const [dealValueServiceKey, setDealValueServiceKey] = useState('');
   const [dealValueInput, setDealValueInput] = useState('');
   const [dealValueSaving, setDealValueSaving] = useState(false);
@@ -153,6 +258,13 @@ export function LeadsTable({
       list = list.filter(
         (l) => (l.status ?? 'Pending') !== 'Disqualified' && (l.status ?? 'Pending') !== 'Closed'
       );
+    }
+
+    // Tab filter
+    if (activeTab === 'in_treatment') {
+      list = list.filter((l) => l.status === 'Contacted' || l.status === 'Appointment scheduled');
+    } else if (activeTab === 'checkin') {
+      list = list.filter((l) => l.status === 'Pending');
     }
 
     if (debouncedSearch.trim()) {
@@ -189,7 +301,7 @@ export function LeadsTable({
       list = list.filter((l) => !pendingDeleteIds.has(l.id));
     }
     return list;
-  }, [leads, debouncedSearch, priorityFilter, statusFilter, sortKey, sortDesc, pendingDeleteIds]);
+  }, [leads, debouncedSearch, priorityFilter, statusFilter, sortKey, sortDesc, pendingDeleteIds, activeTab]);
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -241,67 +353,114 @@ export function LeadsTable({
         next.delete(lead.id);
         return next;
       });
-      setToast('הליד הועבר להסרה');
+      setToast('\u05D4\u05DC\u05D9\u05D3 \u05D4\u05D5\u05E2\u05D1\u05E8 \u05DC\u05D4\u05E1\u05E8\u05D4');
     }, 300);
     setPendingReviewLead(null);
   }, [onStatusChange, onRejectLead]);
 
   return (
-    <div className="space-y-3">
-      {/* Toolbar: search + filters; on desktop only, toolbarStartContent is in this row */}
-      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white dark:border-slate-800/70 dark:bg-slate-950/90 px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between flex-row-reverse">
-        <div className="flex flex-wrap items-center gap-3 flex-row-reverse justify-end">
-          <div className="relative">
-            <Search className="absolute end-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
-            <input
-              type="search"
-              placeholder="חיפוש..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white py-2 pe-9 ps-4 text-sm text-right text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400/30 dark:border-slate-700/60 dark:bg-slate-800/60 dark:text-slate-200 dark:placeholder:text-slate-500 dark:focus:border-slate-500 dark:focus:ring-slate-500/50 transition-colors duration-150 sm:w-56"
-            />
-          </div>
-          <FilterDropdown
-            id="filter-priority"
-            value={priorityFilter}
-            options={['', 'Low', 'Medium', 'High', 'Urgent'] as (Priority | '')[]}
-            getLabel={(v) => (v === '' ? 'כל העדיפויות' : (PRIORITY_LABELS[v as Priority] ?? v))}
-            onChange={(v) => setPriorityFilter(v as Priority | '')}
-            open={openFilter === 'priority'}
-            onOpenChange={(o) => setOpenFilter(o ? 'priority' : null)}
-            minWidth="140px"
-          />
-          <FilterDropdown
-            id="filter-status"
-            value={statusFilter}
-            options={['', 'Pending', 'Appointment scheduled', 'Contacted', 'Closed', 'Disqualified']}
-            getLabel={(v) => (v === '' ? 'כל הסטטוסים' : (STATUS_LABELS[v as LeadStatus] ?? v))}
-            onChange={setStatusFilter}
-            open={openFilter === 'status'}
-            onOpenChange={(o) => setOpenFilter(o ? 'status' : null)}
-            minWidth="140px"
+    <div className="space-y-1">
+      {/* ── Filter/Tab Bar ────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 rounded-xl bg-white dark:bg-slate-900/80 px-4 py-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" dir="rtl">
+        {/* Search input */}
+        <div className="relative flex-1 min-w-[180px] max-w-[320px]">
+          <Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <input
+            type="search"
+            placeholder="חיפוש מ..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-lg bg-slate-50 dark:bg-slate-800/60 py-2.5 pe-10 ps-4 text-[14px] text-slate-900 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-300 dark:focus:ring-slate-600 transition-shadow"
           />
         </div>
-        {toolbarStartContent != null && (
-          <div className="hidden sm:flex items-center gap-2 flex-row-reverse shrink-0">
-            {toolbarStartContent}
-          </div>
+
+        {/* Segment tabs */}
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setActiveTab('all')}
+            className={`px-4 py-2 rounded-lg text-[13px] font-semibold transition-all ${
+              activeTab === 'all'
+                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+          >
+            כל הלידים
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('in_treatment')}
+            className={`px-4 py-2 rounded-lg text-[13px] font-semibold transition-all ${
+              activeTab === 'in_treatment'
+                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+          >
+            בטיפול
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('checkin')}
+            className={`px-4 py-2 rounded-lg text-[13px] font-semibold transition-all ${
+              activeTab === 'checkin'
+                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+          >
+            צ&apos;ק-אין
+          </button>
+        </div>
+
+        {/* Calendar + status filter */}
+        <FilterDropdown
+          id="filter-status"
+          value={statusFilter}
+          options={['', 'Pending', 'Appointment scheduled', 'Contacted', 'Closed', 'Disqualified']}
+          getLabel={(v) => (v === '' ? 'סטטוס' : (STATUS_LABELS[v as LeadStatus] ?? v))}
+          onChange={setStatusFilter}
+          open={openFilter === 'status'}
+          onOpenChange={(o) => setOpenFilter(o ? 'status' : null)}
+          minWidth="110px"
+        />
+        <button
+          type="button"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          title="לוח שנה"
+          onClick={() => router.push('/dashboard/calendar')}
+        >
+          <CalendarIcon className="h-4 w-4" />
+        </button>
+
+        {/* Spacer — pushes tracking badge + new lead to the end (left in RTL) */}
+        <div className="flex-1" />
+
+        <div className="inline-flex flex-row-reverse items-center gap-2.5 rounded-xl bg-slate-900/[0.06] dark:bg-white/[0.06] px-4 py-2.5 text-[14px] font-semibold text-slate-800 dark:text-slate-100">
+          <span className="relative h-2.5 w-2.5 shrink-0">
+            <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-30" />
+            <span className="absolute inset-0 rounded-full bg-emerald-500" />
+          </span>
+          <span className="text-[16px] font-bold tabular-nums">{leads.length}</span>
+          לידים במעקב
+        </div>
+        {onNewLead && (
+          <button
+            type="button"
+            onClick={onNewLead}
+            className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 px-4 py-2 text-[13px] font-semibold text-white dark:text-slate-900 shadow-sm transition-all active:scale-[0.97]"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            ליד חדש
+          </button>
         )}
       </div>
-      {/* Mobile only: count + new lead button below toolbar */}
-      {toolbarStartContent != null && (
-        <div className="flex sm:hidden items-center gap-3 flex-row-reverse justify-end">
-          {toolbarStartContent}
-        </div>
-      )}
 
-      {/* Bulk action bar — above table when at least one selected */}
+      {/* ── Bulk action bar ─────────────────────────────────────────────── */}
       {selectedIds.size > 0 && (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950/95 px-4 py-3 shadow-sm flex-row-reverse justify-end">
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            נבחרו {selectedIds.size} לידים
+        <div className="flex flex-wrap items-center gap-3 rounded-xl bg-white dark:bg-slate-900/80 px-4 py-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" dir="rtl">
+          <span className="text-[13px] font-medium text-slate-700 dark:text-slate-200">
+            {selectedIds.size} נבחרו
           </span>
-          <div className="flex items-center gap-2 flex-row-reverse">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => {
@@ -311,454 +470,275 @@ export function LeadsTable({
                 });
                 setSelectedIds(new Set());
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-600 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 px-3 py-1.5 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
             >
               מחיקה
             </button>
             <button
               type="button"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-600 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 px-3 py-1.5 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
             >
               שינוי סטטוס
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-600 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              ייצוא
             </button>
           </div>
           <button
             type="button"
             onClick={() => setSelectedIds(new Set())}
-            className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
+            className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300 transition-colors"
           >
             ביטול
           </button>
         </div>
       )}
 
-      {/* ── Mobile Card Layout (גדול ~10%) ───────────────────────────────── */}
-      <div className="md:hidden space-y-3" dir="rtl">
+      {/* ── Stacked Card Feed ──────────────────────────────────────────── */}
+      <div className="space-y-1" dir="rtl">
         {filteredAndSorted.map((lead) => {
           const priority = getDisplayPriority(lead);
           const urgent = isUrgent(lead);
+          const isRemoving = removingIds.has(lead.id);
           const isSelected = selectedIds.has(lead.id);
+          const isActive = lead.id === selectedLeadId;
+          const nextAppt = nextAppointmentsByLeadId?.[lead.id];
+          const initials = getInitials(lead.full_name);
+          const riskInfo = getRiskInfo(lead);
+          const stageBadge = getLeadStageBadge(lead);
+          const avatarColor = getAvatarColor(lead.full_name);
+
           return (
             <div
               key={lead.id}
               onClick={() => onView(lead)}
+              draggable={hasFinePointer}
+              onDragStart={(e) => {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', lead.id);
+                setDraggingLead(lead);
+              }}
+              onDragEnd={() => { setDraggingLead(null); setTrashHover(false); }}
               className={[
-                'rounded-2xl border bg-white dark:bg-slate-900 p-4 transition-colors cursor-pointer active:scale-[0.99]',
-                isSelected
-                  ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50/80 dark:bg-indigo-950/25'
-                  : urgent
-                    ? 'border-red-200 dark:border-red-800/50 bg-red-50/40 dark:bg-red-950/10'
-                    : 'border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700',
-              ].join(' ')}
+                'rounded-2xl overflow-hidden transition-all duration-200 cursor-pointer',
+                isRemoving ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100',
+                isActive
+                  ? 'bg-white dark:bg-slate-900 ring-2 ring-indigo-500/25 shadow-[0_4px_16px_rgba(99,102,241,0.12),0_1px_3px_rgba(0,0,0,0.06)]'
+                  : 'bg-white dark:bg-slate-900/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.07)] border border-slate-100/80 dark:border-slate-800/40',
+              ].filter(Boolean).join(' ')}
             >
-              {/* Top row: name + status */}
-              <div className="flex items-start justify-between gap-2.5">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    {urgent && <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-red-500/90" />}
-                    <span className="text-[15px] font-bold text-slate-900 dark:text-slate-50 truncate leading-snug">
-                      {lead.full_name || 'ליד ללא שם'}
-                    </span>
+              {/* ── Risk bar at top ── */}
+              <div className={`h-[3px] w-full ${riskInfo ? riskInfo.barColor : 'bg-emerald-400/60'}`} />
+
+              <div className="px-5 pt-3 pb-4">
+
+                {/* ── Row 1: Identity — name is the primary anchor ── */}
+                <div className="flex items-center gap-3">
+                  <div className={`h-12 w-12 rounded-2xl ${avatarColor} flex items-center justify-center shrink-0 shadow-sm`}>
+                    <span className="text-[15px] font-bold text-white leading-none">{initials}</span>
                   </div>
-                  {lead.email && (
-                    <p className="text-[13px] text-slate-500 dark:text-slate-500 mt-1 truncate">{lead.email}</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold ${PRIORITY_STYLES[priority]}`}>
-                    {PRIORITY_LABELS[priority] ?? priority}
-                  </span>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-[21px] font-bold text-slate-900 dark:text-white truncate leading-tight">
+                        {lead.full_name || 'ליד ללא שם'}
+                      </h3>
+                      {onCompleteLead && lead.status !== 'Closed' && lead.status !== 'Disqualified' && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setCompleteLead(lead); }}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/25 text-emerald-500 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors shrink-0"
+                          title="סיום ליד"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                    {/* Badges row — stage + risk inline */}
+                    <div className="flex items-center gap-2 mt-1">
+                      {stageBadge && (
+                        <span className={`rounded-full px-3 py-1 text-[14px] font-semibold ${stageBadge.className}`}>
+                          {stageBadge.label}
+                        </span>
+                      )}
+                      {riskInfo && (
+                        <span className={`rounded-full px-3 py-1 text-[14px] font-semibold ${
+                          riskInfo.color === 'text-red-500'
+                            ? 'bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400'
+                            : riskInfo.color === 'text-orange-500'
+                            ? 'bg-orange-50 text-orange-600 dark:bg-orange-950/30 dark:text-orange-400'
+                            : 'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400'
+                        }`}>
+                          {riskInfo.label}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
                   <input
                     type="checkbox"
                     checked={isSelected}
                     onChange={(e) => { e.stopPropagation(); toggleSelect(lead.id); }}
                     onClick={(e) => e.stopPropagation()}
-                    className="h-[18px] w-[18px] rounded border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-800 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
+                    className="h-4 w-4 rounded border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-800 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0 shrink-0"
                     aria-label="בחר ליד"
                   />
                 </div>
-              </div>
 
-              {/* מלבן סוג שירות — טיפול נקבע לתור (מובייל) */}
-              {lead.interest && (
-                <div className="mt-2.5 rounded-xl border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/60 dark:bg-indigo-950/30 px-3.5 py-2.5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-400 mb-1">
-                    טיפול נקבע לתור
-                  </p>
-                  <p className="text-[15px] font-medium text-slate-800 dark:text-slate-200 leading-snug">
-                    {lead.interest}
-                  </p>
+                {/* ── Row 2: Split info box — next appointment + last interaction ── */}
+                <div className="mt-3.5 grid grid-cols-2 gap-px rounded-xl overflow-hidden border border-slate-100/70 dark:border-slate-800/40">
+                  <div className={`px-4 py-3 ${
+                    nextAppt ? 'bg-emerald-50/60 dark:bg-emerald-950/20' : 'bg-slate-50/80 dark:bg-slate-800/30'
+                  }`}>
+                    <p className="text-[14px] font-semibold text-slate-500 dark:text-slate-400 mb-1">התור הבא</p>
+                    {nextAppt ? (() => {
+                      const parts = getAppointmentParts(nextAppt);
+                      if (!parts) return <span className="text-[14px] text-slate-400">—</span>;
+                      return (
+                        <button type="button"
+                          onClick={(e) => { e.stopPropagation(); goToCalendarForDate(nextAppt); }}
+                          className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                          {parts.urgent ? (
+                            <span className="inline-flex items-center rounded-md bg-red-500 px-3 py-1 text-[19px] font-black text-white leading-tight shadow-sm">
+                              {parts.label}
+                            </span>
+                          ) : (
+                            <span className="text-[18px] font-bold text-slate-900 dark:text-white leading-tight">
+                              {parts.label}
+                            </span>
+                          )}
+                          <span className="text-[21px] font-bold text-slate-900 dark:text-white tabular-nums leading-none">
+                            {parts.time}
+                          </span>
+                        </button>
+                      );
+                    })() : (
+                      <button type="button"
+                        onClick={(e) => { e.stopPropagation(); onScheduleAppointment(lead); }}
+                        className="inline-flex flex-row-reverse items-center gap-1 text-[17px] font-semibold text-slate-400 dark:text-slate-500 hover:text-indigo-500 transition-colors">
+                        <Plus className="h-4 w-4" />
+                        קבע תור
+                      </button>
+                    )}
+                  </div>
+                  <div className="px-4 py-3 bg-slate-50/80 dark:bg-slate-800/30">
+                    <p className="text-[14px] font-semibold text-slate-500 dark:text-slate-400 mb-1">אינטראקציה אחרונה</p>
+                    <p className="text-[18px] font-bold text-slate-700 dark:text-slate-300 leading-tight">
+                      {lead.last_contact_date
+                        ? `${formatHebrewShortDate(lead.last_contact_date)}${lead.interest ? ` (${lead.interest})` : ''}`
+                        : lead.interest || '—'
+                      }
+                    </p>
+                  </div>
                 </div>
-              )}
 
-              {/* Middle row: status + value (+ button for value when 0) + date */}
-              <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px]">
-                <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-semibold ${STATUS_BADGE_STYLES[lead.status ?? 'Pending'] ?? STATUS_BADGE_STYLES['Pending']}`}>
-                  {STATUS_LABELS[lead.status ?? 'Pending'] ?? lead.status ?? STATUS_LABELS.Pending}
-                </span>
-                {(lead.estimated_deal_value ?? 0) > 0 ? (
-                  <span className="tabular-nums text-slate-700 dark:text-slate-300 font-medium">
-                    {formatCurrencyILS(lead.estimated_deal_value!)}
-                  </span>
-                ) : onUpdateDealValue ? (
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setDealValueLeadId(lead.id); setDealValueServiceKey(''); setDealValueInput(''); }}
-                    title="הוסף שווי"
-                    aria-label="הוסף שווי"
-                    className="inline-flex items-center justify-center rounded-lg border border-emerald-200 dark:border-emerald-700/40 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
-                  >
-                    <Plus className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
-                  </button>
-                ) : null}
-                {lead.last_contact_date && (
-                  <span className="tabular-nums text-slate-500 dark:text-slate-400">
-                    {formatDateDDMMYYYY(lead.last_contact_date)}
-                  </span>
-                )}
-                {lead.source && SOURCE_LABELS[lead.source] && (
-                  <span className="text-slate-500 dark:text-slate-400">{SOURCE_LABELS[lead.source]}</span>
-                )}
-              </div>
+                {/* ── Row 3: Actions (start) + metadata (end) ── */}
+                <div className="mt-3 flex items-center" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-1.5">
+                    {lead.phone && (
+                      <a href={`tel:${lead.phone}`}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-sm"
+                        title="התקשר">
+                        <Phone className="h-4 w-4 shrink-0" />
+                      </a>
+                    )}
+                    {lead.phone && (
+                      <a href={toWaHref(lead.phone)} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
+                        title="WhatsApp">
+                        <WhatsAppIcon className="h-4 w-4 shrink-0" />
+                      </a>
+                    )}
+                  </div>
 
-              {/* Bottom row: actions — on mobile, icons ~10% larger */}
-              <div className="mt-3 flex items-center gap-2 border-t border-slate-100 dark:border-slate-800 pt-3" onClick={(e) => e.stopPropagation()}>
-                {lead.phone && (
-                  <a href={`tel:${lead.phone}`}
-                    className="inline-flex h-10 w-10 min-w-[2.5rem] min-h-[2.5rem] items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors">
-                    <Phone className="h-[18px] w-[18px] shrink-0" />
-                  </a>
+                  <div className="flex-1" />
+
+                  <div className="flex items-center gap-5 text-[15px]">
+                    {(() => {
+                      const svcColor = lead.interest
+                        ? pricingServices.find((s) => s.service_name === lead.interest)?.color ?? null
+                        : null;
+                      return (
+                        <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-200">
+                          <span className="text-slate-500 dark:text-slate-400 font-semibold">טיפול</span>
+                          <span
+                            className={svcColor ? 'h-1.5 w-1.5 rounded-full shrink-0' : 'h-1.5 w-1.5 rounded-full bg-slate-900 dark:bg-white shrink-0'}
+                            style={svcColor ? { backgroundColor: svcColor } : undefined}
+                          />
+                          <span className="font-bold" style={svcColor ? { color: svcColor } : undefined}>
+                            {lead.interest || '—'}
+                          </span>
+                        </span>
+                      );
+                    })()}
+                    <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-200">
+                      <span className="text-slate-500 dark:text-slate-400 font-semibold">תשלום</span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-slate-900 dark:bg-white shrink-0" />
+                      {(lead.estimated_deal_value ?? 0) > 0 ? (
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                          {formatCurrencyILS(lead.estimated_deal_value!)}
+                        </span>
+                      ) : (
+                        <span className="font-bold text-red-500 dark:text-red-400">יתרה פתוחה</span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                {isDisqualifiedView && (lead.reject_reason || lead.rejected_at) && (
+                  <div className="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800/50 flex items-center gap-3 text-[12px] text-slate-400">
+                    {lead.reject_reason && <span>סיבה: {lead.reject_reason}</span>}
+                    {lead.rejected_at && <span className="tabular-nums">בוטל: {formatDateTime(lead.rejected_at)}</span>}
+                  </div>
                 )}
-                {lead.phone && (
-                  <a href={toWaHref(lead.phone)} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex h-10 w-10 min-w-[2.5rem] min-h-[2.5rem] items-center justify-center rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors">
-                    <WhatsAppIcon className="h-[18px] w-[18px] shrink-0" />
-                  </a>
-                )}
-                <ActionIconButton size="lg" icon={CalendarIcon} label="קבע תור" variant="view" onClick={() => onScheduleAppointment(lead)} />
-                <ActionIconButton size="lg" icon={Pencil} label="עריכה" variant="edit" onClick={() => onEdit(lead)} />
-                {onCompleteLead && lead.status !== 'Closed' && lead.status !== 'Disqualified' && (
-                  <ActionIconButton size="lg" icon={CheckCircle} label="סיום טיפול" variant="complete" onClick={() => setCompleteLead(lead)} />
-                )}
-                <div className="flex-1" />
-                <ActionIconButton size="lg" icon={Trash2} label="מחיקה" variant="delete" onClick={() => onDelete(lead)} />
               </div>
             </div>
           );
         })}
+
+        {/* Empty state */}
         {filteredAndSorted.length === 0 && (
-          <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-12 text-center">
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">אין לידים התואמים את הסינון.</p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">נסה לשנות חיפוש או סינון, או הוסף ליד חדש.</p>
+          <div className="rounded-2xl bg-white dark:bg-slate-900/80 px-6 py-16 text-center shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)]">
+            <p className="text-[14px] font-medium text-slate-700 dark:text-slate-300">אין לידים התואמים את הסינון.</p>
+            <p className="mt-1 text-[12px] text-slate-500 dark:text-slate-500">נסה לשנות חיפוש או סינון, או הוסף ליד חדש.</p>
           </div>
         )}
       </div>
 
-      {/* ── Desktop Table ──────────────────────────────────────────────── */}
-      <div className="hidden md:block w-full overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] bg-white dark:bg-slate-900">
-        <div className="overflow-x-auto overflow-y-visible" dir="rtl">
-          <table className="min-w-full border-collapse">
-            <thead>
-              <tr className="sticky top-0 z-10 border-b border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/50 text-right">
-                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right">איש קשר</th>
-                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right">עדיפות</th>
-                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right">שווי</th>
-                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right">סטטוס</th>
-                <th className="hidden lg:table-cell px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right">מקור</th>
-                <th className="hidden lg:table-cell px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right">תאריך</th>
-                <th className="hidden xl:table-cell px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right">מעקב הבא</th>
-                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right">תור הבא</th>
-                {isDisqualifiedView && (
-                  <>
-                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right">סיבת הסרה</th>
-                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right">הוסר בתאריך</th>
-                  </>
-                )}
-                <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 text-right w-[1%]">פעולות</th>
-                <th className="w-10 px-4 py-3 text-right">
-                  <input
-                    type="checkbox"
-                    checked={filteredAndSorted.length > 0 && selectedIds.size === filteredAndSorted.length}
-                    onChange={toggleSelectAll}
-                    className="h-4 w-4 rounded border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-800 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
-                    aria-label="בחר הכל"
-                  />
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAndSorted.map((lead) => {
-                const priority = getDisplayPriority(lead);
-                const urgent = isUrgent(lead);
-                const isRemoving = removingIds.has(lead.id);
-                const isSelected = selectedIds.has(lead.id);
-                const accentBorder = isSelected
-                  ? 'border-s-2 border-s-indigo-500/60'
-                  : urgent
-                    ? 'border-s-2 border-s-red-500/50'
-                    : 'border-s-2 border-s-transparent group-hover:border-s-slate-300 dark:group-hover:border-s-slate-600/50';
-                return (
-                  <tr
-                    key={lead.id}
-                    onClick={() => onView(lead)}
-                    className={[
-                      'group relative border-b border-slate-100 dark:border-slate-800 transition-colors duration-200',
-                      'hover:bg-slate-50/80 dark:hover:bg-slate-800/40',
-                      'cursor-pointer',
-                      isRemoving ? 'opacity-0 scale-y-95 pointer-events-none' : 'opacity-100',
-                      isSelected
-                        ? 'bg-indigo-50/80 dark:bg-indigo-950/25 hover:bg-indigo-50 dark:hover:bg-indigo-950/30'
-                        : urgent
-                          ? 'bg-red-50/50 dark:bg-red-950/10 hover:bg-red-50/70 dark:hover:bg-red-950/20'
-                          : '',
-                    ].join(' ')}
-                  >
-                    <td className={`px-4 py-3 ${accentBorder} transition-[border-color] duration-150 relative`}>
-                      {hasFinePointer && (
-                        <div
-                          draggable
-                          onDragStart={(e) => {
-                            e.stopPropagation();
-                            e.dataTransfer.effectAllowed = 'move';
-                            e.dataTransfer.setData('text/plain', lead.id);
-                            setDraggingLead(lead);
-                          }}
-                          onDragEnd={() => { setDraggingLead(null); setTrashHover(false); }}
-                          onClick={(e) => e.stopPropagation()}
-                          className="absolute start-1 top-1/2 -translate-y-1/2 sm:opacity-0 sm:group-hover:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing p-1 rounded transition-opacity duration-150 z-10"
-                          title="גרור למחיקה"
-                        >
-                          <GripVertical className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2 flex-row-reverse justify-end">
-                        {onCompleteLead && lead.status !== 'Closed' && lead.status !== 'Disqualified' && (
-                          <ActionIconButton
-                            icon={CheckCircle}
-                            label="סיום טיפול"
-                            variant="complete"
-                            onClick={() => setCompleteLead(lead)}
-                          />
-                        )}
-                        {urgent && (
-                          <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-red-500/90" title="דורש טיפול דחוף" />
-                        )}
-                        <div className="min-w-0 text-right">
-                          <button
-                            type="button"
-                            onClick={() => onView(lead)}
-                            className="block text-right text-sm font-bold text-slate-900 hover:text-indigo-600 dark:text-slate-50 dark:hover:text-indigo-400 transition-colors duration-150"
-                          >
-                            {lead.full_name || 'ליד ללא שם'}
-                          </button>
-                          <p className="text-xs text-slate-500 dark:text-slate-500 mt-0.5 text-right">{lead.email || <span className="italic text-slate-400 dark:text-slate-500/80">אין אימייל</span>}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-right align-middle">
-                      <span className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold tracking-wide ${PRIORITY_STYLES[priority]}`}>
-                        {PRIORITY_LABELS[priority] ?? priority}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right text-sm tabular-nums text-slate-700 dark:text-slate-300 align-middle">
-                      {(lead.estimated_deal_value ?? 0) > 0 ? (
-                        formatCurrencyILS(lead.estimated_deal_value!)
-                      ) : onUpdateDealValue ? (
-                        <button
-                          type="button"
-                          onClick={() => { setDealValueLeadId(lead.id); setDealValueServiceKey(''); setDealValueInput(''); }}
-                          title="הוסף שווי"
-                          aria-label="הוסף שווי"
-                          className="inline-flex items-center justify-center rounded-lg border border-emerald-200 dark:border-emerald-700/40 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/30"
-                        >
-                          <Plus className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
-                        </button>
-                      ) : (
-                        <span className="text-xs italic text-slate-400 dark:text-slate-500/80">אין שווי</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2.5 text-right align-middle" onClick={e => e.stopPropagation()}>
-                      {lead.status === 'Pending' ? (
-                        <button type="button" onClick={() => setPendingReviewLead(lead)}
-                          className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[12px] font-semibold cursor-pointer transition-colors ${STATUS_BADGE_STYLES['Pending']}`}
-                          title="לחץ לסקירת הליד">
-                          {STATUS_LABELS.Pending}
-                        </button>
-                      ) : (
-                        <div className="relative">
-                          <button type="button"
-                            onClick={(e) => {
-                              if (statusDropdownId === lead.id) {
-                                setStatusDropdownId(null);
-                                setStatusDropdownPos(null);
-                              } else {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                setStatusDropdownPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
-                                setStatusDropdownId(lead.id);
-                              }
-                            }}
-                            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[12px] font-semibold cursor-pointer transition-colors ${STATUS_BADGE_STYLES[lead.status ?? 'Pending'] ?? STATUS_BADGE_STYLES['Pending']}`}>
-                            {STATUS_LABELS[lead.status ?? 'Pending'] ?? lead.status ?? STATUS_LABELS.Pending}
-                            <ChevronDown className="h-3 w-3 shrink-0 opacity-70" />
-                          </button>
-                          {statusDropdownId === lead.id && statusDropdownPos && createPortal(
-                            <div
-                              ref={statusDropdownRef}
-                              className="fixed z-[70] w-40 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-lg overflow-hidden py-1"
-                              style={{ top: statusDropdownPos.top, right: statusDropdownPos.right }}
-                              dir="rtl"
-                            >
-                              {STATUS_OPTIONS.map(s => {
-                                const dotColor: Record<string, string> = {
-                                  'Pending': 'bg-amber-400',
-                                  'Contacted': 'bg-sky-400',
-                                  'Appointment scheduled': 'bg-indigo-400',
-                                  'Closed': 'bg-emerald-400',
-                                  'Disqualified': 'bg-red-400',
-                                };
-                                return (
-                                  <button key={s} type="button"
-                                    onClick={() => { onStatusChange(lead.id, s); setStatusDropdownId(null); setStatusDropdownPos(null); }}
-                                    className={`w-full flex items-center gap-2 text-right px-3 py-2 text-[13px] transition-all duration-150 hover:bg-slate-50 dark:hover:bg-slate-800 hover:pe-4
-                                      ${(lead.status ?? 'Pending') === s ? 'font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/30' : 'text-slate-700 dark:text-slate-300'}`}>
-                                    <span className={`h-2 w-2 rounded-full shrink-0 ${dotColor[s] ?? 'bg-slate-400'}`} />
-                                    {STATUS_LABELS[s] ?? s}
-                                  </button>
-                                );
-                              })}
-                            </div>,
-                            document.body
-                          )}
-                        </div>
-                      )}
-                    </td>
-                    <td className="hidden lg:table-cell whitespace-nowrap px-4 py-3 text-xs text-slate-600 dark:text-slate-400 text-right align-middle">
-                      {(lead.source && SOURCE_LABELS[lead.source]) ? SOURCE_LABELS[lead.source] : (lead.source || <span className="italic text-slate-400 dark:text-slate-500/80">לא ידוע</span>)}
-                    </td>
-                    <td className="hidden lg:table-cell whitespace-nowrap px-4 py-3 text-xs tabular-nums text-slate-600 dark:text-slate-400 text-right align-middle">
-                      {lead.last_contact_date ? formatDateDDMMYYYY(lead.last_contact_date) : <span className="italic text-slate-400 dark:text-slate-500/80">עדיין לא נוצר קשר</span>}
-                    </td>
-                    <td className="hidden xl:table-cell whitespace-nowrap px-4 py-3 text-xs tabular-nums text-slate-600 dark:text-slate-400 text-right align-middle">
-                      {lead.next_follow_up_date ? formatDateDDMMYYYY(lead.next_follow_up_date) : <span className="italic text-slate-400 dark:text-slate-500/80">אין מעקב</span>}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-xs text-right align-middle">
-                      {nextAppointmentsByLeadId?.[lead.id] ? (
-                        <span className="tabular-nums text-slate-600 dark:text-slate-400">
-                          {new Intl.DateTimeFormat('he-IL', {
-                            timeZone: 'Asia/Jerusalem',
-                            day: '2-digit', month: '2-digit', year: 'numeric',
-                            hour: '2-digit', minute: '2-digit', hour12: false,
-                          }).format(new Date(nextAppointmentsByLeadId[lead.id]!))}
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); onScheduleAppointment(lead); }}
-                          title="קבע תור"
-                          aria-label="קבע תור"
-                          className="inline-flex items-center justify-center rounded-lg border border-emerald-200 dark:border-emerald-700/40 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400/30"
-                        >
-                          <Plus className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
-                        </button>
-                      )}
-                    </td>
-                    {isDisqualifiedView && (
-                      <>
-                        <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600 dark:text-slate-400 text-right align-middle">
-                          {lead.reject_reason ?? <span className="italic text-slate-400 dark:text-slate-500/80">לא צוינה סיבה</span>}
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-3 text-xs tabular-nums text-slate-600 dark:text-slate-400 text-right align-middle">
-                          {lead.rejected_at ? formatDateTime(lead.rejected_at) : <span className="italic text-slate-400 dark:text-slate-500/80">לא ידוע</span>}
-                        </td>
-                      </>
-                    )}
-                    <td className="relative px-3 py-2.5 align-middle" onClick={e => e.stopPropagation()}>
-                      <div className="flex items-center gap-0.5 flex-row-reverse justify-end sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150">
-                        {lead.phone && (
-                          <a href={`tel:${lead.phone}`}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400
-                              hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                            <Phone className="h-3.5 w-3.5" />
-                          </a>
-                        )}
-                        {lead.phone && (
-                          <a href={toWaHref(lead.phone)} target="_blank" rel="noopener noreferrer"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400
-                              hover:bg-green-50 dark:hover:bg-green-950/40 hover:text-green-600 dark:hover:text-green-400 transition-colors">
-                            <WhatsAppIcon className="h-3.5 w-3.5" />
-                          </a>
-                        )}
-                        <ActionIconButton icon={Pencil} label="עריכה" variant="edit" onClick={() => onEdit(lead)} />
-                        <ActionIconButton icon={Trash2} label="מחיקה" variant="delete" onClick={() => onDelete(lead)} />
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-right align-middle">
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleSelect(lead.id)}
-                        className="h-4 w-4 rounded border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-800 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0"
-                        aria-label="בחר ליד"
-                      />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {filteredAndSorted.length === 0 && (
-          <div className="px-6 py-16 text-center">
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">אין לידים התואמים את הסינון.</p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">נסה לשנות חיפוש או סינון, או הוסף ליד חדש.</p>
-          </div>
-        )}
-
-        {/* Trash drop zone — visible only while dragging a lead */}
-        <div
-          className={`flex items-center justify-center gap-2 py-3 border-t-2 border-dashed transition-all duration-200 ${
-            draggingLead
-              ? trashHover
-                ? 'opacity-100 border-red-500 dark:border-red-400 bg-red-100/90 dark:bg-red-950/70'
-                : 'opacity-100 border-red-400 dark:border-red-500 bg-red-50/90 dark:bg-red-950/50'
-              : 'opacity-0 h-0 py-0 overflow-hidden pointer-events-none border-transparent'
-          }`}
-          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setTrashHover(true); }}
-          onDragLeave={() => setTrashHover(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            if (draggingLead) {
-              const lead = draggingLead;
-              setPendingDeleteIds((prev) => new Set(prev).add(lead.id));
-              const timer = setTimeout(() => {
-                onDelete(lead);
-                setPendingDeleteIds((prev) => { const next = new Set(prev); next.delete(lead.id); return next; });
-                pendingDeleteRef.current.delete(lead.id);
-              }, 5000);
-              pendingDeleteRef.current.set(lead.id, timer);
-              toastApi.undo(`"${lead.full_name}" יימחק`, () => {
-                clearTimeout(timer);
-                pendingDeleteRef.current.delete(lead.id);
-                setPendingDeleteIds((prev) => { const next = new Set(prev); next.delete(lead.id); return next; });
-              });
-            }
-            setDraggingLead(null);
-            setTrashHover(false);
-          }}
-        >
-          <Trash2 className="h-4 w-4 text-red-500 dark:text-red-400" />
-          <span className="text-[13px] font-semibold text-red-600 dark:text-red-400">גרור לכאן למחיקה</span>
-        </div>
+      {/* ── Trash drop zone — visible only while dragging ──────────────── */}
+      <div
+        className={`flex items-center justify-center gap-2 rounded-2xl py-3 border-2 border-dashed transition-all duration-200 ${
+          draggingLead
+            ? trashHover
+              ? 'opacity-100 border-red-500 dark:border-red-400 bg-red-100/90 dark:bg-red-950/70'
+              : 'opacity-100 border-red-400 dark:border-red-500 bg-red-50/90 dark:bg-red-950/50'
+            : 'opacity-0 h-0 py-0 overflow-hidden pointer-events-none border-transparent'
+        }`}
+        onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setTrashHover(true); }}
+        onDragLeave={() => setTrashHover(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          if (draggingLead) {
+            const lead = draggingLead;
+            setPendingDeleteIds((prev) => new Set(prev).add(lead.id));
+            const timer = setTimeout(() => {
+              onDelete(lead);
+              setPendingDeleteIds((prev) => { const next = new Set(prev); next.delete(lead.id); return next; });
+              pendingDeleteRef.current.delete(lead.id);
+            }, 5000);
+            pendingDeleteRef.current.set(lead.id, timer);
+            toastApi.undo(`"${lead.full_name}" יימחק`, () => {
+              clearTimeout(timer);
+              pendingDeleteRef.current.delete(lead.id);
+              setPendingDeleteIds((prev) => { const next = new Set(prev); next.delete(lead.id); return next; });
+            });
+          }
+          setDraggingLead(null);
+          setTrashHover(false);
+        }}
+      >
+        <Trash2 className="h-4 w-4 text-red-500 dark:text-red-400" />
+        <span className="text-[13px] font-semibold text-red-600 dark:text-red-400">גרור לכאן למחיקה</span>
       </div>
 
-      {/* Pending Review Modal */}
+      {/* ── Pending Review Modal ──────────────────────────────────────── */}
       {pendingReviewLead && (
         <PendingReviewModal
           lead={pendingReviewLead}
@@ -771,7 +751,7 @@ export function LeadsTable({
         />
       )}
 
-      {/* Phone Contact Modal */}
+      {/* ── Phone Contact Modal ──────────────────────────────────────── */}
       {phoneModalPhone && (
         <PhoneContactModal
           phone={phoneModalPhone}
@@ -779,7 +759,7 @@ export function LeadsTable({
         />
       )}
 
-      {/* Complete Lead Modal */}
+      {/* ── Complete Lead Modal ──────────────────────────────────────── */}
       {completeLead && onCompleteLead && (
         <CompleteLeadModal
           lead={completeLead}
@@ -803,14 +783,14 @@ export function LeadsTable({
         />
       )}
 
-      {/* Deal Value Modal — בחירה מתמחור או הזנה ידנית */}
+      {/* ── Deal Value Modal ─────────────────────────────────────────── */}
       {dealValueLeadId && onUpdateDealValue && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" dir="rtl" role="dialog" aria-modal="true" aria-labelledby="deal-value-title">
           <div className="modal-enter w-full max-w-sm rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-xl p-5">
-            <h2 id="deal-value-title" className="text-base font-semibold text-slate-900 dark:text-slate-50 text-right mb-3">הוסף שווי (₪)</h2>
+            <h2 id="deal-value-title" className="text-[15px] font-semibold text-slate-900 dark:text-slate-50 text-right mb-3">הוסף שווי (₪)</h2>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 text-right mb-1.5">בחר סוג שירות או הזן ידנית</label>
+                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 text-right mb-1.5">בחר סוג שירות או הזן ידנית</label>
                 <GlassSelect
                   value={dealValueServiceKey}
                   onChange={(v) => setDealValueServiceKey(v)}
@@ -823,7 +803,7 @@ export function LeadsTable({
               </div>
               {dealValueServiceKey === DEAL_VALUE_OTHER && (
                 <div>
-                  <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 text-right mb-1.5">סכום (₪)</label>
+                  <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 text-right mb-1.5">סכום (₪)</label>
                   <input
                     type="number"
                     min={0}
@@ -831,7 +811,7 @@ export function LeadsTable({
                     value={dealValueInput}
                     onChange={(e) => setDealValueInput(e.target.value)}
                     placeholder="הזן סכום"
-                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-right text-sm text-slate-900 dark:text-slate-50 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 dark:focus:border-indigo-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 text-right text-[13px] text-slate-900 dark:text-slate-50 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 dark:focus:border-indigo-500"
                     dir="ltr"
                   />
                 </div>
@@ -842,7 +822,7 @@ export function LeadsTable({
                 type="button"
                 onClick={() => { setDealValueLeadId(null); setDealValueServiceKey(''); setDealValueInput(''); }}
                 disabled={dealValueSaving}
-                className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                className="px-4 py-2 text-[13px] font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
               >
                 ביטול
               </button>
@@ -865,7 +845,7 @@ export function LeadsTable({
                   setDealValueServiceKey('');
                   setDealValueInput('');
                 }}
-                className="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:pointer-events-none rounded-xl transition"
+                className="px-4 py-2 text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:pointer-events-none rounded-xl transition"
               >
                 {dealValueSaving ? 'שומר...' : 'שמור'}
               </button>

@@ -165,7 +165,7 @@ export async function POST(req: NextRequest) {
       // Update lead with appointment details
       if (resolvedLeadId) {
         await leadRepository.updateLead(resolvedLeadId, clinicId, {
-          status:            'Pending',
+          status:            'Appointment scheduled',
           last_contact_date: new Date().toISOString(),
           next_appointment:  result.appointment.datetime,
         });

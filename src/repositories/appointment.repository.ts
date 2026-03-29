@@ -206,3 +206,133 @@ export async function deleteAppointmentsByLeadId(
     .eq('clinic_id', clinicId);
   return { error: error ?? null };
 }
+
+// ─── Enriched Patient Queries ───────────────────────────────────────────────
+
+/** Next future scheduled appointment for a patient. Tries patient_id first; falls back to lead_id. */
+export async function getNextAppointmentForPatient(
+  clinicId: string,
+  patientId: string | null,
+  leadId: string | null,
+): Promise<{ datetime: string; service_name: string | null } | null> {
+  const supabase = getSupabaseAdminClient();
+
+  function buildQuery(key: 'patient_id' | 'lead_id', value: string) {
+    return supabase
+      .from('appointments')
+      .select('datetime, service_name')
+      .eq('clinic_id', clinicId)
+      .eq('status', 'scheduled')
+      .gt('datetime', new Date().toISOString())
+      .eq(key, value)
+      .order('datetime', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+  }
+
+  // Try patient_id first
+  if (patientId) {
+    const { data } = await buildQuery('patient_id', patientId);
+    if (data) return data as { datetime: string; service_name: string | null };
+  }
+  // Fallback to lead_id (appointments created before backfill)
+  if (leadId) {
+    const { data } = await buildQuery('lead_id', leadId);
+    if (data) return data as { datetime: string; service_name: string | null };
+  }
+  return null;
+}
+
+/** Appointment counts by status for a patient. Source for cancellation risk calculation.
+ *  Merges results from patient_id and lead_id to cover un-backfilled appointments. */
+export async function getAppointmentStatsForPatient(
+  clinicId: string,
+  patientId: string | null,
+  leadId: string | null,
+): Promise<{ total: number; completed: number; cancelled: number; noShow: number }> {
+  const empty = { total: 0, completed: 0, cancelled: 0, noShow: 0 };
+  const supabase = getSupabaseAdminClient();
+
+  // Collect appointment IDs to deduplicate across both queries
+  const seen = new Set<string>();
+  const allRows: { id: string; status: string }[] = [];
+
+  if (patientId) {
+    const { data } = await supabase
+      .from('appointments').select('id, status')
+      .eq('clinic_id', clinicId).eq('patient_id', patientId);
+    for (const r of (data ?? []) as { id: string; status: string }[]) {
+      seen.add(r.id);
+      allRows.push(r);
+    }
+  }
+  if (leadId) {
+    const { data } = await supabase
+      .from('appointments').select('id, status')
+      .eq('clinic_id', clinicId).eq('lead_id', leadId);
+    for (const r of (data ?? []) as { id: string; status: string }[]) {
+      if (!seen.has(r.id)) { seen.add(r.id); allRows.push(r); }
+    }
+  }
+
+  if (allRows.length === 0) return empty;
+  return {
+    total: allRows.length,
+    completed: allRows.filter((r) => r.status === 'completed').length,
+    cancelled: allRows.filter((r) => r.status === 'cancelled').length,
+    noShow: allRows.filter((r) => r.status === 'no_show').length,
+  };
+}
+
+/** Most frequent service_name from completed appointments (primary treatment).
+ *  Merges patient_id and lead_id results. */
+export async function getPrimaryTreatmentForPatient(
+  clinicId: string,
+  patientId: string | null,
+  leadId: string | null,
+): Promise<string | null> {
+  const supabase = getSupabaseAdminClient();
+  const seen = new Set<string>();
+  const allNames: string[] = [];
+
+  async function query(key: 'patient_id' | 'lead_id', value: string) {
+    const { data } = await supabase
+      .from('appointments').select('id, service_name')
+      .eq('clinic_id', clinicId).eq('status', 'completed')
+      .not('service_name', 'is', null).eq(key, value);
+    for (const r of (data ?? []) as { id: string; service_name: string }[]) {
+      if (!seen.has(r.id)) { seen.add(r.id); allNames.push(r.service_name); }
+    }
+  }
+
+  if (patientId) await query('patient_id', patientId);
+  if (leadId) await query('lead_id', leadId);
+  if (allNames.length === 0) return null;
+
+  const counts = new Map<string, number>();
+  for (const name of allNames) counts.set(name, (counts.get(name) ?? 0) + 1);
+  let best: string | null = null;
+  let bestCount = 0;
+  for (const [name, count] of counts) {
+    if (count > bestCount) { best = name; bestCount = count; }
+  }
+  return best;
+}
+
+/** Backfill patient_id on appointments that only have lead_id. Called during lead→patient conversion only. */
+export async function backfillPatientIdForLead(
+  clinicId: string,
+  leadId: string,
+  patientId: string,
+): Promise<{ count: number; error: unknown }> {
+  const supabase = getSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from('appointments')
+    .update({ patient_id: patientId })
+    .eq('clinic_id', clinicId)
+    .eq('lead_id', leadId)
+    .is('patient_id', null)
+    .select('id');
+  if (error) return { count: 0, error };
+  return { count: (data ?? []).length, error: null };
+}

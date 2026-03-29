@@ -229,6 +229,9 @@ export async function PUT(
     }
 
     if (patientId && patientCreated) {
+      // Backfill patient_id on older appointments that only had lead_id
+      await appointmentRepository.backfillPatientIdForLead(clinicId, leadId, patientId);
+
       // Duplicate protection: skip if a completed appointment already exists for this lead
       const { data: existingApts } = await appointmentRepository.getCompletedAppointmentsByLeadId(leadId, clinicId);
       if (!existingApts || existingApts.length === 0) {

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import { Plus } from 'lucide-react';
 import type { Lead, LeadStatus } from '../../types/leads';
 import type { Appointment } from '@/types/appointments';
 import { LeadsKpiCards } from '../../components/dashboard/LeadsKpiCards';
@@ -47,19 +48,19 @@ export default function DashboardClient() {
 
   const [appointmentLead, setAppointmentLead] = useState<Lead | null>(null);
   const [nextAppointmentsByLeadId, setNextAppointmentsByLeadId] = useState<Record<string, string>>({});
-  const [pricingServices, setPricingServices] = useState<{ service_name: string; price: number }[]>([]);
+  const [pricingServices, setPricingServices] = useState<{ service_name: string; price: number; color?: string | null }[]>([]);
 
   const fetchLeads = async (effectiveClinicId?: string | null) => {
     const url = effectiveClinicId ? `/api/leads?clinic_id=${encodeURIComponent(effectiveClinicId)}` : '/api/leads';
     const res = await fetch(url, { credentials: 'include' });
     const json = await res.json().catch(() => ({})) as { leads?: Lead[]; error?: string };
     if (!res.ok) {
-      setError(json.error ?? 'טעינת לידים נכשלה');
+      setError(json.error ?? '\u05D8\u05E2\u05D9\u05E0\u05EA \u05DC\u05D9\u05D3\u05D9\u05DD \u05E0\u05DB\u05E9\u05DC\u05D4');
       setLeads([]);
     } else {
       setLeads(json.leads ?? []);
       if (json.error === 'Clinic not set for user') {
-        setError('אין עסק מקושר לחשבון. פנה למנהל לשיוך.');
+        setError('\u05D0\u05D9\u05DF \u05E2\u05E1\u05E7 \u05DE\u05E7\u05D5\u05E9\u05E8 \u05DC\u05D7\u05E9\u05D1\u05D5\u05DF. \u05E4\u05E0\u05D4 \u05DC\u05DE\u05E0\u05D4\u05DC \u05DC\u05E9\u05D9\u05D5\u05DA.');
       } else {
         setError(null);
       }
@@ -69,7 +70,7 @@ export default function DashboardClient() {
   const fetchPricingServices = async () => {
     const res = await fetch('/api/clinic-services', { credentials: 'include' });
     const json = await res.json().catch(() => ({})) as {
-      services?: { service_name: string; price?: number; is_active?: boolean }[];
+      services?: { service_name: string; price?: number; is_active?: boolean; color?: string | null }[];
     };
     if (res.ok && Array.isArray(json.services)) {
       const list = json.services
@@ -77,6 +78,7 @@ export default function DashboardClient() {
         .map((s) => ({
           service_name: (s.service_name ?? '').trim(),
           price: typeof s.price === 'number' && !Number.isNaN(s.price) ? s.price : 0,
+          color: s.color ?? null,
         }))
         .filter((s) => s.service_name);
       setPricingServices(list);
@@ -238,7 +240,7 @@ export default function DashboardClient() {
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({
-            patient_name: lead.full_name ?? 'ליד',
+            patient_name: lead.full_name ?? '\u05DC\u05D9\u05D3',
             datetime,
             type: 'new',
             lead_id: lead.id,
@@ -339,7 +341,7 @@ export default function DashboardClient() {
     });
     if (!res.ok) {
       const json = await res.json().catch(() => ({}));
-      return (json as { error?: string }).error ?? 'עדכון נכשל';
+      return (json as { error?: string }).error ?? '\u05E2\u05D3\u05DB\u05D5\u05DF \u05E0\u05DB\u05E9\u05DC';
     }
     setLeads((prev) =>
       prev.map((l) => (l.id === leadId ? { ...l, estimated_deal_value: value } : l))
@@ -388,7 +390,7 @@ export default function DashboardClient() {
       warning?: string;
     };
     if (!res.ok) {
-      return json.error ?? 'עדכון נכשל';
+      return json.error ?? '\u05E2\u05D3\u05DB\u05D5\u05DF \u05E0\u05DB\u05E9\u05DC';
     }
     if (json.existingPatient === true && json.patient && !opts?.forceUpdate && !opts?.createNewAnyway) {
       setExistingPatientPending({
@@ -516,106 +518,129 @@ export default function DashboardClient() {
     setEditLead(lead);
   }, []);
 
+  // ─── Premium skeleton loading ─────────────────────────────────────────────
+  const loadingSkeleton = (
+    <div className="space-y-3">
+      <div className="flex items-stretch rounded-2xl bg-white dark:bg-slate-900 overflow-hidden h-16">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className={`flex-1 flex flex-col items-center justify-center gap-1.5 ${i > 0 ? 'border-s border-slate-100 dark:border-slate-800' : ''}`}>
+            <div className="h-5 w-10 rounded animate-pulse bg-slate-100 dark:bg-slate-800/60" />
+            <div className="h-2.5 w-14 rounded animate-pulse bg-slate-50 dark:bg-slate-800/40" />
+          </div>
+        ))}
+      </div>
+      <div className="rounded-2xl bg-white dark:bg-slate-900 p-2.5 h-11" />
+      <div className="space-y-2.5">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="rounded-2xl bg-white dark:bg-slate-900 overflow-hidden">
+            <div className="h-[3px] w-full bg-slate-100 dark:bg-slate-800" />
+            <div className="p-4 space-y-3">
+              <div className="flex items-center gap-3 flex-row-reverse">
+                <div className="h-11 w-11 rounded-xl animate-pulse bg-slate-100 dark:bg-slate-800/60" />
+                <div className="flex-1 space-y-2"><div className="h-4 w-28 rounded animate-pulse bg-slate-100 dark:bg-slate-800/60" /><div className="h-3 w-20 rounded animate-pulse bg-slate-50 dark:bg-slate-800/40" /></div>
+                <div className="h-5 w-14 rounded-full animate-pulse bg-slate-100 dark:bg-slate-800/60" />
+              </div>
+              <div className="grid grid-cols-2 gap-px rounded-xl overflow-hidden"><div className="h-[52px] bg-slate-50/80 dark:bg-slate-800/30" /><div className="h-[52px] bg-slate-50/80 dark:bg-slate-800/30" /></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const detailPanelSkeleton = (
+    <div className="flex h-full flex-col items-center justify-center text-center px-8">
+      <div className="h-16 w-16 rounded-2xl animate-pulse bg-slate-100 dark:bg-slate-800/60 mb-4" />
+      <div className="h-4 w-28 rounded animate-pulse bg-slate-100 dark:bg-slate-800/60 mb-2" />
+      <div className="h-3 w-20 rounded animate-pulse bg-slate-50 dark:bg-slate-800/40" />
+    </div>
+  );
+
+  // ─── Main feed content ────────────────────────────────────────────────────
+  const mainFeedContent = (
+    <div className="px-3 pt-1 pb-3 lg:px-5 lg:pt-1 lg:pb-4">
+      {error && (
+        <div className="mb-3 rounded-xl bg-red-50/90 dark:bg-red-950/40 px-4 py-2.5 text-[12px] text-red-600 dark:text-red-400">
+          {error}
+        </div>
+      )}
+
+      {loading && loadingSkeleton}
+
+      {!loading && !error && leads.length === 0 && (
+        <LeadsEmptyState onAddLead={() => setShowNewLeadForm(true)} />
+      )}
+
+      {/* KPI → Filter → Feed — tight vertical rhythm */}
+      {!loading && !error && leads.length > 0 && (
+        <div className="space-y-1">
+          <LeadsKpiCards leads={leads} />
+          <LeadsTable
+            leads={leads}
+            onView={handleViewLead}
+            onEdit={handleOpenEdit}
+            onDelete={handleOpenDelete}
+            onStatusChange={handleUpdateLeadStatus}
+            onAcceptPendingLead={handleAcceptPendingLead}
+            onMarkContacted={handleMarkContacted}
+            onScheduleFollowUp={handleScheduleFollowUp}
+            onScheduleAppointment={handleOpenAppointment}
+            onUpdateDealValue={handleUpdateDealValue}
+            onCompleteLead={handleCompleteLead}
+            pricingServices={pricingServices}
+            nextAppointmentsByLeadId={nextAppointmentsByLeadId}
+            onRejectLead={handleRejectLead}
+            selectedLeadId={drawerLead?.id}
+            onNewLead={() => setShowNewLeadForm(true)}
+          />
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <>
-      <div dir="rtl">
-        {/* Table panel */}
-        <div>
+      {/* ── 3-zone RTL layout — negative margin cancels layout wrapper padding ── */}
+      <div dir="rtl" className="flex h-[calc(100dvh-60px)] lg:h-dvh overflow-hidden -mx-4 -mt-5 md:-mx-8 md:-mt-8">
+        {/* Main feed area (center) */}
+        <div className="flex-1 overflow-y-auto bg-[#FAFAF9] dark:bg-slate-950 scrollbar-none" style={{ scrollbarWidth: 'none' }}>
+          {mainFeedContent}
+        </div>
 
-          {!loading && !error && leads.length > 0 && (
-            <div className="mb-8">
-              <LeadsKpiCards leads={leads} />
-            </div>
-          )}
-
-          {error && (
-            <div className="mb-6 rounded-2xl border border-red-200/80 dark:border-red-900/60 bg-red-50/90 dark:bg-red-950/40 px-4 py-3 text-sm text-red-700 dark:text-red-400">
-              {error}
-            </div>
-          )}
-
-          {loading && (
-            <div className="space-y-6 py-4">
-              {/* KPI skeletons */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-3">
-                    <div className="h-10 w-10 rounded-full animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />
-                    <div className="h-7 w-20 rounded-lg animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />
-                    <div className="h-4 w-28 rounded-lg animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />
-                  </div>
-                ))}
-              </div>
-              {/* Table skeleton */}
-              <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
-                <div className="flex gap-4 px-4 py-3 bg-slate-50/70 dark:bg-slate-800/50">
-                  {['w-28','w-20','w-24','w-16'].map((w, i) => (
-                    <div key={i} className={`h-3 rounded-lg animate-pulse bg-slate-200/70 dark:bg-slate-800/60 ${w}`} />
-                  ))}
-                </div>
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="flex gap-4 px-4 py-3.5 border-t border-slate-100 dark:border-slate-800">
-                    {['w-32','w-24','w-28','w-20'].map((w, j) => (
-                      <div key={j} className={`h-4 rounded-lg animate-pulse bg-slate-200/70 dark:bg-slate-800/60 ${w}`} />
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {!loading && !error && leads.length === 0 && (
-            <LeadsEmptyState onAddLead={() => setShowNewLeadForm(true)} />
-          )}
-
-          {!loading && !error && leads.length > 0 && (
-            <LeadsTable
-              leads={leads}
-              onView={handleViewLead}
-              onEdit={handleOpenEdit}
-              onDelete={handleOpenDelete}
+        {/* Detail panel — desktop only */}
+        <div className="hidden lg:flex w-[380px] shrink-0 border-s border-slate-100/60 dark:border-slate-800/40 bg-white dark:bg-slate-900 flex-col overflow-hidden">
+          {loading ? (
+            detailPanelSkeleton
+          ) : (
+            <LeadDetailDrawer
+              lead={drawerLead}
+              open={!!drawerLead}
+              onClose={handleCloseDrawer}
               onStatusChange={handleUpdateLeadStatus}
-              onAcceptPendingLead={handleAcceptPendingLead}
               onMarkContacted={handleMarkContacted}
               onScheduleFollowUp={handleScheduleFollowUp}
-              onScheduleAppointment={handleOpenAppointment}
-              onUpdateDealValue={handleUpdateDealValue}
-              onCompleteLead={handleCompleteLead}
-              pricingServices={pricingServices}
-              nextAppointmentsByLeadId={nextAppointmentsByLeadId}
-              onRejectLead={handleRejectLead}
-              toolbarStartContent={
-                <>
-                  <div className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 card-shadow flex-row-reverse">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                    {leads.length} לידים במעקב
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowNewLeadForm(true)}
-                    className="inline-flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 active:scale-[0.98]"
-                  >
-                    ליד חדש +
-                  </button>
-                </>
-              }
+              onEdit={handleEditFromDrawer}
+              appointmentDate={drawerLead ? nextAppointmentsByLeadId[drawerLead.id] : undefined}
+              mode="inline"
             />
           )}
         </div>
       </div>
 
-      {/* Lead detail overlay drawer */}
-      <LeadDetailDrawer
-        lead={drawerLead}
-        open={!!drawerLead}
-        onClose={handleCloseDrawer}
-        onStatusChange={handleUpdateLeadStatus}
-        onMarkContacted={handleMarkContacted}
-        onScheduleFollowUp={handleScheduleFollowUp}
-        onEdit={handleEditFromDrawer}
-        appointmentDate={drawerLead ? nextAppointmentsByLeadId[drawerLead.id] : undefined}
-        mode="overlay"
-      />
+      {/* Lead detail overlay drawer — mobile/tablet only */}
+      {!isLargeScreen && (
+        <LeadDetailDrawer
+          lead={drawerLead}
+          open={!!drawerLead}
+          onClose={handleCloseDrawer}
+          onStatusChange={handleUpdateLeadStatus}
+          onMarkContacted={handleMarkContacted}
+          onScheduleFollowUp={handleScheduleFollowUp}
+          onEdit={handleEditFromDrawer}
+          appointmentDate={drawerLead ? nextAppointmentsByLeadId[drawerLead.id] : undefined}
+          mode="overlay"
+        />
+      )}
 
       {/* New lead drawer */}
       <NewLeadDrawer
@@ -656,28 +681,28 @@ export default function DashboardClient() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="לקוח קיים">
           <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setExistingPatientPending(null)} aria-hidden="true" />
           <div className="modal-enter relative w-full max-w-sm rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-5 shadow-xl text-right" dir="rtl">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-50">לקוח קיים נמצא</h2>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">לעדכן לקוח קיים או ליצור רשומה חדשה?</p>
-            <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">{existingPatientPending.patient.full_name} · {existingPatientPending.patient.phone}</p>
+            <h2 className="text-[15px] font-semibold text-slate-900 dark:text-slate-50">לקוח קיים נמצא</h2>
+            <p className="mt-2 text-[13px] text-slate-500 dark:text-slate-400">לעדכן לקוח קיים או ליצור רשומה חדשה?</p>
+            <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">{existingPatientPending.patient.full_name} · {existingPatientPending.patient.phone}</p>
             <div className="mt-4 flex gap-2 justify-start">
               <button
                 type="button"
                 onClick={() => resolveExistingPatient(true)}
-                className="rounded-xl bg-slate-900 dark:bg-slate-100 px-4 py-2 text-sm font-semibold text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-white"
+                className="rounded-xl bg-slate-900 dark:bg-slate-100 px-4 py-2 text-[13px] font-semibold text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-white"
               >
                 עדכן לקוח קיים
               </button>
               <button
                 type="button"
                 onClick={() => resolveExistingPatient(false)}
-                className="rounded-xl border border-slate-200 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                className="rounded-xl border border-slate-200 dark:border-slate-600 px-4 py-2 text-[13px] font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
                 צור רשומה חדשה
               </button>
               <button
                 type="button"
                 onClick={() => setExistingPatientPending(null)}
-                className="rounded-xl border border-slate-200 dark:border-slate-600 px-4 py-2 text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                className="rounded-xl border border-slate-200 dark:border-slate-600 px-4 py-2 text-[13px] text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
                 ביטול
               </button>

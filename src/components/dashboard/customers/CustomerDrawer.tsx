@@ -6,6 +6,7 @@ import { useEscapeKey } from '@/hooks/useEscapeKey';
 import {
   X, Phone, Calendar, MessageCircle, Archive, FileText,
   Bell, BellRing, Sparkles, Clock, TrendingUp, ReceiptText,
+  AlertTriangle, CreditCard, Stethoscope, CalendarClock,
 } from 'lucide-react';
 import type { Patient } from '@/types/patients';
 import type { CompletedAppointmentRow } from '@/repositories/appointment.repository';
@@ -15,14 +16,29 @@ import { DOC_TYPE_LABELS } from '@/types/billing';
 import { DocumentDrawer } from '@/components/billing/DocumentDrawer';
 import { CreateDocumentModal } from '@/components/billing/CreateDocumentModal';
 import {
-  type RecallEntry,
   getStatusBadgeStyle,
   getAvatarColor,
   getInitials,
   formatDate,
   daysSince,
   getValuePatient,
+  getCancellationRiskBadge,
+  getPaymentStatusBadge,
 } from './customers-helpers';
+import type { CancellationRisk, PaymentStatusValue } from './customers-helpers';
+
+// ─── Enriched data type (from API) ───────────────────────────────────────────
+
+type EnrichedData = {
+  nextAppointment: { datetime: string; service_name: string | null } | null;
+  timeToAppointment: string | null;
+  lastInteraction: string | null;
+  cancellationRisk: CancellationRisk;
+  paymentStatus: PaymentStatusValue;
+  outstandingBalance: number;
+  primaryTreatment: string | null;
+  appointmentStats: { total: number; completed: number; cancelled: number; noShow: number };
+};
 
 // ─── Suggested actions ────────────────────────────────────────────────────────
 
@@ -55,15 +71,14 @@ function computeSuggestions(customer: Patient | null, allCustomers: Patient[]): 
 // ─── Customer Drawer ──────────────────────────────────────────────────────────
 
 export function CustomerDrawer({
-  customer, appointments, loading, allCustomers,
-  recall, onRecallChange, onClose, onSchedule, onDelete,
+  customer, appointments, enriched, loading, allCustomers,
+  onClose, onSchedule, onDelete,
 }: {
   customer: Patient | null;
   appointments: CompletedAppointmentRow[];
+  enriched: EnrichedData | null;
   loading: boolean;
   allCustomers: Patient[];
-  recall: RecallEntry;
-  onRecallChange: (r: RecallEntry) => void;
   onClose: () => void;
   onSchedule: () => void;
   onDelete: () => void;
@@ -87,7 +102,29 @@ export function CustomerDrawer({
   const statusBadge = customer ? getStatusBadgeStyle(customer.status) : null;
   const avatarColor = customer ? getAvatarColor(customer.id) : 'bg-slate-400';
   const initials = getInitials(customer?.full_name);
-  const daysAgo = daysSince(customer?.last_visit_date ?? null);
+
+  // Recall — persisted via PATCH /api/customers/[id]
+  const [recallActive, setRecallActive] = useState(false);
+  const [recallDate, setRecallDate] = useState('');
+  useEffect(() => {
+    if (!customer) return;
+    setRecallActive(customer.recall_active ?? false);
+    setRecallDate(customer.recall_date ? new Date(customer.recall_date).toISOString().slice(0, 10) : '');
+  }, [customer]);
+
+  const persistRecall = useCallback(async (active: boolean, date: string) => {
+    if (!customer) return;
+    setRecallActive(active);
+    setRecallDate(date);
+    await fetch(`/api/customers/${customer.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recall_active: active,
+        recall_date: date ? new Date(date).toISOString() : null,
+      }),
+    });
+  }, [customer]);
 
   // Billing state
   const [billingDocs, setBillingDocs] = useState<BillingDocumentWithItems[]>([]);
@@ -167,6 +204,14 @@ export function CustomerDrawer({
     slate:   'bg-slate-50 border-slate-200/70 text-slate-600 dark:bg-slate-800/60 dark:border-slate-700/60 dark:text-slate-300',
   };
 
+  // Enriched badge data
+  const riskBadge = enriched ? getCancellationRiskBadge(enriched.cancellationRisk) : null;
+  const paymentBadge = enriched ? getPaymentStatusBadge(enriched.paymentStatus) : null;
+
+  // Last interaction: prefer enriched, fallback to patient.last_visit_date
+  const lastInteractionDate = enriched?.lastInteraction ?? customer?.last_visit_date ?? null;
+  const lastInteractionDays = daysSince(lastInteractionDate);
+
   return (
     <>
       <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm touch-none" onClick={onClose} aria-hidden="true" />
@@ -190,11 +235,19 @@ export function CustomerDrawer({
             </div>
             <div>
               <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50 leading-tight">{customer?.full_name ?? '...'}</h2>
-              {statusBadge && (
-                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium mt-0.5 ${statusBadge.cls}`}>
-                  {statusBadge.label}
-                </span>
-              )}
+              <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                {statusBadge && (
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${statusBadge.cls}`}>
+                    {statusBadge.label}
+                  </span>
+                )}
+                {riskBadge && enriched?.cancellationRisk !== 'low' && (
+                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${riskBadge.cls}`}>
+                    <AlertTriangle className="h-3 w-3" />
+                    סיכון {riskBadge.label}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <button type="button" onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition" aria-label="סגור">
@@ -210,7 +263,34 @@ export function CustomerDrawer({
             </div>
           ) : customer ? (
             <>
-              {/* Contact info */}
+              {/* Next Appointment Banner */}
+              {enriched?.nextAppointment ? (
+                <section className="rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200/60 dark:border-indigo-800/40 p-4">
+                  <div className="flex items-center gap-2.5">
+                    <CalendarClock className="h-5 w-5 text-indigo-500 shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-200">
+                        תור קרוב: {formatDate(enriched.nextAppointment.datetime)}
+                        {enriched.timeToAppointment && (
+                          <span className="font-normal text-indigo-600 dark:text-indigo-400"> · {enriched.timeToAppointment}</span>
+                        )}
+                      </p>
+                      {enriched.nextAppointment.service_name && (
+                        <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-0.5">{enriched.nextAppointment.service_name}</p>
+                      )}
+                    </div>
+                  </div>
+                </section>
+              ) : (
+                <section className="rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/40 p-3">
+                  <div className="flex items-center gap-2.5">
+                    <CalendarClock className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
+                    <p className="text-sm text-slate-500 dark:text-slate-400">אין תורים קרובים</p>
+                  </div>
+                </section>
+              )}
+
+              {/* Contact info + enriched metadata */}
               <section>
                 <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] mb-2">פרטי קשר</p>
                 <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 divide-y divide-slate-100 dark:divide-slate-800">
@@ -220,30 +300,55 @@ export function CustomerDrawer({
                       {formatPhoneILS(customer.phone)}
                     </a>
                   </div>
-                  {daysAgo !== null && (
+                  {lastInteractionDays !== null && (
                     <div className="flex items-center gap-3 px-4 py-3">
                       <Clock className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
                       <span className="text-sm text-slate-600 dark:text-slate-300">
-                        ביקור אחרון לפני <span className="font-semibold">{daysAgo}</span> ימים
+                        אינטראקציה אחרונה לפני <span className="font-semibold">{lastInteractionDays}</span> ימים
+                      </span>
+                    </div>
+                  )}
+                  {enriched?.primaryTreatment && (
+                    <div className="flex items-center gap-3 px-4 py-3">
+                      <Stethoscope className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
+                      <span className="text-sm text-slate-600 dark:text-slate-300">
+                        טיפול עיקרי: <span className="font-semibold">{enriched.primaryTreatment}</span>
                       </span>
                     </div>
                   )}
                 </div>
               </section>
 
-              {/* Revenue summary */}
+              {/* Financial summary — enriched with payment status */}
               <section>
                 <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] mb-2">סיכום פיננסי</p>
                 <div className="rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/5 dark:from-emerald-500/20 dark:to-transparent border border-emerald-200/60 dark:border-emerald-800/30 p-4">
-                  <p className="text-[2rem] font-bold text-slate-900 dark:text-slate-50 tabular-nums leading-none">
-                    {formatCurrencyILS(billingDocsTotal ?? Number(customer.total_revenue))}
-                  </p>
-                  <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-                    {customer.visits_count} ביקורים · ביקור אחרון {formatDate(customer.last_visit_date)}
-                    {billingDocsTotal !== null && (
-                      <span className="me-1.5 text-emerald-600 dark:text-emerald-400">· לפי קבלות</span>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[2rem] font-bold text-slate-900 dark:text-slate-50 tabular-nums leading-none">
+                        {formatCurrencyILS(billingDocsTotal ?? Number(customer.total_revenue))}
+                      </p>
+                      <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                        {customer.visits_count} ביקורים · ביקור אחרון {formatDate(customer.last_visit_date)}
+                        {billingDocsTotal !== null && (
+                          <span className="me-1.5 text-emerald-600 dark:text-emerald-400">· לפי קבלות</span>
+                        )}
+                      </p>
+                    </div>
+                    {paymentBadge && (
+                      <div className="shrink-0 flex flex-col items-end gap-1">
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${paymentBadge.cls}`}>
+                          <CreditCard className="h-3 w-3" />
+                          {paymentBadge.label}
+                        </span>
+                        {enriched && enriched.outstandingBalance > 0 && (
+                          <span className="text-[11px] text-red-600 dark:text-red-400 font-semibold tabular-nums">
+                            חוב: {formatCurrencyILS(enriched.outstandingBalance)}
+                          </span>
+                        )}
+                      </div>
                     )}
-                  </p>
+                  </div>
                 </div>
               </section>
 
@@ -367,37 +472,37 @@ export function CustomerDrawer({
                 </section>
               )}
 
-              {/* Recall / follow-up */}
+              {/* Recall / follow-up — persisted to DB */}
               <section>
                 <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] mb-2">מעקב וחזרה</p>
                 <div className="rounded-xl border border-slate-200/80 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/40 p-4 space-y-3">
                   <label className="flex items-center justify-between cursor-pointer">
                     <div className="flex items-center gap-2.5">
-                      {recall.active
+                      {recallActive
                         ? <BellRing className="h-4 w-4 text-indigo-500" />
                         : <Bell className="h-4 w-4 text-slate-400 dark:text-slate-500" />}
                       <span className="text-sm font-medium text-slate-700 dark:text-slate-300">מסומן לפולואפ</span>
                     </div>
                     <button
                       type="button"
-                      onClick={() => onRecallChange({ ...recall, active: !recall.active })}
-                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${recall.active ? 'bg-indigo-500' : 'bg-slate-200 dark:bg-slate-700'}`}
-                      aria-checked={recall.active}
+                      onClick={() => persistRecall(!recallActive, recallDate)}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${recallActive ? 'bg-indigo-500' : 'bg-slate-200 dark:bg-slate-700'}`}
+                      aria-checked={recallActive}
                       role="switch"
                     >
                       <span
                         className="inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform duration-200"
-                        style={{ transform: recall.active ? 'translateX(18px)' : 'translateX(2px)' }}
+                        style={{ transform: recallActive ? 'translateX(18px)' : 'translateX(2px)' }}
                       />
                     </button>
                   </label>
-                  {recall.active && (
+                  {recallActive && (
                     <div>
                       <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">תאריך תזכורת</label>
                       <input
                         type="date"
-                        value={recall.reminderDate}
-                        onChange={(e) => onRecallChange({ ...recall, reminderDate: e.target.value })}
+                        value={recallDate}
+                        onChange={(e) => persistRecall(recallActive, e.target.value)}
                         className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                         dir="rtl"
                       />

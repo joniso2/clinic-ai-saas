@@ -420,8 +420,15 @@ export function CompleteLeadModal({
   onClose: () => void;
   onConfirm: (leadId: string, value: number, notes?: string, serviceType?: string) => Promise<string | null>;
 }) {
-  const [valueInput, setValueInput] = useState(String(lead.estimated_deal_value ?? ''));
-  const [serviceType, setServiceType] = useState('');
+  // Auto-fill: if lead.interest matches a known service, pre-select it and fill the price
+  const matchedService = lead.interest
+    ? serviceOptions.find((s) => s.service_name === lead.interest)
+    : null;
+
+  const [valueInput, setValueInput] = useState(
+    String(lead.estimated_deal_value ?? (matchedService?.price ?? ''))
+  );
+  const [serviceType, setServiceType] = useState(matchedService?.service_name ?? '');
   const [otherText, setOtherText] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);

@@ -13,6 +13,8 @@ export type Patient = {
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;
+  recall_active: boolean;
+  recall_date: string | null;
 };
 
 export type CompletedAppointmentRow = {

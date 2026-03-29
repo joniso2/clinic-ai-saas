@@ -36,7 +36,7 @@ export async function listPatients(
   const supabase = getSupabaseAdminClient();
   let q = supabase
     .from('patients')
-    .select('id, clinic_id, lead_id, full_name, phone, total_revenue, visits_count, last_visit_date, status, created_at, updated_at, deleted_at')
+    .select('id, clinic_id, lead_id, full_name, phone, total_revenue, visits_count, last_visit_date, status, created_at, updated_at, deleted_at, recall_active, recall_date')
     .eq('clinic_id', clinicId)
     .is('deleted_at', null)
     .order('last_visit_date', { ascending: false, nullsFirst: false });
@@ -73,7 +73,7 @@ export async function getPatientById(
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
     .from('patients')
-    .select('id, clinic_id, lead_id, full_name, phone, total_revenue, visits_count, last_visit_date, status, created_at, updated_at, deleted_at')
+    .select('id, clinic_id, lead_id, full_name, phone, total_revenue, visits_count, last_visit_date, status, created_at, updated_at, deleted_at, recall_active, recall_date')
     .eq('id', patientId)
     .eq('clinic_id', clinicId)
     .is('deleted_at', null)
@@ -90,7 +90,7 @@ export async function findPatientByNormalizedPhone(
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
     .from('patients')
-    .select('id, clinic_id, lead_id, full_name, phone, total_revenue, visits_count, last_visit_date, status, created_at, updated_at, deleted_at')
+    .select('id, clinic_id, lead_id, full_name, phone, total_revenue, visits_count, last_visit_date, status, created_at, updated_at, deleted_at, recall_active, recall_date')
     .eq('clinic_id', clinicId)
     .eq('phone', normalizedPhone)
     .is('deleted_at', null)
@@ -133,7 +133,7 @@ export async function createPatient(
       status,
       updated_at: new Date().toISOString(),
     })
-    .select('id, clinic_id, lead_id, full_name, phone, total_revenue, visits_count, last_visit_date, status, created_at, updated_at, deleted_at')
+    .select('id, clinic_id, lead_id, full_name, phone, total_revenue, visits_count, last_visit_date, status, created_at, updated_at, deleted_at, recall_active, recall_date')
     .single();
   if (error) return { data: null, error };
   return { data: data as Patient, error: null };
@@ -186,7 +186,7 @@ export async function createPatientsBatch(
 export async function updatePatient(
   patientId: string,
   clinicId: string,
-  updates: Partial<Pick<Patient, 'full_name' | 'phone' | 'total_revenue' | 'visits_count' | 'last_visit_date' | 'status'>>
+  updates: Partial<Pick<Patient, 'full_name' | 'phone' | 'total_revenue' | 'visits_count' | 'last_visit_date' | 'status' | 'recall_active' | 'recall_date'>>
 ): Promise<{ error: unknown }> {
   const supabase = getSupabaseAdminClient();
   const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
@@ -196,6 +196,8 @@ export async function updatePatient(
   if (updates.visits_count !== undefined) payload.visits_count = updates.visits_count;
   if (updates.last_visit_date !== undefined) payload.last_visit_date = updates.last_visit_date;
   if (updates.status !== undefined) payload.status = updates.status;
+  if (updates.recall_active !== undefined) payload.recall_active = updates.recall_active;
+  if (updates.recall_date !== undefined) payload.recall_date = updates.recall_date;
   const { error } = await supabase
     .from('patients')
     .update(payload)

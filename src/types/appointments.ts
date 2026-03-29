@@ -1,6 +1,6 @@
 export type AppointmentType = 'new' | 'follow_up';
 
-export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'ai_failed';
+export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'no_show' | 'ai_failed';
 
 export type Appointment = {
   id: string;

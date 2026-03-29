@@ -23,6 +23,8 @@
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.97.0",
     "@types/react-big-calendar": "^1.16.3",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "ai": "^6.0.100",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",

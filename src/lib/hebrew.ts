@@ -27,7 +27,7 @@ export const STATUS_LABELS: Record<string, string> = {
   'Appointment scheduled': 'תור נקבע',
   Closed: 'נסגר',
   Converted: 'הומר',
-  Disqualified: 'הוסר',
+  Disqualified: 'בוטל',
   'AI Failed': 'כשל AI',
 };
 

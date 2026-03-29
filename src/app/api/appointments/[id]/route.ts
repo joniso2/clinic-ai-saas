@@ -40,7 +40,7 @@ export async function PATCH(
     const { datetime, duration_minutes, status } = body as {
       datetime?: string;
       duration_minutes?: number;
-      status?: 'scheduled' | 'completed' | 'cancelled';
+      status?: 'scheduled' | 'completed' | 'cancelled' | 'no_show';
     };
 
     if (datetime === undefined && duration_minutes === undefined && status === undefined) {
