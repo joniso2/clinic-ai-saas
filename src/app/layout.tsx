@@ -3,6 +3,7 @@ import { Heebo } from 'next/font/google';
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ToastProvider } from "@/components/ui/Toast";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 // Railway 1GB: avoid static generation at build time
 export const dynamic = "force-dynamic";
@@ -46,6 +47,7 @@ export default function RootLayout({
         <ThemeProvider>
           <ToastProvider>
             {children}
+            <SpeedInsights />
           </ToastProvider>
         </ThemeProvider>
       </body>
