@@ -473,7 +473,8 @@ function LayoutInner({ children, initialRole, initialUserEmail }: DashboardLayou
 
         <main
           ref={scrollRef}
-          className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-[#F4F4F3] dark:bg-slate-950"
+          className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-[#F4F4F3] dark:bg-slate-950 scrollbar-hide"
+          style={{ scrollbarWidth: 'none' }}
         >
           <div className="px-4 py-5 md:px-8 md:py-8 pb-[calc(80px+env(safe-area-inset-bottom))] md:pb-8">
             {children}

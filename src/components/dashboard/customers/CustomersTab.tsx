@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Trash2, X, DollarSign, ArrowRight, UserCheck, Users,
+  Trash2, X, DollarSign, ArrowRight, UserCheck, Users, Search, Filter, Download, Upload,
   Calendar, Archive, FileText, Send, SortAsc, BellRing, TrendingUp,
 } from 'lucide-react';
 import { CustomersImportModal } from './CustomersImportModal';
@@ -408,7 +408,7 @@ export function CustomersTab() {
           <h3 className="mt-5 text-xl font-semibold text-slate-900 dark:text-slate-50">עדיין אין לקוחות</h3>
           <p className="mt-2 max-w-sm text-sm text-slate-500 dark:text-slate-400">סגור ליד ראשון כדי להתחיל לבנות את רשימת הלקוחות שלך.</p>
           <button type="button" onClick={() => router.push('/dashboard')}
-            className="mt-8 inline-flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-slate-100 px-6 py-3 text-sm font-semibold text-white dark:text-slate-900 shadow-sm hover:bg-slate-800 dark:hover:bg-white transition">
+            className="mt-8 inline-flex flex-row-reverse items-center gap-2 rounded-xl bg-slate-900 dark:bg-slate-100 px-6 py-3 text-sm font-semibold text-white dark:text-slate-900 shadow-sm hover:bg-slate-800 dark:hover:bg-white transition">
             <ArrowRight className="h-4 w-4" /> חזרה ללידים
           </button>
         </div>
@@ -454,7 +454,7 @@ export function CustomersTab() {
               <button
                 type="button"
                 onClick={() => setMessagingOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-sm"
+                className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-sm"
               >
                 <Send className="h-3.5 w-3.5" />
                 שלח הודעה
@@ -599,86 +599,133 @@ export function CustomersTab() {
   // ── Main customers view ───────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-4 -mx-4 -mt-5 md:-mx-8 md:-mt-8 px-4 pt-4 md:px-6 md:pt-5" dir="rtl">
-      {/* KPI cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" dir="rtl">
-        <KpiCardPremium icon={Users}       title="סה״כ לקוחות" value={String(filteredCustomers.length)} accentHue="indigo" />
-        <KpiCardPremium icon={DollarSign}  title="סה״כ הכנסות" value={formatCurrencyILS(kpiRevCustomers)} accentHue="emerald" />
-        <KpiCardPremium icon={TrendingUp}  title="ממוצע ללקוח" value={formatCurrencyILS(kpiAvgCustomers)} accentHue="violet" />
-        <KpiCardPremium icon={Calendar}    title="ביקורים החודש" value={String(kpiMonthCustomers)} accentHue="amber" />
-      </div>
+    <div className="-mx-4 -mt-5 md:-mx-8 md:-mt-8 bg-[#EEEEED] dark:bg-slate-950 min-h-full scrollbar-hide" dir="rtl" style={{ scrollbarWidth: 'none' }}>
 
-      {/* Toolbar (search + filters) */}
-      <Toolbar
-        searchInput={searchInput} onSearch={setSearchInput}
-        filtersOpen={filtersOpen} onToggleFilters={() => setFiltersOpen(!filtersOpen)} hasActiveFilters={hasActiveFilters}
-        downloadingTemplate={downloadingTemplate} onDownload={downloadTemplate}
-        onImport={() => setImportModalOpen(true)} onBackToLeads={() => router.push('/dashboard')}
-        filterPanelRef={filterRef} filterPanelContent={filterPanel}
-      />
-
-      {/* Active filter chips */}
-      {hasActiveFilters && (
-        <div className="flex flex-wrap items-center gap-2">
-          {dateFrom && <FilterChip label={`מ- ${dateFrom}`} onRemove={() => setDateFrom('')} />}
-          {dateTo && <FilterChip label={`עד ${dateTo}`} onRemove={() => setDateTo('')} />}
-          {revenueMinFilter !== '' && <FilterChip label={`מינ׳ ₪${revenueMinFilter}`} onRemove={() => setRevenueMinFilter('')} />}
-          {revenueMaxFilter !== '' && <FilterChip label={`מקס׳ ₪${revenueMaxFilter}`} onRemove={() => setRevenueMaxFilter('')} />}
-          {withRevenueOnly && <FilterChip label="עם הכנסה" onRemove={() => setWithRevenueOnly(false)} />}
-          {statusFilter && <FilterChip label={PATIENT_STATUS_LABELS[statusFilter] ?? statusFilter} onRemove={() => setStatusFilter('')} />}
-          {lastVisitOver6 && <FilterChip label="ביקור 6+ חודשים" onRemove={() => setLastVisitOver6(false)} />}
-        </div>
-      )}
-
-      {/* Table */}
-      <div className="w-full overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] bg-white dark:bg-slate-900">
-        <div className="border-b border-slate-100 dark:border-slate-800 px-5 py-3.5 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40">
-          <div className="flex items-center gap-2.5">
-            <UserCheck className="h-5 w-5 text-slate-500 dark:text-slate-400" />
-            <span className="text-[16px] font-bold text-slate-900 dark:text-slate-100">רשימת לקוחות</span>
-            <span className="rounded-full bg-slate-100 dark:bg-slate-700/80 px-2.5 py-0.5 text-[13px] font-semibold text-slate-600 dark:text-slate-300 tabular-nums">{filteredCustomers.length}</span>
-            {selectedIds.size > 0 && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-800/50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:text-indigo-300">
-                {selectedIds.size} נבחרו
-                <button type="button" onClick={clearSelected} className="hover:text-indigo-900 dark:hover:text-indigo-100">
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            )}
+      {/* ═══ Header: KPI + Toolbar on white surface ═══ */}
+      <div className="bg-white dark:bg-slate-900 px-5 pt-4 pb-3" style={{ boxShadow: '0 1px 0 rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.03)' }}>
+        {/* KPI row */}
+        <div className="grid grid-cols-4 gap-3 mb-3.5">
+          {/* Revenue — hero */}
+          <div className="rounded-2xl px-5 py-4 flex items-center gap-3.5 relative overflow-hidden"
+            style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)', boxShadow: '0 4px 16px rgba(30,27,75,0.25)' }}>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm shrink-0">
+              <DollarSign className="h-5 w-5 text-emerald-300" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-semibold text-indigo-300/80 uppercase tracking-[0.06em] leading-none">סה״כ הכנסות</p>
+              <p className="text-[24px] font-black text-white tabular-nums leading-none mt-1.5 tracking-tight">{formatCurrencyILS(kpiRevCustomers)}</p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setShowArchive(!showArchive)}
-              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition shadow-sm ${
-                showArchive
-                  ? 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-                  : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
-              }`}
-            >
-              <Archive className="h-3.5 w-3.5" />
-              ארכיון {archivedCustomers.length > 0 ? `(${archivedCustomers.length})` : ''}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMessagingOpen(true)}
-              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition shadow-sm ${
-                selectedIds.size > 0
-                  ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-500 text-white hover:bg-indigo-600'
-                  : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
-              }`}
-            >
-              <Send className="h-3.5 w-3.5" />
-              {selectedIds.size > 0 ? `שלח ל-${selectedIds.size}` : 'שלח הודעה'}
-            </button>
-            <SortAsc className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-            <GlassSelect
-              value={sortBy}
-              onChange={(v) => setSortBy(v as SortKey)}
-              options={SORT_OPTIONS}
+          {/* Customers */}
+          <div className="rounded-2xl bg-white dark:bg-slate-800 px-5 py-4 flex items-center gap-3.5"
+            style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06)' }}>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-900/40 shrink-0">
+              <Users className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.06em] leading-none">לקוחות</p>
+              <p className="text-[24px] font-bold text-slate-900 dark:text-white tabular-nums leading-none mt-1.5">{filteredCustomers.length}</p>
+            </div>
+          </div>
+          {/* Average */}
+          <div className="rounded-2xl bg-white dark:bg-slate-800 px-5 py-4 flex items-center gap-3.5"
+            style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06)' }}>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/40 shrink-0">
+              <TrendingUp className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.06em] leading-none">ממוצע ללקוח</p>
+              <p className="text-[24px] font-bold text-slate-900 dark:text-white tabular-nums leading-none mt-1.5">{formatCurrencyILS(kpiAvgCustomers)}</p>
+            </div>
+          </div>
+          {/* This month */}
+          <div className="rounded-2xl bg-white dark:bg-slate-800 px-5 py-4 flex items-center gap-3.5"
+            style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06)' }}>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/40 shrink-0">
+              <Calendar className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.06em] leading-none">ביקורים החודש</p>
+              <p className="text-[24px] font-bold text-slate-900 dark:text-white tabular-nums leading-none mt-1.5">{kpiMonthCustomers}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Toolbar */}
+        <div className="flex items-center gap-2 rounded-xl bg-[#F7F7F6] dark:bg-slate-800/50 px-3 py-2"
+          style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)' }}>
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              type="search"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="חיפוש לפי שם או טלפון..."
+              className="w-full rounded-lg bg-white dark:bg-slate-800 pe-10 ps-3 py-2 text-[13px] text-slate-900 dark:text-slate-50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 border border-slate-200/80 dark:border-slate-700 transition-all"
+              dir="rtl"
             />
           </div>
+          <div className="h-5 w-px bg-slate-200/60 dark:bg-slate-700 shrink-0" />
+          <div className="flex items-center gap-1" ref={filterRef}>
+            <button type="button" onClick={() => setFiltersOpen(!filtersOpen)}
+              className={`inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold transition ${
+                hasActiveFilters ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-slate-600 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm'
+              }`}>
+              <Filter className="h-3.5 w-3.5" /> סינון
+              {hasActiveFilters && <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />}
+            </button>
+            {filtersOpen && filterPanel}
+          </div>
+          <button type="button" onClick={downloadTemplate} disabled={downloadingTemplate}
+            className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm transition disabled:opacity-50">
+            <Download className="h-3.5 w-3.5" /> Excel
+          </button>
+          <button type="button" onClick={() => setImportModalOpen(true)}
+            className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm transition">
+            <Upload className="h-3.5 w-3.5" /> ייבוא
+          </button>
+
+          <div className="flex-1" />
+
+          <button type="button" onClick={() => setShowArchive(!showArchive)}
+            className={`inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold transition ${
+              showArchive ? 'bg-amber-100 text-amber-700' : 'text-slate-600 hover:bg-white hover:shadow-sm'
+            }`}>
+            <Archive className="h-3.5 w-3.5" /> ארכיון{archivedCustomers.length > 0 ? ` (${archivedCustomers.length})` : ''}
+          </button>
+          <button type="button" onClick={() => setMessagingOpen(true)}
+            className={`inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold transition ${
+              selectedIds.size > 0 ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-white hover:shadow-sm'
+            }`}>
+            <Send className="h-3.5 w-3.5" /> {selectedIds.size > 0 ? `שלח ל-${selectedIds.size}` : 'הודעה'}
+          </button>
+          <GlassSelect value={sortBy} onChange={(v) => setSortBy(v as SortKey)} options={SORT_OPTIONS} />
         </div>
+
+        {/* Filter chips */}
+        {hasActiveFilters && (
+          <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
+            {dateFrom && <FilterChip label={`מ- ${dateFrom}`} onRemove={() => setDateFrom('')} />}
+            {dateTo && <FilterChip label={`עד ${dateTo}`} onRemove={() => setDateTo('')} />}
+            {revenueMinFilter !== '' && <FilterChip label={`מינ׳ ₪${revenueMinFilter}`} onRemove={() => setRevenueMinFilter('')} />}
+            {revenueMaxFilter !== '' && <FilterChip label={`מקס׳ ₪${revenueMaxFilter}`} onRemove={() => setRevenueMaxFilter('')} />}
+            {withRevenueOnly && <FilterChip label="עם הכנסה" onRemove={() => setWithRevenueOnly(false)} />}
+            {statusFilter && <FilterChip label={PATIENT_STATUS_LABELS[statusFilter] ?? statusFilter} onRemove={() => setStatusFilter('')} />}
+            {lastVisitOver6 && <FilterChip label="ביקור 6+ חודשים" onRemove={() => setLastVisitOver6(false)} />}
+          </div>
+        )}
+      </div>
+
+      {/* ═══ Table ═══ */}
+      <div className="px-5 pt-4 pb-4">
+      {!showArchive && <div className="w-full overflow-hidden rounded-2xl bg-white dark:bg-slate-900"
+        style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06), 0 6px 20px rgba(0,0,0,0.08), 0 16px 40px rgba(0,0,0,0.04)' }}>
+        {selectedIds.size > 0 && (
+          <div className="px-5 py-2 bg-indigo-50/80 dark:bg-indigo-950/20 border-b border-indigo-100 dark:border-indigo-900/30 flex items-center gap-2">
+            <span className="text-[12px] font-bold text-indigo-700 dark:text-indigo-300">{selectedIds.size} נבחרו</span>
+            <button type="button" onClick={clearSelected} className="text-[11px] text-indigo-500 hover:text-indigo-700 transition font-medium">נקה</button>
+          </div>
+        )}
 
         {/* ── Mobile Card Layout ── */}
         <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
@@ -741,24 +788,24 @@ export function CustomersTab() {
         </div>
 
         {/* ── Desktop Table ── */}
-        <div className="hidden md:block overflow-x-auto max-h-[60vh] overflow-y-auto">
+        <div className="hidden md:block overflow-x-auto max-h-[70vh] overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
           <table className="w-full text-right" dir="rtl">
-            <thead className="sticky top-0 z-10 bg-slate-50/70 dark:bg-slate-800/50 backdrop-blur-sm text-[15px] font-bold text-slate-900 dark:text-slate-100 tracking-[0.02em]">
-              <tr className="border-b border-slate-100 dark:border-slate-800">
-                <th className="py-3.5 pe-4 ps-3 w-10" onClick={(e) => e.stopPropagation()}>
+            <thead className="sticky top-0 z-10">
+              <tr className="bg-[#FAFAF9] dark:bg-slate-800/90 border-b-2 border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.08em]">
+                <th className="py-3 pe-4 ps-5 w-10" onClick={(e) => e.stopPropagation()}>
                   <input
                     type="checkbox"
                     checked={filteredCustomers.length > 0 && filteredCustomers.every((c) => selectedIds.has(c.id))}
                     onChange={(e) => e.target.checked ? selectAll(filteredCustomers.map((c) => c.id)) : clearSelected()}
-                    className="rounded border-slate-300 dark:border-slate-600 text-indigo-500 focus:ring-indigo-500/30"
+                    className="rounded border-slate-300 dark:border-slate-600 text-indigo-500 focus:ring-indigo-500/30 h-3.5 w-3.5"
                   />
                 </th>
-                <th className="py-3.5 px-4 text-right" style={{ width: '28%' }}>לקוח</th>
-                <th className="py-3.5 px-4 text-right" style={{ width: '18%' }}>טלפון</th>
-                <th className="py-3.5 px-4 text-right" style={{ width: '14%' }}>הכנסות</th>
-                <th className="hidden lg:table-cell py-3.5 px-4 text-right" style={{ width: '16%' }}>ביקור אחרון</th>
-                <th className="hidden lg:table-cell py-3.5 px-4 text-right" style={{ width: '10%' }}>ביקורים</th>
-                <th className="py-3.5 px-4 text-right" style={{ width: '10%' }}>סטטוס</th>
+                <th className="py-3 px-4 text-right" style={{ width: '28%' }}>לקוח</th>
+                <th className="py-3 px-4 text-right" style={{ width: '16%' }}>טלפון</th>
+                <th className="py-3 px-4 text-right" style={{ width: '14%' }}>הכנסות</th>
+                <th className="hidden lg:table-cell py-3 px-4 text-right" style={{ width: '16%' }}>ביקור אחרון</th>
+                <th className="hidden lg:table-cell py-3 px-4 text-right" style={{ width: '12%' }}>ביקורים</th>
+                <th className="py-3 px-4 text-right" style={{ width: '10%' }}>סטטוס</th>
                 <th className="py-3 px-4 w-10" />
               </tr>
             </thead>
@@ -780,36 +827,39 @@ export function CustomersTab() {
                 const isSelected = selectedIds.has(c.id);
                 return (
                   <tr key={c.id} onClick={() => { setDetailLead(null); setDetailId(c.id); }}
-                    className={`border-b border-slate-100 dark:border-slate-800/60 last:border-0 cursor-pointer transition-colors group ${isSelected ? 'bg-indigo-50/60 dark:bg-indigo-900/15' : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/40'}`}>
-                    <td className="py-4 pe-4 ps-3 w-10" onClick={(e) => e.stopPropagation()}>
+                    className={`border-b border-slate-100 dark:border-slate-800/30 last:border-0 cursor-pointer group transition-all duration-100 ${isSelected ? 'bg-indigo-50/60 dark:bg-indigo-950/15' : 'hover:bg-indigo-50/30 dark:hover:bg-slate-800/30'}`}
+                    style={{ transition: 'background-color 100ms ease' }}>
+                    <td className="py-4 pe-4 ps-5 w-10" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleSelected(c.id)}
-                        className="rounded border-slate-300 dark:border-slate-600 text-indigo-500 focus:ring-indigo-500/30"
+                        className="rounded border-slate-300 dark:border-slate-600 text-indigo-500 focus:ring-indigo-500/30 h-3.5 w-3.5"
                       />
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">
-                        <div className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${getAvatarColor(c.id)} text-white text-[13px] font-bold`}>
+                        <div className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${getAvatarColor(c.id)} text-white text-[13px] font-bold shadow-sm`}>
                           {getInitials(c.full_name)}
                           {c.recall_active && (
-                            <span className="absolute -top-1 -start-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 border-2 border-white dark:border-slate-900">
-                              <BellRing className="h-2 w-2 text-white" />
+                            <span className="absolute -top-0.5 -start-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-amber-400 border-[1.5px] border-white dark:border-slate-900">
+                              <BellRing className="h-1.5 w-1.5 text-white" />
                             </span>
                           )}
                         </div>
-                        <span className="text-[15px] font-semibold text-slate-800 dark:text-slate-50 truncate">{c.full_name}</span>
+                        <span className="text-[14px] font-semibold text-slate-900 dark:text-slate-50 truncate leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">{c.full_name}</span>
                       </div>
                     </td>
                     <td className="py-4 px-4">
-                      <a href={`tel:${c.phone}`} onClick={(e) => e.stopPropagation()} dir="ltr" className="text-[14px] text-indigo-600 dark:text-indigo-400 hover:underline">{formatPhoneILS(c.phone)}</a>
+                      <span dir="ltr" className="text-[13px] text-slate-500 dark:text-slate-400 tabular-nums">{formatPhoneILS(c.phone)}</span>
                     </td>
-                    <td className="py-4 px-4 text-[14px] font-semibold text-slate-800 dark:text-slate-200 tabular-nums whitespace-nowrap">{formatCurrencyILS(Number(c.total_revenue))}</td>
-                    <td className="hidden lg:table-cell py-4 px-4 text-[14px] text-slate-500 dark:text-slate-400 whitespace-nowrap">{formatDate(c.last_visit_date)}</td>
-                    <td className="hidden lg:table-cell py-4 px-4 text-[14px] text-slate-500 dark:text-slate-400 tabular-nums">{c.visits_count}</td>
                     <td className="py-4 px-4">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[12px] font-semibold ${statusBadge.cls}`}>{statusBadge.label}</span>
+                      <span className="text-[15px] font-black text-slate-900 dark:text-white tabular-nums whitespace-nowrap tracking-tight">{formatCurrencyILS(Number(c.total_revenue))}</span>
+                    </td>
+                    <td className="hidden lg:table-cell py-4 px-4 text-[12px] text-slate-400 dark:text-slate-500 whitespace-nowrap">{formatDate(c.last_visit_date)}</td>
+                    <td className="hidden lg:table-cell py-4 px-4 text-[13px] text-slate-500 dark:text-slate-400 tabular-nums text-center">{c.visits_count}</td>
+                    <td className="py-4 px-4">
+                      <span className={`inline-block rounded-md px-2 py-[3px] text-[10px] font-bold uppercase tracking-wide leading-tight ${statusBadge.cls}`}>{statusBadge.label}</span>
                     </td>
                     <td className="py-4 px-4 w-10" onClick={(e) => e.stopPropagation()}>
                       <button type="button" onClick={() => setDeleteId(c.id)}
@@ -823,9 +873,10 @@ export function CustomersTab() {
             </tbody>
           </table>
         </div>
-      </div>
+      </div>}
 
       {/* Archive panel */}
+      {/* (inside px wrapper) */}
       {showArchive && (
         <div className="w-full overflow-hidden rounded-xl border border-amber-200/60 dark:border-amber-800/40 bg-amber-50/50 dark:bg-amber-950/20">
           <div className="border-b border-amber-200/60 dark:border-amber-800/40 px-5 py-3.5 flex items-center justify-between">
@@ -868,12 +919,17 @@ export function CustomersTab() {
         </div>
       )}
 
+      </div>{/* close px wrapper */}
+
       {/* Customer drawer */}
       {detailId && (
         <CustomerDrawer
           customer={detailCustomer} appointments={detailAppointments} enriched={detailEnriched as never} loading={detailLoading} allCustomers={customers}
           onClose={closeDrawer} onSchedule={() => { closeDrawer(); router.push('/dashboard/calendar'); }}
           onDelete={() => { setDeleteId(detailId); closeDrawer(); }}
+          onUpdate={(id, updates) => {
+            setCustomers((prev) => prev.map((c) => c.id === id ? { ...c, ...updates } : c));
+          }}
         />
       )}
 

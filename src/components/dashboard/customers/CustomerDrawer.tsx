@@ -3,6 +3,8 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
+import { ScheduleAppointmentModal } from '@/app/dashboard/ScheduleAppointmentModal';
+import type { Lead } from '@/types/leads';
 import {
   X, Phone, Calendar, MessageCircle, Archive, FileText,
   Bell, BellRing, Sparkles, Clock, TrendingUp, ReceiptText,
@@ -72,7 +74,7 @@ function computeSuggestions(customer: Patient | null, allCustomers: Patient[]): 
 
 export function CustomerDrawer({
   customer, appointments, enriched, loading, allCustomers,
-  onClose, onSchedule, onDelete,
+  onClose, onSchedule, onDelete, onUpdate,
 }: {
   customer: Patient | null;
   appointments: CompletedAppointmentRow[];
@@ -82,6 +84,7 @@ export function CustomerDrawer({
   onClose: () => void;
   onSchedule: () => void;
   onDelete: () => void;
+  onUpdate?: (id: string, updates: Partial<Patient>) => void;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   useFocusTrap(panelRef, !!customer);
@@ -106,6 +109,7 @@ export function CustomerDrawer({
   // Recall — persisted via PATCH /api/customers/[id]
   const [recallActive, setRecallActive] = useState(false);
   const [recallDate, setRecallDate] = useState('');
+  const [showRecallModal, setShowRecallModal] = useState(false);
   useEffect(() => {
     if (!customer) return;
     setRecallActive(customer.recall_active ?? false);
@@ -124,7 +128,11 @@ export function CustomerDrawer({
         recall_date: date ? new Date(date).toISOString() : null,
       }),
     });
-  }, [customer]);
+    onUpdate?.(customer.id, {
+      recall_active: active,
+      recall_date: date ? new Date(date).toISOString() : null,
+    });
+  }, [customer, onUpdate]);
 
   // Billing state
   const [billingDocs, setBillingDocs] = useState<BillingDocumentWithItems[]>([]);
@@ -499,13 +507,20 @@ export function CustomerDrawer({
                   {recallActive && (
                     <div>
                       <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">תאריך תזכורת</label>
-                      <input
-                        type="date"
-                        value={recallDate}
-                        onChange={(e) => persistRecall(recallActive, e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-                        dir="rtl"
-                      />
+                      {recallDate ? (
+                        <div className="flex items-center justify-between rounded-lg border border-indigo-200 dark:border-indigo-800/40 bg-indigo-50 dark:bg-indigo-950/20 px-3 py-2">
+                          <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                            {new Date(recallDate).toLocaleDateString('he-IL', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                          <button type="button" onClick={() => setShowRecallModal(true)}
+                            className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">שנה</button>
+                        </div>
+                      ) : (
+                        <button type="button" onClick={() => setShowRecallModal(true)}
+                          className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-right">
+                          בחר תאריך ושעה...
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -609,6 +624,20 @@ export function CustomerDrawer({
         </div>
       </div>
 
+      {showRecallModal && customer && (
+        <ScheduleAppointmentModal
+          lead={{ id: customer.id, full_name: customer.full_name } as Lead}
+          title="קביעת תזכורת"
+          submitLabel="קבע תזכורת"
+          appointmentType="follow_up"
+          onClose={() => setShowRecallModal(false)}
+          onScheduled={(apt) => {
+            const date = new Date(apt.datetime).toISOString().slice(0, 10);
+            persistRecall(true, date);
+            setShowRecallModal(false);
+          }}
+        />
+      )}
     </>
   );
 }
