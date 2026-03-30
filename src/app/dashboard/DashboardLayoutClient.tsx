@@ -112,6 +112,8 @@ function LayoutInner({ children, initialRole, initialUserEmail }: DashboardLayou
   }, [pathname]);
 
   const isOnSuperAdmin = pathname?.startsWith(SUPER_ADMIN_HREF) ?? false;
+  // For hash-based sections, we need to be on the exact shell page (not sub-routes like /booking-site)
+  const isOnSuperAdminShell = pathname === SUPER_ADMIN_HREF || pathname === `${SUPER_ADMIN_HREF}/`;
   const isSuperAdmin = role === 'SUPER_ADMIN';
 
   useEffect(() => {
@@ -310,9 +312,15 @@ function LayoutInner({ children, initialRole, initialUserEmail }: DashboardLayou
                 key={id}
                 type="button"
                 onClick={() => {
+                  setDrawerOpen(false);
                   if (href.includes('#')) {
-                    router.push(href);
-                    window.location.hash = href.split('#')[1];
+                    const hash = href.split('#')[1];
+                    if (!isOnSuperAdminShell) {
+                      window.location.href = `${SUPER_ADMIN_HREF}#${hash}`;
+                    } else {
+                      window.location.hash = hash;
+                      window.dispatchEvent(new Event('hashchange'));
+                    }
                   } else {
                     handleNavClick(href);
                   }
@@ -353,8 +361,15 @@ function LayoutInner({ children, initialRole, initialUserEmail }: DashboardLayou
                       title={collapsed ? label : undefined}
                       onClick={() => {
                         if (href.includes('#')) {
-                          if (!isOnSuperAdmin) router.push(SUPER_ADMIN_HREF);
-                          window.location.hash = href.split('#')[1];
+                          const hash = href.split('#')[1];
+                          if (!isOnSuperAdminShell) {
+                            // Full page navigation with hash (Next.js router.push strips hash)
+                            window.location.href = `${SUPER_ADMIN_HREF}#${hash}`;
+                          } else {
+                            // Already on page — set hash + dispatch event as backup
+                            window.location.hash = hash;
+                            window.dispatchEvent(new Event('hashchange'));
+                          }
                         } else {
                           router.push(href);
                         }

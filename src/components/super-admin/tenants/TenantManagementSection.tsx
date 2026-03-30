@@ -90,24 +90,30 @@ export default function TenantManagementSection() {
   }, [show]);
 
   const fetchPlans = useCallback(async () => {
-    const res = await fetch('/api/admin/plans');
-    if (!res.ok) return;
-    const data = await res.json();
-    setPlans(data.plans ?? []);
+    try {
+      const res = await fetch('/api/admin/plans');
+      if (!res.ok) return;
+      const data = await res.json();
+      setPlans(data.plans ?? []);
+    } catch { /* ignore */ }
   }, []);
 
   const fetchDrawerUsers = useCallback(async (id: string) => {
-    const res = await fetch(`/api/super-admin/clinic-users?clinic_id=${encodeURIComponent(id)}`);
-    if (!res.ok) return;
-    const data = await res.json();
-    setDrawerUsers(data.users ?? []);
+    try {
+      const res = await fetch(`/api/super-admin/clinic-users?clinic_id=${encodeURIComponent(id)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setDrawerUsers(data.users ?? []);
+    } catch { setDrawerUsers([]); }
   }, []);
 
   const fetchDrawerServices = useCallback(async (id: string) => {
-    const res = await fetch(`/api/super-admin/services?clinic_id=${encodeURIComponent(id)}`);
-    if (!res.ok) return;
-    const data = await res.json();
-    setDrawerServices(data.services ?? []);
+    try {
+      const res = await fetch(`/api/super-admin/services?clinic_id=${encodeURIComponent(id)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setDrawerServices(data.services ?? []);
+    } catch { setDrawerServices([]); }
   }, []);
 
   useEffect(() => { fetchTenants(); }, [fetchTenants]);

@@ -16,6 +16,18 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
+    const leadIdParam = searchParams.get('lead_id');
+
+    // Fast path: fetch by lead_id (no month/year required)
+    if (leadIdParam) {
+      const { data, error } = await appointmentRepo.getAppointmentsByLeadId(clinicId, leadIdParam);
+      if (error) {
+        console.error('GET /api/appointments?lead_id error:', error);
+        return NextResponse.json({ error: 'Failed to fetch appointments' }, { status: 500 });
+      }
+      return NextResponse.json({ appointments: data ?? [] });
+    }
+
     const month = parseInt(searchParams.get('month') ?? '');
     const year  = parseInt(searchParams.get('year')  ?? '');
 

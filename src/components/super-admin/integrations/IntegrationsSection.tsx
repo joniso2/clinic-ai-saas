@@ -45,19 +45,27 @@ export default function IntegrationsSection() {
       setMappings(mData.mappings ?? []);
       const clinics = cData.clinics ?? [];
       setTenants(clinics);
-      if (!selectedClinicId && clinics.length) setSelectedClinicId(clinics[0].id);
+      setSelectedClinicId((prev) => prev ?? (clinics.length ? clinics[0].id : null));
+    } catch (err) {
+      console.error('[Integrations] fetchAll error:', err);
     } finally { setLoading(false); }
-  }, [selectedClinicId]);
+  }, []);
 
   const fetchPerClinic = useCallback(async () => {
     if (!selectedClinicId) return;
-    const [intRes, metRes] = await Promise.all([
-      fetch(`/api/super-admin/clinic-integrations?clinic_id=${encodeURIComponent(selectedClinicId)}`),
-      fetch(`/api/super-admin/clinic-integrations/metrics?clinic_id=${encodeURIComponent(selectedClinicId)}`),
-    ]);
-    const [intData, metData] = await Promise.all([intRes.json().catch(() => ({})), metRes.json().catch(() => ({}))]);
-    setIntegrations(intData.integrations ?? []);
-    setMetrics(metData.messages_today !== undefined ? metData : null);
+    try {
+      const [intRes, metRes] = await Promise.all([
+        fetch(`/api/super-admin/clinic-integrations?clinic_id=${encodeURIComponent(selectedClinicId)}`),
+        fetch(`/api/super-admin/clinic-integrations/metrics?clinic_id=${encodeURIComponent(selectedClinicId)}`),
+      ]);
+      const [intData, metData] = await Promise.all([intRes.json().catch(() => ({})), metRes.json().catch(() => ({}))]);
+      setIntegrations(intData.integrations ?? []);
+      setMetrics(metData.messages_today !== undefined ? metData : null);
+    } catch (err) {
+      console.error('[Integrations] fetchPerClinic error:', err);
+      setIntegrations([]);
+      setMetrics(null);
+    }
   }, [selectedClinicId]);
 
   useEffect(() => { fetchAll(); }, []);

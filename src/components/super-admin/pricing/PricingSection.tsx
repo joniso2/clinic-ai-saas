@@ -94,9 +94,11 @@ export default function PricingSection() {
   const [saving, setSaving] = useState(false);
 
   const fetchTenants = useCallback(async () => {
-    const res = await fetch('/api/super-admin/clinics');
-    const data = await res.json().catch(() => ({}));
-    setTenants((data.clinics ?? []).map((c: { id: string; name: string | null }) => ({ id: c.id, name: c.name })));
+    try {
+      const res = await fetch('/api/super-admin/clinics');
+      const data = await res.json().catch(() => ({}));
+      setTenants((data.clinics ?? []).map((c: { id: string; name: string | null }) => ({ id: c.id, name: c.name })));
+    } catch { /* ignore */ }
   }, []);
 
   const fetchServices = useCallback(async (id: string) => {

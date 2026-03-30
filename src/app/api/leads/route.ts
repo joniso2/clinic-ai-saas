@@ -92,6 +92,18 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // Batch-by-ids: only fetch specific leads (e.g., calendar status lookup)
+    const idsParam = new URL(req.url).searchParams.get('ids');
+    if (idsParam) {
+      const ids = idsParam.split(',').filter(Boolean);
+      const { data, error } = await leadRepository.getLeadsByIds(clinicId, ids);
+      if (error) {
+        console.error('Error fetching leads by ids:', error);
+        return NextResponse.json({ error: 'Failed to fetch leads' }, { status: 500 });
+      }
+      return NextResponse.json({ leads: data ?? [] });
+    }
+
     const { data, error } = await leadRepository.getLeadsByClinicId(clinicId);
     if (error) {
       console.error('Error fetching leads:', error);

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import type { Lead } from '@/types/leads';
 import { getDisplayPriority } from '@/types/leads';
 import { formatCurrencyILS } from '@/lib/hebrew';
@@ -24,31 +25,35 @@ export function LeadsKpiCards({
   leads: Lead[];
   pendingForApproval?: number;
 }) {
-  const today = new Date().toDateString();
-  const newToday = leads.filter(
-    (l) => new Date(l.created_at).toDateString() === today
-  ).length;
-  const totalRevenue = leads.reduce(
-    (sum, l) => sum + (l.estimated_deal_value ?? 0),
-    0
-  );
-  const closed = leads.filter((l) =>
-    CLOSED_STATUSES.includes(l.status ?? '')
-  ).length;
-  const open = leads.length - closed;
+  const { newToday, totalRevenue, closed, open, cancellationRisk, arrivalRate, teamActive } = useMemo(() => {
+    const today = new Date().toDateString();
+    const _newToday = leads.filter(
+      (l) => new Date(l.created_at).toDateString() === today
+    ).length;
+    const _totalRevenue = leads.reduce(
+      (sum, l) => sum + (l.estimated_deal_value ?? 0),
+      0
+    );
+    const _closed = leads.filter((l) =>
+      CLOSED_STATUSES.includes(l.status ?? '')
+    ).length;
+    const _open = leads.length - _closed;
 
-  const cancellationRisk = leads.filter((l) => {
-    const p = getDisplayPriority(l);
-    const overdue = l.next_follow_up_date
-      ? new Date(l.next_follow_up_date) < new Date()
-      : false;
-    return (p === 'Urgent' || p === 'High') && overdue;
-  }).length;
+    const _cancellationRisk = leads.filter((l) => {
+      const p = getDisplayPriority(l);
+      const overdue = l.next_follow_up_date
+        ? new Date(l.next_follow_up_date) < new Date()
+        : false;
+      return (p === 'Urgent' || p === 'High') && overdue;
+    }).length;
 
-  const arrivalRate = open > 0
-    ? Math.round(((open - cancellationRisk) / Math.max(open, 1)) * 100)
-    : 0;
-  const teamActive = Math.max(pendingForApproval, closed > 0 ? closed : 1);
+    const _arrivalRate = _open > 0
+      ? Math.round(((_open - _cancellationRisk) / Math.max(_open, 1)) * 100)
+      : 0;
+    const _teamActive = Math.max(pendingForApproval, _closed > 0 ? _closed : 1);
+
+    return { newToday: _newToday, totalRevenue: _totalRevenue, closed: _closed, open: _open, cancellationRisk: _cancellationRisk, arrivalRate: _arrivalRate, teamActive: _teamActive };
+  }, [leads, pendingForApproval]);
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3" dir="rtl">

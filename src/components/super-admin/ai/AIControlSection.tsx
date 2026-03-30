@@ -70,26 +70,39 @@ export default function AIControlSection() {
   const [statusLoading, setStatusLoading] = useState(false);
 
   const fetchClinics = useCallback(async () => {
-    const res = await fetch('/api/super-admin/clinics');
-    const d = await res.json().catch(() => ({}));
-    const list = d.clinics ?? [];
-    setClinics(list);
-    if (list.length && !selectedClinicId) setSelectedClinicId(list[0].id);
-  }, [selectedClinicId]);
+    try {
+      const res = await fetch('/api/super-admin/clinics');
+      const d = await res.json().catch(() => ({}));
+      const list = d.clinics ?? [];
+      setClinics(list);
+      setSelectedClinicId((prev) => prev || (list.length ? list[0].id : ''));
+    } catch (err) {
+      console.error('[AI Control] fetchClinics error:', err);
+    }
+  }, []);
 
   const fetchAiModels = useCallback(async () => {
     if (!selectedClinicId) return;
-    const res = await fetch(`/api/super-admin/ai-models?clinic_id=${encodeURIComponent(selectedClinicId)}`);
-    const d = await res.json().catch(() => ({}));
-    setAiPerClinic({ provider: d.provider ?? 'google', model: d.model ?? 'gemini-2.5-flash', temperature: Number(d.temperature) ?? 0.7, max_tokens: Number(d.max_tokens) ?? 2048 });
+    try {
+      const res = await fetch(`/api/super-admin/ai-models?clinic_id=${encodeURIComponent(selectedClinicId)}`);
+      const d = await res.json().catch(() => ({}));
+      setAiPerClinic({ provider: d.provider ?? 'google', model: d.model ?? 'gemini-2.5-flash', temperature: Number(d.temperature) ?? 0.7, max_tokens: Number(d.max_tokens) ?? 2048 });
+    } catch (err) {
+      console.error('[AI Control] fetchAiModels error:', err);
+    }
   }, [selectedClinicId]);
 
   const fetchClinicStatuses = useCallback(async () => {
     setStatusLoading(true);
-    const res = await fetch('/api/super-admin/ai-models/status');
-    const d = await res.json().catch(() => ({}));
-    setClinicStatuses(d.clinics ?? []);
-    setStatusLoading(false);
+    try {
+      const res = await fetch('/api/super-admin/ai-models/status');
+      const d = await res.json().catch(() => ({}));
+      setClinicStatuses(d.clinics ?? []);
+    } catch (err) {
+      console.error('[AI Control] fetchClinicStatuses error:', err);
+    } finally {
+      setStatusLoading(false);
+    }
   }, []);
 
   useEffect(() => { fetchClinics(); }, []);

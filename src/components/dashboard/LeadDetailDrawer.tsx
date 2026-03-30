@@ -72,6 +72,7 @@ export function LeadDetailDrawer({
   onStatusChange,
   onMarkContacted,
   onScheduleFollowUp,
+  onScheduleAppointment,
   onEdit,
   appointmentDate,
   mode = 'overlay',
@@ -82,6 +83,7 @@ export function LeadDetailDrawer({
   onStatusChange: (leadId: string, status: LeadStatus) => void;
   onMarkContacted: (leadId: string) => void;
   onScheduleFollowUp: (leadId: string, days?: number) => void;
+  onScheduleAppointment?: (lead: Lead) => void;
   onEdit: (lead: Lead) => void;
   appointmentDate?: string;
   mode?: 'overlay' | 'inline';
@@ -98,6 +100,28 @@ export function LeadDetailDrawer({
   type TreatmentRow = { id: string; datetime: string; service_name: string | null; status: string | null };
   const [treatments, setTreatments] = useState<TreatmentRow[]>([]);
   const [treatmentsLoading, setTreatmentsLoading] = useState(false);
+  const [cancellingAptId, setCancellingAptId] = useState<string | null>(null);
+  const [confirmCancelAptId, setConfirmCancelAptId] = useState<string | null>(null);
+
+  const handleCancelAppointment = async (aptId: string) => {
+    setCancellingAptId(aptId);
+    setConfirmCancelAptId(null);
+    try {
+      const res = await fetch(`/api/appointments/${aptId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status: 'cancelled' }),
+      });
+      if (res.ok) {
+        setTreatments((prev) => prev.map((t) => t.id === aptId ? { ...t, status: 'cancelled' } : t));
+        if (lead) {
+          onStatusChange(lead.id, 'Contacted' as LeadStatus);
+        }
+      }
+    } catch { /* ignore */ }
+    setCancellingAptId(null);
+  };
 
   // ── Payment data (deal-driven) ──
   type PaymentRow = { id: string; amount: number; payment_method: string; payment_date: string; status: string; is_refund: boolean; notes: string | null };
@@ -119,16 +143,16 @@ export function LeadDetailDrawer({
       setPaymentState((prev) => ({ ...prev, status: 'loading' }));
       setTreatmentsLoading(true);
 
-      const { data: appts } = await supabase
-        .from('appointments')
-        .select('id, datetime, service_name, status')
-        .eq('lead_id', leadId)
-        .order('datetime', { ascending: false })
-        .limit(10);
+      // Fetch appointments for this lead directly (single query, DB-filtered)
+      const aptRes = await fetch(`/api/appointments?lead_id=${encodeURIComponent(leadId)}`, { credentials: 'include' })
+        .then((r) => r.ok ? r.json() : { appointments: [] })
+        .catch(() => ({ appointments: [] }));
+      const rows: TreatmentRow[] = ((aptRes.appointments ?? []) as { id: string; datetime: string; service_name: string | null; status: string | null }[])
+        .map((a) => ({ id: a.id, datetime: a.datetime, service_name: a.service_name, status: a.status }))
+        .slice(0, 10);
 
       if (signal?.cancelled) return;
 
-      const rows = (appts ?? []) as TreatmentRow[];
       setTreatments(rows);
       setTreatmentsLoading(false);
 
@@ -280,7 +304,19 @@ export function LeadDetailDrawer({
               {lead.full_name || 'ליד ללא שם'}
             </h2>
             {lead.phone && (
-              <p className="text-[13px] text-slate-500 dark:text-slate-400 tabular-nums mt-0.5" dir="ltr">{lead.phone}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-[13px] text-slate-500 dark:text-slate-400 tabular-nums" dir="ltr">{lead.phone}</p>
+                <a href={`tel:${lead.phone}`} onClick={(e) => e.stopPropagation()}
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors"
+                  title="התקשר">
+                  <Phone className="h-3 w-3" />
+                </a>
+                <a href={`https://wa.me/${lead.phone.replace(/\D/g, '').replace(/^0/, '972')}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                  title="WhatsApp">
+                  <MessageSquare className="h-3 w-3" />
+                </a>
+              </div>
             )}
           </div>
           <span className={`rounded-full px-3.5 py-1.5 text-[15px] font-bold shrink-0 ${statusBadge.className}`}>{statusBadge.label}</span>
@@ -312,54 +348,120 @@ export function LeadDetailDrawer({
         {/* ═══ Sections — compact editorial blocks ═══ */}
         <div className="px-5 pt-4 space-y-4">
 
-          {/* היסטוריית טיפולים — FIRST */}
-          <div>
-            <div className="flex items-center gap-1.5 mb-2">
-              <span className="h-1 w-1 rounded-full bg-slate-900 dark:bg-white" />
-              <p className="text-[13px] font-bold text-slate-900 dark:text-white uppercase tracking-wide">היסטוריה</p>
-            </div>
-            {treatmentsLoading ? (
-              <div className="rounded-lg bg-[#F8F8F6] dark:bg-slate-800/40 px-3.5 py-4 text-center">
-                <p className="text-[13px] text-slate-400 dark:text-slate-500">טוען...</p>
-              </div>
-            ) : treatments.length === 0 ? (
-              <div className="rounded-lg bg-[#F8F8F6] dark:bg-slate-800/40 px-3.5 py-4 text-center">
-                <p className="text-[14px] text-slate-800 dark:text-slate-200">לא קיים</p>
-              </div>
-            ) : (
-              <div className="rounded-xl bg-[#F8F8F6] dark:bg-slate-800/40 overflow-hidden divide-y divide-slate-200/50 dark:divide-slate-700/30">
-                {treatments.map((t) => {
-                  const d = new Date(t.datetime);
-                  const date = d.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' });
-                  const time = d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-                  const statusLabel = t.status === 'completed' ? 'הושלם' : t.status === 'cancelled' ? 'בוטל' : t.status === 'no_show' ? 'לא הגיע' : 'מתוכנן';
-                  const statusColor = t.status === 'completed'
-                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                    : t.status === 'cancelled' || t.status === 'no_show'
-                      ? 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                      : 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300';
-                  return (
-                    <div key={t.id} className="flex items-center justify-between px-4 py-3">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <Clock className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
-                        <div className="min-w-0">
-                          <p className="text-[14px] font-semibold text-slate-900 dark:text-white truncate">
-                            {t.service_name || 'טיפול'}
-                          </p>
-                          <p className="text-[12px] text-slate-600 dark:text-slate-400 tabular-nums" dir="ltr">
-                            {date} · {time}
-                          </p>
+          {/* ═══ Upcoming appointments ═══ */}
+          {(() => {
+            const upcoming = treatments.filter((t) => t.status === 'scheduled');
+            if (treatmentsLoading || upcoming.length === 0) return null;
+            return (
+              <div>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="h-1 w-1 rounded-full bg-slate-900 dark:bg-white" />
+                  <p className="text-[13px] font-bold text-slate-900 dark:text-white uppercase tracking-wide">תורים קרובים</p>
+                </div>
+                <div className="rounded-xl border border-indigo-200/60 dark:border-indigo-800/40 bg-indigo-50/30 dark:bg-indigo-950/10 overflow-hidden divide-y divide-indigo-100/50 dark:divide-indigo-900/20">
+                  {upcoming.map((t) => {
+                    const d = new Date(t.datetime);
+                    const date = d.toLocaleDateString('he-IL', { weekday: 'short', day: 'numeric', month: 'short' });
+                    const time = d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+                    return (
+                      <div key={t.id} className="flex items-center justify-between px-4 py-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Calendar className="h-4 w-4 text-indigo-500 dark:text-indigo-400 shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-[14px] font-semibold text-slate-900 dark:text-white truncate">
+                              {t.service_name || 'תור'}
+                            </p>
+                            <p className="text-[12px] text-indigo-600 dark:text-indigo-400 font-medium tabular-nums" dir="ltr">
+                              {date} · {time}
+                            </p>
+                          </div>
                         </div>
+                        {confirmCancelAptId === t.id ? (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleCancelAppointment(t.id)}
+                              disabled={cancellingAptId === t.id}
+                              className="rounded-lg px-2.5 py-1 text-[11px] font-bold text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50"
+                            >
+                              {cancellingAptId === t.id ? 'מבטל...' : 'אישור'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmCancelAptId(null)}
+                              className="rounded-lg px-2.5 py-1 text-[11px] font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            >
+                              לא
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmCancelAptId(t.id)}
+                            className="rounded-lg px-3 py-1.5 text-[12px] font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 border border-red-200 dark:border-red-800/40 transition-colors"
+                          >
+                            בטל תור
+                          </button>
+                        )}
                       </div>
-                      <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold shrink-0 ${statusColor}`}>
-                        {statusLabel}
-                      </span>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            )}
-          </div>
+            );
+          })()}
+
+          {/* ═══ History (past appointments only) ═══ */}
+          {(() => {
+            const past = treatments.filter((t) => t.status !== 'scheduled');
+            return (
+              <div>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="h-1 w-1 rounded-full bg-slate-900 dark:bg-white" />
+                  <p className="text-[13px] font-bold text-slate-900 dark:text-white uppercase tracking-wide">היסטוריה</p>
+                </div>
+                {treatmentsLoading ? (
+                  <div className="rounded-lg bg-[#F8F8F6] dark:bg-slate-800/40 px-3.5 py-4 text-center">
+                    <p className="text-[13px] text-slate-400 dark:text-slate-500">טוען...</p>
+                  </div>
+                ) : past.length === 0 ? (
+                  <div className="rounded-lg bg-[#F8F8F6] dark:bg-slate-800/40 px-3.5 py-4 text-center">
+                    <p className="text-[14px] text-slate-800 dark:text-slate-200">לא קיים</p>
+                  </div>
+                ) : (
+                  <div className="rounded-xl bg-[#F8F8F6] dark:bg-slate-800/40 overflow-hidden divide-y divide-slate-200/50 dark:divide-slate-700/30">
+                    {past.map((t) => {
+                      const d = new Date(t.datetime);
+                      const date = d.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' });
+                      const time = d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+                      const statusLabel = t.status === 'completed' ? 'הושלם' : t.status === 'cancelled' ? 'בוטל' : t.status === 'no_show' ? 'לא הגיע' : t.status ?? '';
+                      const statusColor = t.status === 'completed'
+                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                        : 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400';
+                      return (
+                        <div key={t.id} className="flex items-center justify-between px-4 py-3">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <Clock className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-[14px] font-semibold text-slate-900 dark:text-white truncate">
+                                {t.service_name || 'טיפול'}
+                              </p>
+                              <p className="text-[12px] text-slate-600 dark:text-slate-400 tabular-nums" dir="ltr">
+                                {date} · {time}
+                              </p>
+                            </div>
+                          </div>
+                          <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold shrink-0 ${statusColor}`}>
+                            {statusLabel}
+                          </span>
+                        </div>
+                  );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* סטטוס תשלום — after treatments */}
           {paymentState.status !== 'no_deal' && paymentState.status !== 'loading' && (
@@ -522,16 +624,17 @@ export function LeadDetailDrawer({
               { value: 'Disqualified', label: 'בוטל' },
             ]}
           />
+          {/* Schedule appointment — right after status selector */}
+          {(!appointmentDate || lead.status === 'Pending' || lead.status === 'Contacted') && (
+            <button type="button" onClick={() => onScheduleAppointment ? onScheduleAppointment(lead) : onScheduleFollowUp(lead.id)}
+              className="w-full inline-flex items-center justify-center gap-1.5 h-10 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[14px] font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all">
+              <Calendar className="h-4 w-4 shrink-0" /> קבע תור
+            </button>
+          )}
           {/* Follow-up */}
           <FollowUpScheduler leadId={lead.id} leadName={lead.full_name ?? undefined} followUpDate={lead.next_follow_up_date} onSchedule={onScheduleFollowUp} />
-          {/* Actions — right below follow-up scheduler */}
+          {/* Actions */}
           <div className="flex items-center gap-2">
-            {!appointmentDate && (
-              <button type="button" onClick={() => onScheduleFollowUp(lead.id)}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 h-10 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[14px] font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all">
-                <Calendar className="h-4 w-4 shrink-0" /> קבע תור
-              </button>
-            )}
             <button type="button" onClick={() => onEdit(lead)}
               className="flex-1 inline-flex items-center justify-center gap-1.5 h-10 rounded-lg text-slate-700 dark:text-slate-200 text-[14px] font-semibold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
               ערוך ליד
@@ -606,12 +709,11 @@ export function LeadDetailDrawer({
         dir="rtl"
         role="dialog"
         aria-modal="true"
-        className="fixed z-[60] drawer-enter
-          inset-x-0 top-0 bottom-[76px] md:bottom-0
-          md:inset-y-0 md:inset-x-auto md:end-0 md:w-full md:max-w-[420px]
-          md:border-s md:border-slate-200/60 dark:md:border-slate-800/60
-          bg-gradient-to-b from-white via-white to-slate-50/80 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900/50 flex flex-col"
-        style={{ boxShadow: '-4px 0 24px rgba(0,0,0,0.08), -1px 0 6px rgba(0,0,0,0.04), inset 1px 0 0 rgba(255,255,255,0.06)' }}
+        className="fixed z-[60] modal-enter
+          inset-3 md:inset-auto md:top-[3%] md:bottom-[3%] md:left-1/2 md:-translate-x-1/2
+          md:w-full md:max-w-md
+          rounded-2xl
+          bg-gradient-to-b from-white via-white to-slate-50/80 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900/50 shadow-2xl flex flex-col overflow-hidden"
         aria-label="פרטי ליד"
       >
         {drawerContent}

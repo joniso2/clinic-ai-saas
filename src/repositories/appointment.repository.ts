@@ -1,16 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin as getSupabaseAdminClient } from '@/lib/supabase-admin';
 import type { Appointment, AppointmentType } from '@/types/appointments';
-
-function getSupabaseAdminClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('Supabase server environment variables are not configured.');
-  }
-  return createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
-  });
-}
 
 export type CreateAppointmentPayload = {
   clinic_id: string;
@@ -30,6 +19,25 @@ export type CreateAppointmentPayload = {
   priority_level?: 'low' | 'medium' | 'high' | null;
 };
 
+/** Fetch appointments for a specific lead (all time, most recent first, capped at 20). */
+export async function getAppointmentsByLeadId(
+  clinicId: string,
+  leadId: string,
+): Promise<{ data: Appointment[] | null; error: unknown }> {
+  const supabase = getSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from('appointments')
+    .select('id, clinic_id, patient_name, datetime, type, status, created_at, lead_id, service_name')
+    .eq('clinic_id', clinicId)
+    .eq('lead_id', leadId)
+    .order('datetime', { ascending: false })
+    .limit(20);
+
+  if (error) return { data: null, error };
+  const rows = (data ?? []) as (Omit<Appointment, 'duration_minutes'> & { duration_minutes?: number })[];
+  return { data: rows.map((r) => ({ ...r, duration_minutes: r.duration_minutes ?? 30 })) as Appointment[], error: null };
+}
+
 /** Fetch all appointments for a given month (1-indexed month). */
 export async function getAppointmentsByMonth(
   clinicId: string,
@@ -42,7 +50,7 @@ export async function getAppointmentsByMonth(
 
   const { data, error } = await supabase
     .from('appointments')
-    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id, service_name')
+    .select('id, clinic_id, patient_name, datetime, type, status, created_at, lead_id, service_name')
     .eq('clinic_id', clinicId)
     .gte('datetime', start)
     .lt('datetime', end)
@@ -62,7 +70,7 @@ export async function getAppointmentsInRange(
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
     .from('appointments')
-    .select('id, clinic_id, patient_name, datetime, type, created_at, lead_id, service_name')
+    .select('id, clinic_id, patient_name, datetime, type, status, created_at, lead_id, service_name')
     .eq('clinic_id', clinicId)
     .eq('status', 'scheduled')
     .gte('datetime', startIso)

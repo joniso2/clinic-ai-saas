@@ -28,12 +28,12 @@ const ScheduleAppointmentModal = dynamic(
   { ssr: false },
 );
 
-export default function DashboardClient() {
+export default function DashboardClient({ serverClinicId }: { serverClinicId?: string | null } = {}) {
   const router = useRouter();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [clinicId, setClinicId] = useState<string | null>(null);
+  const [clinicId, setClinicId] = useState<string | null>(serverClinicId ?? null);
 
   const [showNewLeadForm, setShowNewLeadForm] = useState(false);
   const isLargeScreen = useMediaQuery('(min-width: 1024px)');
@@ -87,6 +87,17 @@ export default function DashboardClient() {
 
   useEffect(() => {
     const load = async () => {
+      // If clinicId was resolved on the server, skip client-side auth entirely
+      if (serverClinicId) {
+        await Promise.all([
+          fetchLeads(serverClinicId),
+          fetchPricingServices(),
+        ]);
+        setLoading(false);
+        return;
+      }
+
+      // Fallback: resolve clinicId client-side (e.g. if serverClinicId was not passed)
       const {
         data: { session },
         error: sessionError,
@@ -115,7 +126,7 @@ export default function DashboardClient() {
     };
 
     load();
-  }, [router]);
+  }, [router, serverClinicId]);
 
   useEffect(() => {
     refreshNextAppointments();
@@ -188,15 +199,7 @@ export default function DashboardClient() {
     };
   }, [clinicId]);
 
-  // Refetch leads when tab becomes visible (e.g. after Discord bot created a lead)
-  useEffect(() => {
-    if (!clinicId) return;
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') fetchLeads(clinicId);
-    };
-    document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
-  }, [clinicId]);
+  // Realtime subscription above covers INSERT/UPDATE/DELETE — no need for visibility refetch
 
   // Register leads in CommandPalette context
   useEffect(() => { registerLeads(leads); }, [leads, registerLeads]);
@@ -429,18 +432,18 @@ export default function DashboardClient() {
     if (!leads.length) return;
     const now = new Date();
     const monthsToFetch = [0, 1];
+    const results = await Promise.all(
+      monthsToFetch.map((offset) => {
+        const d = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+        const month = d.getMonth() + 1;
+        const year = d.getFullYear();
+        return fetch(`/api/appointments?month=${month}&year=${year}`, { credentials: 'include' })
+          .then((res) => res.ok ? res.json() : {})
+          .catch(() => ({}));
+      })
+    );
     const all: Appointment[] = [];
-    for (const offset of monthsToFetch) {
-      const d = new Date(now.getFullYear(), now.getMonth() + offset, 1);
-      const month = d.getMonth() + 1;
-      const year = d.getFullYear();
-      const res = await fetch(`/api/appointments?month=${month}&year=${year}`, {
-        credentials: 'include',
-      });
-      if (!res.ok) continue;
-      const json = (await res.json().catch(() => ({}))) as {
-        appointments?: Appointment[];
-      };
+    for (const json of results as { appointments?: Appointment[] }[]) {
       if (json.appointments) all.push(...json.appointments);
     }
     const map: Record<string, string> = {};
@@ -628,6 +631,7 @@ export default function DashboardClient() {
               onStatusChange={handleUpdateLeadStatus}
               onMarkContacted={handleMarkContacted}
               onScheduleFollowUp={handleScheduleFollowUp}
+              onScheduleAppointment={handleOpenAppointment}
               onEdit={handleEditFromDrawer}
               appointmentDate={drawerLead ? nextAppointmentsByLeadId[drawerLead.id] : undefined}
               mode="inline"
@@ -645,6 +649,7 @@ export default function DashboardClient() {
           onStatusChange={handleUpdateLeadStatus}
           onMarkContacted={handleMarkContacted}
           onScheduleFollowUp={handleScheduleFollowUp}
+          onScheduleAppointment={handleOpenAppointment}
           onEdit={handleEditFromDrawer}
           appointmentDate={drawerLead ? nextAppointmentsByLeadId[drawerLead.id] : undefined}
           mode="overlay"

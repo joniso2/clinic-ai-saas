@@ -1,17 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-function getSupabaseAdminClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('Supabase server environment variables are not configured.');
-  }
-
-  return createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
-  });
-}
+import { getSupabaseAdmin as getSupabaseAdminClient } from '@/lib/supabase-admin';
 
 export type CreateLeadPayload = {
   clinic_id: string;
@@ -106,6 +93,22 @@ export async function getLeadsByClinicId(clinicId: string): Promise<{
     .eq('clinic_id', clinicId)
     .order('created_at', { ascending: false });
 
+  if (error) return { data: null, error };
+  return { data: (data ?? []) as LeadRow[], error: null };
+}
+
+/** Fetch a batch of leads by IDs (for calendar status lookups). */
+export async function getLeadsByIds(
+  clinicId: string,
+  ids: string[],
+): Promise<{ data: LeadRow[] | null; error: unknown }> {
+  if (ids.length === 0) return { data: [], error: null };
+  const supabase = getSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from('leads')
+    .select('id, clinic_id, full_name, status, priority_level, next_follow_up_date')
+    .eq('clinic_id', clinicId)
+    .in('id', ids);
   if (error) return { data: null, error };
   return { data: (data ?? []) as LeadRow[], error: null };
 }

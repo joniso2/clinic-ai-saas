@@ -76,13 +76,19 @@ interface SuperAdminShellProps {
 
 // ─── Shell ────────────────────────────────────────────────────────────────────
 export function SuperAdminShell({ overviewData }: SuperAdminShellProps) {
-  const [section, setSection] = useState<SectionId>('overview');
+  const [section, setSection] = useState<SectionId>(sectionFromHash);
 
   useEffect(() => {
+    // Sync on mount (covers SSR mismatch) + listen for hash changes
     setSection(sectionFromHash());
     const onHash = () => setSection(sectionFromHash());
     window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
+    // Also listen for popstate — some browsers/routers use this instead
+    window.addEventListener('popstate', onHash);
+    return () => {
+      window.removeEventListener('hashchange', onHash);
+      window.removeEventListener('popstate', onHash);
+    };
   }, []);
 
   const navigate = (id: SectionId) => {

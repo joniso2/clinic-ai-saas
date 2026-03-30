@@ -11,6 +11,8 @@ import type { BillingSettings } from '@/types/billing';
 import { WeekBoard } from './WeekBoard';
 import { ISRAEL_TZ, getEventDateStr } from './calendar-helpers';
 import type { CalendarEvent, DayColumn } from './calendar-helpers';
+import { ScheduleAppointmentModal } from '@/app/dashboard/ScheduleAppointmentModal';
+import { EditLeadModal } from '@/components/dashboard/EditLeadModal';
 
 const LeadDetailDrawer = dynamic(
   () => import('@/components/dashboard/LeadDetailDrawer').then((m) => m.LeadDetailDrawer),
@@ -101,8 +103,12 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
     }
     setLeadStatusFetched(false);
     let cancelled = false;
-    const leadsUrl = clinicId ? `/api/leads?clinic_id=${encodeURIComponent(clinicId)}` : '/api/leads';
-    fetch(leadsUrl, { credentials: 'include' })
+    // Batch fetch only the leads visible on the calendar (not all clinic leads)
+    const idsParam = [...missing].join(',');
+    const batchUrl = clinicId
+      ? `/api/leads?clinic_id=${encodeURIComponent(clinicId)}&ids=${encodeURIComponent(idsParam)}`
+      : `/api/leads?ids=${encodeURIComponent(idsParam)}`;
+    fetch(batchUrl, { credentials: 'include' })
       .then((res) => res.json())
       .then((data: { leads?: Lead[] }) => {
         if (cancelled) return;
@@ -355,6 +361,29 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
 
   const noopHandler = useCallback(() => {}, []);
   const handleCloseDrawer = useCallback(() => setDrawerOpen(false), []);
+  const [scheduleLeadFromDrawer, setScheduleLeadFromDrawer] = useState<Lead | null>(null);
+  const [editLeadFromDrawer, setEditLeadFromDrawer] = useState<Lead | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
+
+  const handleEditSave = useCallback(async (id: string, data: Partial<Lead>) => {
+    setEditSaving(true);
+    try {
+      const res = await fetch(`/api/leads/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        setEditLeadFromDrawer(null);
+        // Update drawer lead with new data
+        if (drawerLead?.id === id) {
+          setDrawerLead((prev) => prev ? { ...prev, ...data } as Lead : prev);
+        }
+      }
+    } catch { /* ignore */ }
+    setEditSaving(false);
+  }, [drawerLead]);
   const handleCloseDayModal = useCallback(() => setSelectedDay(null), []);
   const handleCloseReceiptModal = useCallback(() => setReceiptModalApt(null), []);
 
@@ -531,8 +560,31 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
         onStatusChange={noopHandler}
         onMarkContacted={noopHandler}
         onScheduleFollowUp={noopHandler}
-        onEdit={noopHandler}
+        onScheduleAppointment={(lead) => setScheduleLeadFromDrawer(lead)}
+        onEdit={(lead) => setEditLeadFromDrawer(lead)}
       />
+
+      {/* Edit lead from drawer */}
+      <EditLeadModal
+        lead={editLeadFromDrawer}
+        open={!!editLeadFromDrawer}
+        onClose={() => setEditLeadFromDrawer(null)}
+        onSave={handleEditSave}
+        loading={editSaving}
+      />
+
+      {/* Schedule appointment from drawer */}
+      {scheduleLeadFromDrawer && (
+        <ScheduleAppointmentModal
+          lead={scheduleLeadFromDrawer}
+          onClose={() => setScheduleLeadFromDrawer(null)}
+          onScheduled={(apt) => {
+            setAppointments((prev) => [...prev, apt]);
+            setScheduleLeadFromDrawer(null);
+            setDrawerOpen(false);
+          }}
+        />
+      )}
 
       {/* Day Modal */}
       {selectedDay && (

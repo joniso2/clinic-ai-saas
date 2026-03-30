@@ -50,23 +50,29 @@ export default function MessagingSection() {
       .then((d) => {
         const list = d.clinics ?? [];
         setClinics(list);
-        if (list.length && !selectedClinicId) setSelectedClinicId(list[0].id);
+        setSelectedClinicId((prev) => prev || (list.length ? list[0].id : ''));
       })
-      .catch(() => {});
+      .catch((err) => console.error('[Messaging] fetch clinics error:', err));
   }, []);
 
   const fetchLogs = useCallback(async () => {
     setLogsLoading(true);
-    const params = new URLSearchParams();
-    if (filterClinic) params.set('clinic_id', filterClinic);
-    if (filterChannel) params.set('channel', filterChannel);
-    if (filterFrom) params.set('from', `${filterFrom}T00:00:00.000Z`);
-    if (filterTo) params.set('to', `${filterTo}T23:59:59.999Z`);
-    params.set('limit', '100');
-    const res = await fetch(`/api/super-admin/messages?${params}`);
-    const data = await res.json().catch(() => ({}));
-    setLogs(data.messages ?? []);
-    setLogsLoading(false);
+    try {
+      const params = new URLSearchParams();
+      if (filterClinic) params.set('clinic_id', filterClinic);
+      if (filterChannel) params.set('channel', filterChannel);
+      if (filterFrom) params.set('from', `${filterFrom}T00:00:00.000Z`);
+      if (filterTo) params.set('to', `${filterTo}T23:59:59.999Z`);
+      params.set('limit', '100');
+      const res = await fetch(`/api/super-admin/messages?${params}`);
+      const data = await res.json().catch(() => ({}));
+      setLogs(data.messages ?? []);
+    } catch (err) {
+      console.error('[Messaging] fetchLogs error:', err);
+      setLogs([]);
+    } finally {
+      setLogsLoading(false);
+    }
   }, [filterClinic, filterChannel, filterFrom, filterTo]);
 
   useEffect(() => { fetchLogs(); }, [fetchLogs]);

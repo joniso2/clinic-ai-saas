@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin as getSupabaseAdminClient } from '@/lib/supabase-admin';
 import * as leadRepository from '@/repositories/lead.repository';
 import type { AnalyticsLeadRow } from '@/repositories/lead.repository';
 
@@ -39,18 +39,7 @@ import type {
   AnalyticsData,
 } from './analytics.types';
 
-// ─── Supabase Admin ─────────────────────────────────────────────────────────
-
-function getSupabaseAdminClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('Supabase server environment variables are not configured.');
-  }
-  return createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
-  });
-}
+// ─── Supabase Admin (singleton from @/lib/supabase-admin) ───────────────────
 
 // ─── Internal Helpers ────────────────────────────────────────────────────────
 

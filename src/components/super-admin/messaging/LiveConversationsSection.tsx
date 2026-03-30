@@ -24,10 +24,15 @@ export default function LiveConversationsSection() {
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
-    const res = await fetch('/api/super-admin/messages?limit=50');
-    const data = await res.json().catch(() => ({}));
-    setLogs(data.messages ?? []);
-    setLoading(false);
+    try {
+      const res = await fetch('/api/super-admin/messages?limit=50');
+      const data = await res.json().catch(() => ({}));
+      setLogs(data.messages ?? []);
+    } catch {
+      // Silently fail — auto-retry in 15s
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { fetchLogs(); }, [fetchLogs]);

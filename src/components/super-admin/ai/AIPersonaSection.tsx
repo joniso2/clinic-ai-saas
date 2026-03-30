@@ -199,15 +199,20 @@ export default function AIPersonaSection() {
   }, []);
 
   const fetchClinics = useCallback(async () => {
-    const res = await fetch('/api/super-admin/clinics');
-    const d = await res.json().catch(() => ({}));
-    const list: { id: string; name: string | null }[] = d.clinics ?? [];
-    setClinics(list);
-    if (list.length && !selectedClinicId) {
-      setSelectedClinicId(list[0].id);
-      setSelectedClinicName(list[0].name ?? '');
+    try {
+      const res = await fetch('/api/super-admin/clinics');
+      const d = await res.json().catch(() => ({}));
+      const list: { id: string; name: string | null }[] = d.clinics ?? [];
+      setClinics(list);
+      setSelectedClinicId((prev) => {
+        if (prev) return prev;
+        if (list.length) { setSelectedClinicName(list[0].name ?? ''); return list[0].id; }
+        return prev;
+      });
+    } catch (err) {
+      console.error('[AI Persona] fetchClinics error:', err);
     }
-  }, [selectedClinicId]);
+  }, []);
 
   const fetchPersona = useCallback(async (clinicId: string) => {
     if (!clinicId) return;

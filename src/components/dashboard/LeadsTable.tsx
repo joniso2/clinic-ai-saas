@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Search,
@@ -142,6 +142,220 @@ function getAvatarColor(name: string | null): string {
   }
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
+
+// ─── Memoized Row Component ─────────────────────────────────────────────────
+
+interface LeadRowProps {
+  lead: Lead;
+  isActive: boolean;
+  isSelected: boolean;
+  isRemoving: boolean;
+  isDisqualifiedView: boolean;
+  hasFinePointer: boolean;
+  nextAppt: string | undefined;
+  pricingServices: { service_name: string; price: number; color?: string | null }[];
+  hasCompleteLead: boolean;
+  onView: (lead: Lead) => void;
+  onScheduleAppointment: (lead: Lead) => void;
+  onToggleSelect: (id: string) => void;
+  onSetCompleteLead: (lead: Lead) => void;
+  onDragStart: (lead: Lead) => void;
+  onDragEnd: () => void;
+  onGoToCalendar: (datetime: string) => void;
+}
+
+const LeadRow = memo(function LeadRow({
+  lead, isActive, isSelected, isRemoving, isDisqualifiedView, hasFinePointer,
+  nextAppt, pricingServices, hasCompleteLead,
+  onView, onScheduleAppointment, onToggleSelect, onSetCompleteLead, onDragStart, onDragEnd, onGoToCalendar,
+}: LeadRowProps) {
+  const initials = getInitials(lead.full_name);
+  const riskInfo = getRiskInfo(lead);
+  const stageBadge = getLeadStageBadge(lead);
+  const avatarColor = getAvatarColor(lead.full_name);
+
+  return (
+    <div
+      onClick={() => onView(lead)}
+      draggable={hasFinePointer}
+      onDragStart={(e) => {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', lead.id);
+        onDragStart(lead);
+      }}
+      onDragEnd={() => onDragEnd()}
+      className={[
+        'rounded-2xl overflow-hidden cursor-pointer',
+        isRemoving
+          ? 'opacity-0 scale-95 pointer-events-none transition-all duration-200'
+          : 'opacity-100',
+        isActive
+          ? 'bg-white dark:bg-slate-900 card-float-active'
+          : 'bg-white dark:bg-slate-900/80 card-float',
+      ].filter(Boolean).join(' ')}
+    >
+      <div className="px-5 pt-3 pb-4">
+        {/* Row 1: Identity */}
+        <div className="flex items-center gap-3">
+          <div className={`h-12 w-12 rounded-2xl ${avatarColor} flex items-center justify-center shrink-0 shadow-sm`}>
+            <span className="text-[15px] font-bold text-white leading-none">{initials}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="text-[21px] font-bold text-slate-900 dark:text-white truncate leading-tight">
+                {lead.full_name || 'ליד ללא שם'}
+              </h3>
+              {hasCompleteLead && lead.status !== 'Closed' && lead.status !== 'Disqualified' && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onSetCompleteLead(lead); }}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/25 text-emerald-500 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors shrink-0"
+                  title="סיום ליד"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-2 mt-1">
+              {stageBadge && (
+                <span className={`rounded-full px-3 py-1 text-[14px] font-semibold ${stageBadge.className}`}>
+                  {stageBadge.label}
+                </span>
+              )}
+              {riskInfo && (
+                <span className={`rounded-full px-3 py-1 text-[14px] font-semibold ${
+                  riskInfo.color === 'text-red-500'
+                    ? 'bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400'
+                    : riskInfo.color === 'text-orange-500'
+                    ? 'bg-orange-50 text-orange-600 dark:bg-orange-950/30 dark:text-orange-400'
+                    : 'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400'
+                }`}>
+                  {riskInfo.label}
+                </span>
+              )}
+            </div>
+          </div>
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={(e) => { e.stopPropagation(); onToggleSelect(lead.id); }}
+            onClick={(e) => e.stopPropagation()}
+            className="h-4 w-4 rounded border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-800 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0 shrink-0"
+            aria-label="בחר ליד"
+          />
+        </div>
+
+        {/* Row 2: Split info box */}
+        <div className="mt-3 grid grid-cols-2 gap-px rounded-lg overflow-hidden border border-slate-100/70 dark:border-slate-800/40">
+          <div className={`px-3.5 py-2.5 ${nextAppt ? 'bg-emerald-50 dark:bg-emerald-950/25' : 'bg-slate-50/80 dark:bg-slate-800/30'}`}>
+            <p className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 mb-0.5">התור הבא</p>
+            {nextAppt ? (() => {
+              const parts = getAppointmentParts(nextAppt);
+              if (!parts) return <span className="text-[13px] text-slate-400">—</span>;
+              return (
+                <button type="button"
+                  onClick={(e) => { e.stopPropagation(); onGoToCalendar(nextAppt); }}
+                  className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+                  {parts.urgent ? (
+                    <span className="inline-flex items-center rounded-md bg-red-500 px-2.5 py-0.5 text-[17px] font-black text-white leading-tight shadow-sm">
+                      {parts.label}
+                    </span>
+                  ) : (
+                    <span className="text-[16px] font-bold text-slate-900 dark:text-white leading-tight">
+                      {parts.label}
+                    </span>
+                  )}
+                  <span className="text-[19px] font-bold text-slate-900 dark:text-white tabular-nums leading-none">
+                    {parts.time}
+                  </span>
+                </button>
+              );
+            })() : (
+              <button type="button"
+                onClick={(e) => { e.stopPropagation(); onScheduleAppointment(lead); }}
+                className="inline-flex flex-row-reverse items-center gap-1 text-[15px] font-semibold text-slate-400 dark:text-slate-500 hover:text-indigo-500 transition-colors">
+                <Plus className="h-3.5 w-3.5" />
+                קבע תור
+              </button>
+            )}
+          </div>
+          {(() => {
+            const interestColor = lead.interest ? pricingServices.find((s) => s.service_name === lead.interest)?.color : null;
+            return (
+              <div
+                className={`px-3.5 py-2.5 ${interestColor ? '' : 'bg-slate-50 dark:bg-slate-800/30'}`}
+                style={interestColor ? { background: interestColor + '18' } : undefined}
+              >
+                <p className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 mb-0.5">אינטראקציה אחרונה</p>
+                <p className="text-[16px] font-bold text-slate-700 dark:text-slate-300 leading-tight">
+                  {lead.last_contact_date
+                    ? `${formatHebrewShortDate(lead.last_contact_date)}${lead.interest ? ` (${lead.interest})` : ''}`
+                    : lead.interest || '—'
+                  }
+                </p>
+              </div>
+            );
+          })()}
+        </div>
+
+        {/* Row 3: metadata + actions */}
+        <div className="mt-3 flex items-center" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-5 text-[15px]">
+            {(() => {
+              const svcColor = lead.interest
+                ? pricingServices.find((s) => s.service_name === lead.interest)?.color ?? null
+                : null;
+              return (
+                <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-200">
+                  <span className="text-slate-500 dark:text-slate-400 font-semibold">טיפול</span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-900 dark:bg-white shrink-0" />
+                  <span className="font-bold" style={svcColor ? { color: svcColor } : undefined}>
+                    {lead.interest || '—'}
+                  </span>
+                </span>
+              );
+            })()}
+            <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-200">
+              <span className="text-slate-500 dark:text-slate-400 font-semibold">תשלום</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-slate-900 dark:bg-white shrink-0" />
+              {(lead.estimated_deal_value ?? 0) > 0 ? (
+                <span className="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                  {formatCurrencyILS(lead.estimated_deal_value!)}
+                </span>
+              ) : (
+                <span className="font-bold text-red-500 dark:text-red-400">יתרה פתוחה</span>
+              )}
+            </span>
+          </div>
+          <div className="flex-1" />
+          <div className="flex items-center gap-1.5">
+            {lead.phone && (
+              <a href={`tel:${lead.phone}`}
+                className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-sm"
+                title="התקשר">
+                <Phone className="h-3.5 w-3.5 shrink-0" />
+              </a>
+            )}
+            {lead.phone && (
+              <a href={toWaHref(lead.phone)} target="_blank" rel="noopener noreferrer"
+                className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
+                title="WhatsApp">
+                <WhatsAppIcon className="h-3.5 w-3.5 shrink-0" />
+              </a>
+            )}
+          </div>
+        </div>
+
+        {isDisqualifiedView && (lead.reject_reason || lead.rejected_at) && (
+          <div className="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800/50 flex items-center gap-3 text-[12px] text-slate-400">
+            {lead.reject_reason && <span>סיבה: {lead.reject_reason}</span>}
+            {lead.rejected_at && <span className="tabular-nums">בוטל: {formatDateTime(lead.rejected_at)}</span>}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
@@ -320,6 +534,12 @@ export function LeadsTable({
     }
   }, [selectedIds.size, filteredAndSorted]);
 
+  // Stable callbacks for LeadRow memo
+  const handleSetCompleteLead = useCallback((lead: Lead) => setCompleteLead(lead), []);
+  const handleDragStart = useCallback((lead: Lead) => setDraggingLead(lead), []);
+  const handleDragEnd = useCallback(() => { setDraggingLead(null); setTrashHover(false); }, []);
+  const hasCompleteLead = !!onCompleteLead;
+
   const isUrgent = (lead: Lead) => {
     const p = getDisplayPriority(lead);
     const next = lead.next_follow_up_date
@@ -484,211 +704,27 @@ export function LeadsTable({
 
       {/* ── Stacked Card Feed ──────────────────────────────────────────── */}
       <div className="space-y-3" dir="rtl">
-        {filteredAndSorted.map((lead) => {
-          const priority = getDisplayPriority(lead);
-          const urgent = isUrgent(lead);
-          const isRemoving = removingIds.has(lead.id);
-          const isSelected = selectedIds.has(lead.id);
-          const isActive = lead.id === selectedLeadId;
-          const nextAppt = nextAppointmentsByLeadId?.[lead.id];
-          const initials = getInitials(lead.full_name);
-          const riskInfo = getRiskInfo(lead);
-          const stageBadge = getLeadStageBadge(lead);
-          const avatarColor = getAvatarColor(lead.full_name);
-
-          return (
-            <div
-              key={lead.id}
-              onClick={() => onView(lead)}
-              draggable={hasFinePointer}
-              onDragStart={(e) => {
-                e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/plain', lead.id);
-                setDraggingLead(lead);
-              }}
-              onDragEnd={() => { setDraggingLead(null); setTrashHover(false); }}
-              className={[
-                'rounded-2xl overflow-hidden cursor-pointer',
-                isRemoving
-                  ? 'opacity-0 scale-95 pointer-events-none transition-all duration-200'
-                  : 'opacity-100',
-                isActive
-                  ? 'bg-white dark:bg-slate-900 card-float-active'
-                  : 'bg-white dark:bg-slate-900/80 card-float',
-              ].filter(Boolean).join(' ')}
-            >
-              {/* spacer for consistent layout */}
-
-              <div className="px-5 pt-3 pb-4">
-
-                {/* ── Row 1: Identity — name is the primary anchor ── */}
-                <div className="flex items-center gap-3">
-                  <div className={`h-12 w-12 rounded-2xl ${avatarColor} flex items-center justify-center shrink-0 shadow-sm`}>
-                    <span className="text-[15px] font-bold text-white leading-none">{initials}</span>
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-[21px] font-bold text-slate-900 dark:text-white truncate leading-tight">
-                        {lead.full_name || 'ליד ללא שם'}
-                      </h3>
-                      {onCompleteLead && lead.status !== 'Closed' && lead.status !== 'Disqualified' && (
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); setCompleteLead(lead); }}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/25 text-emerald-500 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors shrink-0"
-                          title="סיום ליד"
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                    {/* Badges row — stage + risk inline */}
-                    <div className="flex items-center gap-2 mt-1">
-                      {stageBadge && (
-                        <span className={`rounded-full px-3 py-1 text-[14px] font-semibold ${stageBadge.className}`}>
-                          {stageBadge.label}
-                        </span>
-                      )}
-                      {riskInfo && (
-                        <span className={`rounded-full px-3 py-1 text-[14px] font-semibold ${
-                          riskInfo.color === 'text-red-500'
-                            ? 'bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400'
-                            : riskInfo.color === 'text-orange-500'
-                            ? 'bg-orange-50 text-orange-600 dark:bg-orange-950/30 dark:text-orange-400'
-                            : 'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400'
-                        }`}>
-                          {riskInfo.label}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={(e) => { e.stopPropagation(); toggleSelect(lead.id); }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="h-4 w-4 rounded border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-800 text-indigo-500 focus:ring-indigo-500/40 focus:ring-offset-0 shrink-0"
-                    aria-label="בחר ליד"
-                  />
-                </div>
-
-                {/* ── Row 2: Split info box — next appointment + last interaction ── */}
-                <div className="mt-3 grid grid-cols-2 gap-px rounded-lg overflow-hidden border border-slate-100/70 dark:border-slate-800/40">
-                  <div className={`px-3.5 py-2.5 ${
-                    nextAppt ? 'bg-emerald-50 dark:bg-emerald-950/25' : 'bg-slate-50/80 dark:bg-slate-800/30'
-                  }`}>
-                    <p className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 mb-0.5">התור הבא</p>
-                    {nextAppt ? (() => {
-                      const parts = getAppointmentParts(nextAppt);
-                      if (!parts) return <span className="text-[13px] text-slate-400">—</span>;
-                      return (
-                        <button type="button"
-                          onClick={(e) => { e.stopPropagation(); goToCalendarForDate(nextAppt); }}
-                          className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
-                          {parts.urgent ? (
-                            <span className="inline-flex items-center rounded-md bg-red-500 px-2.5 py-0.5 text-[17px] font-black text-white leading-tight shadow-sm">
-                              {parts.label}
-                            </span>
-                          ) : (
-                            <span className="text-[16px] font-bold text-slate-900 dark:text-white leading-tight">
-                              {parts.label}
-                            </span>
-                          )}
-                          <span className="text-[19px] font-bold text-slate-900 dark:text-white tabular-nums leading-none">
-                            {parts.time}
-                          </span>
-                        </button>
-                      );
-                    })() : (
-                      <button type="button"
-                        onClick={(e) => { e.stopPropagation(); onScheduleAppointment(lead); }}
-                        className="inline-flex flex-row-reverse items-center gap-1 text-[15px] font-semibold text-slate-400 dark:text-slate-500 hover:text-indigo-500 transition-colors">
-                        <Plus className="h-3.5 w-3.5" />
-                        קבע תור
-                      </button>
-                    )}
-                  </div>
-                  {(() => {
-                    const interestColor = lead.interest ? pricingServices.find((s) => s.service_name === lead.interest)?.color : null;
-                    return (
-                      <div
-                        className={`px-3.5 py-2.5 ${interestColor ? '' : 'bg-slate-50 dark:bg-slate-800/30'}`}
-                        style={interestColor ? { background: interestColor + '18' } : undefined}
-                      >
-                        <p className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 mb-0.5">אינטראקציה אחרונה</p>
-                        <p className="text-[16px] font-bold text-slate-700 dark:text-slate-300 leading-tight">
-                          {lead.last_contact_date
-                            ? `${formatHebrewShortDate(lead.last_contact_date)}${lead.interest ? ` (${lead.interest})` : ''}`
-                            : lead.interest || '—'
-                          }
-                        </p>
-                      </div>
-                    );
-                  })()}
-                </div>
-
-                {/* ── Row 3: metadata (start) + actions (end) ── */}
-                <div className="mt-3 flex items-center" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center gap-5 text-[15px]">
-                    {(() => {
-                      const svcColor = lead.interest
-                        ? pricingServices.find((s) => s.service_name === lead.interest)?.color ?? null
-                        : null;
-                      return (
-                        <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-200">
-                          <span className="text-slate-500 dark:text-slate-400 font-semibold">טיפול</span>
-                          <span className="h-1.5 w-1.5 rounded-full bg-slate-900 dark:bg-white shrink-0" />
-                          <span className="font-bold" style={svcColor ? { color: svcColor } : undefined}>
-                            {lead.interest || '—'}
-                          </span>
-                        </span>
-                      );
-                    })()}
-                    <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-200">
-                      <span className="text-slate-500 dark:text-slate-400 font-semibold">תשלום</span>
-                      <span className="h-1.5 w-1.5 rounded-full bg-slate-900 dark:bg-white shrink-0" />
-                      {(lead.estimated_deal_value ?? 0) > 0 ? (
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
-                          {formatCurrencyILS(lead.estimated_deal_value!)}
-                        </span>
-                      ) : (
-                        <span className="font-bold text-red-500 dark:text-red-400">יתרה פתוחה</span>
-                      )}
-                    </span>
-                  </div>
-
-                  <div className="flex-1" />
-
-                  <div className="flex items-center gap-1.5">
-                    {lead.phone && (
-                      <a href={`tel:${lead.phone}`}
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-sm"
-                        title="התקשר">
-                        <Phone className="h-3.5 w-3.5 shrink-0" />
-                      </a>
-                    )}
-                    {lead.phone && (
-                      <a href={toWaHref(lead.phone)} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
-                        title="WhatsApp">
-                        <WhatsAppIcon className="h-3.5 w-3.5 shrink-0" />
-                      </a>
-                    )}
-                  </div>
-                </div>
-
-                {isDisqualifiedView && (lead.reject_reason || lead.rejected_at) && (
-                  <div className="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800/50 flex items-center gap-3 text-[12px] text-slate-400">
-                    {lead.reject_reason && <span>סיבה: {lead.reject_reason}</span>}
-                    {lead.rejected_at && <span className="tabular-nums">בוטל: {formatDateTime(lead.rejected_at)}</span>}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+        {filteredAndSorted.map((lead) => (
+          <LeadRow
+            key={lead.id}
+            lead={lead}
+            isActive={lead.id === selectedLeadId}
+            isSelected={selectedIds.has(lead.id)}
+            isRemoving={removingIds.has(lead.id)}
+            isDisqualifiedView={isDisqualifiedView}
+            hasFinePointer={hasFinePointer}
+            nextAppt={nextAppointmentsByLeadId?.[lead.id]}
+            pricingServices={pricingServices}
+            hasCompleteLead={hasCompleteLead}
+            onView={onView}
+            onScheduleAppointment={onScheduleAppointment}
+            onToggleSelect={toggleSelect}
+            onSetCompleteLead={handleSetCompleteLead}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onGoToCalendar={goToCalendarForDate}
+          />
+        ))}
 
         {/* Empty state */}
         {filteredAndSorted.length === 0 && (

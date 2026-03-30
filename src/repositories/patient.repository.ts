@@ -1,17 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin as getSupabaseAdminClient } from '@/lib/supabase-admin';
 import type { Patient, PatientStatus } from '@/types/patients';
 import { normalizePhone } from '@/lib/phone';
-
-function getSupabaseAdminClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('Supabase server environment variables are not configured.');
-  }
-  return createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
-  });
-}
 
 /** Compute status from last_visit_date (can be overridden manually). */
 export function computeStatusFromLastVisit(lastVisit: string | null): PatientStatus {
