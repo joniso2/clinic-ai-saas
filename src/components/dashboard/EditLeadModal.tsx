@@ -79,7 +79,7 @@ export function EditLeadModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4"
       role="dialog"
       aria-modal="true"
       aria-label="ערוך ליד"
@@ -131,7 +131,8 @@ export function EditLeadModal({
                   <input
                     type="tel"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    maxLength={10}
+                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                     dir="ltr"
                     className={inputCls}
                   />

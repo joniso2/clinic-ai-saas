@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { Calendar as CalendarIcon, Check } from 'lucide-react';
 import type { Appointment } from '@/types/appointments';
 import { getLeadStatusDisplayHex, getAppointmentStatusBadgeClass, getAppointmentStatusLabel } from '@/lib/status-colors';
+import { deriveCalendarColors, FALLBACK_CALENDAR_TOKENS } from '@/lib/calendar-colors';
 import type { CalendarEvent, DayColumn } from './calendar-helpers';
 import { getServiceCategory, getAppointmentCardLabel, SERVICE_ACCENT_COLOR } from './calendar-helpers';
 
@@ -14,10 +15,10 @@ export function WeekBoardCard({ event, onClick, onComplete, leadStatusByLeadId, 
   const cardLabel = getAppointmentCardLabel(apt, leadStatusByLeadId);
   const leadStatus = apt.lead_id ? leadStatusByLeadId[apt.lead_id] : null;
   const riskLevel = apt.lead_id ? leadRiskByLeadId?.[apt.lead_id] : undefined;
-  // Card bg = service color from pricing. Label text = lead status color (matching leads page).
+  // Derive calendar color tokens from service color source of truth
   const serviceColor = apt.service_name ? serviceColorMap?.[apt.service_name] : undefined;
-  const cardBgColor = serviceColor ?? null;
-  // When no lead status, color by appointment status (matching lead page palette)
+  const ct = serviceColor ? deriveCalendarColors(serviceColor) : FALLBACK_CALENDAR_TOKENS;
+  // Status label color from lead status (matching leads page palette)
   const aptStatusToLeadStatus: Record<string, string> = { scheduled: 'Appointment scheduled', completed: 'Closed', cancelled: 'Disqualified' };
   const labelColor = leadStatus
     ? getLeadStatusDisplayHex(leadStatus)
@@ -43,30 +44,30 @@ export function WeekBoardCard({ event, onClick, onComplete, leadStatusByLeadId, 
       <button
         type="button"
         onClick={onClick}
-        className={`w-full min-w-0 text-right rounded-xl px-3 pt-2 pb-3 sm:px-5 sm:pt-3 sm:pb-4 cursor-pointer flex flex-col ${cardBgColor ? '' : 'border border-slate-100 dark:border-slate-700/60 bg-white dark:bg-slate-800/80'}`}
+        className="w-full min-w-0 text-right rounded-xl cursor-pointer overflow-hidden px-4 pt-2.5 pb-3 sm:px-5 sm:pt-3.5 sm:pb-4.5 flex flex-col"
         dir="rtl"
-        style={cardBgColor ? { background: cardBgColor + '60', boxShadow: `inset 0 0 0 1.5px ${cardBgColor}90` } : undefined}
+        style={{ background: ct.surface, border: `1px solid ${ct.border}` }}
       >
-        <p className="text-[11px] sm:text-[14px] font-bold text-slate-900 dark:text-slate-100 tabular-nums leading-tight">{startStr} – {endStr}</p>
-        <p className="text-[14px] sm:text-[19px] font-bold text-slate-900 dark:text-slate-100 truncate leading-snug mt-0.5 sm:mt-1">{apt.patient_name}</p>
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mt-1.5 sm:mt-2.5">
-          <p className="text-[11px] sm:text-[14.5px] font-semibold truncate leading-tight" style={{ color: labelColor }}>{cardLabel}</p>
-          {apt.service_name && cardLabel !== apt.service_name && (
-            <>
-              <span className="h-1 w-1 sm:h-[6px] sm:w-[6px] rounded-full shrink-0 bg-slate-900 dark:bg-white" />
-              <p className="text-[11px] sm:text-[14.5px] font-semibold truncate leading-tight" style={{ color: cardBgColor ?? '#94a3b8' }}>{apt.service_name}</p>
-            </>
-          )}
-          {riskLevel && (
-            <span className={`rounded-full px-1.5 py-0.5 text-[9px] sm:text-[11px] sm:px-2 font-bold ${
-              riskLevel === 'high'
-                ? 'bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400'
-                : 'bg-orange-100 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400'
-            }`}>
-              {riskLevel === 'high' ? 'סיכון גבוה' : 'סיכון בינוני'}
-            </span>
-          )}
-        </div>
+          <p className="text-[12px] sm:text-[14px] font-bold text-slate-800 dark:text-slate-200 tabular-nums leading-tight">{startStr} – {endStr}</p>
+          <p className="text-[15px] sm:text-[18px] font-bold text-slate-900 dark:text-slate-100 truncate leading-snug mt-0.5 sm:mt-1">{apt.patient_name}</p>
+          <div className="flex items-center gap-1.5 sm:gap-2 mt-1 sm:mt-2 min-w-0 overflow-hidden whitespace-nowrap">
+            <span className="text-[11px] sm:text-[13px] font-semibold leading-tight" style={{ color: labelColor }}>{cardLabel}</span>
+            {apt.service_name && cardLabel !== apt.service_name && (
+              <>
+                <span className="h-1 w-1 sm:h-1.5 sm:w-1.5 rounded-full shrink-0 bg-slate-900 dark:bg-white" />
+                <span className="text-[11px] sm:text-[13px] font-semibold leading-tight overflow-hidden text-ellipsis" style={{ color: ct.text }}>{apt.service_name}</span>
+              </>
+            )}
+            {riskLevel && (
+              <span className={`rounded-full px-1 py-px text-[8px] sm:text-[10px] sm:px-1.5 font-bold shrink-0 ${
+                riskLevel === 'high'
+                  ? 'bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400'
+                  : 'bg-orange-100 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400'
+              }`}>
+                {riskLevel === 'high' ? 'סיכון גבוה' : 'סיכון בינוני'}
+              </span>
+            )}
+          </div>
       </button>
       {canComplete && onComplete && (
         <button
@@ -115,7 +116,7 @@ export function WeekBoard({
       {dayColumns.map((col) => (
         <div
           key={col.dateStr}
-          className={`flex min-w-[144px] sm:min-w-[200px] flex-1 flex-col border-s border-slate-200/60 dark:border-slate-700 last:border-s-0 ${col.isToday ? 'bg-indigo-50/60 dark:bg-indigo-950/25' : 'bg-slate-50/70 dark:bg-slate-900/40'}`}
+          className={`flex min-w-[170px] sm:min-w-[240px] flex-1 flex-col border-s border-slate-200/60 dark:border-slate-700 last:border-s-0 ${col.isToday ? 'bg-indigo-50/60 dark:bg-indigo-950/25' : 'bg-slate-50/70 dark:bg-slate-900/40'}`}
         >
           <div className={`sticky top-0 z-10 flex flex-col items-center justify-center h-[58px] border-b border-slate-200 dark:border-slate-700 px-2 ${col.isToday ? 'bg-indigo-50 dark:bg-indigo-950/40' : 'bg-white dark:bg-slate-900'}`}>
             <p className={`text-[13px] font-semibold uppercase tracking-[0.06em] leading-tight ${col.isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400'}`}>

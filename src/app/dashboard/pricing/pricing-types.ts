@@ -18,16 +18,30 @@ export type ClinicService = {
 };
 
 export const SERVICE_COLOR_PRESETS = [
+  // Row 1 — vivid primaries
   '#6366f1', // indigo
-  '#ec4899', // pink
-  '#f59e0b', // amber
-  '#10b981', // emerald
   '#3b82f6', // blue
-  '#8b5cf6', // violet
-  '#ef4444', // red
-  '#14b8a6', // teal
-  '#f97316', // orange
   '#06b6d4', // cyan
+  '#14b8a6', // teal
+  '#10b981', // emerald
+  // Row 2 — warm tones
+  '#22c55e', // green
+  '#84cc16', // lime
+  '#f59e0b', // amber
+  '#f97316', // orange
+  '#ef4444', // red
+  // Row 3 — purples & pinks
+  '#8b5cf6', // violet
+  '#a855f7', // purple
+  '#d946ef', // fuchsia
+  '#ec4899', // pink
+  '#f43f5e', // rose
+  // Row 4 — deep & muted
+  '#0ea5e9', // sky
+  '#0891b2', // dark cyan
+  '#059669', // dark emerald
+  '#b45309', // dark amber
+  '#dc2626', // dark red
 ] as const;
 
 export type Role = 'CLINIC_ADMIN' | 'STAFF' | 'SUPER_ADMIN';

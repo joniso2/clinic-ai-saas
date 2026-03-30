@@ -744,6 +744,7 @@ function ServiceFormModal({
 
 function ServiceColorDot({ service, onColorChange }: { service: ClinicService; onColorChange?: (s: ClinicService, color: string) => void }) {
   const [open, setOpen] = useState(false);
+  const [customColor, setCustomColor] = useState('');
   const ref = useRef<HTMLDivElement>(null);
   const color = service.color || SERVICE_COLOR_PRESETS[0];
 
@@ -755,6 +756,27 @@ function ServiceColorDot({ service, onColorChange }: { service: ClinicService; o
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
+
+  // Generate rainbow hue spectrum (36 colors across the hue wheel)
+  const rainbow = Array.from({ length: 36 }, (_, i) => {
+    const hue = i * 10;
+    return `hsl(${hue}, 75%, 55%)`;
+  });
+  // Lighter row
+  const rainbowLight = Array.from({ length: 36 }, (_, i) => {
+    const hue = i * 10;
+    return `hsl(${hue}, 70%, 72%)`;
+  });
+  // Darker row
+  const rainbowDark = Array.from({ length: 36 }, (_, i) => {
+    const hue = i * 10;
+    return `hsl(${hue}, 80%, 40%)`;
+  });
+
+  const selectColor = (c: string) => {
+    onColorChange?.(service, c);
+    setOpen(false);
+  };
 
   return (
     <div ref={ref} className="relative">
@@ -768,16 +790,72 @@ function ServiceColorDot({ service, onColorChange }: { service: ClinicService; o
         <div className="h-3 w-3 rounded-full" style={{ backgroundColor: color }} />
       </button>
       {open && (
-        <div className="fixed z-[100] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl p-3 grid grid-cols-5 gap-2" style={{ top: ref.current ? ref.current.getBoundingClientRect().bottom + 4 : 0, left: ref.current ? ref.current.getBoundingClientRect().left - 80 : 0 }} onClick={(e) => e.stopPropagation()}>
-          {SERVICE_COLOR_PRESETS.map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => { onColorChange?.(service, c); setOpen(false); }}
-              className={`h-8 w-8 rounded-full border-2 transition-transform hover:scale-110 ${c === color ? 'border-slate-900 dark:border-white scale-110 ring-2 ring-offset-2 ring-slate-400' : 'border-transparent'}`}
-              style={{ backgroundColor: c }}
+        <div
+          className="fixed z-[100] rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl p-4 w-[320px]"
+          style={{ top: ref.current ? ref.current.getBoundingClientRect().bottom + 4 : 0, left: ref.current ? Math.max(8, ref.current.getBoundingClientRect().left - 140) : 0 }}
+          onClick={(e) => e.stopPropagation()}
+          dir="rtl"
+        >
+          {/* Preset colors */}
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2">צבעים מוכנים</p>
+          <div className="grid grid-cols-10 gap-1.5 mb-3">
+            {SERVICE_COLOR_PRESETS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => selectColor(c)}
+                className={`h-6 w-6 rounded-full transition-transform hover:scale-125 ${c === color ? 'ring-2 ring-offset-1 ring-slate-900 dark:ring-white scale-110' : ''}`}
+                style={{ backgroundColor: c }}
+              />
+            ))}
+          </div>
+
+          {/* Rainbow spectrum */}
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2">קשת צבעים</p>
+          <div className="space-y-1 mb-3">
+            {/* Light row */}
+            <div className="flex gap-px rounded-md overflow-hidden">
+              {rainbowLight.map((c, i) => (
+                <button key={'l' + i} type="button" onClick={() => selectColor(c)}
+                  className="flex-1 h-5 hover:scale-y-150 transition-transform origin-bottom" style={{ backgroundColor: c }} />
+              ))}
+            </div>
+            {/* Main row */}
+            <div className="flex gap-px rounded-md overflow-hidden">
+              {rainbow.map((c, i) => (
+                <button key={'m' + i} type="button" onClick={() => selectColor(c)}
+                  className="flex-1 h-6 hover:scale-y-150 transition-transform origin-center" style={{ backgroundColor: c }} />
+              ))}
+            </div>
+            {/* Dark row */}
+            <div className="flex gap-px rounded-md overflow-hidden">
+              {rainbowDark.map((c, i) => (
+                <button key={'d' + i} type="button" onClick={() => selectColor(c)}
+                  className="flex-1 h-5 hover:scale-y-150 transition-transform origin-top" style={{ backgroundColor: c }} />
+              ))}
+            </div>
+          </div>
+
+          {/* Custom hex input */}
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded-lg shrink-0 border border-slate-200 dark:border-slate-700" style={{ backgroundColor: customColor || color }} />
+            <input
+              type="text"
+              value={customColor}
+              onChange={(e) => setCustomColor(e.target.value)}
+              placeholder="#hex"
+              dir="ltr"
+              className="flex-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-1.5 text-[12px] text-slate-700 dark:text-slate-200 font-mono focus:outline-none focus:ring-1 focus:ring-indigo-400"
             />
-          ))}
+            <button
+              type="button"
+              onClick={() => { if (/^#[0-9a-fA-F]{3,6}$/.test(customColor) || /^hsl/.test(customColor)) selectColor(customColor); }}
+              disabled={!customColor}
+              className="rounded-lg bg-slate-900 dark:bg-white px-3 py-1.5 text-[11px] font-bold text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition disabled:opacity-30"
+            >
+              בחר
+            </button>
+          </div>
         </div>
       )}
     </div>

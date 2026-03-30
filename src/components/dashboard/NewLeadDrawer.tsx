@@ -211,7 +211,8 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated, pric
                 type="tel"
                 dir="ltr"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                maxLength={10}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                 className={`${input} text-left`}
               />
             </div>
