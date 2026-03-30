@@ -120,19 +120,21 @@ export function DocumentDrawer({ doc, open, onClose, onCancelled }: Props) {
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm"
+        className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Drawer panel */}
+      {/* Popup panel */}
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label="מסמך"
-        className="fixed top-0 start-0 bottom-0 z-50 w-full max-w-md bg-white dark:bg-slate-950
-          shadow-[0_10px_30px_rgba(0,0,0,0.12),0_4px_8px_rgba(0,0,0,0.06)]
-          dark:shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden drawer-enter"
+        className="fixed z-50 modal-enter
+          inset-3 md:inset-auto md:top-[3%] md:bottom-[3%] md:left-1/2 md:-translate-x-1/2
+          md:w-full md:max-w-xl
+          rounded-2xl
+          bg-white dark:bg-slate-950 shadow-2xl flex flex-col overflow-hidden"
         dir="rtl"
       >
         {/* Header */}

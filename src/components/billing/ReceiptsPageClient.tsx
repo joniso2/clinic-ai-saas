@@ -20,7 +20,7 @@ import { DOC_TYPE_LABELS } from '@/types/billing';
 import BillingSettingsForm from '@/components/billing/BillingSettingsForm';
 import { DocumentDrawer } from '@/components/billing/DocumentDrawer';
 import { CreateDocumentModal } from '@/components/billing/CreateDocumentModal';
-import { KpiCard, KPI_ACCENT } from '@/components/ui/KpiCard';
+// KPI cards inline (no KpiCard import needed)
 import type { KPIs } from './receipts-helpers';
 import { fmt, fmtFull, fmtDate, DOC_TYPE_FILTER_OPTIONS, PAGE_SIZE } from './receipts-helpers';
 
@@ -166,160 +166,117 @@ export function ReceiptsPageClient() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="-mx-4 -mt-5 md:-mx-8 md:-mt-8 bg-[#EEEEED] dark:bg-slate-950 min-h-full scrollbar-hide" dir="rtl" style={{ scrollbarWidth: 'none' }}>
 
-      {/* ── Page header ──────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-[28px] font-bold text-slate-900 dark:text-slate-50 leading-tight tracking-tight">
-            קבלות ומסמכים
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            ניהול קבלות, חשבוניות ומסמכי ביטול
-          </p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={handleExport}
-            disabled={exporting}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700
-              px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800
-              transition-colors disabled:opacity-40"
-          >
-            <Download className="h-4 w-4" />
-            {exporting ? 'מייצא...' : 'ייצוא CSV'}
-          </button>
-          <button
-            onClick={() => setSettingsOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700
-              px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800
-              transition-colors"
-          >
-            <Settings2 className="h-4 w-4" />
-            פרטי עסק
-          </button>
-          <button
-            onClick={() => setCreateOpen(true)}
-            disabled={!settings}
-            title={!settings ? 'נא להגדיר פרטי עסק תחילה' : undefined}
-            className="inline-flex items-center gap-2 rounded-lg bg-indigo-600
-              px-4 py-2 text-sm font-medium text-white
-              hover:bg-indigo-700 transition-colors
-              disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <Plus className="h-4 w-4" />
-            מסמך חדש
-          </button>
-        </div>
-      </div>
+      {/* ═══ Header: KPI + Toolbar ═══ */}
+      <div className="bg-white dark:bg-slate-900 px-5 pt-4 pb-3" style={{ boxShadow: '0 1px 0 rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.03)' }}>
 
-      {/* ── Settings warning ──────────────────────────────────────────────── */}
-      {!loading && !settings && (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50
-          dark:border-amber-800 dark:bg-amber-900/20 p-4 text-sm text-amber-800 dark:text-amber-200">
-          <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-          <div>
-            <p className="font-medium">פרטי עסק לחשבוניות חסרים</p>
-            <p className="mt-1 text-amber-700 dark:text-amber-300 text-xs">
-              נא להגדיר פרטי עסק לפני הפקת מסמך ראשון.{' '}
-              <button onClick={() => setSettingsOpen(true)} className="underline hover:no-underline font-medium">
-                הגדר עכשיו
-              </button>
-            </p>
+        {/* Settings warning */}
+        {!loading && !settings && (
+          <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20 p-3 text-sm text-amber-800 dark:text-amber-200 mb-3">
+            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+            <div>
+              <p className="font-medium text-[13px]">פרטי עסק חסרים</p>
+              <p className="mt-0.5 text-amber-700 dark:text-amber-300 text-[12px]">
+                <button onClick={() => setSettingsOpen(true)} className="underline hover:no-underline font-medium">הגדר עכשיו</button>
+              </p>
+            </div>
           </div>
+        )}
+
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20 p-3 text-[13px] text-red-700 dark:text-red-300 mb-3">{error}</div>
+        )}
+
+        {/* KPI row */}
+        {kpis && (
+          <div className="grid grid-cols-4 gap-2.5 mb-3.5">
+            <div className="rounded-2xl px-5 py-4 flex items-center gap-3.5 relative overflow-hidden"
+              style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)', boxShadow: '0 4px 16px rgba(30,27,75,0.25)' }}>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm shrink-0">
+                <TrendingUp className="h-5 w-5 text-emerald-300" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-semibold text-indigo-300/80 uppercase tracking-[0.06em] leading-none">סה״כ הכנסות</p>
+                <p className="text-[24px] font-black text-white tabular-nums leading-none mt-1.5 tracking-tight">{fmt(kpis.total_revenue)}</p>
+              </div>
+            </div>
+            <div className="rounded-2xl bg-white dark:bg-slate-800 px-5 py-4 flex items-center gap-3.5"
+              style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06)' }}>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/40 shrink-0">
+                <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.06em] leading-none">מסמכים</p>
+                <p className="text-[24px] font-bold text-slate-900 dark:text-white tabular-nums leading-none mt-1.5">{kpis.total_issued}</p>
+              </div>
+            </div>
+            <div className="rounded-2xl bg-white dark:bg-slate-800 px-5 py-4 flex items-center gap-3.5"
+              style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06)' }}>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/40 shrink-0">
+                <ReceiptText className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.06em] leading-none">מע״מ</p>
+                <p className="text-[24px] font-bold text-slate-900 dark:text-white tabular-nums leading-none mt-1.5">{fmt(kpis.total_vat)}</p>
+              </div>
+            </div>
+            <div className="rounded-2xl bg-white dark:bg-slate-800 px-5 py-4 flex items-center gap-3.5"
+              style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06)' }}>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 dark:bg-red-900/40 shrink-0">
+                <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.06em] leading-none">בוטלו</p>
+                <p className="text-[24px] font-bold text-slate-900 dark:text-white tabular-nums leading-none mt-1.5">{kpis.total_cancelled}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Toolbar */}
+        <div className="flex items-center gap-2 rounded-xl bg-[#F7F7F6] dark:bg-slate-800/50 px-3 py-2"
+          style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)' }}>
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="חיפוש..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-lg bg-white dark:bg-slate-800 pe-10 ps-3 py-2 text-[13px] text-slate-900 dark:text-slate-50 placeholder:text-slate-400 border border-slate-200/80 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+              dir="rtl"
+            />
+          </div>
+          <div className="h-5 w-px bg-slate-200/60 dark:bg-slate-700 shrink-0" />
+          <select value={docType} onChange={(e) => { setDocType(e.target.value as BillingDocType | ''); setPage(0); }}
+            className="appearance-none rounded-lg bg-transparent px-2.5 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white hover:shadow-sm cursor-pointer transition focus:outline-none">
+            {DOC_TYPE_FILTER_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <select value={status} onChange={(e) => { setStatus(e.target.value as 'issued' | 'cancelled' | ''); setPage(0); }}
+            className="appearance-none rounded-lg bg-transparent px-2.5 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white hover:shadow-sm cursor-pointer transition focus:outline-none">
+            <option value="">כל הסטטוסים</option>
+            <option value="issued">הופק</option>
+            <option value="cancelled">בוטל</option>
+          </select>
+          <button onClick={applyFilters}
+            className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white hover:shadow-sm transition">
+            <Search className="h-3.5 w-3.5" /> חפש
+          </button>
+          <div className="flex-1" />
+          <button onClick={handleExport} disabled={exporting}
+            className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white hover:shadow-sm transition disabled:opacity-50">
+            <Download className="h-3.5 w-3.5" /> {exporting ? 'מייצא...' : 'CSV'}
+          </button>
+          <button onClick={() => setSettingsOpen(true)}
+            className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white hover:shadow-sm transition">
+            <Settings2 className="h-3.5 w-3.5" /> הגדרות
+          </button>
+          <button onClick={() => setCreateOpen(true)} disabled={!settings}
+            className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg bg-slate-900 dark:bg-white px-3.5 py-2 text-[12px] font-bold text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition shadow-sm disabled:opacity-40">
+            <Plus className="h-3.5 w-3.5" /> מסמך חדש
+          </button>
         </div>
-      )}
-
-      {/* ── Error ─────────────────────────────────────────────────────────── */}
-      {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-800
-          dark:bg-red-900/20 p-4 text-sm text-red-700 dark:text-red-300">
-          {error}
-        </div>
-      )}
-
-      {/* ── KPI bar ───────────────────────────────────────────────────────── */}
-      {kpis && (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <KpiCard
-            label="מסמכים שהופקו"
-            value={String(kpis.total_issued)}
-            icon={FileText}
-            iconContainerClass={KPI_ACCENT.blue.icon}
-            borderAccentClass={KPI_ACCENT.blue.border}
-          />
-          <KpiCard
-            label="סה״כ הכנסות"
-            value={fmt(kpis.total_revenue)}
-            sub="כולל מע״מ"
-            icon={TrendingUp}
-            iconContainerClass={KPI_ACCENT.emerald.icon}
-            borderAccentClass={KPI_ACCENT.emerald.border}
-          />
-          <KpiCard
-            label="מע״מ שנגבה"
-            value={fmt(kpis.total_vat)}
-            icon={ReceiptText}
-            iconContainerClass="bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400"
-            borderAccentClass="border-s-violet-500 dark:border-s-violet-400"
-          />
-          <KpiCard
-            label="מסמכים שבוטלו"
-            value={String(kpis.total_cancelled)}
-            icon={XCircle}
-            iconContainerClass={KPI_ACCENT.red.icon}
-            borderAccentClass={KPI_ACCENT.red.border}
-          />
-        </div>
-      )}
-
-      {/* ── Toolbar ───────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="חיפוש לפי שם, מספר מסמך, טלפון..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950
-              pe-9 ps-3 py-2 text-sm text-slate-900 dark:text-slate-50 placeholder:text-slate-400
-              dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-300
-              dark:focus:ring-slate-600"
-          />
-        </div>
-
-        <select
-          value={docType}
-          onChange={(e) => { setDocType(e.target.value as BillingDocType | ''); setPage(0); }}
-          className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950
-            px-3 py-2 text-sm text-slate-700 dark:text-slate-300 focus:outline-none
-            focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600"
-        >
-          {DOC_TYPE_FILTER_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-
-        <select
-          value={status}
-          onChange={(e) => { setStatus(e.target.value as 'issued' | 'cancelled' | ''); setPage(0); }}
-          className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950
-            px-3 py-2 text-sm text-slate-700 dark:text-slate-300 focus:outline-none
-            focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-600"
-        >
-          <option value="">כל הסטטוסים</option>
-          <option value="issued">הופק</option>
-          <option value="cancelled">בוטל</option>
-        </select>
-
-        <button
-          onClick={applyFilters}
-          className="rounded-lg bg-slate-100 dark:bg-slate-800 px-4 py-2 text-sm font-medium
-            text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-        >
-          חפש
-        </button>
       </div>
 
       {/* ── Mobile card list ──────────────────────────────────────────────── */}
@@ -415,7 +372,9 @@ export function ReceiptsPageClient() {
       )}
 
       {/* ── Table (desktop) ─────────────────────────────────────────────── */}
-      <div className="hidden md:block w-full overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.06)] bg-white dark:bg-slate-900">
+      <div className="px-5 pt-4 pb-4">
+      <div className="hidden md:block w-full overflow-hidden rounded-2xl bg-white dark:bg-slate-900"
+        style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06), 0 6px 20px rgba(0,0,0,0.08), 0 16px 40px rgba(0,0,0,0.04)' }}>
         {loading ? (
           <div className="p-12 text-center">
             <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600 dark:border-slate-600 dark:border-t-slate-200 mb-3" />
@@ -436,32 +395,16 @@ export function ReceiptsPageClient() {
         ) : (
           <>
             <table className="w-full text-sm" dir="rtl">
-              <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50">
-                  <th className="py-3 px-4 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
-                    מס׳ מסמך
-                  </th>
-                  <th className="py-3 px-4 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
-                    סוג
-                  </th>
-                  <th className="py-3 px-4 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
-                    לקוח
-                  </th>
-                  <th className="py-3 px-4 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 hidden sm:table-cell">
-                    טלפון
-                  </th>
-                  <th className="py-3 px-4 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
-                    תאריך
-                  </th>
-                  <th className="py-3 px-4 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
-                    סה״כ
-                  </th>
-                  <th className="py-3 px-4 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400 hidden md:table-cell">
-                    מע״מ
-                  </th>
-                  <th className="py-3 px-4 text-right text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
-                    סטטוס
-                  </th>
+              <thead className="sticky top-0 z-10">
+                <tr className="bg-[#FAFAF9] dark:bg-slate-800/90 border-b-2 border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.08em]">
+                  <th className="py-3 px-4 text-right">מס׳ מסמך</th>
+                  <th className="py-3 px-4 text-right">סוג</th>
+                  <th className="py-3 px-4 text-right">לקוח</th>
+                  <th className="py-3 px-4 text-right hidden sm:table-cell">טלפון</th>
+                  <th className="py-3 px-4 text-right">תאריך</th>
+                  <th className="py-3 px-4 text-right">סה״כ</th>
+                  <th className="py-3 px-4 text-right hidden md:table-cell">מע״מ</th>
+                  <th className="py-3 px-4 text-right">סטטוס</th>
                 </tr>
               </thead>
               <tbody>
@@ -469,7 +412,7 @@ export function ReceiptsPageClient() {
                   <tr
                     key={doc.id}
                     onClick={() => openDrawer(doc)}
-                    className="border-b border-slate-50 dark:border-slate-800/60 hover:bg-slate-50
+                    className="border-b border-slate-100 dark:border-slate-800/30 hover:bg-indigo-50/30
                       dark:hover:bg-slate-800/30 transition-colors cursor-pointer"
                   >
                     <td className="py-3 px-4 font-mono text-xs font-medium text-slate-700 dark:text-slate-300">
@@ -539,6 +482,7 @@ export function ReceiptsPageClient() {
           </>
         )}
       </div>
+      </div>{/* close px wrapper */}
 
       {/* ── Modals + Drawer ───────────────────────────────────────────────── */}
 

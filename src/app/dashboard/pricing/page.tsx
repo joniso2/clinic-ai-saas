@@ -200,24 +200,7 @@ export default function PricingPage() {
 
   return (
     <>
-      {/* Page header */}
-      <div className="mb-8 flex items-end justify-between" dir="rtl">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">ניהול</p>
-          <h1 className="mt-1 text-[28px] font-bold leading-tight tracking-tight text-slate-900 dark:text-slate-50">שירותים ותמחור</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">הגדרת שירותים, מחירים וכינויים לבוט.</p>
-        </div>
-        {canEdit && (
-          <button
-            type="button"
-            onClick={() => { setEditService(null); setModal('add'); }}
-            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition"
-          >
-            <Plus className="h-4 w-4" />
-            הוסף שירות
-          </button>
-        )}
-      </div>
+      {/* Page header — removed, integrated into KPI header below */}
 
       {/* Error */}
       {error && (
@@ -265,134 +248,152 @@ export default function PricingPage() {
         </div>
 
       ) : (
-        <div className="space-y-6" dir="rtl">
+        <div className="-mx-4 -mt-5 md:-mx-8 md:-mt-8 bg-[#EEEEED] dark:bg-slate-950 min-h-full scrollbar-hide" dir="rtl" style={{ scrollbarWidth: 'none' }}>
 
-          {/* KPI cards */}
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <KpiCard label="סה״כ שירותים"   value={String(kpiTotal)}               icon={Layers}      iconContainerClass={KPI_ACCENT.indigo.icon}  borderAccentClass={KPI_ACCENT.indigo.border} />
-            <KpiCard label="שירותים פעילים" value={String(kpiActive)}              sub={`${kpiTotal - kpiActive} מושבתים`} icon={Zap} iconContainerClass={KPI_ACCENT.emerald.icon} borderAccentClass={KPI_ACCENT.emerald.border} />
-            <KpiCard label="מחיר ממוצע"     value={formatCurrencyILS(kpiAvgPrice)} icon={DollarSign}  iconContainerClass="bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400" borderAccentClass="border-s-violet-500 dark:border-s-violet-400" />
-            <KpiCard label="משך ממוצע"      value={`${kpiAvgDuration} דק׳`}       icon={Clock}       iconContainerClass={KPI_ACCENT.amber.icon}   borderAccentClass={KPI_ACCENT.amber.border} />
-          </div>
-
-          {/* Toolbar */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Search */}
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
-              <input
-                type="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="חיפוש לפי שם או כינוי..."
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 py-2.5 pe-10 ps-4 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 dark:focus:border-indigo-600 transition"
-              />
-            </div>
-
-            {/* Status pills */}
-            <div className="flex rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-0.5 gap-0.5">
-              {(['all', 'active', 'inactive'] as StatusFilter[]).map((f) => (
-                <button
-                  key={f}
-                  type="button"
-                  onClick={() => setStatusFilter(f)}
-                  className={`rounded-lg px-3 py-2 text-xs font-medium transition ${
-                    statusFilter === f
-                      ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-50'
-                  }`}
-                >
-                  {f === 'all' ? 'הכל' : f === 'active' ? 'פעיל' : 'מושבת'}
-                </button>
-              ))}
-            </div>
-
-            {/* Sort */}
-            <div className="relative">
-              <SortAsc className="absolute end-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortKey)}
-                dir="rtl"
-                className="appearance-none rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 py-2.5 pe-9 ps-8 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
-              >
-                {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-              <ChevronDown className="absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            </div>
-
-            {/* Filter */}
-            <div className="relative" ref={filterRef}>
-              <button
-                type="button"
-                onClick={() => setFilterOpen((o) => !o)}
-                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
-                  hasActiveFilters
-                    ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300'
-                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                <Filter className="h-3.5 w-3.5" />
-                סינון
-                {hasActiveFilters && <span className="h-2 w-2 rounded-full bg-indigo-500 shrink-0" />}
-              </button>
-
-              {filterOpen && (
-                <div className="absolute start-0 top-full mt-2 z-30 w-72 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-xl p-4 space-y-4" dir="rtl">
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">סינון מתקדם</p>
-
-                  <div>
-                    <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">טווח מחיר (₪)</p>
-                    <div className="flex items-center gap-2">
-                      <input type="number" placeholder="מינ׳" value={priceMin} onChange={(e) => setPriceMin(e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-                      <span className="text-slate-400 text-xs shrink-0">–</span>
-                      <input type="number" placeholder="מקס׳" value={priceMax} onChange={(e) => setPriceMax(e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">טווח משך (דק׳)</p>
-                    <div className="flex items-center gap-2">
-                      <input type="number" placeholder="מינ׳" value={durMin} onChange={(e) => setDurMin(e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-                      <span className="text-slate-400 text-xs shrink-0">–</span>
-                      <input type="number" placeholder="מקס׳" value={durMax} onChange={(e) => setDurMax(e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-                    </div>
-                  </div>
-
-                  {hasActiveFilters && (
-                    <button type="button"
-                      onClick={() => { setPriceMin(''); setPriceMax(''); setDurMin(''); setDurMax(''); }}
-                      className="text-xs text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 transition">
-                      נקה סינון
-                    </button>
-                  )}
+          {/* ═══ Header: KPI + Toolbar on white surface ═══ */}
+          <div className="bg-white dark:bg-slate-900 px-5 pt-4 pb-3" style={{ boxShadow: '0 1px 0 rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.03)' }}>
+            {/* KPI row */}
+            <div className="grid grid-cols-4 gap-2.5 mb-3.5">
+              <div className="rounded-2xl px-5 py-4 flex items-center gap-3.5 relative overflow-hidden"
+                style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)', boxShadow: '0 4px 16px rgba(30,27,75,0.25)' }}>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm shrink-0">
+                  <Layers className="h-5 w-5 text-indigo-300" />
                 </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-semibold text-indigo-300/80 uppercase tracking-[0.06em] leading-none">שירותים</p>
+                  <p className="text-[24px] font-black text-white tabular-nums leading-none mt-1.5">{kpiActive}<span className="text-[13px] font-normal text-indigo-300/60 ms-1">/ {kpiTotal}</span></p>
+                </div>
+              </div>
+              <div className="rounded-2xl bg-white dark:bg-slate-800 px-5 py-4 flex items-center gap-3.5"
+                style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06)' }}>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/40 shrink-0">
+                  <DollarSign className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.06em] leading-none">מחיר ממוצע</p>
+                  <p className="text-[24px] font-bold text-slate-900 dark:text-white tabular-nums leading-none mt-1.5">{formatCurrencyILS(kpiAvgPrice)}</p>
+                </div>
+              </div>
+              <div className="rounded-2xl bg-white dark:bg-slate-800 px-5 py-4 flex items-center gap-3.5"
+                style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06)' }}>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/40 shrink-0">
+                  <Clock className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.06em] leading-none">משך ממוצע</p>
+                  <p className="text-[24px] font-bold text-slate-900 dark:text-white tabular-nums leading-none mt-1.5">{kpiAvgDuration} <span className="text-[13px] font-normal text-slate-400">דק׳</span></p>
+                </div>
+              </div>
+              <div className="rounded-2xl bg-white dark:bg-slate-800 px-5 py-4 flex items-center gap-3.5"
+                style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06)' }}>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/40 shrink-0">
+                  <Zap className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.06em] leading-none">פעילים</p>
+                  <p className="text-[24px] font-bold text-slate-900 dark:text-white tabular-nums leading-none mt-1.5">{kpiActive}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Toolbar */}
+            <div className="flex items-center gap-2 rounded-xl bg-[#F7F7F6] dark:bg-slate-800/50 px-3 py-2"
+              style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)' }}>
+              <div className="relative flex-1 max-w-xs">
+                <Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="חיפוש לפי שם או כינוי..."
+                  className="w-full rounded-lg bg-white dark:bg-slate-800 pe-10 ps-3 py-2 text-[13px] text-slate-900 dark:text-slate-50 placeholder:text-slate-400 border border-slate-200/80 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                  dir="rtl"
+                />
+              </div>
+              <div className="h-5 w-px bg-slate-200/60 dark:bg-slate-700 shrink-0" />
+              {/* Status pills */}
+              <div className="flex rounded-lg bg-white dark:bg-slate-800 p-0.5 gap-0.5 border border-slate-200/60 dark:border-slate-700">
+                {(['all', 'active', 'inactive'] as StatusFilter[]).map((f) => (
+                  <button key={f} type="button" onClick={() => setStatusFilter(f)}
+                    className={`rounded-md px-2.5 py-1.5 text-[12px] font-semibold transition ${
+                      statusFilter === f ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'text-slate-500 hover:text-slate-800'
+                    }`}>
+                    {f === 'all' ? 'הכל' : f === 'active' ? 'פעיל' : 'מושבת'}
+                  </button>
+                ))}
+              </div>
+              <div className="relative" ref={filterRef}>
+                <button type="button" onClick={() => setFilterOpen((o) => !o)}
+                  className={`inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold transition ${
+                    hasActiveFilters ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:bg-white hover:shadow-sm'
+                  }`}>
+                  <Filter className="h-3.5 w-3.5" /> סינון
+                  {hasActiveFilters && <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />}
+                </button>
+                {filterOpen && (
+                  <div className="absolute start-0 top-full mt-2 z-30 w-72 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-xl p-4 space-y-4" dir="rtl">
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">סינון מתקדם</p>
+                    <div>
+                      <p className="text-xs font-medium text-slate-600 mb-2">טווח מחיר (₪)</p>
+                      <div className="flex items-center gap-2">
+                        <input type="number" placeholder="מינ׳" value={priceMin} onChange={(e) => setPriceMin(e.target.value)}
+                          className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                        <span className="text-slate-400 text-xs shrink-0">–</span>
+                        <input type="number" placeholder="מקס׳" value={priceMax} onChange={(e) => setPriceMax(e.target.value)}
+                          className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-slate-600 mb-2">טווח משך (דק׳)</p>
+                      <div className="flex items-center gap-2">
+                        <input type="number" placeholder="מינ׳" value={durMin} onChange={(e) => setDurMin(e.target.value)}
+                          className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                        <span className="text-slate-400 text-xs shrink-0">–</span>
+                        <input type="number" placeholder="מקס׳" value={durMax} onChange={(e) => setDurMax(e.target.value)}
+                          className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                      </div>
+                    </div>
+                    {hasActiveFilters && (
+                      <button type="button" onClick={() => { setPriceMin(''); setPriceMax(''); setDurMin(''); setDurMax(''); }}
+                        className="text-xs text-indigo-500 hover:text-indigo-700 transition">נקה סינון</button>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="relative">
+                <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} dir="rtl"
+                  className="appearance-none rounded-lg bg-transparent px-2.5 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white hover:shadow-sm cursor-pointer transition focus:outline-none">
+                  {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+              <div className="flex-1" />
+              {canEdit && (
+                <button type="button" onClick={() => { setEditService(null); setModal('add'); }}
+                  className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg bg-slate-900 dark:bg-white px-3.5 py-2 text-[12px] font-bold text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition shadow-sm">
+                  <Plus className="h-3.5 w-3.5" /> שירות חדש
+                </button>
               )}
             </div>
           </div>
 
-          {/* Table */}
-          <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-950/80 shadow-sm overflow-hidden">
-            {/* Table header bar */}
-            <div className="border-b border-slate-100 dark:border-slate-800 px-5 py-3.5 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40">
-              <div className="flex items-center gap-2.5">
-                <Package className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">רשימת שירותים</span>
-                <span className="rounded-full bg-slate-100 dark:bg-slate-700/80 px-2 py-0.5 text-xs font-medium text-slate-500 dark:text-slate-400 tabular-nums">{filteredServices.length}</span>
+          {/* ═══ Table ═══ */}
+          <div className="px-5 pt-4 pb-4">
+          <div className="rounded-2xl bg-white dark:bg-slate-900 overflow-hidden"
+            style={{ boxShadow: '0 0 0 1px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06), 0 6px 20px rgba(0,0,0,0.08), 0 16px 40px rgba(0,0,0,0.04)' }}>
+            <div className="flex items-center justify-between px-5 py-3">
+              <div className="flex items-center gap-2">
+                <span className="text-[15px] font-bold text-slate-900 dark:text-slate-100">שירותים</span>
+                <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[12px] font-semibold text-slate-500 tabular-nums">{filteredServices.length}</span>
               </div>
               {filteredServices.length !== services.length && (
-                <span className="text-xs text-slate-400 dark:text-slate-500">מתוך {services.length}</span>
+                <span className="text-xs text-slate-400">מתוך {services.length}</span>
               )}
             </div>
 
-            <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
+            <div className="overflow-x-auto max-h-[70vh] overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
               <table className="w-full text-right" dir="rtl">
-                <thead className="sticky top-0 z-10 bg-slate-50/95 dark:bg-slate-800/95 backdrop-blur-sm text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  <tr className="border-b border-slate-100 dark:border-slate-800">
+                <thead className="sticky top-0 z-10">
+                  <tr className="bg-[#FAFAF9] dark:bg-slate-800/90 border-b-2 border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.08em]">
                     <th className="py-3 px-5">שם שירות</th>
                     <th className="py-3 px-4 w-36">מחיר</th>
                     <th className="py-3 px-4 w-36">משך</th>
@@ -418,7 +419,7 @@ export default function PricingPage() {
                       <tr
                         key={s.id}
                         onClick={() => setDrawerService(s)}
-                        className="border-b border-slate-50 dark:border-slate-800/60 last:border-0 hover:bg-indigo-50/40 dark:hover:bg-indigo-900/10 cursor-pointer transition-colors group"
+                        className="border-b border-slate-100 dark:border-slate-800/30 last:border-0 hover:bg-indigo-50/30 dark:hover:bg-slate-800/30 cursor-pointer transition-all duration-100 group"
                       >
                         {/* Name */}
                         <td className="py-3.5 px-5">
@@ -524,6 +525,7 @@ export default function PricingPage() {
               </table>
             </div>
           </div>
+          </div>{/* close px wrapper */}
         </div>
       )}
 
