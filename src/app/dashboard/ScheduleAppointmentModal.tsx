@@ -17,6 +17,9 @@ type WorkingHoursDay = {
 
 type Props = {
   lead: Lead;
+  title?: string;
+  submitLabel?: string;
+  appointmentType?: AppointmentType;
   onClose: () => void;
   onScheduled: (appointment: Appointment) => void;
 };
@@ -30,7 +33,7 @@ const DEFAULT_HOURS: WorkingHoursDay[] = Array.from({ length: 7 }, (_, i) => ({
   close: '16:00',
 }));
 
-export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) {
+export function ScheduleAppointmentModal({ lead, title, submitLabel, appointmentType, onClose, onScheduled }: Props) {
   const panelRef = useRef<HTMLFormElement>(null);
   useFocusTrap(panelRef, true);
   useEscapeKey(true, onClose);
@@ -44,7 +47,7 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
     return `${day}/${month}/${year}`;
   });
   const [time, setTime] = useState('');
-  const type: AppointmentType = 'new';
+  const type: AppointmentType = appointmentType ?? 'new';
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -232,7 +235,7 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
             >
               <X className="h-5 w-5" />
             </button>
-            <h2 className="text-lg font-bold text-white text-center flex-1">קביעת תור</h2>
+            <h2 className="text-lg font-bold text-white text-center flex-1">{title ?? 'קביעת תור'}</h2>
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 shrink-0">
               <CalendarIcon className="h-5 w-5 text-white" />
             </div>
@@ -350,7 +353,7 @@ export function ScheduleAppointmentModal({ lead, onClose, onScheduled }: Props) 
             disabled={submitting || hasValidationError || isDayClosed}
             className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            {submitting ? 'קובע…' : 'קבע תור'}
+            {submitting ? 'קובע…' : (submitLabel ?? 'קבע תור')}
           </button>
         </div>
       </form>

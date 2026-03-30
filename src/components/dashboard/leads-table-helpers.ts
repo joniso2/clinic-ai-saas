@@ -16,9 +16,9 @@ export const PRIORITY_STYLES: Record<Priority, string> = {
 export const STATUS_BADGE_STYLES: Record<string, string> = {
   Pending: 'bg-amber-50 text-amber-600 border border-amber-200/30 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-700/40',
   Contacted: 'bg-sky-50 text-sky-600 border border-sky-200/30 dark:bg-sky-900/20 dark:text-sky-300 dark:border-sky-700/40',
-  'Appointment scheduled': 'bg-blue-50 text-blue-600 border border-blue-200/30 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-700/40',
-  Closed: 'bg-emerald-50 text-emerald-600 border border-emerald-200/30 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-700/40',
-  Converted: 'bg-emerald-50 text-emerald-600 border border-emerald-200/30 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-700/40',
+  'Appointment scheduled': 'bg-emerald-50 text-emerald-600 border border-emerald-200/30 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-700/40',
+  Closed: 'bg-red-50 text-red-600 border border-red-200/30 dark:bg-red-900/20 dark:text-red-300 dark:border-red-700/40',
+  Converted: 'bg-red-50 text-red-600 border border-red-200/30 dark:bg-red-900/20 dark:text-red-300 dark:border-red-700/40',
   Disqualified: 'bg-slate-50 text-slate-600 border border-slate-200/30 dark:bg-slate-950/20 dark:text-slate-300 dark:border-slate-700/40',
 };
 

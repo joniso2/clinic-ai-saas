@@ -54,13 +54,20 @@ export function getServiceLabel(apt: Appointment): string {
   return apt.service_name ?? SERVICE_DISPLAY[getServiceCategory(apt)] ?? 'תור';
 }
 
-/** Label for appointment card: lead status (Hebrew) if available, else service/category label. */
+/** Label for appointment card: lead status (Hebrew) if available, else appointment status. */
 export function getAppointmentCardLabel(apt: Appointment, leadStatusByLeadId: Record<string, string>): string {
   if (apt.lead_id && leadStatusByLeadId[apt.lead_id]) {
     const status = leadStatusByLeadId[apt.lead_id];
     return STATUS_LABELS[status] ?? status ?? 'תור';
   }
-  return getServiceLabel(apt);
+  // Fallback to appointment status (matching lead page statuses)
+  const aptStatusLabels: Record<string, string> = {
+    scheduled: 'תור נקבע',
+    completed: 'נסגר',
+    cancelled: 'בוטל',
+    no_show: 'בוטל',
+  };
+  return aptStatusLabels[apt.status ?? ''] ?? 'ממתין';
 }
 
 /** Get YYYY-MM-DD for an event start in Israel timezone */

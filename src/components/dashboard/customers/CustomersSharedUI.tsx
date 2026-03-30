@@ -44,22 +44,22 @@ export function Toolbar({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" dir="rtl">
       <div className="relative flex-1 max-w-sm">
-        <Search className="absolute end-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
+        <Search className="absolute end-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
         <input
           type="search"
           value={searchInput}
           onChange={(e) => onSearch(e.target.value)}
           placeholder="חיפוש לפי שם או טלפון..."
-          className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 pe-11 ps-3 py-2.5 text-sm text-slate-900 dark:text-slate-50 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 text-right shadow-sm transition"
+          className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 pe-12 ps-3.5 py-3 text-[15px] text-slate-900 dark:text-slate-50 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 text-right shadow-sm transition"
           dir="rtl"
         />
       </div>
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-2.5 flex-wrap">
         <div className="relative" ref={filterPanelRef}>
           <button
             type="button"
             onClick={onToggleFilters}
-            className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2.5 text-xs font-medium shadow-sm transition ${
+            className={`inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-3 text-[13px] font-medium shadow-sm transition ${
               hasActiveFilters
                 ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
                 : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
@@ -79,7 +79,7 @@ export function Toolbar({
           type="button"
           onClick={onDownload}
           disabled={downloadingTemplate}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-3 text-[13px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition disabled:opacity-60"
         >
           {downloadingTemplate
             ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
@@ -90,7 +90,7 @@ export function Toolbar({
         <button
           type="button"
           onClick={onImport}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-3 text-[13px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition"
         >
           <Upload className="h-3.5 w-3.5" /> ייבוא לקוחות
         </button>

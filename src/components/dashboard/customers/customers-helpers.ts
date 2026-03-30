@@ -42,7 +42,7 @@ export function getStatusBadgeStyle(status: string) {
   if (status === 'active')   return { label: 'פעיל',    cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' };
   if (status === 'dormant')  return { label: 'רדום',    cls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' };
   if (status === 'inactive') return { label: 'לא פעיל', cls: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400' };
-  if (status === 'Closed')   return { label: 'הושלם',   cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' };
+  if (status === 'Closed')   return { label: 'נסגר',    cls: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' };
   return { label: status, cls: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400' };
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
@@ -508,7 +508,15 @@ export default function DashboardClient() {
     setDeleting(false);
   };
 
-  const handleViewLead = useCallback((lead: Lead) => setDrawerLead(lead), []);
+  const feedScrollRef = useRef<HTMLDivElement>(null);
+  const feedTopRef = useRef<HTMLDivElement>(null);
+  const handleViewLead = useCallback((lead: Lead) => {
+    setDrawerLead(lead);
+    // Scroll feed to top so detail panel is visible
+    requestAnimationFrame(() => {
+      feedTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, []);
   const handleOpenEdit = useCallback((lead: Lead) => setEditLead(lead), []);
   const handleOpenDelete = useCallback((lead: Lead) => setDeleteLead(lead), []);
   const handleOpenAppointment = useCallback((lead: Lead) => setAppointmentLead(lead), []);
@@ -559,6 +567,7 @@ export default function DashboardClient() {
   // ─── Main feed content ────────────────────────────────────────────────────
   const mainFeedContent = (
     <div className="px-3 pt-1 pb-3 lg:px-5 lg:pt-1 lg:pb-4">
+      <div ref={feedTopRef} />
       {error && (
         <div className="mb-3 rounded-xl bg-red-50/90 dark:bg-red-950/40 px-4 py-2.5 text-[12px] text-red-600 dark:text-red-400">
           {error}
@@ -573,7 +582,7 @@ export default function DashboardClient() {
 
       {/* KPI → Filter → Feed — tight vertical rhythm */}
       {!loading && !error && leads.length > 0 && (
-        <div className="space-y-1">
+        <div className="space-y-3">
           <LeadsKpiCards leads={leads} />
           <LeadsTable
             leads={leads}
@@ -601,9 +610,9 @@ export default function DashboardClient() {
   return (
     <>
       {/* ── 3-zone RTL layout — negative margin cancels layout wrapper padding ── */}
-      <div dir="rtl" className="flex h-[calc(100dvh-60px)] lg:h-dvh overflow-hidden -mx-4 -mt-5 md:-mx-8 md:-mt-8">
+      <div dir="rtl" className="flex h-full overflow-hidden -mx-4 -mt-5 md:-mx-8 md:-mt-8">
         {/* Main feed area (center) */}
-        <div className="flex-1 overflow-y-auto bg-[#FAFAF9] dark:bg-slate-950 scrollbar-none" style={{ scrollbarWidth: 'none' }}>
+        <div ref={feedScrollRef} className="flex-1 overflow-y-auto bg-[#F4F4F3] dark:bg-slate-950 scrollbar-none" style={{ scrollbarWidth: 'none' }}>
           {mainFeedContent}
         </div>
 

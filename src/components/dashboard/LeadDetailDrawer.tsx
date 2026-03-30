@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { X, Phone, MessageSquare, Calendar, Receipt, Users, ExternalLink, Info, Clock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { ScheduleAppointmentModal } from '@/app/dashboard/ScheduleAppointmentModal';
+import { PaymentFlowModal } from '@/components/billing/PaymentFlowModal';
+import { PAYMENT_METHOD_LABELS } from '@/types/billing';
+import type { PaymentMethod } from '@/types/billing';
 import { GlassSelect } from '@/components/ui/GlassSelect';
 import type { Lead } from '@/types/leads';
 import {
@@ -41,8 +45,8 @@ function getStatusDotColor(status: string): string {
   switch (status) {
     case 'Pending': return 'bg-amber-400';
     case 'Contacted': return 'bg-sky-400';
-    case 'Appointment scheduled': return 'bg-indigo-400';
-    case 'Closed': return 'bg-emerald-400';
+    case 'Appointment scheduled': return 'bg-emerald-400';
+    case 'Closed': return 'bg-red-400';
     case 'Disqualified': return 'bg-red-400';
     default: return 'bg-slate-400';
   }
@@ -52,8 +56,8 @@ function getStatusBadge(status: string): { label: string; className: string } {
   switch (status) {
     case 'Pending': return { label: 'ליד חדש', className: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' };
     case 'Contacted': return { label: 'נוצר קשר', className: 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300' };
-    case 'Appointment scheduled': return { label: 'תור נקבע', className: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' };
-    case 'Closed': return { label: 'טיפול פעיל', className: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' };
+    case 'Appointment scheduled': return { label: 'תור נקבע', className: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' };
+    case 'Closed': return { label: 'נסגר', className: 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300' };
     case 'Disqualified': return { label: 'בוטל', className: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400' };
     default: return { label: STATUS_LABELS[status as LeadStatus] ?? status, className: 'bg-slate-100 text-slate-600' };
   }
@@ -95,63 +99,105 @@ export function LeadDetailDrawer({
   const [treatments, setTreatments] = useState<TreatmentRow[]>([]);
   const [treatmentsLoading, setTreatmentsLoading] = useState(false);
 
-  // ── Real billing data ──
-  const [billingBalance, setBillingBalance] = useState<{ totalBilled: number; totalPaid: number; status: 'loading' | 'no_billing' | 'up_to_date' | 'outstanding' }>({ totalBilled: 0, totalPaid: 0, status: 'loading' });
+  // ── Payment data (deal-driven) ──
+  type PaymentRow = { id: string; amount: number; payment_method: string; payment_date: string; status: string; is_refund: boolean; notes: string | null };
+  const [paymentState, setPaymentState] = useState<{
+    dealValue: number;        // lead.estimated_deal_value or fallback to billing docs total
+    totalPaid: number;        // sum of received payments
+    pendingAmount: number;    // sum of pending payments
+    status: 'loading' | 'no_deal' | 'up_to_date' | 'outstanding';
+  }>({ dealValue: 0, totalPaid: 0, pendingAmount: 0, status: 'loading' });
+  // Keep billingBalance as alias for backward compat in template
+  const billingBalance = { totalBilled: paymentState.dealValue, totalPaid: paymentState.totalPaid, pendingAmount: paymentState.pendingAmount, status: paymentState.status === 'no_deal' ? 'no_billing' as const : paymentState.status };
+  const [paymentHistory, setPaymentHistory] = useState<PaymentRow[]>([]);
+  const [showPaymentHistory, setShowPaymentHistory] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [appointmentIds, setAppointmentIds] = useState<string[]>([]);
+
+  const fetchBillingData = async (leadId: string, signal?: { cancelled: boolean }) => {
+    try {
+      setPaymentState((prev) => ({ ...prev, status: 'loading' }));
+      setTreatmentsLoading(true);
+
+      const { data: appts } = await supabase
+        .from('appointments')
+        .select('id, datetime, service_name, status')
+        .eq('lead_id', leadId)
+        .order('datetime', { ascending: false })
+        .limit(10);
+
+      if (signal?.cancelled) return;
+
+      const rows = (appts ?? []) as TreatmentRow[];
+      setTreatments(rows);
+      setTreatmentsLoading(false);
+
+      const aptIds = rows.map((r) => r.id);
+      setAppointmentIds(aptIds);
+
+      // Fetch payments (linked to appointments if any)
+      let paymentRows: PaymentRow[] = [];
+      if (aptIds.length > 0) {
+        const { data: allPayments } = await supabase
+          .from('payments')
+          .select('id, amount, payment_method, payment_date, status, is_refund, notes')
+          .in('appointment_id', aptIds)
+          .order('payment_date', { ascending: false });
+        paymentRows = (allPayments ?? []) as PaymentRow[];
+      }
+
+      if (signal?.cancelled) return;
+      setPaymentHistory(paymentRows);
+
+      const totalPaid = paymentRows
+        .filter((p) => p.status === 'received')
+        .reduce((s, p) => s + (p.is_refund ? -p.amount : p.amount), 0);
+      const pendingAmount = paymentRows
+        .filter((p) => p.status === 'pending')
+        .reduce((s, p) => s + p.amount, 0);
+
+      // Deal value = primary source of truth for amount to collect
+      const dealValue = lead?.estimated_deal_value ?? 0;
+
+      // Fallback: if no deal value, try billing documents total
+      let amountToCollect = dealValue;
+      if (amountToCollect <= 0 && aptIds.length > 0) {
+        const { data: docs } = await supabase
+          .from('billing_documents')
+          .select('total, status')
+          .in('appointment_id', aptIds)
+          .eq('status', 'issued');
+        if (signal?.cancelled) return;
+        amountToCollect = (docs ?? []).reduce((s, d: { total: number }) => s + (d.total ?? 0), 0);
+      }
+
+      if (amountToCollect <= 0 && totalPaid <= 0) {
+        setPaymentState({ dealValue: 0, totalPaid: 0, pendingAmount: 0, status: 'no_deal' });
+      } else if (amountToCollect - totalPaid <= 0) {
+        setPaymentState({ dealValue: amountToCollect, totalPaid, pendingAmount, status: 'up_to_date' });
+      } else {
+        setPaymentState({ dealValue: amountToCollect, totalPaid, pendingAmount, status: 'outstanding' });
+      }
+    } catch (err) {
+      console.error('[LeadDetailDrawer] fetchBillingData error:', err);
+      if (!signal?.cancelled) {
+        setTreatmentsLoading(false);
+        setPaymentState({ dealValue: 0, totalPaid: 0, pendingAmount: 0, status: 'no_deal' });
+      }
+    }
+  };
 
   useEffect(() => {
-    if (!lead?.id) { setTreatments([]); setBillingBalance({ totalBilled: 0, totalPaid: 0, status: 'no_billing' }); return; }
-    let cancelled = false;
-    setTreatmentsLoading(true);
-    setBillingBalance((prev) => ({ ...prev, status: 'loading' }));
-
-    supabase
-      .from('appointments')
-      .select('id, datetime, service_name, status')
-      .eq('lead_id', lead.id)
-      .order('datetime', { ascending: false })
-      .limit(10)
-      .then(async ({ data: appts }) => {
-        if (cancelled) return;
-        const rows = (appts ?? []) as TreatmentRow[];
-        setTreatments(rows);
-        setTreatmentsLoading(false);
-
-        // Fetch real billing per appointment_id
-        const appointmentIds = rows.map((r) => r.id);
-        if (appointmentIds.length === 0) {
-          setBillingBalance({ totalBilled: 0, totalPaid: 0, status: 'no_billing' });
-          return;
-        }
-
-        const [{ data: docs }, { data: payments }] = await Promise.all([
-          supabase
-            .from('billing_documents')
-            .select('total, status')
-            .in('appointment_id', appointmentIds)
-            .eq('status', 'issued'),
-          supabase
-            .from('payments')
-            .select('amount, is_refund, status')
-            .in('appointment_id', appointmentIds)
-            .eq('status', 'received'),
-        ]);
-
-        if (cancelled) return;
-
-        const totalBilled = (docs ?? []).reduce((s, d: { total: number }) => s + (d.total ?? 0), 0);
-        const totalPaid = (payments ?? []).reduce((s, p: { amount: number; is_refund: boolean }) => {
-          return s + (p.is_refund ? -p.amount : p.amount);
-        }, 0);
-
-        if (totalBilled === 0) {
-          setBillingBalance({ totalBilled: 0, totalPaid: 0, status: 'no_billing' });
-        } else if (totalBilled - totalPaid <= 0) {
-          setBillingBalance({ totalBilled, totalPaid, status: 'up_to_date' });
-        } else {
-          setBillingBalance({ totalBilled, totalPaid, status: 'outstanding' });
-        }
-      });
-    return () => { cancelled = true; };
+    if (!lead?.id) {
+      setTreatments([]);
+      setPaymentState({ dealValue: 0, totalPaid: 0, pendingAmount: 0, status: 'no_deal' });
+      setPaymentHistory([]);
+      setAppointmentIds([]);
+      return;
+    }
+    const signal = { cancelled: false };
+    fetchBillingData(lead.id, signal);
+    return () => { signal.cancelled = true; };
   }, [lead?.id]);
 
   const isClosedLead = lead?.status === 'Closed' || lead?.status === 'נסגר';
@@ -207,7 +253,7 @@ export function LeadDetailDrawer({
 
   // ── Panel content matching the reference screenshot ──
   const drawerContent = (
-    <>
+    <div className="flex flex-col flex-1 min-h-0">
       {/* ── Close button (overlay only) ── */}
       {mode === 'overlay' && (
         <div className="shrink-0 flex justify-end px-4 pt-4">
@@ -224,31 +270,25 @@ export function LeadDetailDrawer({
 
       <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain text-right scrollbar-none" style={{ minHeight: 0, scrollbarWidth: 'none' }}>
 
-        {/* ═══ Hero block — compact, editorial ═══ */}
-        <div className="flex flex-col items-center px-5 pt-6 pb-4">
-          <div className={`h-[72px] w-[72px] rounded-full ${avatarColor} flex items-center justify-center shadow-[0_2px_12px_rgba(0,0,0,0.10)]`}>
-            <span className="text-[24px] font-bold text-white leading-none">{initials}</span>
+        {/* ═══ Hero block — horizontal, compact ═══ */}
+        <div className="flex items-center gap-3 px-5 pt-4 pb-3">
+          <div className={`h-11 w-11 rounded-xl ${avatarColor} flex items-center justify-center shrink-0 shadow-sm`}>
+            <span className="text-[15px] font-bold text-white leading-none">{initials}</span>
           </div>
-          <h2 className="text-[20px] font-bold text-slate-900 dark:text-white text-center mt-3 leading-tight">
-            {lead.full_name || 'ליד ללא שם'}
-          </h2>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-[17px] font-bold text-slate-900 dark:text-white truncate leading-tight">
+              {lead.full_name || 'ליד ללא שם'}
+            </h2>
+            {lead.phone && (
+              <p className="text-[13px] text-slate-500 dark:text-slate-400 tabular-nums mt-0.5" dir="ltr">{lead.phone}</p>
+            )}
+          </div>
+          <span className={`rounded-full px-3.5 py-1.5 text-[15px] font-bold shrink-0 ${statusBadge.className}`}>{statusBadge.label}</span>
         </div>
 
         {/* ═══ Quick-glance card — grouped key info ═══ */}
         <div className="mx-5 rounded-xl bg-[#F8F8F6] dark:bg-slate-800/30 overflow-hidden">
           <div className="divide-y divide-slate-200/50 dark:divide-slate-700/30">
-            {/* סטטוס */}
-            <div className="flex items-center justify-between px-4 py-3">
-              <div className="flex items-center gap-2">
-                <span className={`h-2.5 w-2.5 rounded-full ${statusDotColor}`} />
-                <span className="text-[14px] text-slate-800 dark:text-slate-200">סטטוס תור</span>
-              </div>
-            </div>
-            {/* סטטוס טיפול */}
-            <div className="flex items-center justify-between px-4 py-3">
-              <span className="text-[14px] text-slate-800 dark:text-slate-200">סטטוס טיפול</span>
-              <span className={`rounded-full px-3 py-1 text-[12px] font-semibold ${statusBadge.className}`}>{statusBadge.label}</span>
-            </div>
             {/* הכנסה צפויה */}
             <div className="flex items-center justify-between px-4 py-3">
               <span className="text-[14px] text-slate-800 dark:text-slate-200">הכנסה צפויה</span>
@@ -260,7 +300,7 @@ export function LeadDetailDrawer({
             <div className="flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-1.5">
                 <Info className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
-                <span className="text-[14px] text-slate-800 dark:text-slate-200">{lead.source ? 'רופא מטפל' : 'עניין'}</span>
+                <span className="text-[14px] text-slate-800 dark:text-slate-200">{lead.source ? 'מטפל' : 'עניין'}</span>
               </div>
               <span className="text-[14px] font-semibold text-slate-900 dark:text-white">
                 {lead.source ? (SOURCE_LABELS[lead.source] ?? lead.source) : (lead.interest ?? '—')}
@@ -272,11 +312,11 @@ export function LeadDetailDrawer({
         {/* ═══ Sections — compact editorial blocks ═══ */}
         <div className="px-5 pt-4 space-y-4">
 
-          {/* היסטוריית טיפולים */}
+          {/* היסטוריית טיפולים — FIRST */}
           <div>
             <div className="flex items-center gap-1.5 mb-2">
               <span className="h-1 w-1 rounded-full bg-slate-900 dark:bg-white" />
-              <p className="text-[13px] font-bold text-slate-900 dark:text-white uppercase tracking-wide">היסטוריית טיפולים</p>
+              <p className="text-[13px] font-bold text-slate-900 dark:text-white uppercase tracking-wide">היסטוריה</p>
             </div>
             {treatmentsLoading ? (
               <div className="rounded-lg bg-[#F8F8F6] dark:bg-slate-800/40 px-3.5 py-4 text-center">
@@ -284,7 +324,7 @@ export function LeadDetailDrawer({
               </div>
             ) : treatments.length === 0 ? (
               <div className="rounded-lg bg-[#F8F8F6] dark:bg-slate-800/40 px-3.5 py-4 text-center">
-                <p className="text-[14px] text-slate-800 dark:text-slate-200">אין טיפולים עדיין</p>
+                <p className="text-[14px] text-slate-800 dark:text-slate-200">לא קיים</p>
               </div>
             ) : (
               <div className="rounded-xl bg-[#F8F8F6] dark:bg-slate-800/40 overflow-hidden divide-y divide-slate-200/50 dark:divide-slate-700/30">
@@ -321,6 +361,107 @@ export function LeadDetailDrawer({
             )}
           </div>
 
+          {/* סטטוס תשלום — after treatments */}
+          {paymentState.status !== 'no_deal' && paymentState.status !== 'loading' && (
+            <div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <span className="h-1 w-1 rounded-full bg-slate-900 dark:bg-white" />
+                <p className="text-[13px] font-bold text-slate-900 dark:text-white uppercase tracking-wide">סטטוס תשלום</p>
+              </div>
+              <div className="rounded-xl border border-slate-200/80 dark:border-slate-700/60 overflow-hidden">
+                <div className={`px-4 py-3.5 flex items-center gap-3 ${
+                  billingBalance.status === 'up_to_date' ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-red-50 dark:bg-red-900/15'
+                }`}>
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${
+                    billingBalance.status === 'up_to_date' ? 'bg-emerald-500' : 'bg-red-500'
+                  }`}>
+                    {billingBalance.status === 'up_to_date' ? (
+                      <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                    ) : (
+                      <span className="text-[13px] font-bold text-white">₪</span>
+                    )}
+                  </div>
+                  <div className="flex-1 text-right">
+                    <p className="text-[15px] font-bold text-slate-900 dark:text-white">
+                      {billingBalance.status === 'up_to_date' ? 'חשבון מאוזן' : 'יתרה פתוחה'}
+                    </p>
+                    <p className="text-[13px] text-slate-600 dark:text-slate-300">
+                      {billingBalance.status === 'up_to_date'
+                        ? `שולם ${formatCurrencyILS(billingBalance.totalPaid)}`
+                        : `${formatCurrencyILS(billingBalance.totalBilled - billingBalance.totalPaid)} לגבייה`}
+                    </p>
+                  </div>
+                </div>
+                <div className="px-4 py-3 bg-white dark:bg-slate-900 space-y-2">
+                  <div className="flex items-center justify-between text-[14px]">
+                    <span className="text-slate-500 dark:text-slate-400">שווי עסקה</span>
+                    <span className="font-bold text-slate-900 dark:text-white tabular-nums">{formatCurrencyILS(billingBalance.totalBilled)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-[14px]">
+                    <span className="text-slate-500 dark:text-slate-400">שולם</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">{formatCurrencyILS(billingBalance.totalPaid)}</span>
+                  </div>
+                  {billingBalance.pendingAmount > 0 && (
+                    <div className="flex items-center justify-between text-[14px]">
+                      <span className="text-slate-500 dark:text-slate-400">ממתין לאישור</span>
+                      <span className="font-bold text-amber-600 dark:text-amber-400 tabular-nums">{formatCurrencyILS(billingBalance.pendingAmount)}</span>
+                    </div>
+                  )}
+                  {billingBalance.status === 'outstanding' && (
+                    <div className="flex items-center justify-between text-[14px] pt-1.5 border-t border-slate-100 dark:border-slate-800">
+                      <span className="text-slate-600 dark:text-slate-300 font-bold">יתרה</span>
+                      <span className="font-black text-red-600 dark:text-red-400 tabular-nums">{formatCurrencyILS(billingBalance.totalBilled - billingBalance.totalPaid)}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex items-center gap-2">
+                  {billingBalance.status === 'outstanding' && (
+                    <button type="button" onClick={() => setShowPaymentModal(true)}
+                      className="flex-1 rounded-lg bg-slate-900 dark:bg-white px-3 py-2 text-[13px] font-semibold text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors text-center">
+                      בצע תשלום
+                    </button>
+                  )}
+                  {paymentHistory.length > 0 && (
+                    <button type="button" onClick={() => setShowPaymentHistory(!showPaymentHistory)}
+                      className="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-[12px] font-medium text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 transition-colors">
+                      {showPaymentHistory ? 'הסתר היסטוריה' : `היסטוריה (${paymentHistory.length})`}
+                    </button>
+                  )}
+                </div>
+                {showPaymentHistory && paymentHistory.length > 0 && (
+                  <div className="border-t border-slate-100 dark:border-slate-800 max-h-48 overflow-y-auto">
+                    {paymentHistory.map((p) => (
+                      <div key={p.id} className="flex items-center justify-between px-4 py-2.5 border-b border-slate-50 dark:border-slate-800/50 last:border-b-0">
+                        <div className="flex items-center gap-2">
+                          <span className={`h-2 w-2 rounded-full shrink-0 ${
+                            p.status === 'received' ? 'bg-emerald-500' : p.status === 'pending' ? 'bg-amber-500' : p.status === 'failed' ? 'bg-red-500' : 'bg-slate-400'
+                          }`} />
+                          <div>
+                            <p className="text-[12px] font-semibold text-slate-700 dark:text-slate-200">
+                              {PAYMENT_METHOD_LABELS[p.payment_method as PaymentMethod] ?? p.payment_method}
+                              {p.is_refund && <span className="text-red-500 ms-1">(החזר)</span>}
+                            </p>
+                            <p className="text-[11px] text-slate-400 dark:text-slate-500">{p.payment_date}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className={`text-[13px] font-bold tabular-nums ${
+                            p.is_refund ? 'text-red-600' : p.status === 'received' ? 'text-emerald-600 dark:text-emerald-400' : p.status === 'pending' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500'
+                          }`}>
+                            {p.is_refund ? '-' : ''}₪{p.amount.toLocaleString()}
+                          </p>
+                          <p className="text-[10px] text-slate-400">
+                            {p.status === 'received' ? 'שולם' : p.status === 'pending' ? 'ממתין' : p.status === 'failed' ? 'נכשל' : 'הוחזר'}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* סיכום AI */}
           {lead.conversation_summary && (
             <div>
@@ -352,48 +493,7 @@ export function LeadDetailDrawer({
             </div>
           </div>
 
-          {/* סטטוס תשלום — based on real billing_documents + payments */}
-          <div>
-            <div className="flex items-center gap-1.5 mb-2">
-              <span className="h-1 w-1 rounded-full bg-slate-900 dark:bg-white" />
-              <p className="text-[13px] font-bold text-slate-900 dark:text-white uppercase tracking-wide">סטטוס תשלום</p>
-            </div>
-            {billingBalance.status === 'loading' ? (
-              <div className="rounded-xl bg-[#F8F8F6] dark:bg-slate-800/40 px-4 py-4 text-center">
-                <p className="text-[13px] text-slate-400 dark:text-slate-500">טוען...</p>
-              </div>
-            ) : billingBalance.status === 'up_to_date' ? (
-              <div className="rounded-xl px-4 py-3.5 flex items-center gap-3 bg-emerald-100 dark:bg-emerald-900/30">
-                <div className="h-8 w-8 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
-                  <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                </div>
-                <div className="text-right">
-                  <p className="text-[15px] font-bold text-slate-900 dark:text-white">חשבון מאוזן</p>
-                  <p className="text-[13px] text-slate-800 dark:text-slate-200">שולם {formatCurrencyILS(billingBalance.totalPaid)}</p>
-                </div>
-              </div>
-            ) : billingBalance.status === 'outstanding' ? (
-              <div className="rounded-xl px-4 py-3.5 flex items-center gap-3 bg-red-100 dark:bg-red-900/25">
-                <div className="h-8 w-8 rounded-full bg-red-500 flex items-center justify-center shrink-0">
-                  <span className="text-[13px] font-bold text-white">₪</span>
-                </div>
-                <div className="text-right">
-                  <p className="text-[15px] font-bold text-slate-900 dark:text-white">יתרה פתוחה</p>
-                  <p className="text-[13px] text-slate-800 dark:text-slate-200">{formatCurrencyILS(billingBalance.totalBilled - billingBalance.totalPaid)} לגבייה</p>
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-xl px-4 py-3.5 flex items-center gap-3 bg-[#F8F8F6] dark:bg-slate-800/40">
-                <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0">
-                  <span className="text-[13px] font-bold text-slate-500 dark:text-slate-400">—</span>
-                </div>
-                <div className="text-right">
-                  <p className="text-[15px] font-bold text-slate-900 dark:text-white">טרם הופק מסמך חיוב</p>
-                  <p className="text-[13px] text-slate-800 dark:text-slate-200">ניתן להפיק קבלה לאחר טיפול</p>
-                </div>
-              </div>
-            )}
-          </div>
+          {/* (Payment section moved to top of sections) */}
 
           {/* AI Intelligence */}
           <AIIntelligenceSection lead={lead} />
@@ -408,8 +508,8 @@ export function LeadDetailDrawer({
           )}
         </div>
 
-        {/* ═══ Bottom controls — sticky feel ═══ */}
-        <div className="px-5 pt-4 pb-5 mt-2 border-t border-slate-100/60 dark:border-slate-800/40 space-y-3">
+        {/* ═══ Bottom controls (inside scroll) ═══ */}
+        <div className="px-5 pt-4 pb-4 mt-2 border-t border-slate-100/60 dark:border-slate-800/40 space-y-3">
           {/* Status */}
           <GlassSelect
             value={status}
@@ -423,8 +523,8 @@ export function LeadDetailDrawer({
             ]}
           />
           {/* Follow-up */}
-          <FollowUpScheduler leadId={lead.id} onSchedule={onScheduleFollowUp} />
-          {/* Actions */}
+          <FollowUpScheduler leadId={lead.id} leadName={lead.full_name ?? undefined} followUpDate={lead.next_follow_up_date} onSchedule={onScheduleFollowUp} />
+          {/* Actions — right below follow-up scheduler */}
           <div className="flex items-center gap-2">
             {!appointmentDate && (
               <button type="button" onClick={() => onScheduleFollowUp(lead.id)}
@@ -439,12 +539,24 @@ export function LeadDetailDrawer({
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 
   // ── Portals (phone + receipt modals) — shared by both modes ──
   const portals = (
     <>
+      {showPaymentModal && (
+        <PaymentFlowModal
+          leadName={lead.full_name ?? ''}
+          appointmentIds={appointmentIds}
+          remainingBalance={billingBalance.totalBilled - billingBalance.totalPaid}
+          onClose={() => setShowPaymentModal(false)}
+          onSuccess={() => {
+            setShowPaymentModal(false);
+            fetchBillingData(lead.id);
+          }}
+        />
+      )}
       {phoneModalOpen && lead.phone && (
         <PhoneContactModal
           phone={lead.phone}
@@ -511,60 +623,90 @@ export function LeadDetailDrawer({
 
 // ── Follow-up scheduler ──────────────────────────────────────────────────────
 
-function FollowUpScheduler({ leadId, onSchedule }: {
+function FollowUpScheduler({ leadId, leadName, followUpDate, onSchedule }: {
   leadId: string;
+  leadName?: string;
+  followUpDate?: string | null;
   onSchedule: (leadId: string, days?: number) => void;
 }) {
-  const [customDate, setCustomDate] = useState('');
-  const [customTime, setCustomTime] = useState('10:00');
-  const [showCustom, setShowCustom] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [justScheduled, setJustScheduled] = useState(false);
 
-  const handleCustomSubmit = () => {
-    if (!customDate) return;
-    const diff = Math.ceil((new Date(`${customDate}T${customTime}`).getTime() - Date.now()) / 86400000);
-    if (diff > 0) onSchedule(leadId, diff);
-    setShowCustom(false);
-    setCustomDate('');
+  const handleSchedule = (days: number) => {
+    onSchedule(leadId, days);
+    setJustScheduled(true);
+    setTimeout(() => setJustScheduled(false), 3000);
   };
+
+  const formatFollowUp = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('he-IL', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
+
+  const isOverdue = followUpDate ? new Date(followUpDate) < new Date() : false;
 
   return (
     <div>
       <p className="text-[13px] font-semibold text-slate-800 dark:text-slate-200 uppercase tracking-[0.12em] mb-2">קבע מעקב</p>
+
+      {/* Show current follow-up status */}
+      {justScheduled && (
+        <div className="mb-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/40 px-3 py-2 flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-[13px] font-semibold text-emerald-700 dark:text-emerald-300">נקבע מעקב בהצלחה</span>
+        </div>
+      )}
+
+      {!justScheduled && followUpDate && (
+        <div className={`mb-2 rounded-lg px-3 py-2 flex items-center gap-2 ${
+          isOverdue
+            ? 'bg-red-50 dark:bg-red-950/30 border border-red-200/60 dark:border-red-800/40'
+            : 'bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-800/40'
+        }`}>
+          <span className={`h-2 w-2 rounded-full ${isOverdue ? 'bg-red-500' : 'bg-indigo-500'}`} />
+          <span className={`text-[13px] font-semibold ${isOverdue ? 'text-red-700 dark:text-red-300' : 'text-indigo-700 dark:text-indigo-300'}`}>
+            {isOverdue ? 'מעקב באיחור — ' : 'מעקב נקבע ל-'}{formatFollowUp(followUpDate)}
+          </span>
+        </div>
+      )}
+
       <div className="rounded-xl border border-slate-200/80 dark:border-slate-700/60 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm shadow-sm overflow-hidden">
         <div className="flex divide-x divide-slate-100 dark:divide-slate-700/60 rtl:divide-x-reverse">
-          <button type="button" onClick={() => onSchedule(leadId, 1)}
+          <button type="button" onClick={() => handleSchedule(1)}
             className="flex-1 py-2.5 text-[13px] font-medium text-slate-900 dark:text-slate-100 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
             מחר
           </button>
-          <button type="button" onClick={() => onSchedule(leadId, 7)}
+          <button type="button" onClick={() => handleSchedule(7)}
             className="flex-1 py-2.5 text-[13px] font-medium text-slate-900 dark:text-slate-100 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
             עוד שבוע
           </button>
-          <button type="button" onClick={() => onSchedule(leadId, 30)}
+          <button type="button" onClick={() => handleSchedule(30)}
             className="flex-1 py-2.5 text-[13px] font-medium text-slate-900 dark:text-slate-100 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
             עוד חודש
           </button>
-          <button type="button" onClick={() => setShowCustom(!showCustom)}
-            className={`flex-1 py-2.5 text-[13px] font-medium transition-colors ${showCustom ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'text-slate-900 dark:text-slate-100 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-300'}`}>
+          <button type="button" onClick={() => setShowModal(true)}
+            className="flex-1 py-2.5 text-[13px] font-medium text-slate-900 dark:text-slate-100 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
             בחירה ידנית
           </button>
         </div>
-        {showCustom && (
-          <div className="border-t border-slate-100 dark:border-slate-700/60 p-3 space-y-2">
-            <div className="flex gap-2">
-              <input type="date" value={customDate} onChange={(e) => setCustomDate(e.target.value)}
-                min={new Date(Date.now() + 86400000).toISOString().slice(0, 10)}
-                className="flex-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-[13px] text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400" />
-              <input type="time" value={customTime} onChange={(e) => setCustomTime(e.target.value)}
-                className="w-24 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-[13px] text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-400/20 focus:border-indigo-400" />
-            </div>
-            <button type="button" onClick={handleCustomSubmit} disabled={!customDate}
-              className="w-full rounded-lg bg-indigo-600 px-3 py-2.5 text-[13px] font-semibold text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-              קבע מעקב
-            </button>
-          </div>
-        )}
       </div>
+
+      {showModal && (
+        <ScheduleAppointmentModal
+          lead={{ id: leadId, full_name: leadName ?? null } as Lead}
+          title="קביעת מעקב"
+          submitLabel="קבע מעקב"
+          appointmentType="follow_up"
+          onClose={() => setShowModal(false)}
+          onScheduled={() => {
+            handleSchedule(7);
+            setShowModal(false);
+          }}
+        />
+      )}
     </div>
   );
 }
+
+
+// FollowUpDateModal removed — now uses NewAppointmentForm directly

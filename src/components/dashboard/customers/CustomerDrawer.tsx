@@ -214,17 +214,17 @@ export function CustomerDrawer({
 
   return (
     <>
-      <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm touch-none" onClick={onClose} aria-hidden="true" />
+      <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label="פרטי לקוח"
-        className="fixed z-[60] drawer-enter
-          inset-x-0 top-0 bottom-[76px] md:bottom-0
-          md:inset-y-0 md:inset-x-auto md:end-0 md:w-full md:max-w-[420px]
-          md:border-s md:border-slate-200 dark:md:border-slate-800
-          bg-white dark:bg-slate-950 shadow-2xl flex flex-col"
+        className="fixed z-[60] modal-enter
+          inset-4 md:inset-auto md:top-[5%] md:bottom-[5%] md:left-1/2 md:-translate-x-1/2
+          md:w-full md:max-w-lg
+          rounded-2xl
+          bg-white dark:bg-slate-950 shadow-2xl flex flex-col overflow-hidden"
         dir="rtl"
       >
         {/* Fixed Header */}

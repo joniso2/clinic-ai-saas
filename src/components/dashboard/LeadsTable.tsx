@@ -67,9 +67,9 @@ function getLeadStageBadge(lead: Lead): { label: string; className: string } | n
     case 'Contacted':
       return { label: 'נוצר קשר', className: 'bg-sky-50 text-sky-600 dark:bg-sky-900/30 dark:text-sky-300' };
     case 'Appointment scheduled':
-      return { label: 'תור נקבע', className: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300' };
+      return { label: 'תור נקבע', className: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300' };
     case 'Closed':
-      return { label: 'נסגר', className: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300' };
+      return { label: 'נסגר', className: 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-300' };
     case 'Disqualified':
       return { label: 'בוטל', className: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400' };
     default:
@@ -359,9 +359,9 @@ export function LeadsTable({
   }, [onStatusChange, onRejectLead]);
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-3">
       {/* ── Filter/Tab Bar ────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3 rounded-xl bg-white dark:bg-slate-900/80 px-4 py-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" dir="rtl">
+      <div className="flex items-center gap-3 rounded-xl bg-white dark:bg-slate-900/80 px-4 py-3 card-float-toolbar" dir="rtl">
         {/* Search input */}
         <div className="relative flex-1 min-w-[180px] max-w-[320px]">
           <Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -422,15 +422,6 @@ export function LeadsTable({
           onOpenChange={(o) => setOpenFilter(o ? 'status' : null)}
           minWidth="110px"
         />
-        <button
-          type="button"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          title="לוח שנה"
-          onClick={() => router.push('/dashboard/calendar')}
-        >
-          <CalendarIcon className="h-4 w-4" />
-        </button>
-
         {/* Spacer — pushes tracking badge + new lead to the end (left in RTL) */}
         <div className="flex-1" />
 
@@ -456,7 +447,7 @@ export function LeadsTable({
 
       {/* ── Bulk action bar ─────────────────────────────────────────────── */}
       {selectedIds.size > 0 && (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl bg-white dark:bg-slate-900/80 px-4 py-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" dir="rtl">
+        <div className="flex flex-wrap items-center gap-3 rounded-xl bg-white dark:bg-slate-900/80 px-4 py-2.5 card-float-toolbar" dir="rtl">
           <span className="text-[13px] font-medium text-slate-700 dark:text-slate-200">
             {selectedIds.size} נבחרו
           </span>
@@ -492,7 +483,7 @@ export function LeadsTable({
       )}
 
       {/* ── Stacked Card Feed ──────────────────────────────────────────── */}
-      <div className="space-y-1" dir="rtl">
+      <div className="space-y-3" dir="rtl">
         {filteredAndSorted.map((lead) => {
           const priority = getDisplayPriority(lead);
           const urgent = isUrgent(lead);
@@ -517,15 +508,16 @@ export function LeadsTable({
               }}
               onDragEnd={() => { setDraggingLead(null); setTrashHover(false); }}
               className={[
-                'rounded-2xl overflow-hidden transition-all duration-200 cursor-pointer',
-                isRemoving ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100',
+                'rounded-2xl overflow-hidden cursor-pointer',
+                isRemoving
+                  ? 'opacity-0 scale-95 pointer-events-none transition-all duration-200'
+                  : 'opacity-100',
                 isActive
-                  ? 'bg-white dark:bg-slate-900 ring-2 ring-indigo-500/25 shadow-[0_4px_16px_rgba(99,102,241,0.12),0_1px_3px_rgba(0,0,0,0.06)]'
-                  : 'bg-white dark:bg-slate-900/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.07)] border border-slate-100/80 dark:border-slate-800/40',
+                  ? 'bg-white dark:bg-slate-900 card-float-active'
+                  : 'bg-white dark:bg-slate-900/80 card-float',
               ].filter(Boolean).join(' ')}
             >
-              {/* ── Risk bar at top ── */}
-              <div className={`h-[3px] w-full ${riskInfo ? riskInfo.barColor : 'bg-emerald-400/60'}`} />
+              {/* spacer for consistent layout */}
 
               <div className="px-5 pt-3 pb-4">
 
@@ -583,28 +575,28 @@ export function LeadsTable({
                 </div>
 
                 {/* ── Row 2: Split info box — next appointment + last interaction ── */}
-                <div className="mt-3.5 grid grid-cols-2 gap-px rounded-xl overflow-hidden border border-slate-100/70 dark:border-slate-800/40">
-                  <div className={`px-4 py-3 ${
-                    nextAppt ? 'bg-emerald-50/60 dark:bg-emerald-950/20' : 'bg-slate-50/80 dark:bg-slate-800/30'
+                <div className="mt-3 grid grid-cols-2 gap-px rounded-lg overflow-hidden border border-slate-100/70 dark:border-slate-800/40">
+                  <div className={`px-3.5 py-2.5 ${
+                    nextAppt ? 'bg-emerald-50 dark:bg-emerald-950/25' : 'bg-slate-50/80 dark:bg-slate-800/30'
                   }`}>
-                    <p className="text-[14px] font-semibold text-slate-500 dark:text-slate-400 mb-1">התור הבא</p>
+                    <p className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 mb-0.5">התור הבא</p>
                     {nextAppt ? (() => {
                       const parts = getAppointmentParts(nextAppt);
-                      if (!parts) return <span className="text-[14px] text-slate-400">—</span>;
+                      if (!parts) return <span className="text-[13px] text-slate-400">—</span>;
                       return (
                         <button type="button"
                           onClick={(e) => { e.stopPropagation(); goToCalendarForDate(nextAppt); }}
-                          className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                          className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
                           {parts.urgent ? (
-                            <span className="inline-flex items-center rounded-md bg-red-500 px-3 py-1 text-[19px] font-black text-white leading-tight shadow-sm">
+                            <span className="inline-flex items-center rounded-md bg-red-500 px-2.5 py-0.5 text-[17px] font-black text-white leading-tight shadow-sm">
                               {parts.label}
                             </span>
                           ) : (
-                            <span className="text-[18px] font-bold text-slate-900 dark:text-white leading-tight">
+                            <span className="text-[16px] font-bold text-slate-900 dark:text-white leading-tight">
                               {parts.label}
                             </span>
                           )}
-                          <span className="text-[21px] font-bold text-slate-900 dark:text-white tabular-nums leading-none">
+                          <span className="text-[19px] font-bold text-slate-900 dark:text-white tabular-nums leading-none">
                             {parts.time}
                           </span>
                         </button>
@@ -612,44 +604,33 @@ export function LeadsTable({
                     })() : (
                       <button type="button"
                         onClick={(e) => { e.stopPropagation(); onScheduleAppointment(lead); }}
-                        className="inline-flex flex-row-reverse items-center gap-1 text-[17px] font-semibold text-slate-400 dark:text-slate-500 hover:text-indigo-500 transition-colors">
-                        <Plus className="h-4 w-4" />
+                        className="inline-flex flex-row-reverse items-center gap-1 text-[15px] font-semibold text-slate-400 dark:text-slate-500 hover:text-indigo-500 transition-colors">
+                        <Plus className="h-3.5 w-3.5" />
                         קבע תור
                       </button>
                     )}
                   </div>
-                  <div className="px-4 py-3 bg-slate-50/80 dark:bg-slate-800/30">
-                    <p className="text-[14px] font-semibold text-slate-500 dark:text-slate-400 mb-1">אינטראקציה אחרונה</p>
-                    <p className="text-[18px] font-bold text-slate-700 dark:text-slate-300 leading-tight">
-                      {lead.last_contact_date
-                        ? `${formatHebrewShortDate(lead.last_contact_date)}${lead.interest ? ` (${lead.interest})` : ''}`
-                        : lead.interest || '—'
-                      }
-                    </p>
-                  </div>
+                  {(() => {
+                    const interestColor = lead.interest ? pricingServices.find((s) => s.service_name === lead.interest)?.color : null;
+                    return (
+                      <div
+                        className={`px-3.5 py-2.5 ${interestColor ? '' : 'bg-slate-50 dark:bg-slate-800/30'}`}
+                        style={interestColor ? { background: interestColor + '18' } : undefined}
+                      >
+                        <p className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 mb-0.5">אינטראקציה אחרונה</p>
+                        <p className="text-[16px] font-bold text-slate-700 dark:text-slate-300 leading-tight">
+                          {lead.last_contact_date
+                            ? `${formatHebrewShortDate(lead.last_contact_date)}${lead.interest ? ` (${lead.interest})` : ''}`
+                            : lead.interest || '—'
+                          }
+                        </p>
+                      </div>
+                    );
+                  })()}
                 </div>
 
-                {/* ── Row 3: Actions (start) + metadata (end) ── */}
+                {/* ── Row 3: metadata (start) + actions (end) ── */}
                 <div className="mt-3 flex items-center" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center gap-1.5">
-                    {lead.phone && (
-                      <a href={`tel:${lead.phone}`}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-sm"
-                        title="התקשר">
-                        <Phone className="h-4 w-4 shrink-0" />
-                      </a>
-                    )}
-                    {lead.phone && (
-                      <a href={toWaHref(lead.phone)} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
-                        title="WhatsApp">
-                        <WhatsAppIcon className="h-4 w-4 shrink-0" />
-                      </a>
-                    )}
-                  </div>
-
-                  <div className="flex-1" />
-
                   <div className="flex items-center gap-5 text-[15px]">
                     {(() => {
                       const svcColor = lead.interest
@@ -658,10 +639,7 @@ export function LeadsTable({
                       return (
                         <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-200">
                           <span className="text-slate-500 dark:text-slate-400 font-semibold">טיפול</span>
-                          <span
-                            className={svcColor ? 'h-1.5 w-1.5 rounded-full shrink-0' : 'h-1.5 w-1.5 rounded-full bg-slate-900 dark:bg-white shrink-0'}
-                            style={svcColor ? { backgroundColor: svcColor } : undefined}
-                          />
+                          <span className="h-1.5 w-1.5 rounded-full bg-slate-900 dark:bg-white shrink-0" />
                           <span className="font-bold" style={svcColor ? { color: svcColor } : undefined}>
                             {lead.interest || '—'}
                           </span>
@@ -680,6 +658,25 @@ export function LeadsTable({
                       )}
                     </span>
                   </div>
+
+                  <div className="flex-1" />
+
+                  <div className="flex items-center gap-1.5">
+                    {lead.phone && (
+                      <a href={`tel:${lead.phone}`}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-sm"
+                        title="התקשר">
+                        <Phone className="h-3.5 w-3.5 shrink-0" />
+                      </a>
+                    )}
+                    {lead.phone && (
+                      <a href={toWaHref(lead.phone)} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
+                        title="WhatsApp">
+                        <WhatsAppIcon className="h-3.5 w-3.5 shrink-0" />
+                      </a>
+                    )}
+                  </div>
                 </div>
 
                 {isDisqualifiedView && (lead.reject_reason || lead.rejected_at) && (
@@ -695,7 +692,7 @@ export function LeadsTable({
 
         {/* Empty state */}
         {filteredAndSorted.length === 0 && (
-          <div className="rounded-2xl bg-white dark:bg-slate-900/80 px-6 py-16 text-center shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)]">
+          <div className="rounded-2xl bg-white dark:bg-slate-900/80 px-6 py-16 text-center card-float-toolbar">
             <p className="text-[14px] font-medium text-slate-700 dark:text-slate-300">אין לידים התואמים את הסינון.</p>
             <p className="mt-1 text-[12px] text-slate-500 dark:text-slate-500">נסה לשנות חיפוש או סינון, או הוסף ליד חדש.</p>
           </div>

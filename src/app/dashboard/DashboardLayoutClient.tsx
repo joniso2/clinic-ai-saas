@@ -218,7 +218,7 @@ function LayoutInner({ children, initialRole, initialUserEmail }: DashboardLayou
   };
 
   return (
-    <div className="flex min-h-[100dvh] md:min-h-screen flex-col bg-[#FAFAF9] dark:bg-slate-950 text-slate-900 dark:text-slate-50 overflow-x-hidden transition-colors duration-300">
+    <div className="flex h-[100dvh] md:h-screen flex-col bg-[#F4F4F3] dark:bg-slate-950 text-slate-900 dark:text-slate-50 overflow-hidden transition-colors duration-300">
 
       <header
         className="border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md w-full sticky top-0 z-40 transition-all duration-200 ease-out md:h-[74px]"
@@ -473,7 +473,7 @@ function LayoutInner({ children, initialRole, initialUserEmail }: DashboardLayou
 
         <main
           ref={scrollRef}
-          className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-[#FAFAF9] dark:bg-slate-950"
+          className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-[#F4F4F3] dark:bg-slate-950"
         >
           <div className="px-4 py-5 md:px-8 md:py-8 pb-[calc(80px+env(safe-area-inset-bottom))] md:pb-8">
             {children}

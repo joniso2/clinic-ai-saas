@@ -61,6 +61,7 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
   const [receiptModalApt, setReceiptModalApt] = useState<Appointment | null>(null);
   const [billingSettings, setBillingSettings] = useState<BillingSettings | null | 'loading' | 'none'>(null);
   const [serviceColorMap, setServiceColorMap] = useState<Record<string, string>>({});
+  const [leadRiskByLeadId, setLeadRiskByLeadId] = useState<Record<string, 'high' | 'medium'>>({});
 
   // On mobile, default to day view
   useEffect(() => {
@@ -113,6 +114,18 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
           }
           return next;
         });
+        // Compute risk levels matching leads page logic
+        const riskMap: Record<string, 'high' | 'medium'> = {};
+        for (const lead of leads) {
+          const p = lead.priority_level ?? lead.priority ?? null;
+          const overdue = lead.next_follow_up_date ? new Date(lead.next_follow_up_date) < new Date() : false;
+          if (p === 'Urgent' || p === 'high' || (p === 'High' && overdue)) {
+            riskMap[lead.id] = 'high';
+          } else if (p === 'High' || p === 'Medium' || p === 'medium') {
+            riskMap[lead.id] = 'medium';
+          }
+        }
+        setLeadRiskByLeadId(riskMap);
         setLeadStatusFetched(true);
       })
       .catch(() => setLeadStatusFetched(true));
@@ -162,6 +175,19 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
     const key = `${y}-${m}`;
     if (!fetchedMonths.has(key)) {
       fetchAppointments(y, m);
+    }
+    // If week view spans into next/prev month, fetch that too
+    const day = currentDate.getDate();
+    const lastDay = new Date(y, currentDate.getMonth() + 1, 0).getDate();
+    if (day >= lastDay - 6) {
+      const next = new Date(y, currentDate.getMonth() + 1, 1);
+      const nk = `${next.getFullYear()}-${next.getMonth() + 1}`;
+      if (!fetchedMonths.has(nk)) fetchAppointments(next.getFullYear(), next.getMonth() + 1);
+    }
+    if (day <= 7) {
+      const prev = new Date(y, currentDate.getMonth() - 1, 1);
+      const pk = `${prev.getFullYear()}-${prev.getMonth() + 1}`;
+      if (!fetchedMonths.has(pk)) fetchAppointments(prev.getFullYear(), prev.getMonth() + 1);
     }
   }, [currentDate, fetchedMonths, fetchAppointments]);
 
@@ -384,9 +410,9 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
 
   return (
     <div
-      className="rbc-rtl-wrapper rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden flex flex-col"
+      className="rbc-rtl-wrapper bg-white dark:bg-slate-900 overflow-hidden flex flex-col"
       dir="rtl"
-      style={{ minHeight: '80vh' }}
+      style={{ height: 'calc(100dvh - 60px)', minHeight: 0 }}
     >
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-4 px-5 py-3 border-b border-slate-200 dark:border-slate-800 shrink-0 flex-row-reverse">
@@ -469,6 +495,7 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
             onDayClick={handleDayClick}
             onComplete={handleCompleteAppointment}
             leadStatusByLeadId={leadStatusByLeadId}
+            leadRiskByLeadId={leadRiskByLeadId}
             serviceColorMap={serviceColorMap}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}

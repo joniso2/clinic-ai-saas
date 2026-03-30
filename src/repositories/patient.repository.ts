@@ -220,6 +220,34 @@ export async function softDeletePatient(
   return { error: error ?? null };
 }
 
+/** Restore a soft-deleted patient: clear deleted_at. */
+export async function restorePatient(
+  patientId: string,
+  clinicId: string
+): Promise<{ error: unknown }> {
+  const supabase = getSupabaseAdminClient();
+  const { error } = await supabase
+    .from('patients')
+    .update({ deleted_at: null, updated_at: new Date().toISOString() })
+    .eq('id', patientId)
+    .eq('clinic_id', clinicId);
+  return { error: error ?? null };
+}
+
+/** List soft-deleted (archived) patients for a clinic. */
+export async function listArchivedPatients(
+  clinicId: string
+): Promise<{ data: Patient[] | null; error: unknown }> {
+  const supabase = getSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from('patients')
+    .select('*')
+    .eq('clinic_id', clinicId)
+    .not('deleted_at', 'is', null)
+    .order('deleted_at', { ascending: false });
+  return { data: (data ?? []) as Patient[], error: error ?? null };
+}
+
 /** Increment patient stats after a completed visit (revenue + visits + last_visit). */
 export async function incrementPatientVisit(
   patientId: string,

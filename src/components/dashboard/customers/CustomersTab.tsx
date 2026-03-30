@@ -12,7 +12,7 @@ import type { Patient } from '@/types/patients';
 import type { Lead } from '@/types/leads';
 import type { CompletedAppointmentRow } from '@/repositories/appointment.repository';
 import { formatCurrencyILS, formatPhoneILS, PATIENT_STATUS_LABELS } from '@/lib/hebrew';
-import { KpiCard, KPI_ACCENT } from '@/components/ui/KpiCard';
+import { KpiCardPremium } from '@/components/ui/KpiCardPremium';
 import { GlassSelect } from '@/components/ui/GlassSelect';
 
 // Extracted modules
@@ -42,6 +42,9 @@ export function CustomersTab() {
 
   // Data state
   const [customers, setCustomers] = useState<Patient[]>([]);
+  const [archivedCustomers, setArchivedCustomers] = useState<Patient[]>([]);
+  const [showArchive, setShowArchive] = useState(false);
+  const [restoringId, setRestoringId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [closedLeads, setClosedLeads] = useState<Lead[]>([]);
   const [closedLeadsLoading, setClosedLeadsLoading] = useState(false);
@@ -136,7 +139,25 @@ export function CustomersTab() {
     setLoading(false);
   }, [statusFilter, revenueMinInput, lastVisitOver6]);
 
+  const fetchArchived = useCallback(async () => {
+    const res = await fetch('/api/customers?archived=true', { credentials: 'include' });
+    const json = await res.json().catch(() => ({})) as { customers?: Patient[] };
+    if (res.ok) setArchivedCustomers(json.customers ?? []);
+  }, []);
+
+  const handleRestore = async (id: string) => {
+    setRestoringId(id);
+    const res = await fetch(`/api/customers/${id}?action=restore`, { method: 'PATCH', credentials: 'include' });
+    if (res.ok) {
+      setArchivedCustomers((prev) => prev.filter((c) => c.id !== id));
+      setToast('הלקוח שוחזר בהצלחה');
+      fetchCustomers();
+    }
+    setRestoringId(null);
+  };
+
   useEffect(() => { setLoading(true); fetchCustomers(); }, [fetchCustomers]);
+  useEffect(() => { if (showArchive) fetchArchived(); }, [showArchive, fetchArchived]);
   useEffect(() => { if (!loading && customers.length === 0) void fetchClosedLeads(); }, [loading, customers.length, fetchClosedLeads]);
   useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(null), 3000); return () => clearTimeout(t); }, [toast]);
 
@@ -415,11 +436,11 @@ export function CustomersTab() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-2.5 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <KpiCard label="סה״כ לקוחות"   value={String(filteredClosedLeads.length)}         icon={Users}       iconContainerClass={KPI_ACCENT.indigo.icon}  borderAccentClass={KPI_ACCENT.indigo.border} />
-          <KpiCard label="סה״כ הכנסות"   value={formatCurrencyILS(kpiRevLeads)}              icon={DollarSign}  iconContainerClass={KPI_ACCENT.emerald.icon} borderAccentClass={KPI_ACCENT.emerald.border} />
-          <KpiCard label="ממוצע ללקוח"   value={filteredClosedLeads.length ? formatCurrencyILS(kpiRevLeads / filteredClosedLeads.length) : '—'} icon={TrendingUp} iconContainerClass={KPI_ACCENT.purple.icon} borderAccentClass={KPI_ACCENT.purple.border} />
-          <KpiCard label="טופלו החודש"   value={String(kpiMonthLeads)}                       icon={Calendar}    iconContainerClass={KPI_ACCENT.amber.icon}   borderAccentClass={KPI_ACCENT.amber.border} />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" dir="rtl">
+          <KpiCardPremium icon={Users}       title="סה״כ לקוחות" value={String(filteredClosedLeads.length)} accentHue="indigo" />
+          <KpiCardPremium icon={DollarSign}  title="סה״כ הכנסות" value={formatCurrencyILS(kpiRevLeads)} accentHue="emerald" />
+          <KpiCardPremium icon={TrendingUp}  title="ממוצע ללקוח" value={filteredClosedLeads.length ? formatCurrencyILS(kpiRevLeads / filteredClosedLeads.length) : '—'} accentHue="violet" />
+          <KpiCardPremium icon={Calendar}    title="טופלו החודש" value={String(kpiMonthLeads)} accentHue="amber" />
         </div>
 
         <div className="w-full overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] bg-white dark:bg-slate-900">
@@ -578,8 +599,16 @@ export function CustomersTab() {
   // ── Main customers view ───────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-6" dir="rtl">
-      {/* Toolbar */}
+    <div className="space-y-4 -mx-4 -mt-5 md:-mx-8 md:-mt-8 px-4 pt-4 md:px-6 md:pt-5" dir="rtl">
+      {/* KPI cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" dir="rtl">
+        <KpiCardPremium icon={Users}       title="סה״כ לקוחות" value={String(filteredCustomers.length)} accentHue="indigo" />
+        <KpiCardPremium icon={DollarSign}  title="סה״כ הכנסות" value={formatCurrencyILS(kpiRevCustomers)} accentHue="emerald" />
+        <KpiCardPremium icon={TrendingUp}  title="ממוצע ללקוח" value={formatCurrencyILS(kpiAvgCustomers)} accentHue="violet" />
+        <KpiCardPremium icon={Calendar}    title="ביקורים החודש" value={String(kpiMonthCustomers)} accentHue="amber" />
+      </div>
+
+      {/* Toolbar (search + filters) */}
       <Toolbar
         searchInput={searchInput} onSearch={setSearchInput}
         filtersOpen={filtersOpen} onToggleFilters={() => setFiltersOpen(!filtersOpen)} hasActiveFilters={hasActiveFilters}
@@ -601,21 +630,13 @@ export function CustomersTab() {
         </div>
       )}
 
-      {/* KPI cards */}
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard label="סה״כ לקוחות" value={String(filteredCustomers.length)} sub={`${customers.length} במערכת`} icon={Users}      iconContainerClass={KPI_ACCENT.indigo.icon}  borderAccentClass={KPI_ACCENT.indigo.border} />
-        <KpiCard label="סה״כ הכנסות" value={formatCurrencyILS(kpiRevCustomers)}                                    icon={DollarSign} iconContainerClass={KPI_ACCENT.emerald.icon} borderAccentClass={KPI_ACCENT.emerald.border} />
-        <KpiCard label="ממוצע ללקוח" value={formatCurrencyILS(kpiAvgCustomers)}                                    icon={TrendingUp} iconContainerClass={KPI_ACCENT.purple.icon} borderAccentClass={KPI_ACCENT.purple.border} />
-        <KpiCard label="ביקורים החודש" value={String(kpiMonthCustomers)}                                           icon={Calendar}   iconContainerClass={KPI_ACCENT.amber.icon}   borderAccentClass={KPI_ACCENT.amber.border} />
-      </div>
-
       {/* Table */}
       <div className="w-full overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] bg-white dark:bg-slate-900">
         <div className="border-b border-slate-100 dark:border-slate-800 px-5 py-3.5 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/40">
           <div className="flex items-center gap-2.5">
-            <UserCheck className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">רשימת לקוחות</span>
-            <span className="rounded-full bg-slate-100 dark:bg-slate-700/80 px-2 py-0.5 text-xs font-medium text-slate-500 dark:text-slate-400 tabular-nums">{filteredCustomers.length}</span>
+            <UserCheck className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+            <span className="text-[16px] font-bold text-slate-900 dark:text-slate-100">רשימת לקוחות</span>
+            <span className="rounded-full bg-slate-100 dark:bg-slate-700/80 px-2.5 py-0.5 text-[13px] font-semibold text-slate-600 dark:text-slate-300 tabular-nums">{filteredCustomers.length}</span>
             {selectedIds.size > 0 && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-800/50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:text-indigo-300">
                 {selectedIds.size} נבחרו
@@ -626,6 +647,18 @@ export function CustomersTab() {
             )}
           </div>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowArchive(!showArchive)}
+              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition shadow-sm ${
+                showArchive
+                  ? 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+                  : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+              }`}
+            >
+              <Archive className="h-3.5 w-3.5" />
+              ארכיון {archivedCustomers.length > 0 ? `(${archivedCustomers.length})` : ''}
+            </button>
             <button
               type="button"
               onClick={() => setMessagingOpen(true)}
@@ -710,9 +743,9 @@ export function CustomersTab() {
         {/* ── Desktop Table ── */}
         <div className="hidden md:block overflow-x-auto max-h-[60vh] overflow-y-auto">
           <table className="w-full text-right" dir="rtl">
-            <thead className="sticky top-0 z-10 bg-slate-50/70 dark:bg-slate-800/50 backdrop-blur-sm text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-[0.08em]">
+            <thead className="sticky top-0 z-10 bg-slate-50/70 dark:bg-slate-800/50 backdrop-blur-sm text-[15px] font-bold text-slate-900 dark:text-slate-100 tracking-[0.02em]">
               <tr className="border-b border-slate-100 dark:border-slate-800">
-                <th className="py-3 pe-4 ps-3 w-10" onClick={(e) => e.stopPropagation()}>
+                <th className="py-3.5 pe-4 ps-3 w-10" onClick={(e) => e.stopPropagation()}>
                   <input
                     type="checkbox"
                     checked={filteredCustomers.length > 0 && filteredCustomers.every((c) => selectedIds.has(c.id))}
@@ -720,12 +753,12 @@ export function CustomersTab() {
                     className="rounded border-slate-300 dark:border-slate-600 text-indigo-500 focus:ring-indigo-500/30"
                   />
                 </th>
-                <th className="py-3 px-4 min-w-[180px] text-right">לקוח</th>
-                <th className="py-3 px-4 w-36 text-right">טלפון</th>
-                <th className="hidden lg:table-cell py-3 px-4 w-32 text-right">ביקור אחרון</th>
-                <th className="py-3 px-4 w-28 text-right">הכנסה</th>
-                <th className="hidden lg:table-cell py-3 px-4 w-24 text-right">ביקורים</th>
-                <th className="py-3 px-4 w-24 text-right">סטטוס</th>
+                <th className="py-3.5 px-4 text-right" style={{ width: '28%' }}>לקוח</th>
+                <th className="py-3.5 px-4 text-right" style={{ width: '18%' }}>טלפון</th>
+                <th className="py-3.5 px-4 text-right" style={{ width: '14%' }}>הכנסות</th>
+                <th className="hidden lg:table-cell py-3.5 px-4 text-right" style={{ width: '16%' }}>ביקור אחרון</th>
+                <th className="hidden lg:table-cell py-3.5 px-4 text-right" style={{ width: '10%' }}>ביקורים</th>
+                <th className="py-3.5 px-4 text-right" style={{ width: '10%' }}>סטטוס</th>
                 <th className="py-3 px-4 w-10" />
               </tr>
             </thead>
@@ -748,7 +781,7 @@ export function CustomersTab() {
                 return (
                   <tr key={c.id} onClick={() => { setDetailLead(null); setDetailId(c.id); }}
                     className={`border-b border-slate-100 dark:border-slate-800/60 last:border-0 cursor-pointer transition-colors group ${isSelected ? 'bg-indigo-50/60 dark:bg-indigo-900/15' : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/40'}`}>
-                    <td className="py-3.5 pe-4 ps-3 w-10" onClick={(e) => e.stopPropagation()}>
+                    <td className="py-4 pe-4 ps-3 w-10" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -756,9 +789,9 @@ export function CustomersTab() {
                         className="rounded border-slate-300 dark:border-slate-600 text-indigo-500 focus:ring-indigo-500/30"
                       />
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-4 px-4">
                       <div className="flex items-center gap-3">
-                        <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getAvatarColor(c.id)} text-white text-xs font-bold`}>
+                        <div className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${getAvatarColor(c.id)} text-white text-[13px] font-bold`}>
                           {getInitials(c.full_name)}
                           {c.recall_active && (
                             <span className="absolute -top-1 -start-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 border-2 border-white dark:border-slate-900">
@@ -766,19 +799,19 @@ export function CustomersTab() {
                             </span>
                           )}
                         </div>
-                        <span className="font-medium text-slate-800 dark:text-slate-50 truncate max-w-[160px]">{c.full_name}</span>
+                        <span className="text-[15px] font-semibold text-slate-800 dark:text-slate-50 truncate">{c.full_name}</span>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 w-36">
-                      <a href={`tel:${c.phone}`} onClick={(e) => e.stopPropagation()} dir="ltr" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">{formatPhoneILS(c.phone)}</a>
+                    <td className="py-4 px-4">
+                      <a href={`tel:${c.phone}`} onClick={(e) => e.stopPropagation()} dir="ltr" className="text-[14px] text-indigo-600 dark:text-indigo-400 hover:underline">{formatPhoneILS(c.phone)}</a>
                     </td>
-                    <td className="hidden lg:table-cell py-3.5 px-4 w-32 text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">{formatDate(c.last_visit_date)}</td>
-                    <td className="py-3.5 px-4 w-28 text-sm font-semibold text-slate-800 dark:text-slate-200 tabular-nums whitespace-nowrap">{formatCurrencyILS(Number(c.total_revenue))}</td>
-                    <td className="hidden lg:table-cell py-3.5 px-4 w-24 text-sm text-slate-500 dark:text-slate-400 tabular-nums">{c.visits_count}</td>
-                    <td className="py-3.5 px-4 w-24">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusBadge.cls}`}>{statusBadge.label}</span>
+                    <td className="py-4 px-4 text-[14px] font-semibold text-slate-800 dark:text-slate-200 tabular-nums whitespace-nowrap">{formatCurrencyILS(Number(c.total_revenue))}</td>
+                    <td className="hidden lg:table-cell py-4 px-4 text-[14px] text-slate-500 dark:text-slate-400 whitespace-nowrap">{formatDate(c.last_visit_date)}</td>
+                    <td className="hidden lg:table-cell py-4 px-4 text-[14px] text-slate-500 dark:text-slate-400 tabular-nums">{c.visits_count}</td>
+                    <td className="py-4 px-4">
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[12px] font-semibold ${statusBadge.cls}`}>{statusBadge.label}</span>
                     </td>
-                    <td className="py-3.5 px-4 w-10" onClick={(e) => e.stopPropagation()}>
+                    <td className="py-4 px-4 w-10" onClick={(e) => e.stopPropagation()}>
                       <button type="button" onClick={() => setDeleteId(c.id)}
                         className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition sm:opacity-0 sm:group-hover:opacity-100">
                         <Trash2 className="h-3.5 w-3.5" />
@@ -791,6 +824,49 @@ export function CustomersTab() {
           </table>
         </div>
       </div>
+
+      {/* Archive panel */}
+      {showArchive && (
+        <div className="w-full overflow-hidden rounded-xl border border-amber-200/60 dark:border-amber-800/40 bg-amber-50/50 dark:bg-amber-950/20">
+          <div className="border-b border-amber-200/60 dark:border-amber-800/40 px-5 py-3.5 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Archive className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              <span className="text-[16px] font-bold text-slate-900 dark:text-slate-100">ארכיון</span>
+              <span className="rounded-full bg-amber-100 dark:bg-amber-900/40 px-2.5 py-0.5 text-[13px] font-semibold text-amber-700 dark:text-amber-300 tabular-nums">{archivedCustomers.length}</span>
+            </div>
+            <button type="button" onClick={() => setShowArchive(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          {archivedCustomers.length === 0 ? (
+            <div className="px-5 py-8 text-center text-[14px] text-slate-500 dark:text-slate-400">הארכיון ריק</div>
+          ) : (
+            <div className="divide-y divide-amber-100 dark:divide-amber-900/30">
+              {archivedCustomers.map((c) => (
+                <div key={c.id} className="flex items-center justify-between px-5 py-3.5">
+                  <div className="flex items-center gap-3">
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${getAvatarColor(c.id)} text-white text-[13px] font-bold`}>
+                      {getInitials(c.full_name)}
+                    </div>
+                    <div>
+                      <p className="text-[15px] font-semibold text-slate-900 dark:text-slate-100">{c.full_name}</p>
+                      <p className="text-[12px] text-slate-500 dark:text-slate-400" dir="ltr">{formatPhoneILS(c.phone)}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRestore(c.id)}
+                    disabled={restoringId === c.id}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                  >
+                    {restoringId === c.id ? 'משחזר...' : 'שחזר'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Customer drawer */}
       {detailId && (

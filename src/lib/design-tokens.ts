@@ -16,6 +16,9 @@ export const shadows = {
   L1: 'shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)]',
   L2: 'shadow-[0_4px_12px_rgba(0,0,0,0.08),0_2px_4px_rgba(0,0,0,0.04)]',
   L3: 'shadow-[0_10px_30px_rgba(0,0,0,0.12),0_4px_8px_rgba(0,0,0,0.06)]',
+  float: 'card-float',
+  floatToolbar: 'card-float-toolbar',
+  floatActive: 'card-float-active',
 } as const;
 
 export const radius = {

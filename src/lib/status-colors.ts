@@ -29,10 +29,10 @@ export const CANONICAL_STATUS: Record<CanonicalStatus, {
     hex: '#f59e0b',
   },
   closed: {
-    label: 'נסגר / הושלם',
-    badge: 'bg-emerald-50 text-emerald-600 border border-emerald-200/30 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-700/40',
-    accent: 'border-s-4 border-emerald-500',
-    hex: '#10b981',
+    label: 'נסגר',
+    badge: 'bg-red-50 text-red-600 border border-red-200/30 dark:bg-red-900/20 dark:text-red-300 dark:border-red-700/40',
+    accent: 'border-s-4 border-red-500',
+    hex: '#ef4444',
   },
   cancelled: {
     label: 'בוטל',
@@ -75,6 +75,21 @@ export function getLeadStatusBadgeClass(dbStatus: string | null | undefined): st
 
 export function getLeadStatusAccentHex(dbStatus: string | null | undefined): string {
   return CANONICAL_STATUS[mapLeadStatusToCanonical(dbStatus)].hex;
+}
+
+/** Direct lead status → hex color matching the leads page badge colors exactly. */
+export function getLeadStatusDisplayHex(dbStatus: string | null | undefined): string {
+  switch (dbStatus) {
+    case 'Pending':                return '#f59e0b'; // amber-500 (כתום)
+    case 'Contacted':              return '#0ea5e9'; // sky-500
+    case 'Appointment scheduled':  return '#10b981'; // emerald-500 (ירוק)
+    case 'Closed':
+    case 'Converted':              return '#ef4444'; // red-500 (אדום)
+    case 'Disqualified':
+    case 'Not relevant':           return '#94a3b8'; // slate-400
+    case 'AI Failed':              return '#94a3b8';
+    default:                       return '#f59e0b'; // amber-500
+  }
 }
 
 // ─── Appointment Statuses ────────────────────────────────────────────────────

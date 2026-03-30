@@ -7,6 +7,7 @@ import { btn, input, inputLabel } from '@/lib/ui-classes';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useUnsavedWarning } from '@/hooks/useUnsavedWarning';
 import { GlassSelect } from '@/components/ui/GlassSelect';
+import { ScheduleAppointmentModal } from '@/app/dashboard/ScheduleAppointmentModal';
 import type { Lead, LeadStatus } from '@/types/leads';
 
 const OTHER_SERVICE_KEY = '__other__';
@@ -43,6 +44,9 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated, pric
   /** טקסט חופשי כשנבחר "אחר" */
   const [interestOther, setInterestOther] = useState('');
   const [status, setStatus] = useState<LeadStatus>('Pending');
+  const [showAptModal, setShowAptModal] = useState(false);
+  const [aptDate, setAptDate] = useState('');
+  const [aptTime, setAptTime] = useState('10:00');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,6 +60,9 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated, pric
     setSelectedServiceKey('');
     setInterestOther('');
     setStatus('Pending');
+    setShowAptModal(false);
+    setAptDate('');
+    setAptTime('10:00');
     setError(null);
   }, []);
 
@@ -97,6 +104,8 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated, pric
     setError(null);
 
     try {
+      const hasApt = aptDate && aptTime;
+      const finalStatus = hasApt ? 'Appointment scheduled' : status;
       const res = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -106,7 +115,7 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated, pric
           email: email.trim() || null,
           phone: phone.trim() || null,
           interest: interest || null,
-          status,
+          status: finalStatus,
           ...(estimatedDealValue != null && { estimated_deal_value: estimatedDealValue }),
         }),
       });
@@ -117,7 +126,24 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated, pric
       }
 
       const json = await res.json() as { lead?: Lead };
-      if (json.lead) onCreated(json.lead);
+
+      // Create appointment if date was selected
+      if (json.lead && hasApt) {
+        await fetch('/api/appointments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            patient_name: name.trim(),
+            datetime: `${aptDate}T${aptTime}:00`,
+            type: 'new',
+            lead_id: json.lead.id,
+            service_name: interest || null,
+          }),
+        }).catch(() => {});
+      }
+
+      if (json.lead) onCreated({ ...json.lead, status: finalStatus as LeadStatus });
       resetForm();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'שגיאה לא צפויה');
@@ -126,57 +152,39 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated, pric
     }
   };
 
-  const modalContent = (
-    <>
-      {/* Backdrop — touch-none so it doesn't steal touch/scroll gestures */}
-      {open && (
-        <div
-          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm touch-none"
-          onClick={onClose}
-        />
-      )}
-
-      {/* Panel: mobile = bottom-sheet, desktop (md+) = side-drawer */}
-      <aside
+  const modalContent = open ? (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label="ליד חדש"
-        className={`fixed z-50 flex flex-col bg-white dark:bg-slate-900 transition-transform duration-300 ease-out
-          inset-x-0 bottom-0 rounded-t-2xl max-h-[92dvh]
-          shadow-[0_-6px_40px_rgba(0,0,0,0.18),0_-1px_4px_rgba(0,0,0,0.06)]
-          md:inset-x-auto md:end-0 md:top-14 md:bottom-0 md:w-[420px]
-          md:rounded-none md:max-h-none
-          md:border-s md:border-slate-200 dark:md:border-slate-800
-          md:shadow-[0_10px_30px_rgba(0,0,0,0.12),0_4px_8px_rgba(0,0,0,0.06)]
-          ${open
-            ? 'translate-y-0 md:translate-x-0'
-            : 'translate-y-full md:translate-y-0 md:ltr:translate-x-full md:rtl:-translate-x-full'
-          }`}
+        className="modal-enter w-full max-w-md max-h-[90dvh] rounded-2xl bg-white dark:bg-slate-900 shadow-2xl overflow-hidden flex flex-col"
+        dir="rtl"
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Mobile drag handle */}
-        <div className="flex justify-center pt-3 pb-0 md:hidden" aria-hidden="true">
-          <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
-        </div>
-
-        {/* Sticky Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-5 py-4 md:px-6">
-          <h2 className="text-[18px] font-semibold text-slate-900 dark:text-slate-50">
-            ליד חדש
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className={btn.icon}
-            aria-label="סגור"
-          >
-            <X className="h-5 w-5" />
-          </button>
+        {/* Header — dark, matching ScheduleAppointmentModal */}
+        <div className="bg-slate-900 px-6 py-4 shrink-0">
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full p-1.5 text-slate-400 hover:bg-white/10 hover:text-white transition-colors shrink-0"
+              aria-label="סגור"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <h2 className="text-lg font-bold text-white text-center flex-1">ליד חדש</h2>
+            <div className="w-9" />
+          </div>
         </div>
 
         {/* Scrollable Body */}
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col min-h-0 overflow-hidden">
-          <div className="flex-1 min-h-0 overflow-y-auto overscroll-none touch-pan-y touch-auto px-5 py-5 space-y-5 md:px-6">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-none px-6 py-5 space-y-5">
             {/* Error Banner */}
             {error && (
               <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-[14px] text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-400">
@@ -244,38 +252,73 @@ export default function NewLeadDrawer({ open, clinicId, onClose, onCreated, pric
               </div>
             )}
 
-            <div>
-              <label className={inputLabel}>סטטוס</label>
-              <GlassSelect
-                value={status}
-                onChange={(v) => setStatus(v as LeadStatus)}
-                options={STATUS_OPTIONS}
-              />
-            </div>
+            {/* Schedule appointment button */}
+            <button
+              type="button"
+              onClick={() => setShowAptModal(true)}
+              className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-[14px] font-semibold transition-colors ${
+                aptDate
+                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40'
+                  : 'bg-white text-slate-900 dark:bg-slate-800/70 dark:text-slate-100 hover:bg-indigo-50 hover:text-indigo-700 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-300 border border-slate-200/80 dark:border-slate-700/60'
+              }`}
+            >
+              <span>{aptDate ? `תור נקבע — ${aptDate} ${aptTime}` : 'קבע תור ישירות'}</span>
+              {aptDate && (
+                <span
+                  className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-600 text-white font-bold cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); setAptDate(''); setAptTime('10:00'); }}
+                >הסר</span>
+              )}
+            </button>
+
+            {!aptDate && (
+              <div>
+                <label className={inputLabel}>סטטוס</label>
+                <GlassSelect
+                  value={status}
+                  onChange={(v) => setStatus(v as LeadStatus)}
+                  options={STATUS_OPTIONS}
+                />
+              </div>
+            )}
           </div>
 
-          {/* Sticky Footer — shrink-0 so it never gets pushed off; mobile: stacked, desktop: row */}
-          <div className="shrink-0 flex flex-col gap-2.5 border-t border-slate-100 dark:border-slate-800 px-4 pt-4 pb-8 md:flex-row md:items-center md:justify-end md:gap-3 md:px-6 md:py-4">
+          {/* Footer — matching ScheduleAppointmentModal style */}
+          <div className="shrink-0 flex items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 px-6 py-4 bg-slate-50/50 dark:bg-slate-800/30">
             <button
               type="button"
               onClick={onClose}
-              className={`${btn.secondary} w-full justify-center md:w-auto`}
               disabled={submitting}
+              className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:border-slate-300 disabled:opacity-50 transition-colors"
             >
               ביטול
             </button>
             <button
               type="submit"
-              className={`${btn.primary} w-full justify-center md:w-auto`}
               disabled={submitting}
+              className="rounded-xl bg-slate-900 dark:bg-white px-5 py-2.5 text-sm font-semibold text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              {submitting ? 'שומר...' : 'שמור ליד'}
+              {submitting ? 'שומר...' : aptDate ? 'שמור וקבע תור' : 'שמור ליד'}
             </button>
           </div>
         </form>
-      </aside>
-    </>
-  );
+      </div>
+
+      {/* Appointment scheduling — same ScheduleAppointmentModal as leads page */}
+      {showAptModal && (
+        <ScheduleAppointmentModal
+          lead={{ id: '', full_name: name.trim() || null, interest: interest || null } as Lead}
+          title="קבע תור"
+          onClose={() => setShowAptModal(false)}
+          onScheduled={(apt) => {
+            setAptDate(new Date(apt.datetime).toLocaleDateString('en-GB'));
+            setAptTime(new Date(apt.datetime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }));
+            setShowAptModal(false);
+          }}
+        />
+      )}
+    </div>
+  ) : null;
 
   if (!mounted) return null;
   return createPortal(modalContent, document.body);

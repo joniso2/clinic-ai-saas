@@ -43,6 +43,18 @@ export async function PATCH(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const { id } = await params;
+
+  // Restore action via query param
+  const { searchParams } = new URL(req.url);
+  if (searchParams.get('action') === 'restore') {
+    const { error } = await patientRepository.restorePatient(id, access.clinicId);
+    if (error) {
+      console.error('PATCH /api/customers/[id]?action=restore error:', error);
+      return NextResponse.json({ error: 'Failed to restore customer' }, { status: 500 });
+    }
+    return NextResponse.json({ ok: true });
+  }
+
   let body: unknown;
   try {
     body = await req.json();

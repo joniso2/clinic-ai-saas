@@ -11,6 +11,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const { searchParams } = new URL(req.url);
+    // Archived mode — returns soft-deleted customers
+    if (searchParams.get('archived') === 'true') {
+      const { data, error } = await patientRepository.listArchivedPatients(access.clinicId);
+      if (error) {
+        console.error('GET /api/customers?archived error:', error);
+        return NextResponse.json({ error: 'Failed to fetch archived customers' }, { status: 500 });
+      }
+      return NextResponse.json({ customers: data });
+    }
+
     const search = searchParams.get('search') ?? undefined;
     const status = searchParams.get('status') as PatientStatus | undefined;
     const revenueMin = searchParams.get('revenueMin');

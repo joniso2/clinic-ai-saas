@@ -8,12 +8,18 @@ import { formatFullDateTime } from '@/lib/calendar/time.utils';
 export type NewAppointmentFormProps = {
   prefillDate?: string;
   prefillTime?: string;
+  prefillName?: string;
+  prefillType?: AppointmentType;
+  title?: string;
+  submitLabel?: string;
+  hideName?: boolean;
+  hideType?: boolean;
   onClose: () => void;
   onSuccess: (apt: Appointment) => void;
 };
 
-export function NewAppointmentForm({ prefillDate, prefillTime, onClose, onSuccess }: NewAppointmentFormProps) {
-  const [patientName, setPatientName] = useState('');
+export function NewAppointmentForm({ prefillDate, prefillTime, prefillName, prefillType, title, submitLabel, hideName, hideType, onClose, onSuccess }: NewAppointmentFormProps) {
+  const [patientName, setPatientName] = useState(prefillName ?? '');
   const [date, setDate] = useState(() => {
     if (prefillDate) {
       const [y, m, d] = prefillDate.split('-');
@@ -26,7 +32,7 @@ export function NewAppointmentForm({ prefillDate, prefillTime, onClose, onSucces
     return `${day}/${month}/${year}`;
   });
   const [time, setTime] = useState(() => prefillTime ?? '08:00');
-  const [type, setType] = useState<AppointmentType>('new');
+  const [type, setType] = useState<AppointmentType>(prefillType ?? 'new');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,10 +79,10 @@ export function NewAppointmentForm({ prefillDate, prefillTime, onClose, onSucces
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 backdrop-blur-sm" onClick={onClose} role="presentation">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 backdrop-blur-sm cursor-pointer" onClick={onClose}>
       <form onSubmit={handleSubmit} className="modal-enter w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex-row-reverse">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100 text-right">תור חדש</h2>
+          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100 text-right">{title ?? 'תור חדש'}</h2>
           <button type="button" onClick={onClose}
             className="rounded-full p-1.5 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="סגור">
             <X className="h-4 w-4" />
@@ -89,12 +95,14 @@ export function NewAppointmentForm({ prefillDate, prefillTime, onClose, onSucces
               {error}
             </div>
           )}
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-700 dark:text-slate-300 text-right block">שם הלקוח</label>
-            <input type="text" value={patientName} onChange={(e) => setPatientName(e.target.value)}
-              required placeholder="שם מלא"
-              className="block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/50 focus:border-indigo-400 transition" />
-          </div>
+          {!hideName && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 text-right block">שם הלקוח</label>
+              <input type="text" value={patientName} onChange={(e) => setPatientName(e.target.value)}
+                required placeholder="שם מלא"
+                className="block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/50 focus:border-indigo-400 transition" />
+            </div>
+          )}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-700 dark:text-slate-300 text-right block">תאריך (DD/MM/YYYY)</label>
             <input type="text" value={date} onChange={(e) => setDate(e.target.value)}
@@ -129,14 +137,16 @@ export function NewAppointmentForm({ prefillDate, prefillTime, onClose, onSucces
               </div>
             ))}
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-700 dark:text-slate-300 text-right block">סוג</label>
-            <select value={type} onChange={(e) => setType(e.target.value as AppointmentType)}
-              className="block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/50 focus:border-indigo-400 transition text-right">
-              <option value="new">תור חדש</option>
-              <option value="follow_up">מעקב</option>
-            </select>
-          </div>
+          {!hideType && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 text-right block">סוג</label>
+              <select value={type} onChange={(e) => setType(e.target.value as AppointmentType)}
+                className="block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/50 focus:border-indigo-400 transition text-right">
+                <option value="new">תור חדש</option>
+                <option value="follow_up">מעקב</option>
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-start gap-3 border-t border-slate-100 dark:border-slate-800 px-5 py-3 flex-row-reverse">
@@ -146,7 +156,7 @@ export function NewAppointmentForm({ prefillDate, prefillTime, onClose, onSucces
           </button>
           <button type="submit" disabled={submitting}
             className="rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white dark:text-white disabled:opacity-50 transition-colors">
-            {submitting ? 'קובע…' : 'קבע תור'}
+            {submitting ? 'קובע…' : (submitLabel ?? 'קבע תור')}
           </button>
         </div>
       </form>
