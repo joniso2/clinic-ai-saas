@@ -74,9 +74,9 @@ export function WeekBoardCard({ event, onClick, onComplete, leadStatusByLeadId, 
           type="button"
           onClick={(e) => { e.stopPropagation(); onComplete(apt); }}
           title="סמן כהושלם"
-          className="absolute top-1.5 start-1.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity rounded-full bg-emerald-500 text-white p-0.5 hover:bg-emerald-600 z-10"
+          className="absolute top-1.5 start-1.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity rounded-full bg-emerald-500 text-white p-1.5 md:p-0.5 hover:bg-emerald-600 z-10"
         >
-          <Check className="h-3 w-3" />
+          <Check className="h-4 w-4 md:h-3 md:w-3" />
         </button>
       )}
     </div>
@@ -125,7 +125,7 @@ export function WeekBoard({
             <button
               type="button"
               onClick={() => onDayClick(col.dateStr)}
-              className={`h-9 w-9 rounded-full flex items-center justify-center text-[18px] font-bold tabular-nums cursor-pointer border-0 transition-colors mt-0.5 ${col.isToday ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'text-slate-900 dark:text-slate-50 hover:bg-slate-100 dark:hover:bg-slate-800 bg-transparent'}`}
+              className={`h-10 w-10 md:h-9 md:w-9 rounded-full flex items-center justify-center text-[18px] font-bold tabular-nums cursor-pointer border-0 transition-colors mt-0.5 ${col.isToday ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'text-slate-900 dark:text-slate-50 hover:bg-slate-100 dark:hover:bg-slate-800 bg-transparent'}`}
             >
               {col.dayNum}
             </button>

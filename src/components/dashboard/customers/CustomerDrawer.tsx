@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 import { ScheduleAppointmentModal } from '@/app/dashboard/ScheduleAppointmentModal';
@@ -220,7 +221,7 @@ export function CustomerDrawer({
   const lastInteractionDate = enriched?.lastInteraction ?? customer?.last_visit_date ?? null;
   const lastInteractionDays = daysSince(lastInteractionDate);
 
-  return (
+  const drawerContent = (
     <>
       <div className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div
@@ -229,14 +230,15 @@ export function CustomerDrawer({
         aria-modal="true"
         aria-label="פרטי לקוח"
         className="fixed z-[60] modal-enter
-          inset-4 md:inset-auto md:top-[5%] md:bottom-[5%] md:left-1/2 md:-translate-x-1/2
+          inset-0 sm:inset-3
+          md:inset-auto md:top-[5%] md:bottom-[5%] md:left-1/2 md:-translate-x-1/2
           md:w-full md:max-w-lg
-          rounded-2xl
+          rounded-none sm:rounded-2xl
           bg-white dark:bg-slate-950 shadow-2xl flex flex-col overflow-hidden"
         dir="rtl"
       >
         {/* Fixed Header */}
-        <div className="shrink-0 z-10 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex items-center justify-between">
+        <div className="shrink-0 z-10 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex items-center justify-between" style={{ paddingTop: 'max(env(safe-area-inset-top, 0px) + 8px, 16px)' }}>
           <div className="flex items-center gap-3">
             <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${avatarColor} text-white text-sm font-bold shrink-0`}>
               {initials}
@@ -640,4 +642,5 @@ export function CustomerDrawer({
       )}
     </>
   );
+  return typeof document !== 'undefined' ? createPortal(drawerContent, document.body) : drawerContent;
 }

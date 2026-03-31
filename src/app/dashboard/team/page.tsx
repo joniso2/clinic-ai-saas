@@ -90,7 +90,7 @@ export default function TeamPage() {
       )}
 
       {!loading && !error && (
-        <div className="mb-8 grid grid-cols-3 gap-3">
+        <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
           <SummaryCard icon={Users} value={total} label="סה״כ אנשי צוות" />
           <SummaryCard icon={Shield} value={admins} label="מנהלים" />
           <SummaryCard icon={UserCircle} value={staff} label="עובדים" />

@@ -238,17 +238,13 @@ export async function getNextAppointmentForPatient(
       .maybeSingle();
   }
 
-  // Try patient_id first
-  if (patientId) {
-    const { data } = await buildQuery('patient_id', patientId);
-    if (data) return data as { datetime: string; service_name: string | null };
-  }
-  // Fallback to lead_id (appointments created before backfill)
-  if (leadId) {
-    const { data } = await buildQuery('lead_id', leadId);
-    if (data) return data as { datetime: string; service_name: string | null };
-  }
-  return null;
+  // Run both in parallel, prefer patient_id result
+  const [byPatient, byLead] = await Promise.all([
+    patientId ? buildQuery('patient_id', patientId) : Promise.resolve({ data: null }),
+    leadId ? buildQuery('lead_id', leadId) : Promise.resolve({ data: null }),
+  ]);
+  const result = byPatient.data ?? byLead.data;
+  return result ? (result as { datetime: string; service_name: string | null }) : null;
 }
 
 /** Appointment counts by status for a patient. Source for cancellation risk calculation.
@@ -261,24 +257,20 @@ export async function getAppointmentStatsForPatient(
   const empty = { total: 0, completed: 0, cancelled: 0, noShow: 0 };
   const supabase = getSupabaseAdminClient();
 
-  // Collect appointment IDs to deduplicate across both queries
+  // Fetch by patient_id and lead_id in parallel, then deduplicate
+  async function statsQuery(key: 'patient_id' | 'lead_id', value: string) {
+    const { data } = await supabase.from('appointments').select('id, status')
+      .eq('clinic_id', clinicId).eq(key, value);
+    return (data ?? []) as { id: string; status: string }[];
+  }
+  const queries: Promise<{ id: string; status: string }[]>[] = [];
+  if (patientId) queries.push(statsQuery('patient_id', patientId));
+  if (leadId) queries.push(statsQuery('lead_id', leadId));
+  const results = await Promise.all(queries);
   const seen = new Set<string>();
   const allRows: { id: string; status: string }[] = [];
-
-  if (patientId) {
-    const { data } = await supabase
-      .from('appointments').select('id, status')
-      .eq('clinic_id', clinicId).eq('patient_id', patientId);
-    for (const r of (data ?? []) as { id: string; status: string }[]) {
-      seen.add(r.id);
-      allRows.push(r);
-    }
-  }
-  if (leadId) {
-    const { data } = await supabase
-      .from('appointments').select('id, status')
-      .eq('clinic_id', clinicId).eq('lead_id', leadId);
-    for (const r of (data ?? []) as { id: string; status: string }[]) {
+  for (const rows of results) {
+    for (const r of rows) {
       if (!seen.has(r.id)) { seen.add(r.id); allRows.push(r); }
     }
   }
@@ -308,13 +300,18 @@ export async function getPrimaryTreatmentForPatient(
       .from('appointments').select('id, service_name')
       .eq('clinic_id', clinicId).eq('status', 'completed')
       .not('service_name', 'is', null).eq(key, value);
-    for (const r of (data ?? []) as { id: string; service_name: string }[]) {
+    return (data ?? []) as { id: string; service_name: string }[];
+  }
+
+  const queries: Promise<{ id: string; service_name: string }[]>[] = [];
+  if (patientId) queries.push(query('patient_id', patientId));
+  if (leadId) queries.push(query('lead_id', leadId));
+  const results = await Promise.all(queries);
+  for (const rows of results) {
+    for (const r of rows) {
       if (!seen.has(r.id)) { seen.add(r.id); allNames.push(r.service_name); }
     }
   }
-
-  if (patientId) await query('patient_id', patientId);
-  if (leadId) await query('lead_id', leadId);
   if (allNames.length === 0) return null;
 
   const counts = new Map<string, number>();

@@ -118,7 +118,7 @@ export function NewAppointmentForm({ prefillDate, prefillTime, prefillName, pref
             ].map((group) => (
               <div key={group.label}>
                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1 text-right">{group.label}</p>
-                <div className="grid grid-cols-4 gap-1.5">
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
                   {group.slots.map((slot) => (
                     <button
                       key={slot}

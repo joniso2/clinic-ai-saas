@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import {
   Plus, Pencil, Trash2, Power, PowerOff, X, Search, Package,
   Clock, DollarSign, Layers, Zap, Copy, ChevronDown, Filter,
-  SortAsc, CheckCircle2, XCircle,
+  SortAsc, CheckCircle2, XCircle, ChevronLeft,
 } from 'lucide-react';
 import { formatCurrencyILS } from '@/lib/hebrew';
 import { ConfirmDeleteModal } from '@/components/dashboard/ConfirmDeleteModal';
@@ -253,7 +253,7 @@ export default function PricingPage() {
           {/* ═══ Header: KPI + Toolbar on white surface ═══ */}
           <div className="bg-white dark:bg-slate-900 px-5 pt-4 pb-3" style={{ boxShadow: '0 1px 0 rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.03)' }}>
             {/* KPI row */}
-            <div className="grid grid-cols-4 gap-2.5 mb-3.5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3.5">
               <div className="rounded-2xl px-5 py-4 flex items-center gap-3.5 relative overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)', boxShadow: '0 4px 16px rgba(30,27,75,0.25)' }}>
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm shrink-0">
@@ -297,82 +297,161 @@ export default function PricingPage() {
             </div>
 
             {/* Toolbar */}
-            <div className="flex items-center gap-2 rounded-xl bg-[#F7F7F6] dark:bg-slate-800/50 px-3 py-2"
+            <div className="rounded-xl bg-[#F7F7F6] dark:bg-slate-800/50"
               style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)' }}>
-              <div className="relative flex-1 max-w-xs">
-                <Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="חיפוש לפי שם או כינוי..."
-                  className="w-full rounded-lg bg-white dark:bg-slate-800 pe-10 ps-3 py-2 text-[13px] text-slate-900 dark:text-slate-50 placeholder:text-slate-400 border border-slate-200/80 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                  dir="rtl"
-                />
-              </div>
-              <div className="h-5 w-px bg-slate-200/60 dark:bg-slate-700 shrink-0" />
-              {/* Status pills */}
-              <div className="flex rounded-lg bg-white dark:bg-slate-800 p-0.5 gap-0.5 border border-slate-200/60 dark:border-slate-700">
-                {(['all', 'active', 'inactive'] as StatusFilter[]).map((f) => (
-                  <button key={f} type="button" onClick={() => setStatusFilter(f)}
-                    className={`rounded-md px-2.5 py-1.5 text-[12px] font-semibold transition ${
-                      statusFilter === f ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'text-slate-500 hover:text-slate-800'
-                    }`}>
-                    {f === 'all' ? 'הכל' : f === 'active' ? 'פעיל' : 'מושבת'}
-                  </button>
-                ))}
-              </div>
-              <div className="relative" ref={filterRef}>
-                <button type="button" onClick={() => setFilterOpen((o) => !o)}
-                  className={`inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold transition ${
-                    hasActiveFilters ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:bg-white hover:shadow-sm'
-                  }`}>
-                  <Filter className="h-3.5 w-3.5" /> סינון
-                  {hasActiveFilters && <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />}
-                </button>
-                {filterOpen && (
-                  <div className="absolute start-0 top-full mt-2 z-30 w-72 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-xl p-4 space-y-4" dir="rtl">
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">סינון מתקדם</p>
-                    <div>
-                      <p className="text-xs font-medium text-slate-600 mb-2">טווח מחיר (₪)</p>
-                      <div className="flex items-center gap-2">
-                        <input type="number" placeholder="מינ׳" value={priceMin} onChange={(e) => setPriceMin(e.target.value)}
-                          className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-                        <span className="text-slate-400 text-xs shrink-0">–</span>
-                        <input type="number" placeholder="מקס׳" value={priceMax} onChange={(e) => setPriceMax(e.target.value)}
-                          className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+
+              {/* ── Mobile ── */}
+              <div className="flex flex-col gap-2 px-3 py-2.5 sm:hidden">
+                {/* Row 1: Status pills + filter + sort */}
+                <div className="flex items-center gap-1.5">
+                  <div className="flex rounded-lg bg-white dark:bg-slate-800 p-0.5 gap-0.5 border border-slate-200/60 dark:border-slate-700">
+                    {(['all', 'active', 'inactive'] as StatusFilter[]).map((f) => (
+                      <button key={f} type="button" onClick={() => setStatusFilter(f)}
+                        className={`rounded-md px-2.5 py-1.5 text-[11px] font-semibold transition ${
+                          statusFilter === f ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'text-slate-500 hover:text-slate-800'
+                        }`}>
+                        {f === 'all' ? 'הכל' : f === 'active' ? 'פעיל' : 'מושבת'}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="relative" ref={filterRef}>
+                    <button type="button" onClick={() => setFilterOpen((o) => !o)}
+                      className={`inline-flex flex-row-reverse items-center gap-1 rounded-lg px-2.5 py-2 text-[12px] font-semibold transition ${
+                        hasActiveFilters ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:bg-white'
+                      }`}>
+                      <Filter className="h-3.5 w-3.5" /> סינון
+                    </button>
+                    {filterOpen && (
+                      <div className="absolute start-0 top-full mt-2 z-30 w-72 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-xl p-4 space-y-4" dir="rtl">
+                        <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">סינון מתקדם</p>
+                        <div>
+                          <p className="text-xs font-medium text-slate-600 mb-2">טווח מחיר (₪)</p>
+                          <div className="flex items-center gap-2">
+                            <input type="number" placeholder="מינ׳" value={priceMin} onChange={(e) => setPriceMin(e.target.value)}
+                              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                            <span className="text-slate-400 text-xs shrink-0">–</span>
+                            <input type="number" placeholder="מקס׳" value={priceMax} onChange={(e) => setPriceMax(e.target.value)}
+                              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-slate-600 mb-2">טווח משך (דק׳)</p>
+                          <div className="flex items-center gap-2">
+                            <input type="number" placeholder="מינ׳" value={durMin} onChange={(e) => setDurMin(e.target.value)}
+                              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                            <span className="text-slate-400 text-xs shrink-0">–</span>
+                            <input type="number" placeholder="מקס׳" value={durMax} onChange={(e) => setDurMax(e.target.value)}
+                              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                          </div>
+                        </div>
+                        {hasActiveFilters && (
+                          <button type="button" onClick={() => { setPriceMin(''); setPriceMax(''); setDurMin(''); setDurMax(''); }}
+                            className="text-xs text-indigo-500 hover:text-indigo-700 transition">נקה סינון</button>
+                        )}
                       </div>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-slate-600 mb-2">טווח משך (דק׳)</p>
-                      <div className="flex items-center gap-2">
-                        <input type="number" placeholder="מינ׳" value={durMin} onChange={(e) => setDurMin(e.target.value)}
-                          className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-                        <span className="text-slate-400 text-xs shrink-0">–</span>
-                        <input type="number" placeholder="מקס׳" value={durMax} onChange={(e) => setDurMax(e.target.value)}
-                          className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
-                      </div>
-                    </div>
-                    {hasActiveFilters && (
-                      <button type="button" onClick={() => { setPriceMin(''); setPriceMax(''); setDurMin(''); setDurMax(''); }}
-                        className="text-xs text-indigo-500 hover:text-indigo-700 transition">נקה סינון</button>
                     )}
                   </div>
-                )}
+                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} dir="rtl"
+                    className="appearance-none rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 px-2 py-1.5 text-[11px] font-semibold text-slate-600 cursor-pointer transition focus:outline-none">
+                    {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
+                {/* Row 2: Search + add */}
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1 min-w-0">
+                    <Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input
+                      type="search"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="חיפוש..."
+                      className="w-full rounded-lg bg-white dark:bg-slate-800 pe-10 ps-3 py-2 text-[13px] text-slate-900 dark:text-slate-50 placeholder:text-slate-400 border border-slate-200/80 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                      dir="rtl"
+                    />
+                  </div>
+                  {canEdit && (
+                    <button type="button" onClick={() => { setEditService(null); setModal('add'); }}
+                      className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg bg-slate-900 dark:bg-white px-3.5 py-2 text-[12px] font-bold text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition shadow-sm shrink-0">
+                      <Plus className="h-3.5 w-3.5" /> שירות חדש
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="relative">
+
+              {/* ── Desktop ── */}
+              <div className="hidden sm:flex items-center gap-2 px-3 py-2">
+                <div className="relative flex-1 min-w-[140px] max-w-xs">
+                  <Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <input
+                    type="search"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="חיפוש לפי שם או כינוי..."
+                    className="w-full rounded-lg bg-white dark:bg-slate-800 pe-10 ps-3 py-2 text-[13px] text-slate-900 dark:text-slate-50 placeholder:text-slate-400 border border-slate-200/80 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    dir="rtl"
+                  />
+                </div>
+                <div className="h-5 w-px bg-slate-200/60 dark:bg-slate-700 shrink-0" />
+                <div className="flex rounded-lg bg-white dark:bg-slate-800 p-0.5 gap-0.5 border border-slate-200/60 dark:border-slate-700">
+                  {(['all', 'active', 'inactive'] as StatusFilter[]).map((f) => (
+                    <button key={f} type="button" onClick={() => setStatusFilter(f)}
+                      className={`rounded-md px-2.5 py-1.5 text-[12px] font-semibold transition ${
+                        statusFilter === f ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'text-slate-500 hover:text-slate-800'
+                      }`}>
+                      {f === 'all' ? 'הכל' : f === 'active' ? 'פעיל' : 'מושבת'}
+                    </button>
+                  ))}
+                </div>
+                <div className="relative" ref={filterRef}>
+                  <button type="button" onClick={() => setFilterOpen((o) => !o)}
+                    className={`inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold transition ${
+                      hasActiveFilters ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:bg-white hover:shadow-sm'
+                    }`}>
+                    <Filter className="h-3.5 w-3.5" /> סינון
+                    {hasActiveFilters && <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />}
+                  </button>
+                  {filterOpen && (
+                    <div className="absolute start-0 top-full mt-2 z-30 w-72 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 shadow-xl p-4 space-y-4" dir="rtl">
+                      <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">סינון מתקדם</p>
+                      <div>
+                        <p className="text-xs font-medium text-slate-600 mb-2">טווח מחיר (₪)</p>
+                        <div className="flex items-center gap-2">
+                          <input type="number" placeholder="מינ׳" value={priceMin} onChange={(e) => setPriceMin(e.target.value)}
+                            className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                          <span className="text-slate-400 text-xs shrink-0">–</span>
+                          <input type="number" placeholder="מקס׳" value={priceMax} onChange={(e) => setPriceMax(e.target.value)}
+                            className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-slate-600 mb-2">טווח משך (דק׳)</p>
+                        <div className="flex items-center gap-2">
+                          <input type="number" placeholder="מינ׳" value={durMin} onChange={(e) => setDurMin(e.target.value)}
+                            className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                          <span className="text-slate-400 text-xs shrink-0">–</span>
+                          <input type="number" placeholder="מקס׳" value={durMax} onChange={(e) => setDurMax(e.target.value)}
+                            className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                        </div>
+                      </div>
+                      {hasActiveFilters && (
+                        <button type="button" onClick={() => { setPriceMin(''); setPriceMax(''); setDurMin(''); setDurMax(''); }}
+                          className="text-xs text-indigo-500 hover:text-indigo-700 transition">נקה סינון</button>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} dir="rtl"
                   className="appearance-none rounded-lg bg-transparent px-2.5 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white hover:shadow-sm cursor-pointer transition focus:outline-none">
                   {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
+                <div className="flex-1" />
+                {canEdit && (
+                  <button type="button" onClick={() => { setEditService(null); setModal('add'); }}
+                    className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg bg-slate-900 dark:bg-white px-3.5 py-2 text-[12px] font-bold text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition shadow-sm">
+                    <Plus className="h-3.5 w-3.5" /> שירות חדש
+                  </button>
+                )}
               </div>
-              <div className="flex-1" />
-              {canEdit && (
-                <button type="button" onClick={() => { setEditService(null); setModal('add'); }}
-                  className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg bg-slate-900 dark:bg-white px-3.5 py-2 text-[12px] font-bold text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition shadow-sm">
-                  <Plus className="h-3.5 w-3.5" /> שירות חדש
-                </button>
-              )}
             </div>
           </div>
 
@@ -390,7 +469,32 @@ export default function PricingPage() {
               )}
             </div>
 
-            <div className="overflow-x-auto max-h-[70vh] overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+            {/* Mobile card view */}
+            <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+              {filteredServices.length === 0 ? (
+                <div className="py-12 text-center text-slate-400">
+                  <Package className="mx-auto h-8 w-8 mb-2" />
+                  <p className="text-sm font-medium">אין תוצאות</p>
+                </div>
+              ) : filteredServices.map((s) => (
+                <button key={s.id} type="button" onClick={() => setDrawerService(s)}
+                  className="w-full flex items-center gap-3 px-5 py-4 text-right hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                  <div className="h-3 w-3 rounded-full shrink-0" style={{ background: s.color || '#94a3b8' }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-slate-900 dark:text-slate-50 truncate">{s.service_name}</p>
+                    <div className="flex items-center gap-3 mt-1 text-[13px] text-slate-500">
+                      <span className="font-medium tabular-nums">{formatCurrencyILS(s.price)}</span>
+                      <span>⏱ {s.duration_minutes} דק׳</span>
+                      <span className={s.is_active ? 'text-emerald-600' : 'text-slate-400'}>{s.is_active ? 'פעיל' : 'מושבת'}</span>
+                    </div>
+                  </div>
+                  <ChevronLeft className="h-4 w-4 text-slate-300 shrink-0" />
+                </button>
+              ))}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto max-h-[70vh] overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
               <table className="w-full text-right" dir="rtl">
                 <thead className="sticky top-0 z-10">
                   <tr className="bg-[#FAFAF9] dark:bg-slate-800/90 border-b-2 border-slate-200 dark:border-slate-700 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.08em]">
@@ -798,7 +902,7 @@ function ServiceColorDot({ service, onColorChange }: { service: ClinicService; o
         >
           {/* Preset colors */}
           <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-2">צבעים מוכנים</p>
-          <div className="grid grid-cols-10 gap-1.5 mb-3">
+          <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5 mb-3">
             {SERVICE_COLOR_PRESETS.map((c) => (
               <button
                 key={c}

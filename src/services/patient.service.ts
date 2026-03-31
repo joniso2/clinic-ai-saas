@@ -19,6 +19,7 @@ export type PatientCardData = {
   outstandingBalance: number;
   primaryTreatment: string | null;
   appointmentStats: { total: number; completed: number; cancelled: number; noShow: number };
+  completedAppointments: { id: string; datetime: string; service_name: string | null; revenue: number | null; notes: string | null }[];
 };
 
 // ─── Derived Field Computation ──────────────────────────────────────────────
@@ -177,6 +178,7 @@ export async function getPatientCardData(
       outstandingBalance,
       primaryTreatment,
       appointmentStats,
+      completedAppointments: completedAppointments.data ?? [],
     },
     error: null,
   };

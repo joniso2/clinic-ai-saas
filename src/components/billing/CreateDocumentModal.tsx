@@ -200,21 +200,18 @@ export function CreateDocumentModal({ settings, appointmentId, appointmentLabel,
       <div ref={panelRef} className="modal-enter w-full max-w-2xl bg-white dark:bg-slate-950 rounded-2xl shadow-2xl flex flex-col max-h-[90vh]" dir="rtl" role="dialog" aria-modal="true" aria-label="יצירת מסמך">
 
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4 shrink-0">
-          <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">מסמך חדש</h2>
-            {(fromAppointment || appointmentId) && (
-              <span className="inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-900/30
-                border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 text-xs font-medium
-                text-emerald-700 dark:text-emerald-300">
-                נוצר מתוך תור
+        <div className="bg-slate-900 px-6 py-4 shrink-0">
+          <div className="flex items-center justify-between gap-3">
+            <button onClick={onClose} className="rounded-full p-1.5 text-slate-400 hover:bg-white/10 hover:text-white transition-colors shrink-0" aria-label="סגור">
+              <X className="h-5 w-5" />
+            </button>
+            <h2 className="text-lg font-bold text-white text-center flex-1">מסמך חדש</h2>
+            {(fromAppointment || appointmentId) ? (
+              <span className="inline-flex items-center rounded-full bg-emerald-500/20 border border-emerald-400/30 px-2 py-0.5 text-[10px] font-medium text-emerald-300 shrink-0">
+                מתוך תור
               </span>
-            )}
+            ) : <div className="w-9" />}
           </div>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:text-slate-600
-            dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-            <X className="h-4 w-4" />
-          </button>
         </div>
 
         {/* Step indicators */}
@@ -514,28 +511,23 @@ export function CreateDocumentModal({ settings, appointmentId, appointmentLabel,
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-100 dark:border-slate-800 px-6 py-4 flex items-center justify-between shrink-0">
+        <div className="shrink-0 flex items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 px-6 py-4 bg-slate-50/50 dark:bg-slate-800/30">
           <button onClick={step === 0 ? onClose : back} disabled={submitting}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700
-              px-4 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800
-              transition-colors disabled:opacity-40">
+            className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:border-slate-300 disabled:opacity-50 transition-colors">
             <ChevronLeft className="h-4 w-4" />
             {step === 0 ? 'ביטול' : 'חזרה'}
           </button>
 
           {step < 4 && (
             <button onClick={next} disabled={!canAdvance()}
-              className="rounded-lg bg-slate-900 dark:bg-slate-100 px-5 py-2 text-sm font-medium
-                text-white dark:text-slate-900 hover:bg-slate-700 dark:hover:bg-slate-300 transition-colors
-                disabled:opacity-40 disabled:cursor-not-allowed">
+              className="rounded-xl bg-slate-900 dark:bg-white px-5 py-2.5 text-sm font-semibold text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
               המשך
             </button>
           )}
 
           {step === 4 && (
             <button onClick={issue} disabled={submitting}
-              className="rounded-lg bg-emerald-600 px-6 py-2 text-sm font-medium text-white
-                hover:bg-emerald-700 transition-colors disabled:opacity-40">
+              className="rounded-xl bg-slate-900 dark:bg-white px-5 py-2.5 text-sm font-semibold text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 disabled:opacity-40 transition-colors">
               {submitting ? 'מנפיק...' : 'הנפק מסמך'}
             </button>
           )}

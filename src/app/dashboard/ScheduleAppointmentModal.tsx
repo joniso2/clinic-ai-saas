@@ -310,13 +310,13 @@ export function ScheduleAppointmentModal({ lead, title, submitLabel, appointment
                 {slotSections.map(section => (
                   <div key={section.label}>
                     <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-[0.08em] mb-1.5">{section.label}</p>
-                    <div className="grid grid-cols-4 gap-1.5">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
                       {section.slots.map(slot => (
                         <button
                           key={slot}
                           type="button"
                           onClick={() => setTime(slot)}
-                          className={`rounded-lg px-2 py-1.5 text-xs tabular-nums font-medium transition-colors
+                          className={`rounded-lg px-2 py-2 sm:py-1.5 text-xs tabular-nums font-medium transition-colors
                             ${time === slot
                               ? 'bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-500/30'
                               : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200'

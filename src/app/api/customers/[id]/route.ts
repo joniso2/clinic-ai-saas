@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireClinicAccess } from '@/lib/auth-server';
 import * as patientRepository from '@/repositories/patient.repository';
-import * as appointmentRepository from '@/repositories/appointment.repository';
 import * as patientService from '@/services/patient.service';
 
 /** GET /api/customers/[id] — single customer + completed appointments timeline + enriched data */
@@ -15,20 +14,18 @@ export async function GET(
   }
   const { id } = await params;
 
-  // Run enriched card data + appointments timeline in parallel
-  const [cardResult, appointmentsResult] = await Promise.all([
-    patientService.getPatientCardData(id, access.clinicId),
-    appointmentRepository.getCompletedAppointmentsByPatientId(id, access.clinicId),
-  ]);
+  // All enriched data + appointments fetched in one parallel batch (no duplicate queries)
+  const cardResult = await patientService.getPatientCardData(id, access.clinicId);
 
   if (cardResult.error || !cardResult.data) {
     return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
   }
 
-  const { patient, ...enriched } = cardResult.data;
+  const { patient, completedAppointments, ...enriched } = cardResult.data;
+
   return NextResponse.json({
     customer: patient,
-    appointments: appointmentsResult.data,
+    appointments: completedAppointments,
     enriched,
   });
 }

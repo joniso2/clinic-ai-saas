@@ -443,61 +443,95 @@ export function CalendarView({ initialDate, clinicId }: { initialDate?: string; 
       dir="rtl"
       style={{ height: 'calc(100dvh - 60px)', minHeight: 0 }}
     >
-      {/* Toolbar */}
-      <div className="flex items-center justify-between gap-4 px-5 py-3 border-b border-slate-200 dark:border-slate-800 shrink-0 flex-row-reverse">
-        <div className="flex items-center gap-2 flex-row-reverse min-w-0">
-          <CalendarIcon className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
-          <span className="text-base font-semibold text-slate-900 dark:text-white truncate">{headerTitle}</span>
+      {/* Toolbar — mobile: 2 rows, desktop: 1 row */}
+      <div className="border-b border-slate-200 dark:border-slate-800 shrink-0">
+        {/* ── Mobile ── */}
+        <div className="flex flex-col gap-2 px-4 py-2.5 sm:hidden" dir="rtl">
+          {/* Row 1: title + view toggle */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 min-w-0">
+              <CalendarIcon className="h-4 w-4 text-slate-400 shrink-0" />
+              <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">{headerTitle}</span>
+            </div>
+            <div className="flex rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0">
+              <button
+                onClick={() => setCurrentView('day')}
+                className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${currentView === 'day' ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+              >
+                יום
+              </button>
+              <button
+                onClick={() => setCurrentView('week')}
+                className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${currentView === 'week' ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+              >
+                שבוע
+              </button>
+            </div>
+          </div>
+          {/* Row 2: nav + actions */}
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => { setPrefillDate(undefined); setPrefillTime(undefined); setShowNewForm(true); }}
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+            >
+              <Plus className="h-3.5 w-3.5" /> חדש
+            </button>
+            <button onClick={goToToday} className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">היום</button>
+            <button onClick={goPrev} className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="הקודם"><ChevronRight className="h-4 w-4" /></button>
+            <button onClick={goNext} className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="הבא"><ChevronLeft className="h-4 w-4" /></button>
+          </div>
         </div>
-        <div className="flex items-center gap-2 flex-row-reverse shrink-0">
-          <button
-            onClick={() => { setPrefillDate(undefined); setPrefillTime(undefined); setShowNewForm(true); }}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
-          >
-            <Plus className="h-3.5 w-3.5" /> חדש
-          </button>
-          <button
-            onClick={goToToday}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            היום
-          </button>
-          <button
-            onClick={goNext}
-            className="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            aria-label="הבא"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
-            onClick={goPrev}
-            className="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            aria-label="הקודם"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-          <div className="flex rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+
+        {/* ── Desktop ── */}
+        <div className="hidden sm:flex items-center justify-between gap-4 px-5 py-3 flex-row-reverse">
+          <div className="flex items-center gap-2 flex-row-reverse min-w-0">
+            <CalendarIcon className="h-4 w-4 text-slate-400 dark:text-slate-500 shrink-0" />
+            <span className="text-base font-semibold text-slate-900 dark:text-white truncate">{headerTitle}</span>
+          </div>
+          <div className="flex items-center gap-2 flex-row-reverse shrink-0">
             <button
-              onClick={() => setCurrentView('week')}
-              className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${currentView === 'week' ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+              onClick={() => { setPrefillDate(undefined); setPrefillTime(undefined); setShowNewForm(true); }}
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
             >
-              שבוע
+              <Plus className="h-3.5 w-3.5" /> חדש
             </button>
-            <button
-              onClick={() => setCurrentView('day')}
-              className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${currentView === 'day' ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-            >
-              יום
-            </button>
+            <button onClick={goToToday} className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">היום</button>
+            <button onClick={goNext} className="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="הבא"><ChevronLeft className="h-4 w-4" /></button>
+            <button onClick={goPrev} className="rounded-lg p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="הקודם"><ChevronRight className="h-4 w-4" /></button>
+            <div className="flex rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+              <button
+                onClick={() => setCurrentView('week')}
+                className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${currentView === 'week' ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+              >
+                שבוע
+              </button>
+              <button
+                onClick={() => setCurrentView('day')}
+                className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${currentView === 'day' ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+              >
+                יום
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
 
-      {/* Loading / Error */}
+      {/* Loading skeleton — day view on mobile, week view on sm+ */}
       {loading && (
         <div className="px-4 py-6 space-y-3 shrink-0">
-          <div className="grid grid-cols-7 gap-2">
+          {/* Mobile: single-column day-view skeleton */}
+          <div className="sm:hidden space-y-3">
+            <div className="flex items-center justify-center gap-2">
+              <div className="h-4 w-12 rounded animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />
+              <div className="h-10 w-10 rounded-full animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />
+            </div>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-20 rounded-xl animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />
+            ))}
+          </div>
+          {/* Tablet+: week-view skeleton */}
+          <div className="hidden sm:grid grid-cols-7 gap-2">
             {Array.from({ length: 7 }).map((_, i) => (
               <div key={i} className="space-y-2">
                 <div className="h-3 w-10 mx-auto rounded animate-pulse bg-slate-200/70 dark:bg-slate-800/60" />

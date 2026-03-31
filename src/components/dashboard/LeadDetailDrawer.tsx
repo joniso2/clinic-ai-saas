@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { X, Phone, MessageSquare, Calendar, Receipt, Users, ExternalLink, Info, Clock } from 'lucide-react';
@@ -138,15 +139,15 @@ export function LeadDetailDrawer({
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [appointmentIds, setAppointmentIds] = useState<string[]>([]);
 
-  const fetchBillingData = async (leadId: string, signal?: { cancelled: boolean }) => {
+  const fetchBillingData = async (leadId: string, signal?: { cancelled: boolean }, abortSignal?: AbortSignal) => {
     try {
       setPaymentState((prev) => ({ ...prev, status: 'loading' }));
       setTreatmentsLoading(true);
 
       // Fetch appointments for this lead directly (single query, DB-filtered)
-      const aptRes = await fetch(`/api/appointments?lead_id=${encodeURIComponent(leadId)}`, { credentials: 'include' })
+      const aptRes = await fetch(`/api/appointments?lead_id=${encodeURIComponent(leadId)}`, { credentials: 'include', signal: abortSignal })
         .then((r) => r.ok ? r.json() : { appointments: [] })
-        .catch(() => ({ appointments: [] }));
+        .catch((err) => { if (err?.name === 'AbortError') throw err; return { appointments: [] }; });
       const rows: TreatmentRow[] = ((aptRes.appointments ?? []) as { id: string; datetime: string; service_name: string | null; status: string | null }[])
         .map((a) => ({ id: a.id, datetime: a.datetime, service_name: a.service_name, status: a.status }))
         .slice(0, 10);
@@ -220,8 +221,9 @@ export function LeadDetailDrawer({
       return;
     }
     const signal = { cancelled: false };
-    fetchBillingData(lead.id, signal);
-    return () => { signal.cancelled = true; };
+    const controller = new AbortController();
+    fetchBillingData(lead.id, signal, controller.signal).catch(() => {});
+    return () => { signal.cancelled = true; controller.abort('cleanup'); };
   }, [lead?.id]);
 
   const isClosedLead = lead?.status === 'Closed' || lead?.status === 'נסגר';
@@ -280,7 +282,7 @@ export function LeadDetailDrawer({
     <div className="flex flex-col flex-1 min-h-0">
       {/* ── Close button (overlay only) ── */}
       {mode === 'overlay' && (
-        <div className="shrink-0 flex justify-end px-4 pt-4">
+        <div className="shrink-0 flex justify-end px-4" style={{ paddingTop: 'max(env(safe-area-inset-top, 0px) + 8px, 16px)' }}>
           <button
             type="button"
             onClick={onClose}
@@ -695,9 +697,9 @@ export function LeadDetailDrawer({
     );
   }
 
-  // ── Overlay mode: fixed backdrop + sliding panel ──
+  // ── Overlay mode: fixed backdrop + sliding panel (portal to body to escape stacking context) ──
   if (!open) return null;
-  return (
+  const overlayContent = (
     <>
       <div
         className="fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm touch-none"
@@ -710,9 +712,10 @@ export function LeadDetailDrawer({
         role="dialog"
         aria-modal="true"
         className="fixed z-[60] modal-enter
-          inset-3 md:inset-auto md:top-[3%] md:bottom-[3%] md:left-1/2 md:-translate-x-1/2
+          inset-0 sm:inset-3
+          md:inset-auto md:top-[3%] md:bottom-[3%] md:left-1/2 md:-translate-x-1/2
           md:w-full md:max-w-md
-          rounded-2xl
+          rounded-none sm:rounded-2xl
           bg-gradient-to-b from-white via-white to-slate-50/80 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900/50 shadow-2xl flex flex-col overflow-hidden"
         aria-label="פרטי ליד"
       >
@@ -721,6 +724,7 @@ export function LeadDetailDrawer({
       {portals}
     </>
   );
+  return typeof document !== 'undefined' ? createPortal(overlayContent, document.body) : overlayContent;
 }
 
 // ── Follow-up scheduler ──────────────────────────────────────────────────────

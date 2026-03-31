@@ -49,6 +49,7 @@ export default function DashboardClient({ serverClinicId }: { serverClinicId?: s
   const [appointmentLead, setAppointmentLead] = useState<Lead | null>(null);
   const [nextAppointmentsByLeadId, setNextAppointmentsByLeadId] = useState<Record<string, string>>({});
   const [pricingServices, setPricingServices] = useState<{ service_name: string; price: number; color?: string | null }[]>([]);
+  const [busyLeadIds, setBusyLeadIds] = useState<Set<string>>(new Set());
 
   const fetchLeads = async (effectiveClinicId?: string | null) => {
     const url = effectiveClinicId ? `/api/leads?clinic_id=${encodeURIComponent(effectiveClinicId)}` : '/api/leads';
@@ -206,22 +207,28 @@ export default function DashboardClient({ serverClinicId }: { serverClinicId?: s
   useEffect(() => { registerOnNewLead(() => setShowNewLeadForm(true)); }, [registerOnNewLead]);
 
   const handleUpdateLeadStatus = useCallback(async (leadId: string, status: LeadStatus) => {
-    const res = await fetch(`/api/leads/${leadId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ status }),
-    });
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}));
-      setError((json as { error?: string }).error ?? 'Failed to update');
-      return;
+    if (busyLeadIds.has(leadId)) return;
+    setBusyLeadIds((prev) => new Set(prev).add(leadId));
+    try {
+      const res = await fetch(`/api/leads/${leadId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        setError((json as { error?: string }).error ?? 'Failed to update');
+        return;
+      }
+      setLeads((prev) =>
+        prev.map((l) => (l.id === leadId ? { ...l, status } : l))
+      );
+      setDrawerLead((prev) => (prev?.id === leadId ? { ...prev, status } : prev));
+    } finally {
+      setBusyLeadIds((prev) => { const next = new Set(prev); next.delete(leadId); return next; });
     }
-    setLeads((prev) =>
-      prev.map((l) => (l.id === leadId ? { ...l, status } : l))
-    );
-    setDrawerLead((prev) => (prev?.id === leadId ? { ...prev, status } : prev));
-  }, []);
+  }, [busyLeadIds]);
 
   const handleMarkContacted = useCallback(async (leadId: string) => {
     await handleUpdateLeadStatus(leadId, 'Contacted');

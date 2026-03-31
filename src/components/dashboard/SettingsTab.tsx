@@ -84,7 +84,7 @@ export function SettingsTab({
       {/* ── Sidebar / tab nav ─────────────────────────────────────────────── */}
       <nav className="lg:w-52 shrink-0">
         {/* Mobile: horizontal scroll */}
-        <div className="flex gap-1 overflow-x-auto pb-1 lg:hidden scrollbar-none">
+        <div className="flex flex-wrap gap-1 pb-1 lg:hidden">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;

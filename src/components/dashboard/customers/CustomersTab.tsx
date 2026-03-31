@@ -6,8 +6,14 @@ import {
   Trash2, X, DollarSign, ArrowRight, UserCheck, Users, Search, Filter, Download, Upload,
   Calendar, Archive, FileText, Send, SortAsc, BellRing, TrendingUp,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { CustomersImportModal } from './CustomersImportModal';
 import { MessagingPanel } from './MessagingPanel';
+
+const ScheduleAppointmentModal = dynamic(
+  () => import('@/app/dashboard/ScheduleAppointmentModal').then((m) => m.ScheduleAppointmentModal),
+  { ssr: false },
+);
 import type { Patient } from '@/types/patients';
 import type { Lead } from '@/types/leads';
 import type { CompletedAppointmentRow } from '@/repositories/appointment.repository';
@@ -18,7 +24,7 @@ import { GlassSelect } from '@/components/ui/GlassSelect';
 // Extracted modules
 import {
   STATUS_OPTIONS,
-  SORT_OPTIONS,
+  SORT_OPTIONS, SORT_OPTIONS_SHORT,
   type SortKey,
   getStatusBadgeStyle,
   getAvatarColor,
@@ -46,6 +52,7 @@ export function CustomersTab() {
   const [showArchive, setShowArchive] = useState(false);
   const [restoringId, setRestoringId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [closedLeads, setClosedLeads] = useState<Lead[]>([]);
   const [closedLeadsLoading, setClosedLeadsLoading] = useState(false);
 
@@ -77,6 +84,7 @@ export function CustomersTab() {
   const [detailLead, setDetailLead] = useState<Lead | null>(null);
   const [detailAppointments, setDetailAppointments] = useState<CompletedAppointmentRow[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [scheduleCustomer, setScheduleCustomer] = useState<Patient | null>(null);
 
   // Action state
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -126,6 +134,7 @@ export function CustomersTab() {
   }, []);
 
   const fetchCustomers = useCallback(async () => {
+    setFetchError(null);
     const params = new URLSearchParams();
     if (statusFilter) params.set('status', statusFilter);
     if (revenueMinInput.trim()) {
@@ -133,9 +142,14 @@ export function CustomersTab() {
       if (!Number.isNaN(n)) params.set('revenueMin', String(n));
     }
     if (lastVisitOver6) params.set('lastVisitOver6', 'true');
-    const res = await fetch(`/api/customers?${params.toString()}`, { credentials: 'include' });
-    const json = await res.json().catch(() => ({})) as { customers?: Patient[] };
-    if (res.ok) setCustomers(json.customers ?? []);
+    try {
+      const res = await fetch(`/api/customers?${params.toString()}`, { credentials: 'include' });
+      const json = await res.json().catch(() => ({})) as { customers?: Patient[] };
+      if (res.ok) { setCustomers(json.customers ?? []); }
+      else { setFetchError('שגיאה בטעינת לקוחות'); }
+    } catch {
+      setFetchError('שגיאה בטעינת לקוחות — בדוק חיבור לאינטרנט');
+    }
     setLoading(false);
   }, [statusFilter, revenueMinInput, lastVisitOver6]);
 
@@ -601,10 +615,17 @@ export function CustomersTab() {
   return (
     <div className="-mx-4 -mt-5 md:-mx-8 md:-mt-8 bg-[#EEEEED] dark:bg-slate-950 min-h-full scrollbar-hide" dir="rtl" style={{ scrollbarWidth: 'none' }}>
 
+      {fetchError && (
+        <div className="mx-5 mt-4 rounded-xl bg-red-50/90 dark:bg-red-950/40 px-4 py-3 text-[13px] text-red-600 dark:text-red-400 flex items-center justify-between">
+          <span>{fetchError}</span>
+          <button type="button" onClick={fetchCustomers} className="text-red-700 dark:text-red-300 font-semibold hover:underline text-[12px]">נסה שוב</button>
+        </div>
+      )}
+
       {/* ═══ Header: KPI + Toolbar on white surface ═══ */}
       <div className="bg-white dark:bg-slate-900 px-5 pt-4 pb-3" style={{ boxShadow: '0 1px 0 rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.03)' }}>
         {/* KPI row */}
-        <div className="grid grid-cols-4 gap-3 mb-3.5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3.5">
           {/* Revenue — hero */}
           <div className="rounded-2xl px-5 py-4 flex items-center gap-3.5 relative overflow-hidden"
             style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)', boxShadow: '0 4px 16px rgba(30,27,75,0.25)' }}>
@@ -652,54 +673,109 @@ export function CustomersTab() {
         </div>
 
         {/* Toolbar */}
-        <div className="flex items-center gap-2 rounded-xl bg-[#F7F7F6] dark:bg-slate-800/50 px-3 py-2"
+        <div className="rounded-xl bg-[#F7F7F6] dark:bg-slate-800/50"
           style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)' }}>
-          <div className="relative flex-1 max-w-xs">
-            <Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            <input
-              type="search"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="חיפוש לפי שם או טלפון..."
-              className="w-full rounded-lg bg-white dark:bg-slate-800 pe-10 ps-3 py-2 text-[13px] text-slate-900 dark:text-slate-50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 border border-slate-200/80 dark:border-slate-700 transition-all"
-              dir="rtl"
-            />
+
+          {/* ── Mobile layout ── */}
+          <div className="flex flex-col gap-2 px-3 py-2.5 sm:hidden">
+            {/* Row 1: Actions */}
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1" ref={filterRef}>
+                <button type="button" onClick={() => setFiltersOpen(!filtersOpen)}
+                  className={`inline-flex flex-row-reverse items-center gap-1 rounded-lg px-2.5 py-2 text-[12px] font-semibold transition ${
+                    hasActiveFilters ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-slate-600 hover:bg-white dark:hover:bg-slate-800'
+                  }`}>
+                  <Filter className="h-3.5 w-3.5" /> סינון
+                </button>
+                {filtersOpen && filterPanel}
+              </div>
+              <button type="button" onClick={downloadTemplate} disabled={downloadingTemplate}
+                className="inline-flex flex-row-reverse items-center gap-1 rounded-lg px-2.5 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white dark:hover:bg-slate-800 transition disabled:opacity-50">
+                <Download className="h-3.5 w-3.5" /> Excel
+              </button>
+              <button type="button" onClick={() => setImportModalOpen(true)}
+                className="inline-flex flex-row-reverse items-center gap-1 rounded-lg px-2.5 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white dark:hover:bg-slate-800 transition">
+                <Upload className="h-3.5 w-3.5" /> ייבוא
+              </button>
+              <button type="button" onClick={() => setShowArchive(!showArchive)}
+                className={`inline-flex flex-row-reverse items-center gap-1 rounded-lg px-2.5 py-2 text-[12px] font-semibold transition ${
+                  showArchive ? 'bg-amber-100 text-amber-700' : 'text-slate-600 hover:bg-white'
+                }`}>
+                <Archive className="h-3.5 w-3.5" /> ארכיון
+              </button>
+              <button type="button" onClick={() => setMessagingOpen(true)}
+                className={`inline-flex flex-row-reverse items-center justify-center rounded-lg p-2 transition ${
+                  selectedIds.size > 0 ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-white'
+                }`}>
+                <Send className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            {/* Row 2: Search + sort */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 min-w-0">
+                <Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <input
+                  type="search"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="חיפוש..."
+                  className="w-full rounded-lg bg-white dark:bg-slate-800 pe-10 ps-3 py-2 text-[13px] text-slate-900 dark:text-slate-50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 border border-slate-200/80 dark:border-slate-700 transition-all"
+                  dir="rtl"
+                />
+              </div>
+              <GlassSelect value={sortBy} onChange={(v) => setSortBy(v as SortKey)} options={SORT_OPTIONS_SHORT} />
+            </div>
           </div>
-          <div className="h-5 w-px bg-slate-200/60 dark:bg-slate-700 shrink-0" />
-          <div className="flex items-center gap-1" ref={filterRef}>
-            <button type="button" onClick={() => setFiltersOpen(!filtersOpen)}
-              className={`inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold transition ${
-                hasActiveFilters ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-slate-600 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm'
-              }`}>
-              <Filter className="h-3.5 w-3.5" /> סינון
-              {hasActiveFilters && <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />}
+
+          {/* ── Desktop layout ── */}
+          <div className="hidden sm:flex items-center gap-2 px-3 py-2">
+            <div className="relative flex-1 min-w-[140px] max-w-xs">
+              <Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <input
+                type="search"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="חיפוש לפי שם או טלפון..."
+                className="w-full rounded-lg bg-white dark:bg-slate-800 pe-10 ps-3 py-2 text-[13px] text-slate-900 dark:text-slate-50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 border border-slate-200/80 dark:border-slate-700 transition-all"
+                dir="rtl"
+              />
+            </div>
+            <div className="h-5 w-px bg-slate-200/60 dark:bg-slate-700 shrink-0" />
+            <div className="flex items-center gap-1" ref={filterRef}>
+              <button type="button" onClick={() => setFiltersOpen(!filtersOpen)}
+                className={`inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold transition ${
+                  hasActiveFilters ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-slate-600 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm'
+                }`}>
+                <Filter className="h-3.5 w-3.5" /> סינון
+                {hasActiveFilters && <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />}
+              </button>
+              {filtersOpen && filterPanel}
+            </div>
+            <button type="button" onClick={downloadTemplate} disabled={downloadingTemplate}
+              className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm transition disabled:opacity-50">
+              <Download className="h-3.5 w-3.5" /> Excel
             </button>
-            {filtersOpen && filterPanel}
+            <button type="button" onClick={() => setImportModalOpen(true)}
+              className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm transition">
+              <Upload className="h-3.5 w-3.5" /> ייבוא
+            </button>
+
+            <div className="flex-1" />
+
+            <button type="button" onClick={() => setShowArchive(!showArchive)}
+              className={`inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold transition ${
+                showArchive ? 'bg-amber-100 text-amber-700' : 'text-slate-600 hover:bg-white hover:shadow-sm'
+              }`}>
+              <Archive className="h-3.5 w-3.5" /> ארכיון{archivedCustomers.length > 0 ? ` (${archivedCustomers.length})` : ''}
+            </button>
+            <button type="button" onClick={() => setMessagingOpen(true)}
+              className={`inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold transition ${
+                selectedIds.size > 0 ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-white hover:shadow-sm'
+              }`}>
+              <Send className="h-3.5 w-3.5" /> {selectedIds.size > 0 ? `שלח ל-${selectedIds.size}` : 'הודעה'}
+            </button>
+            <GlassSelect value={sortBy} onChange={(v) => setSortBy(v as SortKey)} options={SORT_OPTIONS} />
           </div>
-          <button type="button" onClick={downloadTemplate} disabled={downloadingTemplate}
-            className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm transition disabled:opacity-50">
-            <Download className="h-3.5 w-3.5" /> Excel
-          </button>
-          <button type="button" onClick={() => setImportModalOpen(true)}
-            className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm transition">
-            <Upload className="h-3.5 w-3.5" /> ייבוא
-          </button>
-
-          <div className="flex-1" />
-
-          <button type="button" onClick={() => setShowArchive(!showArchive)}
-            className={`inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold transition ${
-              showArchive ? 'bg-amber-100 text-amber-700' : 'text-slate-600 hover:bg-white hover:shadow-sm'
-            }`}>
-            <Archive className="h-3.5 w-3.5" /> ארכיון{archivedCustomers.length > 0 ? ` (${archivedCustomers.length})` : ''}
-          </button>
-          <button type="button" onClick={() => setMessagingOpen(true)}
-            className={`inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold transition ${
-              selectedIds.size > 0 ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-white hover:shadow-sm'
-            }`}>
-            <Send className="h-3.5 w-3.5" /> {selectedIds.size > 0 ? `שלח ל-${selectedIds.size}` : 'הודעה'}
-          </button>
-          <GlassSelect value={sortBy} onChange={(v) => setSortBy(v as SortKey)} options={SORT_OPTIONS} />
         </div>
 
         {/* Filter chips */}
@@ -925,7 +1001,7 @@ export function CustomersTab() {
       {detailId && (
         <CustomerDrawer
           customer={detailCustomer} appointments={detailAppointments} enriched={detailEnriched as never} loading={detailLoading} allCustomers={customers}
-          onClose={closeDrawer} onSchedule={() => { closeDrawer(); router.push('/dashboard/calendar'); }}
+          onClose={closeDrawer} onSchedule={() => { if (detailCustomer) setScheduleCustomer(detailCustomer); }}
           onDelete={() => { setDeleteId(detailId); closeDrawer(); }}
           onUpdate={(id, updates) => {
             setCustomers((prev) => prev.map((c) => c.id === id ? { ...c, ...updates } : c));
@@ -952,6 +1028,15 @@ export function CustomersTab() {
       {/* Import modal */}
       {importModalOpen && (
         <CustomersImportModal onClose={() => setImportModalOpen(false)} onSuccess={() => { setToast('ייבוא הושלם בהצלחה'); fetchCustomers(); }} />
+      )}
+
+      {scheduleCustomer && (
+        <ScheduleAppointmentModal
+          lead={{ id: scheduleCustomer.lead_id ?? scheduleCustomer.id, full_name: scheduleCustomer.full_name, interest: null } as import('@/types/leads').Lead}
+          title="קבע תור"
+          onClose={() => setScheduleCustomer(null)}
+          onScheduled={() => { setScheduleCustomer(null); setToast('התור נקבע בהצלחה'); }}
+        />
       )}
 
       {/* Toast */}

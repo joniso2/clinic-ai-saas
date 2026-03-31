@@ -17,6 +17,15 @@ export const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'name_za', label: 'שם ת-א' },
 ];
 
+export const SORT_OPTIONS_SHORT: { value: SortKey; label: string }[] = [
+  { value: 'date_desc', label: 'חדש לישן' },
+  { value: 'date_asc', label: 'ישן לחדש' },
+  { value: 'value_desc', label: 'שווי ↓' },
+  { value: 'value_asc', label: 'שווי ↑' },
+  { value: 'name_az', label: 'שם א-ת' },
+  { value: 'name_za', label: 'שם ת-א' },
+];
+
 // ─── Design helpers ───────────────────────────────────────────────────────────
 
 const SOURCE_BADGE_STYLES: Record<string, { label: string; cls: string }> = {

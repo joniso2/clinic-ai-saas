@@ -175,7 +175,7 @@ function PrimaryCard({ title, value, icon: Icon, trend, className = '' }: KpiCar
     <div
       ref={cardRef}
       className={`
-        group relative rounded-[20px] p-6 overflow-hidden cursor-default
+        group relative rounded-[20px] p-4 sm:p-6 overflow-hidden cursor-default
         hover:-translate-y-[3px]
         transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]
         will-change-transform
@@ -227,26 +227,25 @@ function PrimaryCard({ title, value, icon: Icon, trend, className = '' }: KpiCar
       <div className="absolute inset-0 rounded-[20px] ring-1 ring-inset ring-white/[0.05] group-hover:ring-white/[0.09] transition-all duration-500 pointer-events-none" />
 
       {/* ── Content ── */}
-      <div className="relative flex items-center gap-4">
+      <div className="relative flex items-center gap-3 sm:gap-4">
         {/* Icon — frosted glass container */}
-        <div className="relative h-14 w-14 rounded-[16px] flex items-center justify-center shrink-0 group-hover:scale-[1.03] transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" style={{ willChange: 'transform' }}>
-          <div className="absolute inset-0 rounded-[16px] bg-white/[0.08] backdrop-blur-sm" />
-          <div className="absolute inset-0 rounded-[16px] ring-1 ring-inset ring-white/[0.10] group-hover:ring-white/[0.14] transition-all duration-500" />
-          <div className="absolute inset-0 rounded-[16px] bg-gradient-to-b from-white/[0.08] to-transparent" />
-          {/* inner top-edge highlight */}
+        <div className="relative h-10 w-10 sm:h-14 sm:w-14 rounded-[12px] sm:rounded-[16px] flex items-center justify-center shrink-0 group-hover:scale-[1.03] transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" style={{ willChange: 'transform' }}>
+          <div className="absolute inset-0 rounded-[12px] sm:rounded-[16px] bg-white/[0.08] backdrop-blur-sm" />
+          <div className="absolute inset-0 rounded-[12px] sm:rounded-[16px] ring-1 ring-inset ring-white/[0.10] group-hover:ring-white/[0.14] transition-all duration-500" />
+          <div className="absolute inset-0 rounded-[12px] sm:rounded-[16px] bg-gradient-to-b from-white/[0.08] to-transparent" />
           <div className="absolute top-0 inset-x-2 h-px rounded-full bg-white/[0.12] pointer-events-none" />
-          <Icon className="relative h-6 w-6 text-white/90 group-hover:text-white transition-colors duration-500" strokeWidth={1.6} />
+          <Icon className="relative h-5 w-5 sm:h-6 sm:w-6 text-white/90 group-hover:text-white transition-colors duration-500" strokeWidth={1.6} />
         </div>
 
         <div className="min-w-0 flex-1">
           {/* Title */}
-          <p className="text-[10.5px] font-semibold text-white/40 tracking-[0.10em] uppercase mb-3 select-none leading-none">
+          <p className="text-[10px] sm:text-[10.5px] font-semibold text-white/40 tracking-[0.10em] uppercase mb-1.5 sm:mb-3 select-none leading-none truncate">
             {title}
           </p>
 
           {/* Value + trend */}
-          <div className="flex items-end gap-3">
-            <p className="text-[36px] font-bold text-white tabular-nums leading-none tracking-[-0.03em]">
+          <div className="flex items-end gap-2 sm:gap-3">
+            <p className="text-[22px] sm:text-[36px] font-bold text-white tabular-nums leading-none tracking-[-0.03em] truncate">
               {value}
             </p>
             {trend && <TrendBadge trend={trend} variant="primary" />}
@@ -280,7 +279,7 @@ function DefaultCard({ title, value, icon: Icon, trend, accentHue = 'indigo', da
   return (
     <div
       className={`
-        group relative rounded-[18px] p-5 overflow-hidden cursor-default
+        group relative rounded-[18px] p-3.5 sm:p-5 overflow-hidden cursor-default
         bg-white dark:bg-[#161d30]
         hover:-translate-y-[2px]
         transition-all duration-[450ms] ease-[cubic-bezier(0.16,1,0.3,1)]
@@ -322,30 +321,30 @@ function DefaultCard({ title, value, icon: Icon, trend, accentHue = 'indigo', da
       {/* ── Content ── */}
       <div className="relative">
         {/* Icon container */}
-        <div className="mb-4">
+        <div className="mb-3 sm:mb-4">
           <div
             className={`
-              h-10 w-10 rounded-[12px] flex items-center justify-center
+              h-8 w-8 sm:h-10 sm:w-10 rounded-[10px] sm:rounded-[12px] flex items-center justify-center
               transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)]
               group-hover:scale-[1.04]
               ${accent.icon} ${accent.iconHover}
             `}
             style={{ boxShadow: accent.shadow, willChange: 'transform' }}
           >
-            <Icon className="h-[18px] w-[18px]" strokeWidth={1.7} />
+            <Icon className="h-4 w-4 sm:h-[18px] sm:w-[18px]" strokeWidth={1.7} />
           </div>
         </div>
 
         {/* Value */}
-        <p className={`text-[28px] font-bold tabular-nums leading-none tracking-[-0.03em] ${
+        <p className={`text-[20px] sm:text-[28px] font-bold tabular-nums leading-none tracking-[-0.03em] truncate ${
           danger ? 'text-red-500 dark:text-red-400' : 'text-slate-900 dark:text-slate-50'
         }`}>
           {value}
         </p>
 
         {/* Title + trend row */}
-        <div className="flex items-center justify-between mt-2">
-          <p className={`text-[11px] font-medium tracking-[0.01em] ${
+        <div className="flex items-center justify-between mt-1.5 sm:mt-2">
+          <p className={`text-[10px] sm:text-[11px] font-medium tracking-[0.01em] truncate ${
             danger ? 'text-red-400/50 dark:text-red-400/40' : 'text-slate-400 dark:text-slate-500'
           }`}>
             {title}

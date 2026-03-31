@@ -202,14 +202,14 @@ const LeadRow = memo(function LeadRow({
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="text-[21px] font-bold text-slate-900 dark:text-white truncate leading-tight">
+              <h3 className="text-[17px] sm:text-[21px] font-bold text-slate-900 dark:text-white truncate leading-tight">
                 {lead.full_name || 'ליד ללא שם'}
               </h3>
               {hasCompleteLead && lead.status !== 'Closed' && lead.status !== 'Disqualified' && (
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); onSetCompleteLead(lead); }}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/25 text-emerald-500 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors shrink-0"
+                  className="inline-flex h-9 w-9 md:h-7 md:w-7 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/25 text-emerald-500 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors shrink-0"
                   title="סיום ליד"
                 >
                   <CheckCircle className="h-4 w-4" />
@@ -300,7 +300,7 @@ const LeadRow = memo(function LeadRow({
 
         {/* Row 3: metadata + actions */}
         <div className="mt-3 flex items-center" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center gap-5 text-[15px]">
+          <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-5 text-[15px]">
             {(() => {
               const svcColor = lead.interest
                 ? pricingServices.find((s) => s.service_name === lead.interest)?.color ?? null
@@ -328,19 +328,19 @@ const LeadRow = memo(function LeadRow({
             </span>
           </div>
           <div className="flex-1" />
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2.5 md:gap-1.5">
             {lead.phone && (
               <a href={`tel:${lead.phone}`}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-sm"
+                className="inline-flex h-9 w-9 md:h-7 md:w-7 items-center justify-center rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-sm"
                 title="התקשר">
-                <Phone className="h-3.5 w-3.5 shrink-0" />
+                <Phone className="h-4 w-4 md:h-3.5 md:w-3.5 shrink-0" />
               </a>
             )}
             {lead.phone && (
               <a href={toWaHref(lead.phone)} target="_blank" rel="noopener noreferrer"
-                className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
+                className="inline-flex h-9 w-9 md:h-7 md:w-7 items-center justify-center rounded-md bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
                 title="WhatsApp">
-                <WhatsAppIcon className="h-3.5 w-3.5 shrink-0" />
+                <WhatsAppIcon className="h-4 w-4 md:h-3.5 md:w-3.5 shrink-0" />
               </a>
             )}
           </div>
@@ -581,88 +581,130 @@ export function LeadsTable({
   return (
     <div className="space-y-3">
       {/* ── Filter/Tab Bar ────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3 rounded-xl bg-white dark:bg-slate-900/80 px-4 py-3 card-float-toolbar" dir="rtl">
-        {/* Search input */}
-        <div className="relative flex-1 min-w-[180px] max-w-[320px]">
-          <Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
-          <input
-            type="search"
-            placeholder="חיפוש מ..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg bg-slate-50 dark:bg-slate-800/60 py-2.5 pe-10 ps-4 text-[14px] text-slate-900 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-300 dark:focus:ring-slate-600 transition-shadow"
+      <div className="rounded-xl bg-white dark:bg-slate-900/80 card-float-toolbar" dir="rtl">
+        {/* ── Mobile layout: stacked rows ── */}
+        <div className="flex flex-col gap-2.5 px-3.5 py-3 sm:hidden">
+          {/* Row 1: Tabs + status + new lead */}
+          <div className="flex items-center gap-1.5">
+            {(['all', 'in_treatment', 'checkin'] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 py-2 rounded-lg text-[12px] font-semibold transition-all ${
+                  activeTab === tab
+                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                {tab === 'all' ? 'הכל' : tab === 'in_treatment' ? 'בטיפול' : 'צ׳ק-אין'}
+              </button>
+            ))}
+            <FilterDropdown
+              id="filter-status-m"
+              value={statusFilter}
+              options={['', 'Pending', 'Appointment scheduled', 'Contacted', 'Closed', 'Disqualified']}
+              getLabel={(v) => (v === '' ? 'סטטוס' : (STATUS_LABELS[v as LeadStatus] ?? v))}
+              onChange={setStatusFilter}
+              open={openFilter === 'status'}
+              onOpenChange={(o) => setOpenFilter(o ? 'status' : null)}
+              minWidth="80px"
+            />
+            {onNewLead && (
+              <button
+                type="button"
+                onClick={onNewLead}
+                className="inline-flex flex-row-reverse items-center justify-center rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 p-2 text-white dark:text-slate-900 shadow-sm transition-all active:scale-[0.97]"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          {/* Row 2: Search + badge */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <input
+                type="search"
+                placeholder="חיפוש מ..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-lg bg-slate-50 dark:bg-slate-800/60 py-2 pe-10 ps-3 text-[13px] text-slate-900 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-300 dark:focus:ring-slate-600 transition-shadow"
+              />
+            </div>
+            <div className="inline-flex flex-row-reverse items-center gap-2 rounded-lg bg-slate-900/[0.06] dark:bg-white/[0.06] px-3 py-2 text-[13px] font-semibold text-slate-800 dark:text-slate-100 shrink-0">
+              <span className="relative h-2 w-2 shrink-0">
+                <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-30" />
+                <span className="absolute inset-0 rounded-full bg-emerald-500" />
+              </span>
+              <span className="text-[14px] font-bold tabular-nums">{leads.length}</span>
+              במעקב
+            </div>
+          </div>
+        </div>
+
+        {/* ── Desktop layout: single row ── */}
+        <div className="hidden sm:flex items-center gap-3 px-4 py-3">
+          <div className="relative flex-1 min-w-[180px] max-w-[320px]">
+            <Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              type="search"
+              placeholder="חיפוש מ..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-lg bg-slate-50 dark:bg-slate-800/60 py-2.5 pe-10 ps-4 text-[14px] text-slate-900 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-300 dark:focus:ring-slate-600 transition-shadow"
+            />
+          </div>
+
+          <div className="flex items-center gap-1">
+            {(['all', 'in_treatment', 'checkin'] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 rounded-lg text-[13px] font-semibold transition-all ${
+                  activeTab === tab
+                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                {tab === 'all' ? 'כל הלידים' : tab === 'in_treatment' ? 'בטיפול' : 'צ׳ק-אין'}
+              </button>
+            ))}
+          </div>
+
+          <FilterDropdown
+            id="filter-status"
+            value={statusFilter}
+            options={['', 'Pending', 'Appointment scheduled', 'Contacted', 'Closed', 'Disqualified']}
+            getLabel={(v) => (v === '' ? 'סטטוס' : (STATUS_LABELS[v as LeadStatus] ?? v))}
+            onChange={setStatusFilter}
+            open={openFilter === 'status'}
+            onOpenChange={(o) => setOpenFilter(o ? 'status' : null)}
+            minWidth="110px"
           />
-        </div>
 
-        {/* Segment tabs */}
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setActiveTab('all')}
-            className={`px-4 py-2 rounded-lg text-[13px] font-semibold transition-all ${
-              activeTab === 'all'
-                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            כל הלידים
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('in_treatment')}
-            className={`px-4 py-2 rounded-lg text-[13px] font-semibold transition-all ${
-              activeTab === 'in_treatment'
-                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            בטיפול
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('checkin')}
-            className={`px-4 py-2 rounded-lg text-[13px] font-semibold transition-all ${
-              activeTab === 'checkin'
-                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            צ&apos;ק-אין
-          </button>
-        </div>
+          <div className="flex-1" />
 
-        {/* Calendar + status filter */}
-        <FilterDropdown
-          id="filter-status"
-          value={statusFilter}
-          options={['', 'Pending', 'Appointment scheduled', 'Contacted', 'Closed', 'Disqualified']}
-          getLabel={(v) => (v === '' ? 'סטטוס' : (STATUS_LABELS[v as LeadStatus] ?? v))}
-          onChange={setStatusFilter}
-          open={openFilter === 'status'}
-          onOpenChange={(o) => setOpenFilter(o ? 'status' : null)}
-          minWidth="110px"
-        />
-        {/* Spacer — pushes tracking badge + new lead to the end (left in RTL) */}
-        <div className="flex-1" />
-
-        <div className="inline-flex flex-row-reverse items-center gap-2.5 rounded-xl bg-slate-900/[0.06] dark:bg-white/[0.06] px-4 py-2.5 text-[14px] font-semibold text-slate-800 dark:text-slate-100">
-          <span className="relative h-2.5 w-2.5 shrink-0">
-            <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-30" />
-            <span className="absolute inset-0 rounded-full bg-emerald-500" />
-          </span>
-          <span className="text-[16px] font-bold tabular-nums">{leads.length}</span>
-          לידים במעקב
+          <div className="inline-flex flex-row-reverse items-center gap-2.5 rounded-xl bg-slate-900/[0.06] dark:bg-white/[0.06] px-4 py-2.5 text-[14px] font-semibold text-slate-800 dark:text-slate-100">
+            <span className="relative h-2.5 w-2.5 shrink-0">
+              <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-30" />
+              <span className="absolute inset-0 rounded-full bg-emerald-500" />
+            </span>
+            <span className="text-[16px] font-bold tabular-nums">{leads.length}</span>
+            לידים במעקב
+          </div>
+          {onNewLead && (
+            <button
+              type="button"
+              onClick={onNewLead}
+              className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 px-4 py-2 text-[13px] font-semibold text-white dark:text-slate-900 shadow-sm transition-all active:scale-[0.97]"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              ליד חדש
+            </button>
+          )}
         </div>
-        {onNewLead && (
-          <button
-            type="button"
-            onClick={onNewLead}
-            className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 px-4 py-2 text-[13px] font-semibold text-white dark:text-slate-900 shadow-sm transition-all active:scale-[0.97]"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            ליד חדש
-          </button>
-        )}
       </div>
 
       {/* ── Bulk action bar ─────────────────────────────────────────────── */}

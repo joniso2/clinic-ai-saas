@@ -190,7 +190,7 @@ export function ReceiptsPageClient() {
 
         {/* KPI row */}
         {kpis && (
-          <div className="grid grid-cols-4 gap-2.5 mb-3.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3.5">
             <div className="rounded-2xl px-5 py-4 flex items-center gap-3.5 relative overflow-hidden"
               style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)', boxShadow: '0 4px 16px rgba(30,27,75,0.25)' }}>
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm shrink-0">
@@ -235,47 +235,94 @@ export function ReceiptsPageClient() {
         )}
 
         {/* Toolbar */}
-        <div className="flex items-center gap-2 rounded-xl bg-[#F7F7F6] dark:bg-slate-800/50 px-3 py-2"
+        <div className="rounded-xl bg-[#F7F7F6] dark:bg-slate-800/50"
           style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)' }}>
-          <div className="relative flex-1 max-w-xs">
-            <Search className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="חיפוש..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg bg-white dark:bg-slate-800 pe-10 ps-3 py-2 text-[13px] text-slate-900 dark:text-slate-50 placeholder:text-slate-400 border border-slate-200/80 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
-              dir="rtl"
-            />
+
+          {/* ── Mobile ── */}
+          <div className="flex flex-col gap-2 px-3 py-2.5 sm:hidden">
+            {/* Row 1: Filters + actions */}
+            <div className="flex items-center gap-1.5">
+              <select value={docType} onChange={(e) => { setDocType(e.target.value as BillingDocType | ''); setPage(0); }}
+                className="appearance-none rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 px-2.5 py-2 text-[12px] font-semibold text-slate-600 cursor-pointer transition focus:outline-none">
+                {DOC_TYPE_FILTER_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+              <select value={status} onChange={(e) => { setStatus(e.target.value as 'issued' | 'cancelled' | ''); setPage(0); }}
+                className="appearance-none rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 px-2.5 py-2 text-[12px] font-semibold text-slate-600 cursor-pointer transition focus:outline-none">
+                <option value="">כל הסטטוסים</option>
+                <option value="issued">הופק</option>
+                <option value="cancelled">בוטל</option>
+              </select>
+              <button onClick={handleExport} disabled={exporting}
+                className="inline-flex flex-row-reverse items-center gap-1 rounded-lg px-2.5 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white transition disabled:opacity-50">
+                <Download className="h-3.5 w-3.5" /> CSV
+              </button>
+              <button onClick={() => setSettingsOpen(true)}
+                className="inline-flex items-center justify-center rounded-lg p-2 text-slate-600 hover:bg-white transition">
+                <Settings2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            {/* Row 2: Search + create */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 min-w-0">
+                <Search className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="חיפוש..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full rounded-lg bg-white dark:bg-slate-800 pe-10 ps-3 py-2 text-[13px] text-slate-900 dark:text-slate-50 placeholder:text-slate-400 border border-slate-200/80 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                  dir="rtl"
+                />
+              </div>
+              <button onClick={() => setCreateOpen(true)} disabled={!settings}
+                className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg bg-slate-900 dark:bg-white px-3.5 py-2 text-[12px] font-bold text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition shadow-sm shrink-0 disabled:opacity-40">
+                <Plus className="h-3.5 w-3.5" /> מסמך חדש
+              </button>
+            </div>
           </div>
-          <div className="h-5 w-px bg-slate-200/60 dark:bg-slate-700 shrink-0" />
-          <select value={docType} onChange={(e) => { setDocType(e.target.value as BillingDocType | ''); setPage(0); }}
-            className="appearance-none rounded-lg bg-transparent px-2.5 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white hover:shadow-sm cursor-pointer transition focus:outline-none">
-            {DOC_TYPE_FILTER_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-          <select value={status} onChange={(e) => { setStatus(e.target.value as 'issued' | 'cancelled' | ''); setPage(0); }}
-            className="appearance-none rounded-lg bg-transparent px-2.5 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white hover:shadow-sm cursor-pointer transition focus:outline-none">
-            <option value="">כל הסטטוסים</option>
-            <option value="issued">הופק</option>
-            <option value="cancelled">בוטל</option>
-          </select>
-          <button onClick={applyFilters}
-            className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white hover:shadow-sm transition">
-            <Search className="h-3.5 w-3.5" /> חפש
-          </button>
-          <div className="flex-1" />
-          <button onClick={handleExport} disabled={exporting}
-            className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white hover:shadow-sm transition disabled:opacity-50">
-            <Download className="h-3.5 w-3.5" /> {exporting ? 'מייצא...' : 'CSV'}
-          </button>
-          <button onClick={() => setSettingsOpen(true)}
-            className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white hover:shadow-sm transition">
-            <Settings2 className="h-3.5 w-3.5" /> הגדרות
-          </button>
-          <button onClick={() => setCreateOpen(true)} disabled={!settings}
-            className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg bg-slate-900 dark:bg-white px-3.5 py-2 text-[12px] font-bold text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition shadow-sm disabled:opacity-40">
-            <Plus className="h-3.5 w-3.5" /> מסמך חדש
-          </button>
+
+          {/* ── Desktop ── */}
+          <div className="hidden sm:flex items-center gap-2 px-3 py-2">
+            <div className="relative flex-1 min-w-[140px] max-w-xs">
+              <Search className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="חיפוש..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-lg bg-white dark:bg-slate-800 pe-10 ps-3 py-2 text-[13px] text-slate-900 dark:text-slate-50 placeholder:text-slate-400 border border-slate-200/80 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                dir="rtl"
+              />
+            </div>
+            <div className="h-5 w-px bg-slate-200/60 dark:bg-slate-700 shrink-0" />
+            <select value={docType} onChange={(e) => { setDocType(e.target.value as BillingDocType | ''); setPage(0); }}
+              className="appearance-none rounded-lg bg-transparent px-2.5 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white hover:shadow-sm cursor-pointer transition focus:outline-none">
+              {DOC_TYPE_FILTER_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            <select value={status} onChange={(e) => { setStatus(e.target.value as 'issued' | 'cancelled' | ''); setPage(0); }}
+              className="appearance-none rounded-lg bg-transparent px-2.5 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white hover:shadow-sm cursor-pointer transition focus:outline-none">
+              <option value="">כל הסטטוסים</option>
+              <option value="issued">הופק</option>
+              <option value="cancelled">בוטל</option>
+            </select>
+            <button onClick={applyFilters}
+              className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white hover:shadow-sm transition">
+              <Search className="h-3.5 w-3.5" /> חפש
+            </button>
+            <div className="flex-1" />
+            <button onClick={handleExport} disabled={exporting}
+              className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white hover:shadow-sm transition disabled:opacity-50">
+              <Download className="h-3.5 w-3.5" /> {exporting ? 'מייצא...' : 'CSV'}
+            </button>
+            <button onClick={() => setSettingsOpen(true)}
+              className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-600 hover:bg-white hover:shadow-sm transition">
+              <Settings2 className="h-3.5 w-3.5" /> הגדרות
+            </button>
+            <button onClick={() => setCreateOpen(true)} disabled={!settings}
+              className="inline-flex flex-row-reverse items-center gap-1.5 rounded-lg bg-slate-900 dark:bg-white px-3.5 py-2 text-[12px] font-bold text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition shadow-sm disabled:opacity-40">
+              <Plus className="h-3.5 w-3.5" /> מסמך חדש
+            </button>
+          </div>
         </div>
       </div>
 

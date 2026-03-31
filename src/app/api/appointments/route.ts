@@ -55,11 +55,15 @@ export async function GET(req: NextRequest) {
     if (needLead.length > 0) {
       const { data: clinicLeads } = await leadRepository.getLeadsByClinicId(clinicId);
       const leads = clinicLeads ?? [];
-      const norm = (s: string) => s.trim().replace(/\s+/g, ' ');
+      const norm = (s: string) => s.trim().replace(/\s+/g, ' ').toLowerCase();
+      // Build hash map for O(1) lookup instead of O(n) per appointment
+      const leadByName = new Map<string, string>();
+      for (const l of leads) {
+        if (l.full_name) leadByName.set(norm(l.full_name), l.id);
+      }
       for (const apt of needLead) {
-        const aptName = norm(apt.patient_name!);
-        const lead = leads.find((l) => norm(l.full_name ?? '') === aptName);
-        if (lead) (apt as { lead_id?: string | null }).lead_id = lead.id;
+        const id = leadByName.get(norm(apt.patient_name!));
+        if (id) (apt as { lead_id?: string | null }).lead_id = id;
       }
     }
     return NextResponse.json({ appointments: list });

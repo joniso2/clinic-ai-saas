@@ -273,7 +273,7 @@ function LayoutInner({ children, initialRole, initialUserEmail }: DashboardLayou
               <ClinicLogo size="sm" />
               <div className="flex min-w-0 flex-col leading-tight">
                 <span className="text-[9px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">ניהול עסק</span>
-                <span className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50 max-w-[160px]">
+                <span className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50 max-w-[200px]">
                   {clinicName ?? 'לוח בקרה'}
                 </span>
                 {clinicName?.startsWith('כעסק:') && (
