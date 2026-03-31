@@ -1,13 +1,11 @@
-import { Building2 } from 'lucide-react';
+import Image from 'next/image';
 
 export function ClinicLogo({ size = 'md' }: { size?: 'sm' | 'md' }) {
-  const box = size === 'sm' ? 'h-7 w-7 rounded-lg' : 'h-8 w-8 rounded-xl';
+  const px = size === 'sm' ? 40 : 44;
+  const box = size === 'sm' ? 'h-10 w-10' : 'h-11 w-11';
   return (
-    <div
-      className={`flex ${box} shrink-0 items-center justify-center bg-indigo-600 text-white shadow-sm`}
-      style={{ boxShadow: '0 1px 6px rgba(79,70,229,0.35)' }}
-    >
-      <Building2 className="h-4 w-4 shrink-0" strokeWidth={2} />
+    <div className={`flex ${box} shrink-0 items-center justify-center`}>
+      <Image src="/logo-64.png" alt="ClinicFlow" width={px} height={px} className="object-contain" priority />
     </div>
   );
 }

@@ -40,15 +40,10 @@ export default function LoginForm() {
       <div className="w-full max-w-md">
         {/* Glassmorphism card — backdrop blur, semi-transparent border, soft shadow */}
         <div className="rounded-3xl border border-white/40 bg-white/75 px-8 py-10 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.25)] backdrop-blur-xl sm:px-10 sm:py-12">
-          {/* Brand: Lambda logo + Clinic AI */}
-          <div className="mb-11 flex flex-col items-center text-center">
-            <div className="mb-7 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-2xl bg-gradient-to-br from-slate-800 to-slate-950 shadow-lg shadow-slate-900/40">
-              <span className="text-[1.75rem] font-bold text-white">λ</span>
-            </div>
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-              Clinic AI
-            </h1>
-            <p className="mt-3 text-sm text-slate-500">
+          {/* Brand */}
+          <div className="mb-8 flex flex-col items-center text-center">
+            <img src="/logo-192.png" alt="ClinicFlow" className="h-[104px] object-contain mb-1" />
+            <p className="text-sm text-slate-500">
               מערכת ניהול חכמה
             </p>
           </div>
@@ -168,7 +163,7 @@ export default function LoginForm() {
         </div>
 
         <p className="mt-5 text-center text-xs text-slate-600">
-          Clinic AI · מערכת ניהול חכמה · גישה מאובטחת
+          ClinicFlow · מערכת ניהול חכמה · גישה מאובטחת
         </p>
       </div>
     </div>

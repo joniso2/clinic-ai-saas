@@ -16,7 +16,7 @@ const heebo = Heebo({
 });
 
 export const metadata: Metadata = {
-  title: "Clinic AI",
+  title: "ClinicFlow",
   description: "מערכת ניהול חכמה למרפאות",
 };
 
@@ -35,6 +35,8 @@ export default function RootLayout({
   return (
     <html lang="he" dir="rtl" suppressHydrationWarning>
       <head>
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
         {/* Blocking script: apply theme before first paint to prevent flash */}
         <script
           dangerouslySetInnerHTML={{

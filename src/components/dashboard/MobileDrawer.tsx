@@ -87,7 +87,7 @@ export default function MobileDrawer({ open, onClose, children }: MobileDrawerPr
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <ClinicLogo size="sm" />
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Clinic AI</span>
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">ClinicFlow</span>
           </div>
           <button
             onClick={onClose}
