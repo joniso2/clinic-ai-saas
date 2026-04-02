@@ -61,8 +61,10 @@ export async function middleware(request: NextRequest) {
     },
   );
 
+  let isAuthenticated = false;
   try {
-    await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
+    isAuthenticated = !!user;
   } catch (e: unknown) {
     const isRefreshTokenError =
       e &&
@@ -78,6 +80,14 @@ export async function middleware(request: NextRequest) {
       });
     }
   }
+
+  // ── Auth guard: protect /dashboard/* routes ──
+  const pathname = request.nextUrl.pathname;
+  if (pathname.startsWith('/dashboard') && !isAuthenticated) {
+    const loginUrl = new URL('/login', request.url);
+    return NextResponse.redirect(loginUrl);
+  }
+
   return response;
 }
 
