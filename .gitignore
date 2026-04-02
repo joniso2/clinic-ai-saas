@@ -53,3 +53,11 @@ next-env.d.ts
 
 # Local audit reports
 *.pdf
+
+# Playwright MCP
+.playwright-mcp/
+
+# Design mockups / screenshots at root
+linear-*.png
+redesign-*.png
+screenshots/
